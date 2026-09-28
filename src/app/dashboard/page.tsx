@@ -96,6 +96,24 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Riwayat Absensi</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-foreground/70">
+            Lihat catatan setiap percobaan kirim — sukses, duplikat, maupun
+            gagal. Berguna sebagai bukti bila ada sengketa kehadiran.
+          </p>
+          <Button
+            variant="neutral"
+            render={<Link href="/dashboard/history" />}
+          >
+            Buka riwayat
+          </Button>
+        </CardContent>
+      </Card>
+
       {isAdmin && (
         <Card className="mb-6 border-dashed">
           <CardHeader>
@@ -131,6 +149,7 @@ export default async function DashboardPage() {
             <li>✅ Simpan kredensial Monev (Tahap 2)</li>
             <li>✅ Isi 3 template laporan (Tahap 2–3)</li>
             <li>✅ Kirim absensi ke portal (Tahap 4)</li>
+            <li>✅ Riwayat audit log submit (Tahap 5)</li>
           </ol>
         </CardContent>
       </Card>
