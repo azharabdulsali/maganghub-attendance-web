@@ -52,6 +52,7 @@ Setiap request ke `monev-api` membawa header berikut:
 | Header | Contoh / catatan |
 | :--- | :--- |
 | `Origin` | `https://monev.maganghub.kemnaker.go.id` (**wajib**, jika tidak → CORS gagal) |
+| `authorization` | `Bearer <access token>` (**wajib untuk endpoint data**: submit, daily-logs, attendances — lihat §8) |
 | `User-Agent` | `Mozilla/5.0 (Linux; Android 15; Pixel 9) ... Chrome/154.0.0.0 Mobile Safari/537.36` |
 | `x-frontend-build-id` | `<build-id>-production` — lihat §3 |
 | `cookie` | Berisi `acw_tc`, `cf_clearance`, dan cookie sesi — lihat §5 |
@@ -88,7 +89,99 @@ karena nilainya murah didapat, cukup selalu dikirim.
 
 ## 4. Alur login (OAuth 2.0 Authorization Code)
 
-Tiga request yang teramati, berurutan:
+> **✅ ALUR LENGKAP TERJAWAB (2026-09-28).** Sebelumnya kita hanya tahu
+> potongan-potongannya. Rekaman terakhir menyatukan semuanya — lihat §4.0.
+> Ringkasnya: `code` dari SSO ditukar ke sesi lewat **`POST /api/v1/auth/login`
+> dengan body JSON `{code, state}`**. Yang **masih belum terekam**: **respons**
+> dari langkah-langkah ini (khususnya apakah ada access token terpisah — §4.4).
+
+### 4.0 Alur penuh (end-to-end) — ✅ LENGKAP & TERVERIFIKASI
+
+```
+(0) Klik "Masuk"
+
+(1) GET  https://monev-api.maganghub.kemnaker.go.id/api/v1/auth/login
+        → set-cookie: monev_oauth_state=<STATE>   (state anti-CSRF)
+        → BODY = URL authorize SSO (bukan 302!)
+
+(2) GET  https://account.kemnaker.go.id/auth?client_id=...&state=<STATE>&...
+        (halaman login SSO — di sini pengguna mengetik kredensial)
+
+(2a) POST https://account.kemnaker.go.id/auth/login
+        content-type: application/json;charset=UTF-8
+        x-csrf-token: <TOKEN>   x-requested-with: XMLHttpRequest
+        body: {"username":"<USER>","password":"<PASS>"}
+        → 200 { data: { authenticated: true, redirect_uri: "http://account.kemnaker.go.id/auth?..." } }
+
+(2b) ikuti `redirect_uri` di atas → halaman SSO meloloskan ke callback dengan
+     `?code=<CODE>&state=<STATE>`  (code bernilai panjang, mirip JWT)
+
+(3) GET  https://monev.maganghub.kemnaker.go.id/sso/callback?code=<CODE>&state=<STATE>
+        (ini halaman FRONTEND — jembatan, bukan API)
+
+(4) ✅ GET https://monev-api.maganghub.kemnaker.go.id/api/v1/auth/login/callback
+        ?code=<CODE>&state=<STATE>
+        cookie: monev_oauth_state=<STATE>; ...
+        x-frontend-build-id: <build-id>-production
+        → 200 { "access_token":"eyJ...", "user_id":"...", "name":"..." }
+                ▲ INI SUMBER `Bearer <access token>` (§4.4 TERJAWAB)
+
+(5) Sesi dipakai: GET .../api/v1/users/me/home
+        authorization: Bearer <access_token dari langkah (4)>
+```
+
+**Endpoint penukaran = `GET /api/v1/auth/login/callback`** (⚠️ **bukan**
+`POST /api/v1/auth/login` seperti dugaan awal). `code` & `state` dikirim
+sebagai **query string**, bukan body. Method `GET`.
+
+**Respons (1) — ✅ TERVERIFIKASI.** Body-nya adalah **URL SSO**:
+
+```
+https://account.kemnaker.go.id/auth
+  ?client_id=79230891-cc02-43c8-964c-b525bce27857
+  &redirect_uri=https%3A%2F%2Fmonev.maganghub.kemnaker.go.id%2Fsso%2Fcallback
+  &response_type=code
+  &scope=basic+email
+  &state=<STATE>
+```
+
+Artinya `GET /auth/login` **tidak** melakukan `302` ke SSO; ia **mengembalikan
+URL authorize** supaya klien (frontend) yang mengarahkan.
+
+**Respons (4) — ✅ TERVERIFIKASI. Inilah kunci `Bearer`:**
+
+```json
+{ "access_token": "eyJ0eXAi...", "user_id": "<UUID>", "name": "<NAMA>" }
+```
+
+- **`access_token` langsung dipakai sebagai `authorization: Bearer <...>`** di
+  endpoint API monev (§8.1, §4.5). **Tidak perlu** memanggil `/auth/refresh`
+  untuk mendapatkannya.
+- Payload JWT-nya: `ttl: 21600` (6 jam), `client: 79230891-...`,
+  `fingerprint: 71c61cbb...` — **identik** dengan Bearer di `/users/me/home`,
+  jadi cocok secara kriptografis.
+- Bonus: `user_id` & `name` → untuk verifikasi identitas akun.
+
+**Parameter OAuth yang diketahui:**
+| Param | Nilai | Catatan |
+| :-- | :-- | :-- |
+| `client_id` | `79230891-cc02-43c8-964c-b525bce27857` | **Publik** — cocok klaim `client`/`aud` JWT. Aman dicatat. |
+| `redirect_uri` | `https://monev.maganghub.kemnaker.go.id/sso/callback` | Halaman frontend (langkah 3). |
+| `response_type` | `code` | Alur authorization-code. |
+| `scope` | `basic email` | — |
+| `state` | disamarkan `<STATE>` | **Berubah tiap login** → jangan dicatat nilainya. |
+
+**Titik penting yang mudah keliru:**
+- Ada **tiga** endpoint mirip: `GET /api/v1/auth/login` (mulai, langkah 1),
+  `POST /api/v1/auth/login` (§4.2, baca-saja?), dan
+  **`GET /api/v1/auth/login/callback`** (tukar code, langkah 4). Jangan tertukar.
+- `state` harus **konsisten** antara cookie `monev_oauth_state`, `?state=` di
+  callback, dan request langkah (4).
+- Langkah (2)/(2a)/(2b)/(3) ada di domain **`account.kemnaker.go.id` /
+  frontend** — di luar `monev-api`. Yang benar-benar perlu ditiru klien REST:
+  (1) → [SSO] → (3) → (4) → (5).
+- **Langkah (2a) memegang password asli.** Lihat §7 untuk aturan keamanannya.
+
 
 ### 4.1 `POST /api/v1/auth/refresh`
 
@@ -121,6 +214,87 @@ Poin penting:
 
 **Masih belum direkam:** respons **sukses** (`200`) — apakah ada body JSON?
 Apakah men-set cookie access token baru?
+
+### 4.4 Dari mana `Bearer <access token>` berasal? — ✅ TERJAWAB
+
+**Jawaban: dari body respons `GET /api/v1/auth/login/callback` (langkah 4 §4.0).**
+
+```json
+{ "access_token": "eyJ0eXAi...", "user_id": "<UUID>", "name": "<NAMA>" }
+```
+
+`access_token` itu **langsung** dipakai sebagai `authorization: Bearer <...>`.
+Jadi dari dua kemungkinan sebelumnya, **kemungkinan #2 yang benar** — tapi
+**bukan** lewat `/auth/refresh`; lewat endpoint callback OAuth.
+
+**Bukti kriptografis (dua token identik):**
+
+| Klaim | `access_token` (langkah 4) | Bearer di `/users/me/home` |
+| :-- | :-- | :-- |
+| `alg` | RS512 | RS512 |
+| `client` / `aud` | `79230891-cc02-43c8-964c-b525bce27857` | sama |
+| `ttl` | `21600` (6 jam) | `21600` |
+| `fingerprint` | `71c61cbb…` (disamarkan) | sama |
+
+Kesamaan `fingerprint` + `client` + `ttl` → **token yang sama**, bukan kebetulan.
+
+**Konsekuensi untuk implementasi:**
+- `submitReport(accessToken, ...)` benar: pemanggil menyerahkan `access_token`
+  dari langkah 4.
+- `/auth/refresh` (§4.1) **bukan** jalur mendapat access token pertama. Ia
+  untuk **mewujudkan ulang sesi** dari cookie `monev_refresh_token` (30 hari)
+  saat access token (6 jam) sudah kedaluwarsa — perannya menyegarkan, bukan
+  menukar pertama kali.
+- `exchangeRefreshForAccess()` (§4.4 lama) tetap berguna, tapi **bukan** syarat
+  mutlak alur utama; `interpretRefreshResponse()` sudah menangani
+  `access_token` di body — yang **cocok** dengan bentuk respons callback ini.
+
+
+### 4.5 `GET /api/v1/users/me/home` — endpoint data pertama yang terverifikasi
+
+```
+GET https://monev-api.maganghub.kemnaker.go.id/api/v1/users/me/home
+authorization: Bearer <access token>
+origin: https://monev.maganghub.kemnaker.go.id
+```
+
+Guna di proyek kita: **uji sesi alternatif**. Bila `/auth/refresh` ambigu,
+`/users/me/home` dengan Bearer memberi tahu apakah sesi benar-benar hidup.
+(Tetap baca-saja — tidak mengirim laporan.)
+
+### 4.6 Respons `POST account.kemnaker.go.id/auth/login` — ✅ TERVERIFIKASI
+
+Rekaman 2026-09-28 menunjukkan respons login SSO berbentuk **JSON** (bukan
+`302`), dengan `authenticated: true` dan **`redirect_uri` baru**:
+
+```json
+{
+  "data": {
+    "authenticated": true,
+    "redirect_uri": "http://account.kemnaker.go.id/auth?client_id=<ID>&redirect_uri=<CALLBACK>&response_type=code&scope=basic%20email&state=<STATE>"
+  },
+  "meta": { "hostname": "...", "client_ip": "<IP-KLIEN>" }
+}
+```
+
+**Fakta penting:**
+- `authenticated: true` = kredensial benar. Alur lanjut dengan **mengikuti
+  `redirect_uri`** yang dikembalikan (menuju halaman `/auth`), bukan membaca
+  `code` langsung dari respons ini.
+- **`state` di sini BERBEDA dari `state` langkah (1).** Kedua rekaman berasal
+  dari sesi login berbeda, jadi ini wajar — tapi menegaskan: **`state` tidak
+  boleh di-hardcode**; selalu ambil yang terbaru.
+- **Skema `http://` (polos!)** meski situs https. Jangan asumsikan https untuk
+  URL ini; ikuti apa adanya. (Kemungkinan konfigurasi server / efek proxy.)
+- `scope` di sini ter-encode `basic%20email` (langkah 1 pakai `basic+email`) —
+  server membangun ulang URL-nya sendiri.
+- **`meta.client_ip`** → server **mencatat IP klien**. Ini sinyal (bukan bukti)
+  bahwa `fingerprint` di JWT mungkin divalidasi terhadap IP/UA (§4.4).
+
+**Yang masih belum terekam:** apakah mengikuti `redirect_uri` itu benar-benar
+membawa `code`, dan **respons `POST /api/v1/auth/login {code,state}`** (§4.0
+langkah 3) yang menuntaskan penukaran jadi sesi.
+
 
 ### 4.2 `GET /api/v1/auth/login`
 
@@ -238,45 +412,70 @@ HTML challenge Cloudflare. `version.json` juga `200` tanpa cookie.
 - ✅ `SPEC.md` §6 "Direct REST API tanpa browser" **AMAN** dan bisa
   dijalankan dari server mana pun (termasuk serverless/Vercel).
 
-### Yang masih tersisa: langkah SSO
+### Langkah SSO — ✅ TERJAWAB (2026-09-28)
 
-Satu-satunya bagian yang butuh browser adalah **halaman SSO**
-`account.kemnaker.go.id/auth` (tempat mengetik password). Itu **di luar
-`monev-api`** dan kita **belum tahu** bentuk POST-nya.
+Awalnya dikira "di luar jangkauan kita". Rekaman menunjukkan **SSO ternyata
+REST biasa** — `POST` JSON biasa ke `account.kemnaker.go.id`. Bukan form HTML,
+bukan CAPTCHA. Artinya **login otomatis penuh mungkin dilakukan tanpa browser**.
 
-### Opsi untuk mendapatkan sesi valid (pilih satu)
+```
+POST https://account.kemnaker.go.id/auth/login
+content-type: application/json;charset=UTF-8
+origin:   https://account.kemnaker.go.id
+referer:  https://account.kemnaker.go.id/auth/login
+x-csrf-token: <token dari cookie/halaman>
+x-requested-with: XMLHttpRequest
+cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
+```
+
+Body (JSON): dua field — **`username`** (email) dan **`password`**. Nilai
+sengaja **TIDAK dicatat** di dokumen ini.
+
+> ⚠️ **Ini satu-satunya tempat kita memegang password asli.** Prinsip yang
+> dipegang keras:
+> - Password **tidak pernah** ditulis ke docs, kode, log, atau pesan.
+> - Password hanya hidup **terenkripsi** di DB (kolom `ciphertext`/`iv`/
+>   `authTag` — sama seperti sejak awal) dan **hanya didekripsi sesaat** untuk
+>   satu panggilan login.
+> - `x-csrf-token` + `kemnaker_ri_session` diperoleh dari **`GET /auth`**
+>   (halaman login) lebih dulu; keduanya berumur pendek.
+
+**Yang belum direkam:** respons sukses (`200`?) dan bagaimana `code` OAuth
+mengalir balik (`account.kemnaker.go.id` → `.../sso/callback?code=...`).
+Perlu satu rekaman lagi: tekan "Masuk" sekali, lihat request `POST /auth/login`
+**beserta respons**, dan request lanjutan ke `redirect_uri`.
+
+### Opsi untuk mendapatkan sesi valid
+
+Dengan SSO kini diketahui REST, ada dua jalur — dan keduanya **bukan** lagi
+"Chromium headless":
 
 | Opsi | Cara | Catatan |
 | :--- | :--- | :--- |
-| **C1 — Tempel refresh token** | Pengguna login di browser sendiri, ambil `monev_refresh_token` (via DevTools), tempel ke dashboard (terenkripsi) | **Paling sederhana, aman, tidak butuh browser di server.** ⚠️ HttpOnly → harus disalin manual dari DevTools. |
-| **A1 — Chromium headless untuk SSO** | Playwright hanya untuk langkah SSO, sisanya REST | Otomatis penuh, tapi bertentangan dengan semangat §6 dan butuh Chromium di server. |
-| **B1 — Login di browser pengguna** | Klien melakukan login, cookie diteruskan | Sulit: cookie HttpOnly. |
+| **C1 — Tempel refresh token** | Pengguna ambil `monev_refresh_token` via DevTools, tempel ke dashboard (terenkripsi) | Aman, tidak menyentuh password. **Sudah diimplementasi.** |
+| **A — Login otomatis (SSO REST)** | Server POST `username`+`password` ke SSO → ikuti OAuth → dapat `monev_refresh_token` | Otomatis penuh, **tanpa browser** (SSO = JSON API). Butuh menangani `x-csrf-token`. Belum dijalankan. |
+
+**Rekomendasi:** C1 tetap jalur default (paling rendah risiko). Opsi A
+disiapkan sebagai **kerangka** yang tidak dieksekusi sampai bentuk respons
+`/auth/login` terekam dan pemilik memutuskan risiko password-diamankan-server.
+Menaruh password di server yang bisa didekripsi memang memperbesar tanggung
+jawab — karena itu tetap **opt-in**, bukan pengganti C1.
 
 **Catatan soal `fingerprint`:** JWT refresh token memuat klaim
 `fingerprint` (hash). **Belum diketahui** apakah server memvalidasi
 fingerprint terhadap IP/UA pemakai. Bila ya, refresh token dari satu
 perangkat mungkin **ditolak** dari server lain — perlu diuji.
 
-**Rekomendasi:** mulai dari **C1** (paling rendah risiko, tidak menyentuh
-batas etika §9), sambil menguji apakah `fingerprint` menghalangi pemakaian
-lintas-IP.
-
 > **Status implementasi (diperbarui):** **Opsi C1 SUDAH DIIMPLEMENTASI.**
-> Lihat `src/lib/monev-client.ts` (fungsi `fetchBuildId` + `verifySession`)
-> dan endpoint `src/app/api/credentials/verify/route.ts`. Token disimpan
-> terenkripsi AES-256-GCM di kolom terpisah (`tokenCiphertext`) pada
+> Lihat `src/lib/monev-client.ts` (`fetchBuildId` + `verifySession`) dan
+> `src/app/api/credentials/verify/route.ts`. Token disimpan terenkripsi
+> AES-256-GCM di kolom terpisah (`tokenCiphertext`) pada
 > `maganghub_credentials`, berdampingan dengan password asli yang tidak
 > tersentuh. UI: kartu "Tes Koneksi" di
 > `src/app/dashboard/credentials/page.tsx`.
 >
 > **Yang belum diuji terhadap portal sungguhan:** apakah klaim `fingerprint`
 > di JWT refresh token divalidasi lintas-IP (butuh token asli dari pengguna).
-> Bila hasilnya `401` padahal token baru, itu jawabannya; bila `200`, C1 aman
-> lintas perangkat.
-
-
-**Rekomendasi:** lihat hasil eksperimen di atas — masalah ini **sudah
-terselesaikan**; lanjut ke §5 untuk detail cookie.
 
 ---
 
@@ -284,62 +483,98 @@ terselesaikan**; lanjut ke §5 untuk detail cookie.
 
 ---
 
-## 8. Endpoint submit laporan — BELUM DIKETAHUI
+## 8. Endpoint submit laporan — ✅ TERJAWAB (2026-09-28)
 
-Diperlukan untuk fase berikutnya (bukan bagian dari tes koneksi).
+**Bukti:** rekaman "Copy as cURL" dari pemilik akun (satu tekan `Simpan dan
+Kirim`). Terekam **tiga** permintaan sekaligus — submit + dua pembacaan status.
+Nilai rahasia disensor di bawah.
 
-**Perlu direkam dari browser (satu kali tekan `Simpan dan Kirim`):**
-- Method + URL
-- Nama field body (tiga kolom: Uraian Aktivitas, Pembelajaran, Kendala)
-- Bentuk body: JSON atau form-encoded?
+### 8.1 Submit — `POST /api/v1/attendances/with-daily-log`
 
-**Perilaku yang diharapkan (dari `SPEC.md` §2):**
-- Sukses → status tertentu (200/201?)
-- "Laporan sudah ada" → kemungkinan `409 Conflict`
-- Belum pernah diverifikasi langsung.
-
-### 8.1 Alat bantu perekaman (sudah tersedia)
-
-Agar tidak perlu membaca HAR manual, sudah dibuat alat diagnostik:
-
-- **Halaman:** `/dashboard/dev-tools` (khusus **ADMIN**; user biasa diarahkan
-  kembali ke dashboard).
-- **API:** `POST /api/dev-tools/analyze-capture` — body `{ "raw": "<curl|HAR>" }`.
-- **Logika murni:** `src/lib/har-capture.ts` (`analyzeCapture`).
-
-Cara pakai (dilakukan **oleh pemilik akun, di browser sendiri**):
-
-1. Buka `/dashboard/dev-tools`.
-2. Ikuti panduan 4 langkah di halaman: DevTools → Network → tekan
-   `Simpan dan Kirim` **sekali** → klik kanan permintaan → **Copy as cURL**.
-3. Tempel ke kotak, tekan **Analisis**. Alat akan menampilkan method, path,
-   `content-type`, bentuk body, **nama field**, dan snippet respons.
-
-**Jaminan keamanan pada alat ini:**
-- **Tidak mengirim apa pun** ke portal Monev — hanya membaca teks yang
-  ditempel (`har-capture.ts` murni, tanpa I/O jaringan).
-- **Menyamarkan rahasia**: header/field yang namanya memuat
-  `authorization`, `cookie`, `token`, `password`, `secret`, dsb. **nilainya
-  dibuang**, bukan hanya ditampilkan. Uji `src/lib/har-capture.test.ts`
-  menegakkan janji ini (100 tes hijau).
-- **Tidak menyimpan** hasil ke database.
-
-Setelah bentuknya diketahui, isi tabel di bawah dan tulis fungsi submit di
-`src/lib/monev-client.ts` (belum dibuat — memang sengaja, sampai §8 pasti).
-
-### 8.2 Isian yang dicari (diisi setelah perekaman)
-
-| Hal | Nilai (diisi nanti) |
+| Hal | Nilai |
 | :--- | :--- |
-| Method | ? |
-| Path | ? |
-| Content-Type | ? |
-| Nama field: aktivitas | ? |
-| Nama field: pembelajaran | ? |
-| Nama field: kendala | ? |
-| Nama field: kehadiran (lihat §12.7.2) | ? |
-| Status sukses | ? |
-| Status "sudah ada" | ? |
+| Method | `POST` |
+| Path | `/api/v1/attendances/with-daily-log` |
+| Auth | **`authorization: Bearer <access token>`** (JWT akses, `ttl` 6 jam) — *bukan* cukup `monev_refresh_token` saja |
+| Content-Type | `application/json` |
+| Origin | wajib `https://monev.maganghub.kemnaker.go.id` |
+| Field: tanggal | `date` → `"2026-09-28"` (`YYYY-MM-DD`) |
+| Field: kehadiran | **`status` → `"PRESENT"`** (enum, bukan `"1"`) |
+| Field: aktivitas | `activity_log` |
+| Field: pembelajaran | `lesson_learned` (bukan "learning") |
+| Field: kendala | `obstacles` |
+
+Contoh body (terverifikasi):
+
+```json
+{
+  "date": "2026-09-28",
+  "status": "PRESENT",
+  "activity_log": "…",
+  "lesson_learned": "…",
+  "obstacles": "…"
+}
+```
+
+> **Penting (SPEC §11B, §12.7.2):** "kehadiran Hadir" TIDAK dikirim sebagai
+> `attendance: "1"` seperti dugaan awal, melainkan lewat field **`status`**
+> bernilai **`"PRESENT"`**. Ini field wajib; kalau terlewat, laporan bisa
+> tercatat "Tidak Hadir". Nilai "Hadir" = `PRESENT`.
+
+### 8.2 Cek duplikasi (RB-03) — `GET /api/v1/daily-logs`
+
+| Hal | Nilai |
+| :--- | :--- |
+| Method | `GET` |
+| Path | `/api/v1/daily-logs?date=<YYYY-MM-DD>&participant_id=<uuid>&limit=100` |
+| Auth | `authorization: Bearer <access token>` |
+| Guna | Periksa apakah `date` itu **sudah punya** daily-log → `ALREADY_SUBMITTED` |
+
+### 8.3 Baca status kalender — `GET /api/v1/attendances`
+
+| Hal | Nilai |
+| :--- | :--- |
+| Method | `GET` |
+| Path | `/api/v1/attendances?participant_id=<uuid>&start_date=<YYYY-MM-DD>&end_date=<YYYY-MM-DD>` |
+| Auth | `authorization: Bearer <access token>` |
+| Guna | Ambil status per tanggal (verifikasi pasca-submit / RB-06, §12.7.3) |
+
+> ⚠️ **Jebakan tanggal (SPEC §11B, §12.7.3):** verifikasi pasca-submit HARUS
+> memakai rentang yang **memuat tanggal target** (`start_date`/`end_date`), lalu
+> **cocokkan tanggal target** — bukan membaca "hari ini". Ini persis bug laten
+> bot lama.
+
+### 8.4 ⚠️ Token: Bearer akses ≠ refresh token
+
+Temuan penting: API submit **tidak** membaca `monev_refresh_token` langsung.
+Rekaman memakai header `authorization: Bearer <access token>` dengan `ttl` 6 jam.
+Artinya, **sebelum submit** kita perlu menukar `monev_refresh_token` menjadi
+access token — kemungkinan lewat `POST /api/v1/auth/refresh` (§4.1) yang
+`200`-nya berisi access token baru.
+
+> **Status:** bentuk body sukses `/auth/refresh` **belum terekam** (§10). Ini
+> satu-satunya bagian yang masih menggantung untuk Tahap 4.
+
+### 8.5 Kerangka yang sudah diisi
+
+`src/lib/monev-submit.ts` — `TODO §8` kini diisi dari §8.1 (lihat tabel di
+sana). Status HTTP sukses/"sudah ada" **belum terverifikasi** (rekaman tidak
+memuat kode balasan) — perlu diamati saat uji pertama. Fungsi murni
+(`buildSubmitBody`, `interpretSubmitResponse`) + tesnya tetap hijau.
+
+### 8.6 Alat diagnostik (untuk rekaman berikutnya)
+
+Halaman `/dashboard/dev-tools` (khusus ADMIN) + `POST /api/dev-tools/analyze-capture`
+memakai `src/lib/har-capture.ts` (murni): tempel "Copy as cURL"/HAR → langsung
+terbaca method/path/field, rahasia disembunyikan. **Tidak mengirim** apa pun ke
+portal.
+
+### 8.7 Yang masih perlu direkam (satu kali lagi)
+
+Hanya **satu** yang tersisa: **bentuk body `200` dari `POST /api/v1/auth/refresh`**
+(§4.1) — untuk tahu nama field access token di dalamnya. Setelah itu
+`submitReport()` bisa menukar refresh token → Bearer secara utuh.
+
 
 ---
 
@@ -361,25 +596,29 @@ terpenuhi.
 
 | ✅ Sudah pasti (terverifikasi) | ❓ Belum diketahui |
 | :--- | :--- |
-| Host API: `monev-api.maganghub.kemnaker.go.id` | Isi body sukses `/auth/refresh` (200) |
+| Host API: `monev-api.maganghub.kemnaker.go.id` | Isi body sukses `/auth/refresh` (200) — nama field access token |
 | **API TIDAK diblokir Cloudflare** — `401` JSON polos | Apakah klaim `fingerprint` divalidasi lintas-IP |
 | `version.json` → `{"build_id":"...-production"}` | Bentuk POST halaman SSO `account.kemnaker.go.id` |
-| `GET /auth/login` → `201`, body = **URL SSO polos** | Endpoint submit + nama field body |
+| `GET /auth/login` → `201`, body = **URL SSO polos** | Apakah `x-frontend-build-id` wajib |
 | OAuth: `client_id`, `redirect_uri`, `scope=basic email` | Isi body callback (1 KB JSON) |
-| Cookie: `monev_refresh_token` (HttpOnly, 30 hari) | Apakah `x-frontend-build-id` wajib |
+| Cookie: `monev_refresh_token` (HttpOnly, 30 hari) | |
 | `/auth/refresh` gagal → **`401 AUTHORIZATION_ERROR`** | |
 | `/auth/login/callback` sukses → **`201 Created`** | |
 | Origin wajib: `https://monev.maganghub.kemnaker.go.id` | |
+| **Submit = `POST /attendances/with-daily-log`**, field `date`/`status=PRESENT`/`activity_log`/`lesson_learned`/`obstacles` (§8) | |
+| Endpoint baca: `GET /daily-logs`, `GET /attendances` (§8) | |
+| Submit butuh `authorization: Bearer <access>` (bukan refresh cookie) | |
+| Kerangka submit + policy siap (`monev-submit.ts`, `report-policy.ts`) | |
 
 ---
 
 ## 11. Langkah selanjutnya
 
 1. ✅ **Uji pemblokiran Cloudflare** — SELESAI, hasil: **tidak diblokir** (§7).
-2. **Rekam respons sukses `/auth/refresh`** (`200`) — untuk tahu bentuk sesi.
-3. **Rekam satu kali submit laporan** (`Simpan dan Kirim`) — untuk §8. Gunakan
-   alat diagnostik `/dashboard/dev-tools` (§8.1) agar bentuknya langsung
-   terbaca; cukup tempel "Copy as cURL".
+2. **Rekam respons sukses `/auth/refresh`** (`200`) — untuk tahu nama field
+   **access token**. Ini satu-satunya yang tersisa untuk membuka submit.
+3. ✅ **Rekam satu kali submit laporan** — SELESAI (2026-09-28). Endpoint &
+   field terbaca → §8.
 4. **Uji `fingerprint`:** pakai refresh token dari perangkat A di perangkat B
    (IP berbeda) — apakah diterima?
 5. ✅ **Tulis `src/lib/monev-client.ts` + endpoint Tes Koneksi

@@ -415,6 +415,20 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 | **2** | Kredensial Monev terenkripsi + editor 3 template | Bisa simpan & tes koneksi, template tersimpan |
 | **3** | Buat draf dari template + edit + validasi 100 karakter | Bisa lihat draf terisi dari template |
 | **4** | Submit Direct REST API + webhook trigger | Bisa submit dari dashboard & cron |
+
+> **Status Tahap 4:** endpoint submit **sudah terjawab** (2026-09-28, lihat
+> `docs/MONEV-API.md` §8):
+> - `src/lib/report-policy.ts` — aturan "kapan boleh submit" (hari kerja,
+>   libur, `LAST_ACTIVE_DATE`, validasi 100 kar.) — **sudah pasti & teruji**.
+> - `src/lib/monev-submit.ts` — endpoint final
+>   (`POST /api/v1/attendances/with-daily-log`, field `date`/`status=PRESENT`/
+>   `activity_log`/`lesson_learned`/`obstacles`) + tafsir respons, teruji
+>   (termasuk `submitReport` dengan `fetch` di-mock — tanpa jaringan nyata).
+> - **Sisa satu:** submit butuh `authorization: Bearer <access token>`, jadi
+>   perlu menukar `monev_refresh_token` → access token lebih dulu. Bentuk body
+>   `200` dari `/auth/refresh` belum terekam (§8.4, §8.7).
+
+
 | **5** | Audit log, rate limit, deploy Vercel + daftar cron eksternal | Siap dipakai publik |
 
 **Rekomendasi:** mulai dari Tahap 1 saja. Buktikan jalan, baru lanjut.

@@ -8,6 +8,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   fetchBuildId,
   verifySession,
+  buildCodeExchangeUrl,
+  interpretCallbackResponse,
+  startOAuthFlow,
+  exchangeCodeForSession,
+  OAUTH_CALLBACK_PATH,
+  KEMNAKER_OAUTH,
   MONEV_API_BASE,
   MONEV_FRONTEND_ORIGIN,
 } from "./monev-client";
@@ -145,5 +151,136 @@ describe("verifySession — §4.1 & §6", () => {
 
     const res = await verifySession("a.b.c");
     expect(res.status).toBe("ERROR");
+  });
+});
+
+describe("alur OAuth code-exchange — §4.0", () => {
+  it("buildCodeExchangeUrl menyusun GET callback?code=&state=", () => {
+    const url = buildCodeExchangeUrl(MONEV_API_BASE, "CODE-1", "STATE-1");
+    expect(url).toContain(OAUTH_CALLBACK_PATH);
+    const u = new URL(url);
+    expect(u.searchParams.get("code")).toBe("CODE-1");
+    expect(u.searchParams.get("state")).toBe("STATE-1");
+  });
+
+  it("interpretCallbackResponse: 200 + access_token → OK (dengan user_id/name)", () => {
+    const r = interpretCallbackResponse(
+      200,
+      JSON.stringify({ access_token: "eyJ.stub", user_id: "u-1", name: "Budi" }),
+    );
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") {
+      expect(r.accessToken).toBe("eyJ.stub");
+      expect(r.userId).toBe("u-1");
+      expect(r.name).toBe("Budi");
+    }
+  });
+
+  it("interpretCallbackResponse: 200 tanpa access_token → ERROR (bukan OK palsu)", () => {
+    expect(interpretCallbackResponse(200, JSON.stringify({ user_id: "u" })).status).toBe(
+      "ERROR",
+    );
+  });
+
+  it("interpretCallbackResponse: non-2xx → REJECTED", () => {
+    const r = interpretCallbackResponse(403, "forbidden");
+    expect(r.status).toBe("REJECTED");
+    if (r.status === "REJECTED") expect(r.httpCode).toBe(403);
+  });
+
+  it("startOAuthFlow tanpa izin → ERROR, fetch tidak dipanggil", async () => {
+    const r = await startOAuthFlow({ confirmLivePortalRequest: false });
+    expect(r.status).toBe("ERROR");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("startOAuthFlow: GET /auth/login & baca state + authorizeUrl dari body (fetch di-mock)", async () => {
+    const ssoUrl =
+      "https://account.kemnaker.go.id/auth?client_id=79230891-cc02-43c8-964c-b525bce27857" +
+      "&redirect_uri=https%3A%2F%2Fmonev.maganghub.kemnaker.go.id%2Fsso%2Fcallback" +
+      "&response_type=code&scope=basic+email&state=STATE-URL";
+    fetchMock.mockResolvedValueOnce(
+      new Response(ssoUrl, {
+        status: 200,
+        headers: { "set-cookie": "monev_oauth_state=STATE-COOKIE; Path=/; HttpOnly" },
+      }),
+    );
+
+    const r = await startOAuthFlow({ confirmLivePortalRequest: true });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") {
+      // state diutamakan dari cookie
+      expect(r.state).toBe("STATE-COOKIE");
+      // ✅ §4.0: URL authorize ada di BODY, bukan header Location
+      expect(r.authorizeUrl).toBe(ssoUrl);
+    }
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${MONEV_API_BASE}/api/v1/auth/login`);
+    expect((init as RequestInit).method).toBe("GET");
+  });
+
+  it("startOAuthFlow: state diambil dari URL bila cookie tidak ada", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        "https://account.kemnaker.go.id/auth?response_type=code&state=STATE-FROM-URL",
+        { status: 200 },
+      ),
+    );
+    const r = await startOAuthFlow({ confirmLivePortalRequest: true });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") expect(r.state).toBe("STATE-FROM-URL");
+  });
+
+  it("KEMNAKER_OAUTH menyimpan parameter publik terverifikasi", () => {
+    expect(KEMNAKER_OAUTH.responseType).toBe("code");
+    expect(KEMNAKER_OAUTH.redirectUri).toContain("/sso/callback");
+    expect(KEMNAKER_OAUTH.clientId).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("exchangeCodeForSession tanpa izin → ERROR, fetch tidak dipanggil", async () => {
+    const r = await exchangeCodeForSession("C", "S", {
+      confirmLivePortalRequest: false,
+    });
+    expect(r.status).toBe("ERROR");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("exchangeCodeForSession: GET callback?code=&state= → access_token (fetch di-mock)", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ build_id: BUILD_ID })); // fetchBuildId
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ access_token: "eyJ.tok", user_id: "u-1", name: "Budi" }),
+    );
+
+    const r = await exchangeCodeForSession("CODE-9", "STATE-9", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") expect(r.accessToken).toBe("eyJ.tok");
+
+    const [url, init] = fetchMock.mock.calls[1];
+    expect(String(url)).toContain(`${MONEV_API_BASE}${OAUTH_CALLBACK_PATH}`);
+    const u = new URL(String(url));
+    expect(u.searchParams.get("code")).toBe("CODE-9");
+    expect(u.searchParams.get("state")).toBe("STATE-9");
+    expect((init as RequestInit).method).toBe("GET");
+  });
+
+  it("exchangeCodeForSession 401 → REJECTED", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ build_id: BUILD_ID })); // fetchBuildId
+    fetchMock.mockResolvedValueOnce(new Response("nope", { status: 401 }));
+    const r = await exchangeCodeForSession("C", "S", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("REJECTED");
+  });
+
+  it("exchangeCodeForSession error jaringan → ERROR (tidak crash)", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ build_id: BUILD_ID })); // fetchBuildId
+    fetchMock.mockRejectedValueOnce(new Error("ECONNRESET"));
+    const r = await exchangeCodeForSession("C", "S", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("ERROR");
   });
 });
