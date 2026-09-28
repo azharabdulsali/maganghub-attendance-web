@@ -182,6 +182,25 @@ URL authorize** supaya klien (frontend) yang mengarahkan.
   (1) → [SSO] → (3) → (4) → (5).
 - **Langkah (2a) memegang password asli.** Lihat §7 untuk aturan keamanannya.
 
+**Implementasi orkestrasi — ✅ TERPASANG, gated.** Keempat langkah yang bisa
+dilakukan tanpa browser dirangkai jadi satu di `src/lib/monev-login.ts`:
+
+| Fungsi | Langkah | Gerbang? |
+| :-- | :-- | :-- |
+| `startOAuthFlow` (`monev-client`) | (1) `GET /auth/login` → `state` + URL SSO | ✅ |
+| `primeSsoSession` (`monev-login`) | (2) `GET account.kemnaker.go.id/auth` → `x-csrf-token` + cookie | ✅ |
+| `loginToSso` (`kemnaker-sso`) | (3) `POST .../auth/login` → `code` | ✅ |
+| `exchangeCodeForSession` (`monev-client`) | (4) `GET /callback?code=&state=` → `access_token` | ✅ |
+| **`runLoginFlow`** (`monev-login`) | **(1)→(2)→(3)→(4) sekaligus** | ✅ |
+
+- `interpretSsoPrimeResponse` (murni) + `summarizeLoginStep` (murni) teruji tanpa
+  jaringan; `runLoginFlow` memeriksa gerbang **sekali di muka** sehingga tanpa
+  `confirmLivePortalRequest: true` **tidak ada** panggilan jaringan sama sekali
+  (ditegakkan tes: `fetch` di-mock dan diperiksa `not.toHaveBeenCalled()`).
+- **Belum pernah dijalankan.** Sisa yang belum terekam: apakah `code` muncul di
+  `redirect_uri` respons login (langkah 3) atau perlu diambil dari `authorizeUrl`.
+  `runLoginFlow` menerima **keduanya** dan memberi `ERROR` jujur bila tak ketemu.
+
 
 ### 4.1 `POST /api/v1/auth/refresh`
 
@@ -455,9 +474,11 @@ Dengan SSO kini diketahui REST, ada dua jalur — dan keduanya **bukan** lagi
 | **C1 — Tempel refresh token** | Pengguna ambil `monev_refresh_token` via DevTools, tempel ke dashboard (terenkripsi) | Aman, tidak menyentuh password. **Sudah diimplementasi.** |
 | **A — Login otomatis (SSO REST)** | Server POST `username`+`password` ke SSO → ikuti OAuth → dapat `monev_refresh_token` | Otomatis penuh, **tanpa browser** (SSO = JSON API). Butuh menangani `x-csrf-token`. Belum dijalankan. |
 
-**Rekomendasi:** C1 tetap jalur default (paling rendah risiko). Opsi A
-disiapkan sebagai **kerangka** yang tidak dieksekusi sampai bentuk respons
-`/auth/login` terekam dan pemilik memutuskan risiko password-diamankan-server.
+**Rekomendasi:** C1 tetap jalur default (paling rendah risiko). Opsi A sudah
+**tersusun sebagai kode gated** (`runLoginFlow` di `src/lib/monev-login.ts`,
+§4.0): seluruh alur (1)→(2)→(3)→(4) siap, tetapi **tidak dieksekusi** dan hanya
+aktif dengan `confirmLivePortalRequest: true`. Pemilik tetap yang memutuskan
+risiko "password diamankan-server" sebelum mengaktifkannya.
 Menaruh password di server yang bisa didekripsi memang memperbesar tanggung
 jawab — karena itu tetap **opt-in**, bukan pengganti C1.
 
@@ -562,6 +583,24 @@ sana). Status HTTP sukses/"sudah ada" **belum terverifikasi** (rekaman tidak
 memuat kode balasan) — perlu diamati saat uji pertama. Fungsi murni
 (`buildSubmitBody`, `interpretSubmitResponse`) + tesnya tetap hijau.
 
+### 8.5b Route submit (Tahap 4) — ✅ TERPASANG, gated
+
+`src/app/api/reports/submit/route.ts` menyatukan alur penuh:
+
+1. `assessReadiness()` (`src/lib/submit-service.ts`, **murni**) — cek policy
+   (`decide()`) + kelengkapan (template & token). Libur/akhir program → batal
+   **sebelum** jaringan disentuh.
+2. Tukar refresh token tersimpan → access token (`exchangeRefreshForAccess`).
+3. `submitReport()` → `POST /api/v1/attendances/with-daily-log`.
+4. Selalu tulis `SubmitLog` (`MANUAL`/`CRON`) — sukses, duplikat, maupun gagal
+   (kegagalan tulis log sengaja ditelan; bukan alasan menggagalkan respons).
+
+**Gerbang keselamatan:** pengiriman nyata hanya aktif bila `ALLOW_LIVE_SUBMIT=1`
+(lihat `.env.example`). Tanpa itu → mode latihan (`DRY_RUN`): seluruh keputusan
+dihitung, portal **tidak disentuh**. Tombol pemicu ada di `/dashboard`
+("Kirim Absen", trigger `MANUAL`). Tanggal target dihitung server dalam zona
+Asia/Jakarta (`todayInJakarta`), bukan zona perangkat.
+
 ### 8.6 Alat diagnostik (untuk rekaman berikutnya)
 
 Halaman `/dashboard/dev-tools` (khusus ADMIN) + `POST /api/dev-tools/analyze-capture`
@@ -569,11 +608,17 @@ memakai `src/lib/har-capture.ts` (murni): tempel "Copy as cURL"/HAR → langsung
 terbaca method/path/field, rahasia disembunyikan. **Tidak mengirim** apa pun ke
 portal.
 
-### 8.7 Yang masih perlu direkam (satu kali lagi)
+### 8.7 Yang masih perlu direkam (opsional)
 
-Hanya **satu** yang tersisa: **bentuk body `200` dari `POST /api/v1/auth/refresh`**
-(§4.1) — untuk tahu nama field access token di dalamnya. Setelah itu
-`submitReport()` bisa menukar refresh token → Bearer secara utuh.
+Bentuk body `200` dari `POST /api/v1/auth/refresh` (§4.1) — **tidak lagi
+mem-blocking**: alur pertama memakai `access_token` dari `/auth/login/callback`
+(§4.4, sudah terverifikasi). Penukaran refresh hanya perlu bila token 6 jam
+kedaluwarsa; bentuk responsnya belum terekam sehingga
+`interpretRefreshResponse` masih toleran dua kemungkinan (body JSON *atau*
+`set-cookie`) dan **tidak menebak**.
+
+**Status HTTP submit** (`200`/`201` vs `409` duplikat) juga belum terekam —
+diamati saat uji pertama sebelum `ALLOW_LIVE_SUBMIT=1`.
 
 
 ---
@@ -609,6 +654,7 @@ terpenuhi.
 | Endpoint baca: `GET /daily-logs`, `GET /attendances` (§8) | |
 | Submit butuh `authorization: Bearer <access>` (bukan refresh cookie) | |
 | Kerangka submit + policy siap (`monev-submit.ts`, `report-policy.ts`) | |
+| **Route submit Tahap 4 terpasang, gated by `ALLOW_LIVE_SUBMIT`** (§8.5b) | Status HTTP sukses submit belum terekam |
 
 ---
 

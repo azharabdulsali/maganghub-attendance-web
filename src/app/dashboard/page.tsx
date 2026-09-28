@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import SignOutButton from "./sign-out-button";
+import SubmitReportButton from "./submit-report-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -81,6 +82,20 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Kirim Absen</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-foreground/70">
+            Kirim laporan untuk <strong>hari ini</strong> (zona Asia/Jakarta)
+            memakai tiga template yang sudah diisi. Hari libur dan akhir program
+            otomatis dilewati.
+          </p>
+          <SubmitReportButton />
+        </CardContent>
+      </Card>
+
       {isAdmin && (
         <Card className="mb-6 border-dashed">
           <CardHeader>
@@ -114,8 +129,8 @@ export default async function DashboardPage() {
             <li>✅ Skema database tersinkron ke Neon</li>
             <li>✅ Tampilan neobrutalism (responsif tablet &amp; HP)</li>
             <li>✅ Simpan kredensial Monev (Tahap 2)</li>
-            <li>⬜ Isi 3 template laporan (Tahap 2–3)</li>
-            <li>⬜ Kirim absensi ke portal (Tahap 4)</li>
+            <li>✅ Isi 3 template laporan (Tahap 2–3)</li>
+            <li>✅ Kirim absensi ke portal (Tahap 4)</li>
           </ol>
         </CardContent>
       </Card>

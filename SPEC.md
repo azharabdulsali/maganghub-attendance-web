@@ -417,16 +417,22 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 | **4** | Submit Direct REST API + webhook trigger | Bisa submit dari dashboard & cron |
 
 > **Status Tahap 4:** endpoint submit **sudah terjawab** (2026-09-28, lihat
-> `docs/MONEV-API.md` §8):
+> `docs/MONEV-API.md` §8) dan **route-nya sudah terpasang**:
 > - `src/lib/report-policy.ts` — aturan "kapan boleh submit" (hari kerja,
 >   libur, `LAST_ACTIVE_DATE`, validasi 100 kar.) — **sudah pasti & teruji**.
 > - `src/lib/monev-submit.ts` — endpoint final
 >   (`POST /api/v1/attendances/with-daily-log`, field `date`/`status=PRESENT`/
 >   `activity_log`/`lesson_learned`/`obstacles`) + tafsir respons, teruji
 >   (termasuk `submitReport` dengan `fetch` di-mock — tanpa jaringan nyata).
-> - **Sisa satu:** submit butuh `authorization: Bearer <access token>`, jadi
->   perlu menukar `monev_refresh_token` → access token lebih dulu. Bentuk body
->   `200` dari `/auth/refresh` belum terekam (§8.4, §8.7).
+> - `src/lib/submit-service.ts` — orkestrasi murni (`assessReadiness`,
+>   `todayInJakarta`, `submitStatusFor`) + 14 tes.
+> - `src/app/api/reports/submit/route.ts` — route submit (policy → tukar token →
+>   kirim → `SubmitLog`), **gated**: pengiriman nyata hanya bila
+>   `ALLOW_LIVE_SUBMIT=1`, selain itu mode `DRY_RUN`. Tombol pemicu `MANUAL` di
+>   `/dashboard`.
+> - **Sisa (opsional):** bentuk body `200` `/auth/refresh` bila token 6 jam
+>   kedaluwarsa; status HTTP sukses submit diamati saat uji pertama. Alur
+>   pertama memakai `access_token` dari `/auth/login/callback` (§4.4).
 
 
 | **5** | Audit log, rate limit, deploy Vercel + daftar cron eksternal | Siap dipakai publik |
