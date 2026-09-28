@@ -149,6 +149,21 @@ Aturan praktis saat menulis kode:
 - Jika menemukan kode yang menuliskan password ke log, itu **bug kritis** —
   perbaiki atau laporkan, jangan diabaikan.
 
+### Aturan `ENCRYPTION_KEY` (jangan sampai salah)
+- **64 karakter hex** (32 byte) untuk AES-256-GCM. `env.ts` memvalidasi ini
+  lewat regex `^[0-9a-fA-F]{64}$`.
+- Boleh ditulis **dengan atau tanpa tanda kutip** di `.env.local`; `dotenv`
+  mengupas kutipnya otomatis, jadi yang dilihat kode tetap 64 karakter. (Kalau
+  memeriksa bentuk kunci lewat PowerShell `Get-Content`, Anda melihat teks
+  mentah — itu bisa tampak 66 karakter. Itu **bukan** bug. Verifikasi lewat
+  nilai yang sudah dimuat `dotenv`, bukan teks mentah.)
+- **Jangan pernah mengganti kunci ini setelah ada data kredensial tersimpan** —
+  data lama menjadi tidak bisa didekripsi. Ganti hanya saat tabel kosong.
+
+Kripto ada di `src/lib/crypto.ts` (AES-256-GCM, IV 12 byte acak per enkripsi,
+auth tag 16 byte). Kolom DB: `ciphertext`, `iv`, `authTag` di
+`maganghub_credentials`.
+
 ---
 
 ## 6. Alur Kerja Submit (jangan diubah tanpa alasan)
@@ -174,25 +189,40 @@ ada`). Pilih salah satu per hari.
 ## 7. Testing & Verifikasi
 
 ```bash
+npm test          # vitest run
+npm run test:watch
 npm run lint      # eslint (0 error, 0 warning)
 npm run typecheck # tsc --noEmit
 npm run build     # pastikan build produksi lolos
 ```
 
-> **Catatan:** `npm test` (Vitest) **belum terpasang**. Tambahkan Vitest lebih
-> dulu sebelum mengandalkan test otomatis. Sampai itu ada, verifikasi dilakukan
-> lewat `lint`, `typecheck`, `build`, dan uji manual langsung (mis. request
-> nyata ke `/api/auth/*`).
+Sudah ada: **Vitest 3.2.7** (`vitest.config.ts`, environment `node`).
 
-Prioritas test (setelah Vitest terpasang):
-1. **Enkripsi** (`crypto`): enkripsi→dekripsi menghasilkan teks sama; IV
-   berbeda tiap kali; data yang diubah gagal didekripsi (anti-tamper).
+> **Jebakan versi:** pakai **Vitest 3**, JANGAN Vitest 5. Vitest 5 menuntut
+> `@types/node` v22+, sedangkan proyek ini di `@types/node` v20 — `npm install
+> vitest` polos akan gagal `ERESOLVE`. Selain itu `@vitejs/plugin-react`
+> **bentrok** dengan `@babel/*` bawaan `shadcn`; plugin itu tidak dibutuhkan
+> selama test hanya menguji fungsi Node (tanpa JSX).
+
+Prioritas test:
+1. ✅ **Enkripsi** (`src/lib/crypto.test.ts`, 14 test) — round-trip, IV selalu
+   baru, anti-tamper (ciphertext & authTag diubah → gagal), kunci salah → gagal,
+   `safeEqual`.
 2. **Penegakan 100 karakter** pada laporan yang disusun dari template.
 3. **Penggantian placeholder** template (mis. `{tanggal}`) saat menyusun draf.
 4. **Penanganan error API Monev**: 409, 422, 403 tidak membuat sistem crash.
 
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
-(gagal seperti seharusnya), bukan hanya jalur sukses.
+(gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan
+test benar-benar bisa gagal (sengaja rusakkan kode → test harus merah → 
+kembalikan), karena test yang selalu hijau belum tentu menguji apa pun.
+
+### Catatan `npm audit`
+`npm audit` melaporkan 6 kerentanan (`vitest`, `@vitest/mocker`, `deepmerge-ts`,
+`mysql2`). Semuanya **dev/transitif** dan tidak masuk bundle produksi; `mysql2`
+(driver MySQL) bahkan tidak pernah dirujuk karena proyek memakai Postgres.
+**Jangan** jalankan `npm audit fix --force` — risikonya breaking change demi
+paket yang tidak terpakai.
 
 
 ---
