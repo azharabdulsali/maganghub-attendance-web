@@ -72,10 +72,33 @@ khususnya bahwa **AI dan integrasi GitHub sudah dibatalkan**.
 | Auth | NextAuth.js v5 (**email/password saja** — tanpa OAuth) |
 | Enkripsi | AES-256-GCM (`node:crypto`) |
 | AI | **Tidak dipakai** — template tetap menggantikan peringkasan AI |
-| Test | Vitest (belum terpasang) |
+| Test | Vitest 3.2.7 (environment `node`) |
 | Deploy | Vercel (serverless, paket gratis) |
 
 Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
+
+### Aturan Prisma 7 (penting)
+
+- **Prisma 7 WAJIB memakai driver adapter.** `new PrismaClient()` polos akan
+  gagal: *"A driver adapter is required to connect to your database."*
+  Selalu pakai instance bersama dari `src/lib/prisma.ts`.
+  ```ts
+  import { prisma } from "@/lib/prisma"; // BENAR
+  ```
+- Skema **tidak lagi** memuat `url` di `datasource` — koneksi diberikan lewat
+  adapter `PrismaNeon({ connectionString: env.DATABASE_URL })`.
+- **Menjalankan skrip di luar Next.js** (mis. `npx tsx scripts/foo.ts`):
+  1. `tsx` **tidak** memuat `.env.local` otomatis (itu tugas Next.js) — panggil
+     `config({ path: ".env.local" })` dari `dotenv` **sebelum** mengimpor modul
+     yang membaca env (`env.ts` melempar error kalau variabel kosong).
+  2. Impor `prisma` dari `@/lib/prisma`, jangan `new PrismaClient()`.
+  3. Kolom katalog Postgres bertipe `name` (mis. `table_name`) **tidak bisa**
+     dideserialisasi Prisma — `SELECT table_name::text AS table_name`.
+- Proyek ini memakai **`prisma db push`**, bukan migrasi (tidak ada folder
+  `prisma/migrations`). Per 2026-09, **9 tabel sudah ada di Neon** dan cocok
+  dengan 9 model di schema.
+- Klien hasil generate berformat **TypeScript** di `src/generated/prisma/`
+  (`client.ts`, bukan `index.js`).
 
 ### Aturan UI (penting)
 
@@ -127,6 +150,27 @@ maganghub-attendance-web/
 - Kode yang menyentuh rahasia (dekripsi, API key) hanya di `src/lib/` dan
   `src/services/`, tidak pernah di `components/`.
 - Komponen UI tidak boleh mengimpor Prisma langsung — lewat server action.
+
+**Yang sudah ada (per 2026-09):**
+- `src/lib/` — `env.ts`, `auth.ts`, `prisma.ts`, `crypto.ts` (+test),
+  `validate.ts` (+test), `utils.ts`
+- `src/app/api/` — `auth/[...nextauth]`, `register`, `credentials`
+- `src/app/dashboard/` — `page.tsx`, `credentials/` (halaman + form)
+
+### Aturan penyimpanan kredensial Monev
+- Password Monev **TIDAK di-hash** (beda dari password akun aplikasi) — harus
+  bisa dipakai ulang untuk login ke portal, jadi disimpan terenkripsi dua arah.
+- **Jangan pernah mengembalikan password Monev ke klien.** `GET /api/credentials`
+  hanya mengembalikan `emailMonev`, `status`, dan `updatedAt` — pemiliknya pun
+  tidak bisa melihat password lama, hanya bisa menggantinya.
+- Saat `SELECT` kredensial, pilih kolom spesifik (`select: {...}`), jangan
+  seluruh baris — supaya `ciphertext`/`iv`/`authTag` tidak ikut terbawa.
+- Endpoint memakai `upsert` (satu kredensial per user, `userId @unique`).
+  Setiap penyimpanan menerbitkan IV baru — JANGAN pakai ulang IV lama.
+- Status dimulai `UNVERIFIED`; naik ke `ACTIVE` hanya setelah berhasil dicoba
+  ke portal Monev, `INVALID` kalau ditolak.
+- Periksa otorisasi **sebelum** parsing body (sudah diterapkan) — supaya
+  penyerang tanpa sesi tidak bisa membedakan respons.
 
 
 ---
@@ -208,9 +252,10 @@ Prioritas test:
 1. ✅ **Enkripsi** (`src/lib/crypto.test.ts`, 14 test) — round-trip, IV selalu
    baru, anti-tamper (ciphertext & authTag diubah → gagal), kunci salah → gagal,
    `safeEqual`.
-2. **Penegakan 100 karakter** pada laporan yang disusun dari template.
-3. **Penggantian placeholder** template (mis. `{tanggal}`) saat menyusun draf.
-4. **Penanganan error API Monev**: 409, 422, 403 tidak membuat sistem crash.
+2. ✅ **Validasi kredensial** (`src/lib/validate.test.ts`, 12 test).
+3. **Penegakan 100 karakter** pada laporan yang disusun dari template.
+4. **Penggantian placeholder** template (mis. `{tanggal}`) saat menyusun draf.
+5. **Penanganan error API Monev**: 409, 422, 403 tidak membuat sistem crash.
 
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
 (gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan

@@ -1,8 +1,10 @@
 ﻿import { redirect } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import SignOutButton from "./sign-out-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 // Dashboard — halaman terlindungi. Kalau belum login, langsung dilempar
 // ke /login. Ini bukti berhasil Tahap 1 (SPEC.md §12).
@@ -49,6 +51,21 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Kredensial Monev</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-foreground/70">
+            Simpan email &amp; password portal Maganghub untuk absensi otomatis.
+            Password disimpan terenkripsi.
+          </p>
+          <Button render={<Link href="/dashboard/credentials" />}>
+            Atur kredensial
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card className="border-dashed">
         <CardHeader>
           <CardTitle>Tahap 1 selesai — fondasi siap</CardTitle>
@@ -61,7 +78,7 @@ export default async function DashboardPage() {
           <ol className="space-y-1 text-sm text-foreground/70">
             <li>✅ Skema database tersinkron ke Neon</li>
             <li>✅ Tampilan neobrutalism (responsif tablet &amp; HP)</li>
-            <li>⬜ Simpan kredensial Monev (Tahap 2)</li>
+            <li>✅ Simpan kredensial Monev (Tahap 2)</li>
             <li>⬜ Isi 3 template laporan (Tahap 2–3)</li>
             <li>⬜ Kirim absensi ke portal (Tahap 4)</li>
           </ol>
