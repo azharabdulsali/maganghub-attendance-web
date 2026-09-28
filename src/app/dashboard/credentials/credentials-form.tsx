@@ -19,6 +19,7 @@ type Props = {
   existingEmail: string | null;
   existingStatus: string | null;
   updatedAt: string | null;
+  hasToken: boolean;
 };
 
 function formatTanggal(iso: string | null): string {
@@ -38,6 +39,7 @@ export default function CredentialsForm({
   existingEmail,
   existingStatus,
   updatedAt,
+  hasToken,
 }: Props) {
   const router = useRouter();
 
@@ -52,6 +54,59 @@ export default function CredentialsForm({
   const [error, setError] = useState<string | null>(null);
   const [sukses, setSukses] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // --- Tes Koneksi (docs/MONEV-API.md §6) ---
+  const [token, setToken] = useState("");
+  const [tokenMsg, setTokenMsg] = useState<string | null>(null);
+  const [tokenState, setTokenState] = useState<
+    "idle" | "ok" | "invalid" | "error"
+  >("idle");
+  const [tokenLoading, setTokenLoading] = useState(false);
+
+  async function tesKoneksi(denganToken: boolean) {
+    setTokenMsg(null);
+    setTokenState("idle");
+    setTokenLoading(true);
+
+    try {
+      const res = await fetch("/api/credentials/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(denganToken ? { token } : {}),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as {
+        status?: string;
+        message?: string;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        setTokenState("error");
+        setTokenMsg(data.error ?? "Tes koneksi gagal dijalankan.");
+        return;
+      }
+
+      if (data.status === "ACTIVE") {
+        setTokenState("ok");
+        setTokenMsg(data.message ?? "Sesi Monev aktif.");
+        setToken(""); // jangan biarkan token tertinggal di state
+        router.refresh();
+      } else if (data.status === "INVALID") {
+        setTokenState("invalid");
+        setTokenMsg(data.message ?? "Sesi Monev tidak valid.");
+        router.refresh();
+      } else {
+        setTokenState("error");
+        setTokenMsg(data.message ?? "Tidak dapat memastikan status sesi.");
+      }
+    } catch {
+      setTokenState("error");
+      setTokenMsg("Tidak dapat menghubungi server. Periksa koneksi Anda.");
+    } finally {
+      setTokenLoading(false);
+    }
+  }
 
   async function simpan(e: React.FormEvent) {
     e.preventDefault();
@@ -227,6 +282,77 @@ export default function CredentialsForm({
           </CardContent>
         </Card>
       )}
+
+      {/* Tes Koneksi — docs/MONEV-API.md §6. Hanya memeriksa sesi, tidak pernah
+          mengirim laporan (SPEC.md §10). */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tes Koneksi ke portal Monev</CardTitle>
+          <CardDescription>
+            Tempel token sesi dari portal. Kami hanya memeriksa apakah sesi
+            masih hidup — tidak ada laporan yang dikirim.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="monevToken">
+              Token sesi Monev (<code>monev_refresh_token</code>)
+            </Label>
+            <Input
+              id="monevToken"
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="eyJ... (tempel dari DevTools)"
+            />
+            <p className="text-xs text-foreground/70">
+              Cara ambil: buka portal Monev yang sudah login → DevTools →
+              Application → Cookies → salin nilai <code>monev_refresh_token</code>.
+              Token disimpan terenkripsi dan tidak bisa ditampilkan kembali.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              onClick={() => tesKoneksi(true)}
+              disabled={tokenLoading || token.trim().length === 0}
+            >
+              {tokenLoading ? "Memeriksa..." : "Simpan & tes"}
+            </Button>
+            {hasToken && (
+              <Button
+                variant="neutral"
+                onClick={() => tesKoneksi(false)}
+                disabled={tokenLoading}
+              >
+                Tes ulang token tersimpan
+              </Button>
+            )}
+          </div>
+
+          {hasToken && tokenState === "idle" && !tokenMsg && (
+            <p className="text-xs text-foreground/70">
+              Sudah ada token tersimpan. Gunakan &quot;Tes ulang&quot; untuk
+              memeriksa, atau tempel token baru untuk mengganti.
+            </p>
+          )}
+
+          {tokenMsg && (
+            <p
+              className={
+                "rounded-base border-2 border-border px-3 py-2 text-sm " +
+                (tokenState === "ok"
+                  ? "bg-main text-main-foreground"
+                  : "bg-background text-foreground")
+              }
+            >
+              {tokenMsg}
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

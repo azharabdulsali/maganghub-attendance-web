@@ -120,6 +120,14 @@ model MaganghubCredential {
   ciphertext String
   iv         String
   authTag    String
+  // Token sesi Monev (`monev_refresh_token`, HttpOnly di browser). Disimpan
+  // terenkripsi AES-256-GCM sama seperti password, tapi di kolom terpisah
+  // supaya password asli tidak ikut terhapus saat tes koneksi memperbarui
+  // token. Opsi C1 (docs/MONEV-API.md §7) — pengguna menempel token sekali.
+  // Boleh NULL: pengguna boleh menyimpan password saja tanpa token.
+  tokenCiphertext String?
+  tokenIv         String?
+  tokenAuthTag    String?
   status     CredentialStatus @default(UNVERIFIED)
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt

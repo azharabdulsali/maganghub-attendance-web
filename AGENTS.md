@@ -94,6 +94,10 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
   2. Impor `prisma` dari `@/lib/prisma`, jangan `new PrismaClient()`.
   3. Kolom katalog Postgres bertipe `name` (mis. `table_name`) **tidak bisa**
      dideserialisasi Prisma — `SELECT table_name::text AS table_name`.
+  4. **Top-level `await` tidak didukung** — `tsx` memakai output **CJS** di
+     proyek ini, error: *"Top-level await is currently not supported with the
+     cjs output format"*. Bungkus dalam `async function main()` lalu
+     `main().catch(...).finally(() => prisma.$disconnect())`.
 - Proyek ini memakai **`prisma db push`**, bukan migrasi (tidak ada folder
   `prisma/migrations`). Per 2026-09, **9 tabel sudah ada di Neon** dan cocok
   dengan 9 model di schema.
@@ -253,9 +257,31 @@ Prioritas test:
    baru, anti-tamper (ciphertext & authTag diubah → gagal), kunci salah → gagal,
    `safeEqual`.
 2. ✅ **Validasi kredensial** (`src/lib/validate.test.ts`, 12 test).
-3. **Penegakan 100 karakter** pada laporan yang disusun dari template.
+3. ✅ **Aturan 100 karakter** (`src/lib/report-rules.test.ts`, 27 test) +
+   skema template (`src/lib/validate.test.ts`, 15 test).
 4. **Penggantian placeholder** template (mis. `{tanggal}`) saat menyusun draf.
 5. **Penanganan error API Monev**: 409, 422, 403 tidak membuat sistem crash.
+
+### Aturan 100 karakter laporan (dari bot Python & portal)
+- Angka `100` dan `5000` adalah aturan **pihak ketiga**. Jangan diubah tanpa
+  bukti dari portal. Sumber tunggal: `src/lib/report-rules.ts`.
+- Perhitungan memakai **panjang setelah trim** (`len(value.strip()) < 100` di
+  bot Python). Teks 100 karakter yang diapit spasi tetap sah.
+- `trim()` di JS memangkas NBSP (U+00A0) dan ideographic space (U+3000) —
+  sudah diuji, penting karena pengguna sering menempel dari Word.
+- Zero-width space (U+200B) **tidak** dipangkas dan tetap dihitung. Jangan
+  membuangnya otomatis (itu mengubah isi tulisan orang).
+- Akhir baris diseragamkan ke `\n` sebelum simpan (`normalizeReportText`),
+  supaya teks sama dari Windows (CRLF) maupun perangkat lain (LF) benar-benar
+  identik. Ini mencegah bug halus: jumlah karakter beda 1 per baris.
+
+### Struktur data template
+- `ReportTemplate` = **satu baris per user** (`userId @unique`) dengan **3
+  kolom**: `activity`, `learning`, `obstacles`. Bukan banyak baris.
+- Isi template **bukan rahasia** — boleh dikembalikan penuh ke klien (beda dari
+  password Monev). Pengguna harus bisa melihat & menyuntingnya.
+- Penghitung karakter di form memakai `countReportLength` yang **sama** dengan
+  server, jadi angka di layar tidak mungkin berbeda dari yang divalidasi.
 
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
 (gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan

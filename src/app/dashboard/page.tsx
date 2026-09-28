@@ -66,7 +66,22 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-dashed">
+      <Card className="mb-6 border-dashed">
+        <CardHeader>
+          <CardTitle>Template Laporan</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-foreground/70">
+            Isi 3 template laporan yang dipakai berulang setiap hari absensi.
+            Minimal 100 karakter per kolom.
+          </p>
+          <Button render={<Link href="/dashboard/report-templates" />}>
+            Atur template
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6 border-dashed">
         <CardHeader>
           <CardTitle>Tahap 1 selesai — fondasi siap</CardTitle>
         </CardHeader>

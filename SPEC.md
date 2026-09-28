@@ -323,6 +323,87 @@ Prinsipnya: **meniru caranya bekerja, bukan cara mengakalinya.**
 - Jangan submit untuk hari yang sama dari dua sistem sekaligus.
 
 ---
+## 11B. Aturan Bisnis (warisan dari proyek Python)
+
+Diambil dari `maganghub-autoabsen/src/policy.py`, `state.py`, dan
+`config/config.json` — sudah terverifikasi di produksi. Web app **harus**
+mereplikasi aturan ini; jangan mengarang ulang dari nol.
+
+### Kapan boleh submit
+
+| Aturan | Nilai | Sumber |
+| :--- | :--- | :--- |
+| Hanya hari kerja | Senin–Jumat (`weekday() < 5`) | `policy.py` |
+| Libur nasional | dilewati | `config/holidays.json` |
+| **Batas akhir program** | **`LAST_ACTIVE_DATE = 2027-02-09`** | `policy.py:11` |
+
+**`LAST_ACTIVE_DATE` adalah pengaman mandiri.** Mulai **2027-02-10**, seluruh
+otomasi harus berhenti sendiri — tanpa submit, tanpa membuka apa pun — meski
+penjadwal masih aktif. Ini agar tidak bergantung pada siapa pun yang ingat
+untuk mematikan cron. Web app wajib menegakkan tanggal ini di sisi server,
+bukan hanya di UI.
+
+### Jadwal cadangan (mode terjadwal)
+
+Dua slot per hari, zona **Asia/Jakarta**: **16:30** dan **20:00**. Slot kedua
+adalah cadangan bila slot pertama gagal.
+
+### Wajib cek duplikasi sebelum submit (RB-03)
+
+Jangan submit sebelum memastikan hari ini belum terisi. Bila bot Python sudah
+mengirim, portal membalas **`409 Presensi sudah ada`** (lihat MONEV-API §12.6).
+Periksa dulu → bila sudah ada, catat `ALREADY_SUBMITTED`, jangan kirim.
+
+### Sukses ≠ tombol terklik (RB-06)
+
+Submit hanya diakui sukses bila ada **bukti status tersimpan**. Untuk web,
+artinya: respons submit harus diikuti pengecekan status. **Jangan** menganggap
+HTTP `2xx` sebagai bukti final bila status belum terkonfirmasi.
+
+### ⚠️ Verifikasi tanggal YANG DIMINTA, bukan "hari ini"
+
+Bug laten di bot lama (MONEV-API §12.7.3): status dibaca dari kalender
+**hari ini**, padahal tanggal target bisa berbeda — sehingga tanggal keliru
+ditandai "sudah dikirim". Bot lama tidak celaka karena hanya jalan untuk hari
+ini; **web multi-user bisa submit tanggal mundur.** Maka:
+
+- Verifikasi harus **cocokkan tanggal target**, bukan sekadar "ada laporan".
+- Simpan bukti per tanggal target (per pengguna), bukan satu penanda global.
+
+### ⚠️ Field kehadiran ("Hadir") wajib ikut dikirim
+
+Dropdown Kehadiran di portal **tersembunyi** dan di-set lewat JS oleh bot lama
+(MONEV-API §12.7.2). Saat membangun submit web, pastikan field kehadiran
+**ada di body request**. Kalau terlewat, laporan bisa tercatat "Tidak Hadir".
+
+### Alur "hubungkan ulang akun" wajib ada
+
+Sesi Monev bisa kedaluwarsa kapan saja, bahkan dengan sesi 30 hari
+(MONEV-API §12.7.5). Sediakan jalur re-auth yang jelas, jangan hanya
+menampilkan error mentah.
+
+### ⚠️ Jangan pakai `.status-dot` sebagai tanda "sudah absen"
+
+Elemen `<i class="status-dot">` **muncul juga pada hari kosong**. Bug nyata di
+bot lama. Hanya **teks status** (`Belum Diisi` / `Menunggu Persetujuan` /
+`Disetujui`) yang sah. Detail: MONEV-API §12.3.
+
+### Status hasil (samakan dengan bot lama)
+
+`SUCCESS`, `ALREADY_SUBMITTED`, `INTERVENTION_REQUIRED`, `ERROR`, plus
+`SKIPPED` (libur) dan `PROGRAM_ENDED` (lewat batas). Dipakai konsisten di
+audit log §5.7.
+
+### Optimasi: state lokal
+
+Bot lama menyimpan `data/state.json` (`last_success_date`) supaya run
+cadangan tidak membuka browser lagi. Web app punya DB — simpan padanannya
+(per pengguna, per tanggal) sebagai jalur cepat, **tapi portal tetap sumber
+kebenaran**: cek portal lebih dulu untuk hal yang tidak diketahui state.
+
+---
+
+
 
 ## 12. Tahapan Pembangunan
 

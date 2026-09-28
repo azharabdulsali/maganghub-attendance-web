@@ -36,11 +36,12 @@ export async function GET() {
       emailMonev: true,
       status: true,
       updatedAt: true,
+      tokenCiphertext: true,
     },
   });
 
   if (!credential) {
-    return NextResponse.json({ exists: false });
+    return NextResponse.json({ exists: false, hasToken: false });
   }
 
   return NextResponse.json({
@@ -48,6 +49,8 @@ export async function GET() {
     emailMonev: credential.emailMonev,
     status: credential.status,
     updatedAt: credential.updatedAt,
+    // Hanya Boolean — nilai token tidak pernah keluar dari server.
+    hasToken: Boolean(credential.tokenCiphertext),
   });
 }
 

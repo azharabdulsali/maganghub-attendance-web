@@ -1,0 +1,248 @@
+"use client";
+
+// src/app/dashboard/report-templates/report-templates-form.tsx — form 3 template.
+//
+// Alasan bentuknya begini:
+//   - Penghitung karakter tampil LANGSUNG saat mengetik. Aturan 100 karakter
+//     milik portal; kalau pengguna baru tahu setelah menekan Simpan, itu
+//     pengalaman yang buruk.
+//   - Tombol Simpan mati selama ada kolom yang belum memenuhi syarat. Lebih
+//     baik mencegah daripada menampilkan error setelah mencoba.
+//   - Hitungan memakai `countReportLength` yang sama dengan server, jadi angka
+//     di layar tidak mungkin berbeda dari yang divalidasi server.
+
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  MIN_REPORT_LENGTH,
+  MAX_REPORT_LENGTH,
+  countReportLength,
+  checkReportField,
+} from "@/lib/report-rules";
+
+const FIELDS = [
+  {
+    name: "activity" as const,
+    label: "Uraian Aktivitas",
+    hint: "Apa yang Anda kerjakan hari itu.",
+  },
+  {
+    name: "learning" as const,
+    label: "Pembelajaran yang Diperoleh",
+    hint: "Ilmu atau pengalaman baru yang didapat.",
+  },
+  {
+    name: "obstacles" as const,
+    label: "Kendala yang Dialami",
+    hint: 'Hambatan yang ditemui, atau tulis "tidak ada kendala" bila lancar.',
+  },
+];
+
+type FieldName = (typeof FIELDS)[number]["name"];
+
+interface Props {
+  hasExisting: boolean;
+  initialActivity: string;
+  initialLearning: string;
+  initialObstacles: string;
+  updatedAt: string | null;
+}
+
+export default function ReportTemplatesForm({
+  hasExisting,
+  initialActivity,
+  initialLearning,
+  initialObstacles,
+  updatedAt,
+}: Props) {
+  const [values, setValues] = useState<Record<FieldName, string>>({
+    activity: initialActivity,
+    learning: initialLearning,
+    obstacles: initialObstacles,
+  });
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(updatedAt);
+  const [exists, setExists] = useState(hasExisting);
+
+  // Hitung status tiap kolom sekali per perubahan isi.
+  const status = useMemo(() => {
+    const hasil = {} as Record<
+      FieldName,
+      { panjang: number; error: string | null }
+    >;
+    for (const f of FIELDS) {
+      hasil[f.name] = {
+        panjang: countReportLength(values[f.name]),
+        error: checkReportField(values[f.name]),
+      };
+    }
+    return hasil;
+  }, [values]);
+
+  const semuaValid = FIELDS.every((f) => status[f.name].error === null);
+
+  function ubah(name: FieldName, teks: string) {
+    setValues((prev) => ({ ...prev, [name]: teks }));
+    setServerError(null);
+  }
+
+  async function simpan() {
+    if (!semuaValid || saving) return;
+    setSaving(true);
+    setServerError(null);
+
+    try {
+      const res = await fetch("/api/report-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setServerError(data.error ?? "Gagal menyimpan. Coba lagi.");
+        return;
+      }
+
+      setExists(true);
+      setSavedAt(data.updatedAt ?? new Date().toISOString());
+    } catch {
+      setServerError("Tidak bisa menghubungi server. Periksa koneksi Anda.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function hapus() {
+    if (deleting) return;
+    // Penghapusan tidak bisa dibatalkan, jadi minta konfirmasi lebih dulu.
+    const yakin = window.confirm(
+      "Hapus ketiga template? Absensi otomatis tidak bisa jalan tanpa template.",
+    );
+    if (!yakin) return;
+
+    setDeleting(true);
+    setServerError(null);
+
+    try {
+      const res = await fetch("/api/report-templates", { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setServerError(data.error ?? "Gagal menghapus. Coba lagi.");
+        return;
+      }
+
+      setValues({ activity: "", learning: "", obstacles: "" });
+      setExists(false);
+      setSavedAt(null);
+    } catch {
+      setServerError("Tidak bisa menghubungi server. Periksa koneksi Anda.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Ringkasan status penyimpanan */}
+      <div className="border-2 border-border bg-secondary-background px-4 py-3 shadow-shadow">
+        <p className="text-sm">
+          {exists ? (
+            <>
+              ✅ Template tersimpan
+              {savedAt
+                ? ` — terakhir diubah ${new Date(savedAt).toLocaleString("id-ID")}`
+                : null}
+            </>
+          ) : (
+            <>⚠️ Belum ada template tersimpan</>
+          )}
+        </p>
+      </div>
+
+      {FIELDS.map((f) => {
+        const s = status[f.name];
+        const kurang = MIN_REPORT_LENGTH - s.panjang;
+        // Hijau begitu memenuhi syarat; merah kalau sudah mulai diketik tapi
+        // belum cukup; netral kalau masih kosong.
+        const warna =
+          s.panjang === 0
+            ? "text-foreground/60"
+            : s.error
+              ? "text-red-600"
+              : "text-green-700";
+
+        return (
+          <div key={f.name} className="flex flex-col gap-2">
+            <Label htmlFor={f.name} className="font-heading">
+              {f.label}
+            </Label>
+            <p className="text-xs text-foreground/60">{f.hint}</p>
+
+            <Textarea
+              id={f.name}
+              value={values[f.name]}
+              onChange={(e) => ubah(f.name, e.target.value)}
+              rows={4}
+              maxLength={MAX_REPORT_LENGTH}
+              disabled={saving || deleting}
+              placeholder={`Tulis ${f.label.toLowerCase()} (minimal ${MIN_REPORT_LENGTH} karakter)...`}
+            />
+
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className={warna}>
+                {s.panjang === 0
+                  ? `Minimal ${MIN_REPORT_LENGTH} karakter`
+                  : s.error
+                    ? s.error
+                    : "✓ Sudah memenuhi syarat"}
+              </span>
+              <span className="tabular-nums text-foreground/60">
+                {s.panjang}/{MIN_REPORT_LENGTH}
+                {kurang > 0 ? ` (kurang ${kurang})` : ""}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+
+      {serverError ? (
+        <div className="border-2 border-border bg-red-100 px-4 py-3 shadow-shadow">
+          <p className="text-sm text-red-800">{serverError}</p>
+        </div>
+      ) : null}
+
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
+          onClick={simpan}
+          disabled={!semuaValid || saving || deleting}
+          className="sm:flex-1"
+        >
+          {saving
+            ? "Menyimpan..."
+            : exists
+              ? "Perbarui template"
+              : "Simpan template"}
+        </Button>
+
+        {exists ? (
+          <Button onClick={hapus} disabled={saving || deleting} variant="neutral">
+            {deleting ? "Menghapus..." : "Hapus"}
+          </Button>
+        ) : null}
+      </div>
+
+      {!semuaValid ? (
+        <p className="text-xs text-foreground/60">
+          Tombol simpan aktif setelah ketiga kolom memenuhi minimal{" "}
+          {MIN_REPORT_LENGTH} karakter.
+        </p>
+      ) : null}
+    </div>
+  );
+}

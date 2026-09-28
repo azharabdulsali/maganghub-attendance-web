@@ -127,6 +127,9 @@ export const MaganghubCredentialScalarFieldEnum = {
   ciphertext: 'ciphertext',
   iv: 'iv',
   authTag: 'authTag',
+  tokenCiphertext: 'tokenCiphertext',
+  tokenIv: 'tokenIv',
+  tokenAuthTag: 'tokenAuthTag',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

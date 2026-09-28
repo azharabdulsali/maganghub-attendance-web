@@ -20,7 +20,12 @@ export default async function CredentialsPage() {
 
   const credential = await prisma.maganghubCredential.findUnique({
     where: { userId: session.user.id },
-    select: { emailMonev: true, status: true, updatedAt: true },
+    select: {
+      emailMonev: true,
+      status: true,
+      updatedAt: true,
+      tokenCiphertext: true,
+    },
   });
 
   return (
@@ -43,6 +48,7 @@ export default async function CredentialsPage() {
         existingEmail={credential?.emailMonev ?? null}
         existingStatus={credential?.status ?? null}
         updatedAt={credential?.updatedAt?.toISOString() ?? null}
+        hasToken={Boolean(credential?.tokenCiphertext)}
       />
     </main>
   );

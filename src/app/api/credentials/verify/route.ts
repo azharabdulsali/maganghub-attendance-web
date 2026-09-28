@@ -1,0 +1,160 @@
+// src/app/api/credentials/verify/route.ts — "Tes Koneksi" ke portal Monev.
+//
+// Alur (docs/MONEV-API.md §6, Opsi C1 §7):
+//   1. Pengguna menempel `monev_refresh_token` dari DevTools.
+//   2. Kita simpan terenkripsi (AES-256-GCM), sama seperti password.
+//   3. Kita panggil `POST /auth/refresh` dengan token itu.
+//        - 200  → ACTIVE  (sesi hidup)
+//        - 401  → INVALID (sesi mati, pengguna harus login ulang)
+//        - lain → jangan ubah apa pun, laporkan ERROR apa adanya
+//
+// PENTING (SPEC.md §10): route ini TIDAK PERNAH mengirim laporan apa pun.
+// Hanya memperbarui/ memeriksa sesi. Fase uji koneksi berhenti di sini.
+
+import { NextResponse } from "next/server";
+
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { encrypt, decrypt } from "@/lib/crypto";
+import { monevTokenSchema } from "@/lib/validate";
+import { verifySession } from "@/lib/monev-client";
+
+/** POST — simpan token (bila dikirim) lalu uji ke portal. */
+export async function POST(request: Request) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Format permintaan salah" }, { status: 400 });
+  }
+
+  const { token } = (body ?? {}) as { token?: unknown };
+
+  // Token baru (tempelan pengguna) bersifat opsional: kalau tidak dikirim,
+  // kita uji token yang sudah tersimpan. Ini yang dipakai tombol "Tes ulang".
+  let tokenToCheck: string | null = null;
+  let isNewToken = false;
+
+  if (token !== undefined) {
+    const parsed = monevTokenSchema.safeParse(token);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Token tidak valid" },
+        { status: 400 },
+      );
+    }
+    tokenToCheck = parsed.data;
+    isNewToken = true;
+  } else {
+    const saved = await prisma.maganghubCredential.findUnique({
+      where: { userId },
+      select: { tokenCiphertext: true, tokenIv: true, tokenAuthTag: true },
+    });
+    if (!saved?.tokenCiphertext || !saved.tokenIv || !saved.tokenAuthTag) {
+      return NextResponse.json(
+        { error: "Belum ada token tersimpan. Tempel token terlebih dahulu." },
+        { status: 400 },
+      );
+    }
+    try {
+      tokenToCheck = decrypt({
+        ciphertext: saved.tokenCiphertext,
+        iv: saved.tokenIv,
+        authTag: saved.tokenAuthTag,
+      });
+    } catch {
+      // Data rusak/kunci berubah → jangan diamkan; minta pengguna menempel ulang.
+      return NextResponse.json(
+        {
+          error:
+            "Token tersimpan tidak dapat dibaca (kunci enkripsi berubah?). Tempel ulang token.",
+        },
+        { status: 500 },
+      );
+    }
+  }
+
+  const result = await verifySession(tokenToCheck);
+
+  // Simpan token baru HANYA setelah diuji, dan hanya bila bukan ERROR jaringan
+  // (kalau jaringan gagal, token belum terbukti apa-apa — jangan klaim tersimpan).
+  if (isNewToken && result.status !== "ERROR") {
+    const enc = encrypt(tokenToCheck);
+    try {
+      await prisma.maganghubCredential.upsert({
+        where: { userId },
+        create: {
+          userId,
+          // Cabang "create" hanya terjadi bila user menempel token SEBELUM
+          // mengisi kredensial. Password belum ada, jadi kolom password diisi
+          // string kosong terenkripsi (bukan token!) agar tidak ada campur
+          // aduk: password dan token punya kolom masing-masing.
+          ...encrypt(""),
+          emailMonev: (await existingEmail(userId)) ?? "belum-diisi@monev.local",
+          tokenCiphertext: enc.ciphertext,
+          tokenIv: enc.iv,
+          tokenAuthTag: enc.authTag,
+          status: result.status === "ACTIVE" ? "ACTIVE" : "INVALID",
+        },
+        update: {
+          tokenCiphertext: enc.ciphertext,
+          tokenIv: enc.iv,
+          tokenAuthTag: enc.authTag,
+          status: result.status === "ACTIVE" ? "ACTIVE" : "INVALID",
+        },
+        select: { status: true },
+      });
+    } catch {
+      // Penyimpanan gagal bukan alasan menutupi hasil tes yang sudah diperoleh.
+      return NextResponse.json(
+        {
+          ok: false,
+          status: result.status,
+          message: "Tes berhasil dijalankan, tetapi token gagal disimpan.",
+        },
+        { status: 200 },
+      );
+    }
+  } else if (!isNewToken && result.status !== "ERROR") {
+    // Token lama: perbarui status saja.
+    await prisma.maganghubCredential.update({
+      where: { userId },
+      data: { status: result.status === "ACTIVE" ? "ACTIVE" : "INVALID" },
+    });
+  }
+
+  return NextResponse.json(toResponse(result), { status: 200 });
+}
+
+/** Email yang sudah tersimpan (bila ada) — untuk tidak menimpa dengan placeholder. */
+async function existingEmail(userId: string): Promise<string | null> {
+  const row = await prisma.maganghubCredential.findUnique({
+    where: { userId },
+    select: { emailMonev: true },
+  });
+  return row?.emailMonev ?? null;
+}
+
+/** Bentuk balasan yang stabil untuk UI. Tidak pernah memuat token. */
+function toResponse(result: Awaited<ReturnType<typeof verifySession>>) {
+  if (result.status === "ACTIVE") {
+    return { ok: true, status: "ACTIVE", message: "Sesi Monev aktif dan valid." };
+  }
+  if (result.status === "INVALID") {
+    return {
+      ok: false,
+      status: "INVALID",
+      message:
+        result.message ??
+        "Sesi Monev tidak valid. Silakan login ulang di portal lalu tempel token baru.",
+      errorCode: result.errorCode,
+    };
+  }
+  return { ok: false, status: "ERROR", message: result.message };
+}
