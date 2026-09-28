@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------
+# RAHASIA — ini yang paling penting.
+# Ditulis lebih dulu sebelum `git init` supaya tidak ada satu detik pun
+# di mana .env bisa ikut ter-commit. Lihat SPEC.md §9 dan §14 Tahap B.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# Jangan pernah commit file kunci / kredensial lain
+*.pem
+*.key
+*.p12
+.neon
+
+# ---------------------------------------------------------------------------
+# Node / Next.js
+# ---------------------------------------------------------------------------
+node_modules/
+.pnp
+.pnp.js
+
+.next/
+out/
+build/
+dist/
+next-env.d.ts
+
+# Cache
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# ---------------------------------------------------------------------------
+# Vercel / Neon CLI (bila nanti dipakai)
+# ---------------------------------------------------------------------------
+.vercel
+.neon
+
+# ---------------------------------------------------------------------------
+# Prisma
+# ---------------------------------------------------------------------------
+prisma/migrations/dev.db
+*.db
+*.db-journal
+
+# ---------------------------------------------------------------------------
+# Log & OS
+# ---------------------------------------------------------------------------
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------------------------------------------------------------------------
+# Editor
+# ---------------------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# File sementara saat pengembangan
+dev-log.txt
+dev-err.txt

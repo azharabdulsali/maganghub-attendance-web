@@ -1,0 +1,220 @@
+// Skema Prisma — maganghub-attendance-web
+// Sumber kebenaran: SPEC.md §7 (Model Data).
+// Tahap 1 hanya memasang model inti yang dibutuhkan auth + fondasi fitur.
+//
+// Catatan: model fitur (MaganghubCredential, ReportTemplate, Report,
+// SubmitLog, AutomationConfig) sudah ada di sini sejak awal supaya migrasi
+// cukup sekali dan tidak berubah-ubah (SPEC.md §7, §14 Tahap C).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enum
+// ---------------------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum CredentialStatus {
+  UNVERIFIED
+  ACTIVE
+  INVALID
+}
+
+enum SourceType {
+  TEMPLATE
+  MANUAL_EDIT
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  FAILED
+  PRESENT_ALREADY_EXISTS
+}
+
+enum SubmitStatus {
+  SUCCESS
+  FAILED
+  DUPLICATE
+}
+
+enum TriggerType {
+  MANUAL
+  CRON
+}
+
+// ---------------------------------------------------------------------------
+// Model Auth — NextAuth v5 (SPEC.md §7, §9)
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String?
+  role          Role      @default(USER)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  credential   MaganghubCredential?
+  template     ReportTemplate?
+  reports      Report[]
+  submitLogs   SubmitLog[]
+  automation   AutomationConfig?
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Model Fitur
+// ---------------------------------------------------------------------------
+/// Kredensial Monev pengguna. Password TIDAK pernah disimpan mentah —
+/// hanya ciphertext AES-256-GCM beserta IV dan auth tag (SPEC.md §9 poin 1).
+model MaganghubCredential {
+  id         String           @id @default(cuid())
+  userId     String           @unique
+  emailMonev String
+  ciphertext String
+  iv         String
+  authTag    String
+  status     CredentialStatus @default(UNVERIFIED)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("maganghub_credentials")
+}
+
+/// Tiga template tetap: uraian aktivitas, pembelajaran, kendala.
+/// Isinya >100 karakter (syarat portal) dan dipakai ulang setiap hari —
+/// persis perilaku bot Python (SPEC.md §1, §5.3, §13 baris 9).
+model ReportTemplate {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  activity  String
+  learning  String
+  obstacles String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("report_templates")
+}
+
+/// Satu laporan untuk satu tanggal. `source` menandai apakah isinya
+/// diambil apa adanya dari template atau diedit manual (SPEC.md §7).
+model Report {
+  id        String       @id @default(cuid())
+  userId    String
+  date      DateTime     @db.Date
+  activity  String
+  learning  String
+  obstacles String
+  source    SourceType   @default(TEMPLATE)
+  status    ReportStatus @default(DRAFT)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submitLogs SubmitLog[]
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("reports")
+}
+
+/// Audit log tiap percobaan submit — bukti "sudah dikirim" bila disengketakan
+/// (SPEC.md §7, §10). Tidak boleh ada submit yang tidak tercatat di sini.
+model SubmitLog {
+  id         String       @id @default(cuid())
+  reportId   String?
+  userId     String
+  status     SubmitStatus
+  message    String?
+  httpCode   Int?
+  trigger    TriggerType
+  attempt    Int          @default(1)
+  createdAt  DateTime     @default(now())
+
+  report Report? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("submit_logs")
+}
+
+/// Pengaturan pemicu otomatis per pengguna. `webhookKey` adalah rahasia
+/// milik pengguna sendiri — jangan satu kunci untuk semua (SPEC.md §9 poin 7).
+model AutomationConfig {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  isEnabled  Boolean  @default(false)
+  webhookKey String   @unique
+  hour       Int      @default(7)
+  minute     Int      @default(30)
+  timezone   String   @default("Asia/Jakarta")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("automation_configs")
+}
+
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
