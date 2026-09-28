@@ -40,12 +40,20 @@ function Button({
   className,
   variant,
   size,
+  nativeButton,
+  render,
   ...props
 }: React.ComponentProps<typeof ButtonPrimitive> &
   VariantProps<typeof buttonVariants>) {
+  // Base UI mengasumsikan komponen ini selalu <button>. Di proyek ini `render`
+  // kerap diisi <Link> (yaitu <a>), yang memicu peringatan semantik tombol.
+  // Jadi bila `render` diberikan, kita matikan nativeButton secara default;
+  // pemanggil tetap bisa menimpanya eksplisit dengan nativeButton={true}.
   return (
     <ButtonPrimitive
       data-slot="button"
+      nativeButton={nativeButton ?? render == null}
+      render={render}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
