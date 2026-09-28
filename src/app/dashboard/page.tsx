@@ -81,6 +81,26 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
+      {isAdmin && (
+        <Card className="mb-6 border-dashed">
+          <CardHeader>
+            <CardTitle>Alat Diagnostik (khusus admin)</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-foreground/70">
+              Rekam bentuk endpoint submit laporan dari browser Anda sendiri
+              (docs/MONEV-API.md §8). Tidak menyimpan atau mengirim apa pun.
+            </p>
+            <Button
+              variant="neutral"
+              render={<Link href="/dashboard/dev-tools" />}
+            >
+              Buka alat diagnostik
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="mb-6 border-dashed">
         <CardHeader>
           <CardTitle>Tahap 1 selesai — fondasi siap</CardTitle>

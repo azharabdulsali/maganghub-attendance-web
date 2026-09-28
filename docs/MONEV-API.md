@@ -298,6 +298,49 @@ Diperlukan untuk fase berikutnya (bukan bagian dari tes koneksi).
 - "Laporan sudah ada" → kemungkinan `409 Conflict`
 - Belum pernah diverifikasi langsung.
 
+### 8.1 Alat bantu perekaman (sudah tersedia)
+
+Agar tidak perlu membaca HAR manual, sudah dibuat alat diagnostik:
+
+- **Halaman:** `/dashboard/dev-tools` (khusus **ADMIN**; user biasa diarahkan
+  kembali ke dashboard).
+- **API:** `POST /api/dev-tools/analyze-capture` — body `{ "raw": "<curl|HAR>" }`.
+- **Logika murni:** `src/lib/har-capture.ts` (`analyzeCapture`).
+
+Cara pakai (dilakukan **oleh pemilik akun, di browser sendiri**):
+
+1. Buka `/dashboard/dev-tools`.
+2. Ikuti panduan 4 langkah di halaman: DevTools → Network → tekan
+   `Simpan dan Kirim` **sekali** → klik kanan permintaan → **Copy as cURL**.
+3. Tempel ke kotak, tekan **Analisis**. Alat akan menampilkan method, path,
+   `content-type`, bentuk body, **nama field**, dan snippet respons.
+
+**Jaminan keamanan pada alat ini:**
+- **Tidak mengirim apa pun** ke portal Monev — hanya membaca teks yang
+  ditempel (`har-capture.ts` murni, tanpa I/O jaringan).
+- **Menyamarkan rahasia**: header/field yang namanya memuat
+  `authorization`, `cookie`, `token`, `password`, `secret`, dsb. **nilainya
+  dibuang**, bukan hanya ditampilkan. Uji `src/lib/har-capture.test.ts`
+  menegakkan janji ini (100 tes hijau).
+- **Tidak menyimpan** hasil ke database.
+
+Setelah bentuknya diketahui, isi tabel di bawah dan tulis fungsi submit di
+`src/lib/monev-client.ts` (belum dibuat — memang sengaja, sampai §8 pasti).
+
+### 8.2 Isian yang dicari (diisi setelah perekaman)
+
+| Hal | Nilai (diisi nanti) |
+| :--- | :--- |
+| Method | ? |
+| Path | ? |
+| Content-Type | ? |
+| Nama field: aktivitas | ? |
+| Nama field: pembelajaran | ? |
+| Nama field: kendala | ? |
+| Nama field: kehadiran (lihat §12.7.2) | ? |
+| Status sukses | ? |
+| Status "sudah ada" | ? |
+
 ---
 
 ## 9. Batas etika (dari `SPEC.md` §10)
@@ -334,7 +377,9 @@ terpenuhi.
 
 1. ✅ **Uji pemblokiran Cloudflare** — SELESAI, hasil: **tidak diblokir** (§7).
 2. **Rekam respons sukses `/auth/refresh`** (`200`) — untuk tahu bentuk sesi.
-3. **Rekam satu kali submit laporan** (`Simpan dan Kirim`) — untuk §8.
+3. **Rekam satu kali submit laporan** (`Simpan dan Kirim`) — untuk §8. Gunakan
+   alat diagnostik `/dashboard/dev-tools` (§8.1) agar bentuknya langsung
+   terbaca; cukup tempel "Copy as cURL".
 4. **Uji `fingerprint`:** pakai refresh token dari perangkat A di perangkat B
    (IP berbeda) — apakah diterima?
 5. ✅ **Tulis `src/lib/monev-client.ts` + endpoint Tes Koneksi
