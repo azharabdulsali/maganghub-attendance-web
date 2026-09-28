@@ -65,16 +65,35 @@ khususnya bahwa **AI dan integrasi GitHub sudah dibatalkan**.
 | Layer | Teknologi |
 | :--- | :--- |
 | Framework | Next.js (App Router), TypeScript |
-| Styling | Tailwind CSS v4 |
+| Styling | Tailwind CSS v4 + **neobrutalism.dev** (via shadcn CLI) |
+| UI base | **Base UI** (`@base-ui/react`) — komponen neobrutalism memakai ini |
 | Database | PostgreSQL (Neon) |
-| ORM | Prisma |
+| ORM | Prisma 7 (driver adapter `@prisma/adapter-neon`) |
 | Auth | NextAuth.js v5 (**email/password saja** — tanpa OAuth) |
 | Enkripsi | AES-256-GCM (`node:crypto`) |
 | AI | **Tidak dipakai** — template tetap menggantikan peringkasan AI |
-| Test | Vitest |
+| Test | Vitest (belum terpasang) |
 | Deploy | Vercel (serverless, paket gratis) |
 
 Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
+
+### Aturan UI (penting)
+
+- Komponen ada di `src/components/ui/` — **jangan diedit gayanya sembarangan**;
+  tambah komponen baru lewat `npx shadcn@latest add <url-neobrutalism>`.
+- Komponen neobrutalism dibangun di atas **Base UI**, **bukan Radix**. Karena itu
+  prop `asChild` **tidak ada**. Untuk merender `Button` sebagai link, pakai
+  prop `render`:
+  ```tsx
+  <Button render={<Link href="/register" />}>Daftar</Button>
+  ```
+- Warna **wajib** pakai token, bukan warna mentah: `bg-main`,
+  `text-main-foreground`, `bg-secondary-background`, `text-foreground`,
+  `border-border`, `rounded-base`, `shadow-shadow`, `font-heading`, `font-base`.
+  Hindari `slate-*`/`gray-*`/`rounded-md` — tidak mengenal tema neobrutalism.
+- **Responsif wajib** untuk tablet & HP (aplikasi ini web, tapi tetap dipakai di
+  layar kecil). Uji di `sm:`, `md:`, `lg:`. Jangan buat layout yang hanya rapi
+  di desktop.
 
 ---
 

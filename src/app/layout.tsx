@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
+import { cn } from "@/lib/utils";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "MagangHub Attendance",
+  title: "Maganghub Autoabsen",
   description:
     "Kirim absensi MagangHub dari tiga template laporan Anda, otomatis dan tanpa biaya bulanan.",
 };
@@ -15,8 +16,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id">
-      <body className={`${inter.className} bg-white text-slate-900 antialiased`}>
+    <html lang="id" className={cn("font-sans", inter.variable)}>
+      <body className="bg-secondary-background text-foreground antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

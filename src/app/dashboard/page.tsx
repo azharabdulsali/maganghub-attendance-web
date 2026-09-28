@@ -1,7 +1,8 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import SignOutButton from "./sign-out-button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Dashboard — halaman terlindungi. Kalau belum login, langsung dilempar
 // ke /login. Ini bukti berhasil Tahap 1 (SPEC.md §12).
@@ -16,53 +17,56 @@ export default async function DashboardPage() {
   const isAdmin = role === "ADMIN";
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <div className="mb-8 flex items-start justify-between">
+    <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-12">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="font-heading text-3xl">Dashboard</h1>
+          <p className="mt-1 text-sm text-foreground/70">
             Masuk sebagai {session.user.email}
           </p>
         </div>
         <SignOutButton />
       </div>
 
-      <div className="mb-6 rounded-lg border border-slate-200 p-4">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-slate-600">Peran akun:</span>
+      <Card className="mb-6">
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <span className="text-sm text-foreground/70">Peran akun:</span>
           <span
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
+            className={`inline-flex items-center rounded-base border-2 border-border px-3 py-1 text-xs font-heading ${
               isAdmin
-                ? "bg-amber-100 text-amber-800"
-                : "bg-slate-100 text-slate-700"
+                ? "bg-main text-main-foreground"
+                : "bg-secondary-background text-foreground"
             }`}
           >
             {role}
           </span>
-        </div>
-        {!env.ADMIN_EMAIL && (
-          <p className="mt-3 text-xs text-slate-500">
-            Catatan: <code>ADMIN_EMAIL</code> belum diisi, jadi tidak ada admin
-            yang dibuat otomatis.
-          </p>
-        )}
-      </div>
+          {!env.ADMIN_EMAIL && (
+            <p className="w-full text-xs text-foreground/60">
+              Catatan: <code>ADMIN_EMAIL</code> belum diisi, jadi tidak ada admin
+              yang dibuat otomatis.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-      <div className="rounded-lg border border-dashed border-slate-300 p-6">
-        <h2 className="mb-2 font-medium text-slate-900">
-          Tahap 1 selesai — fondasi siap
-        </h2>
-        <p className="mb-4 text-sm text-slate-600">
-          Login, sesi, dan database sudah bekerja. Fitur absensi menyusul pada
-          tahap berikutnya.
-        </p>
-        <ol className="space-y-1 text-sm text-slate-600">
-          <li>✅ Skema database tersinkron ke Neon</li>
-          <li>⬜ Simpan kredensial Monev (Tahap 2)</li>
-          <li>⬜ Isi 3 template laporan (Tahap 2–3)</li>
-          <li>⬜ Kirim absensi ke portal (Tahap 4)</li>
-        </ol>
-      </div>
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle>Tahap 1 selesai — fondasi siap</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 text-sm text-foreground/70">
+            Login, sesi, dan database sudah bekerja. Fitur absensi menyusul pada
+            tahap berikutnya.
+          </p>
+          <ol className="space-y-1 text-sm text-foreground/70">
+            <li>✅ Skema database tersinkron ke Neon</li>
+            <li>✅ Tampilan neobrutalism (responsif tablet &amp; HP)</li>
+            <li>⬜ Simpan kredensial Monev (Tahap 2)</li>
+            <li>⬜ Isi 3 template laporan (Tahap 2–3)</li>
+            <li>⬜ Kirim absensi ke portal (Tahap 4)</li>
+          </ol>
+        </CardContent>
+      </Card>
     </main>
   );
 }
