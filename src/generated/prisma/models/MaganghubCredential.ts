@@ -35,6 +35,10 @@ export type MaganghubCredentialMinAggregateOutputType = {
   tokenCiphertext: string | null
   tokenIv: string | null
   tokenAuthTag: string | null
+  accessCiphertext: string | null
+  accessIv: string | null
+  accessAuthTag: string | null
+  accessExpiresAt: Date | null
   status: $Enums.CredentialStatus | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -50,6 +54,10 @@ export type MaganghubCredentialMaxAggregateOutputType = {
   tokenCiphertext: string | null
   tokenIv: string | null
   tokenAuthTag: string | null
+  accessCiphertext: string | null
+  accessIv: string | null
+  accessAuthTag: string | null
+  accessExpiresAt: Date | null
   status: $Enums.CredentialStatus | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -65,6 +73,10 @@ export type MaganghubCredentialCountAggregateOutputType = {
   tokenCiphertext: number
   tokenIv: number
   tokenAuthTag: number
+  accessCiphertext: number
+  accessIv: number
+  accessAuthTag: number
+  accessExpiresAt: number
   status: number
   createdAt: number
   updatedAt: number
@@ -82,6 +94,10 @@ export type MaganghubCredentialMinAggregateInputType = {
   tokenCiphertext?: true
   tokenIv?: true
   tokenAuthTag?: true
+  accessCiphertext?: true
+  accessIv?: true
+  accessAuthTag?: true
+  accessExpiresAt?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -97,6 +113,10 @@ export type MaganghubCredentialMaxAggregateInputType = {
   tokenCiphertext?: true
   tokenIv?: true
   tokenAuthTag?: true
+  accessCiphertext?: true
+  accessIv?: true
+  accessAuthTag?: true
+  accessExpiresAt?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -112,6 +132,10 @@ export type MaganghubCredentialCountAggregateInputType = {
   tokenCiphertext?: true
   tokenIv?: true
   tokenAuthTag?: true
+  accessCiphertext?: true
+  accessIv?: true
+  accessAuthTag?: true
+  accessExpiresAt?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -200,6 +224,10 @@ export type MaganghubCredentialGroupByOutputType = {
   tokenCiphertext: string | null
   tokenIv: string | null
   tokenAuthTag: string | null
+  accessCiphertext: string | null
+  accessIv: string | null
+  accessAuthTag: string | null
+  accessExpiresAt: Date | null
   status: $Enums.CredentialStatus
   createdAt: Date
   updatedAt: Date
@@ -236,6 +264,10 @@ export type MaganghubCredentialWhereInput = {
   tokenCiphertext?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
   tokenIv?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
   tokenAuthTag?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
+  accessCiphertext?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
+  accessIv?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
+  accessAuthTag?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
+  accessExpiresAt?: Prisma.DateTimeNullableFilter<"MaganghubCredential"> | Date | string | null
   status?: Prisma.EnumCredentialStatusFilter<"MaganghubCredential"> | $Enums.CredentialStatus
   createdAt?: Prisma.DateTimeFilter<"MaganghubCredential"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaganghubCredential"> | Date | string
@@ -252,6 +284,10 @@ export type MaganghubCredentialOrderByWithRelationInput = {
   tokenCiphertext?: Prisma.SortOrderInput | Prisma.SortOrder
   tokenIv?: Prisma.SortOrderInput | Prisma.SortOrder
   tokenAuthTag?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessCiphertext?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessIv?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessAuthTag?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -271,6 +307,10 @@ export type MaganghubCredentialWhereUniqueInput = Prisma.AtLeast<{
   tokenCiphertext?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
   tokenIv?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
   tokenAuthTag?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
+  accessCiphertext?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
+  accessIv?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
+  accessAuthTag?: Prisma.StringNullableFilter<"MaganghubCredential"> | string | null
+  accessExpiresAt?: Prisma.DateTimeNullableFilter<"MaganghubCredential"> | Date | string | null
   status?: Prisma.EnumCredentialStatusFilter<"MaganghubCredential"> | $Enums.CredentialStatus
   createdAt?: Prisma.DateTimeFilter<"MaganghubCredential"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaganghubCredential"> | Date | string
@@ -287,6 +327,10 @@ export type MaganghubCredentialOrderByWithAggregationInput = {
   tokenCiphertext?: Prisma.SortOrderInput | Prisma.SortOrder
   tokenIv?: Prisma.SortOrderInput | Prisma.SortOrder
   tokenAuthTag?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessCiphertext?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessIv?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessAuthTag?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -308,6 +352,10 @@ export type MaganghubCredentialScalarWhereWithAggregatesInput = {
   tokenCiphertext?: Prisma.StringNullableWithAggregatesFilter<"MaganghubCredential"> | string | null
   tokenIv?: Prisma.StringNullableWithAggregatesFilter<"MaganghubCredential"> | string | null
   tokenAuthTag?: Prisma.StringNullableWithAggregatesFilter<"MaganghubCredential"> | string | null
+  accessCiphertext?: Prisma.StringNullableWithAggregatesFilter<"MaganghubCredential"> | string | null
+  accessIv?: Prisma.StringNullableWithAggregatesFilter<"MaganghubCredential"> | string | null
+  accessAuthTag?: Prisma.StringNullableWithAggregatesFilter<"MaganghubCredential"> | string | null
+  accessExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"MaganghubCredential"> | Date | string | null
   status?: Prisma.EnumCredentialStatusWithAggregatesFilter<"MaganghubCredential"> | $Enums.CredentialStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MaganghubCredential"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"MaganghubCredential"> | Date | string
@@ -322,6 +370,10 @@ export type MaganghubCredentialCreateInput = {
   tokenCiphertext?: string | null
   tokenIv?: string | null
   tokenAuthTag?: string | null
+  accessCiphertext?: string | null
+  accessIv?: string | null
+  accessAuthTag?: string | null
+  accessExpiresAt?: Date | string | null
   status?: $Enums.CredentialStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -338,6 +390,10 @@ export type MaganghubCredentialUncheckedCreateInput = {
   tokenCiphertext?: string | null
   tokenIv?: string | null
   tokenAuthTag?: string | null
+  accessCiphertext?: string | null
+  accessIv?: string | null
+  accessAuthTag?: string | null
+  accessExpiresAt?: Date | string | null
   status?: $Enums.CredentialStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -352,6 +408,10 @@ export type MaganghubCredentialUpdateInput = {
   tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumCredentialStatusFieldUpdateOperationsInput | $Enums.CredentialStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -368,6 +428,10 @@ export type MaganghubCredentialUncheckedUpdateInput = {
   tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumCredentialStatusFieldUpdateOperationsInput | $Enums.CredentialStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -383,6 +447,10 @@ export type MaganghubCredentialCreateManyInput = {
   tokenCiphertext?: string | null
   tokenIv?: string | null
   tokenAuthTag?: string | null
+  accessCiphertext?: string | null
+  accessIv?: string | null
+  accessAuthTag?: string | null
+  accessExpiresAt?: Date | string | null
   status?: $Enums.CredentialStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -397,6 +465,10 @@ export type MaganghubCredentialUpdateManyMutationInput = {
   tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumCredentialStatusFieldUpdateOperationsInput | $Enums.CredentialStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -412,6 +484,10 @@ export type MaganghubCredentialUncheckedUpdateManyInput = {
   tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumCredentialStatusFieldUpdateOperationsInput | $Enums.CredentialStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -432,6 +508,10 @@ export type MaganghubCredentialCountOrderByAggregateInput = {
   tokenCiphertext?: Prisma.SortOrder
   tokenIv?: Prisma.SortOrder
   tokenAuthTag?: Prisma.SortOrder
+  accessCiphertext?: Prisma.SortOrder
+  accessIv?: Prisma.SortOrder
+  accessAuthTag?: Prisma.SortOrder
+  accessExpiresAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -447,6 +527,10 @@ export type MaganghubCredentialMaxOrderByAggregateInput = {
   tokenCiphertext?: Prisma.SortOrder
   tokenIv?: Prisma.SortOrder
   tokenAuthTag?: Prisma.SortOrder
+  accessCiphertext?: Prisma.SortOrder
+  accessIv?: Prisma.SortOrder
+  accessAuthTag?: Prisma.SortOrder
+  accessExpiresAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -462,6 +546,10 @@ export type MaganghubCredentialMinOrderByAggregateInput = {
   tokenCiphertext?: Prisma.SortOrder
   tokenIv?: Prisma.SortOrder
   tokenAuthTag?: Prisma.SortOrder
+  accessCiphertext?: Prisma.SortOrder
+  accessIv?: Prisma.SortOrder
+  accessAuthTag?: Prisma.SortOrder
+  accessExpiresAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -512,6 +600,10 @@ export type MaganghubCredentialCreateWithoutUserInput = {
   tokenCiphertext?: string | null
   tokenIv?: string | null
   tokenAuthTag?: string | null
+  accessCiphertext?: string | null
+  accessIv?: string | null
+  accessAuthTag?: string | null
+  accessExpiresAt?: Date | string | null
   status?: $Enums.CredentialStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -526,6 +618,10 @@ export type MaganghubCredentialUncheckedCreateWithoutUserInput = {
   tokenCiphertext?: string | null
   tokenIv?: string | null
   tokenAuthTag?: string | null
+  accessCiphertext?: string | null
+  accessIv?: string | null
+  accessAuthTag?: string | null
+  accessExpiresAt?: Date | string | null
   status?: $Enums.CredentialStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -556,6 +652,10 @@ export type MaganghubCredentialUpdateWithoutUserInput = {
   tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumCredentialStatusFieldUpdateOperationsInput | $Enums.CredentialStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -570,6 +670,10 @@ export type MaganghubCredentialUncheckedUpdateWithoutUserInput = {
   tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessIv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessAuthTag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumCredentialStatusFieldUpdateOperationsInput | $Enums.CredentialStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -587,6 +691,10 @@ export type MaganghubCredentialSelect<ExtArgs extends runtime.Types.Extensions.I
   tokenCiphertext?: boolean
   tokenIv?: boolean
   tokenAuthTag?: boolean
+  accessCiphertext?: boolean
+  accessIv?: boolean
+  accessAuthTag?: boolean
+  accessExpiresAt?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -603,6 +711,10 @@ export type MaganghubCredentialSelectCreateManyAndReturn<ExtArgs extends runtime
   tokenCiphertext?: boolean
   tokenIv?: boolean
   tokenAuthTag?: boolean
+  accessCiphertext?: boolean
+  accessIv?: boolean
+  accessAuthTag?: boolean
+  accessExpiresAt?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -619,6 +731,10 @@ export type MaganghubCredentialSelectUpdateManyAndReturn<ExtArgs extends runtime
   tokenCiphertext?: boolean
   tokenIv?: boolean
   tokenAuthTag?: boolean
+  accessCiphertext?: boolean
+  accessIv?: boolean
+  accessAuthTag?: boolean
+  accessExpiresAt?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -635,12 +751,16 @@ export type MaganghubCredentialSelectScalar = {
   tokenCiphertext?: boolean
   tokenIv?: boolean
   tokenAuthTag?: boolean
+  accessCiphertext?: boolean
+  accessIv?: boolean
+  accessAuthTag?: boolean
+  accessExpiresAt?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type MaganghubCredentialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "emailMonev" | "ciphertext" | "iv" | "authTag" | "tokenCiphertext" | "tokenIv" | "tokenAuthTag" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["maganghubCredential"]>
+export type MaganghubCredentialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "emailMonev" | "ciphertext" | "iv" | "authTag" | "tokenCiphertext" | "tokenIv" | "tokenAuthTag" | "accessCiphertext" | "accessIv" | "accessAuthTag" | "accessExpiresAt" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["maganghubCredential"]>
 export type MaganghubCredentialInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -666,6 +786,10 @@ export type $MaganghubCredentialPayload<ExtArgs extends runtime.Types.Extensions
     tokenCiphertext: string | null
     tokenIv: string | null
     tokenAuthTag: string | null
+    accessCiphertext: string | null
+    accessIv: string | null
+    accessAuthTag: string | null
+    accessExpiresAt: Date | null
     status: $Enums.CredentialStatus
     createdAt: Date
     updatedAt: Date
@@ -1102,6 +1226,10 @@ export interface MaganghubCredentialFieldRefs {
   readonly tokenCiphertext: Prisma.FieldRef<"MaganghubCredential", 'String'>
   readonly tokenIv: Prisma.FieldRef<"MaganghubCredential", 'String'>
   readonly tokenAuthTag: Prisma.FieldRef<"MaganghubCredential", 'String'>
+  readonly accessCiphertext: Prisma.FieldRef<"MaganghubCredential", 'String'>
+  readonly accessIv: Prisma.FieldRef<"MaganghubCredential", 'String'>
+  readonly accessAuthTag: Prisma.FieldRef<"MaganghubCredential", 'String'>
+  readonly accessExpiresAt: Prisma.FieldRef<"MaganghubCredential", 'DateTime'>
   readonly status: Prisma.FieldRef<"MaganghubCredential", 'CredentialStatus'>
   readonly createdAt: Prisma.FieldRef<"MaganghubCredential", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"MaganghubCredential", 'DateTime'>

@@ -4,13 +4,20 @@
 // `JSON.stringify`, log, atau pesan hasil. Dan membuktikan gerbang opt-in
 // benar-benar mencegah panggilan jaringan.
 
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   KEMNAKER_SSO_ORIGIN,
   SsoCredentials,
   buildSsoLoginRequest,
   interpretSsoLoginResponse,
   parseOAuthCallbackParams,
+  extractCallbackUrl,
+  isSsoAuthPageUrl,
+  extractCallbackUrlFromHtml,
+  describeSsoRedirectResponse,
+  describeHtmlHint,
+  extractCookieNames,
+  catchOAuthCode,
   loginToSso,
 } from "./kemnaker-sso";
 
@@ -136,6 +143,31 @@ describe("loginToSso — gerbang opt-in (TIDAK menyentuh jaringan)", () => {
     if (r.status === "OK") expect(r.redirectUri).toContain("state=S2");
   });
 
+  it("respons authenticated:true + set-cookie → OK menyertakan setCookies (sesi login)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: { authenticated: true } }), {
+            status: 200,
+            headers: {
+              "set-cookie": "kemnaker_ri_session=SESI-LOGIN; Path=/; HttpOnly",
+            },
+          }),
+      ),
+    );
+    const r = await loginToSso(new SsoCredentials("a@b.com", SECRET), {
+      csrfToken: "c",
+      cookies: "kemnaker_ri_session=anon",
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") {
+      expect(r.setCookies).toBeDefined();
+      expect(r.setCookies?.join(";")).toContain("kemnaker_ri_session=SESI-LOGIN");
+    }
+  });
+
   it("200 tanpa authenticated:true → REJECTED (bukan OK palsu)", async () => {
     vi.stubGlobal(
       "fetch",
@@ -226,5 +258,300 @@ describe("parseOAuthCallbackParams (murni)", () => {
 
   it("URL tanpa code/state → objek kosong", () => {
     expect(parseOAuthCallbackParams("https://x/y")).toEqual({});
+  });
+});
+
+describe("extractCallbackUrl & isSsoAuthPageUrl (murni)", () => {
+  it("URL dengan code= → dianggap callback", () => {
+    const u = "https://monev.maganghub.kemnaker.go.id/sso/callback?code=ABC&state=X";
+    expect(extractCallbackUrl(u)).toBe(u);
+  });
+
+  it("URL /sso/callback → dianggap callback", () => {
+    const u = "https://monev.maganghub.kemnaker.go.id/sso/callback";
+    expect(extractCallbackUrl(u)).toBe(u);
+  });
+
+  it("halaman SSO /auth?... → BUKAN callback (harus diikuti dulu)", () => {
+    const u =
+      "http://account.kemnaker.go.id/auth?client_id=CID&response_type=code&state=X";
+    expect(extractCallbackUrl(u)).toBeUndefined();
+    expect(isSsoAuthPageUrl(u)).toBe(true);
+  });
+
+  it("undefined / host lain → bukan halaman SSO", () => {
+    expect(isSsoAuthPageUrl(undefined)).toBe(false);
+    expect(isSsoAuthPageUrl("https://example.com/auth")).toBe(false);
+  });
+});
+
+describe("catchOAuthCode — GERBANG & penangkapan code (fetch di-mock)", () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("tanpa izin → ERROR, fetch TIDAK dipanggil", async () => {
+    const r = await catchOAuthCode("http://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: false,
+    });
+    expect(r.status).toBe("ERROR");
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("mengikuti halaman SSO → menangkap code dari header Location hop pertama", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: {
+          location:
+            "https://monev.maganghub.kemnaker.go.id/sso/callback?code=CODE-123&state=S9",
+        },
+      }),
+    );
+    const r = await catchOAuthCode("http://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") {
+      expect(r.code).toBe("CODE-123");
+      expect(r.state).toBe("S9");
+    }
+  });
+
+  it("mengikuti RANTAI redirect (301 → 302) sampai code ditemukan", async () => {
+    // Hop 1: 301 ke halaman SSO lain TANPA code (persis bukti lapangan).
+    fetchSpy.mockResolvedValueOnce(
+      new Response(null, {
+        status: 301,
+        headers: { location: "https://account.kemnaker.go.id/dashboard" },
+      }),
+    );
+    // Hop 2: 302 ke callback ber-code.
+    fetchSpy.mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: {
+          location:
+            "https://monev.maganghub.kemnaker.go.id/sso/callback?code=CHAIN-9&state=S2",
+        },
+      }),
+    );
+    const r = await catchOAuthCode("http://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") expect(r.code).toBe("CHAIN-9");
+    // Dua hop berarti fetch dipanggil dua kali.
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("Location relatif di-resolve terhadap URL hop saat ini", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: { location: "/sso/callback?code=REL-1&state=S" },
+      }),
+    );
+    const r = await catchOAuthCode("https://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") {
+      expect(r.code).toBe("REL-1");
+      expect(r.callbackUrl).toBe(
+        "https://account.kemnaker.go.id/sso/callback?code=REL-1&state=S",
+      );
+    }
+  });
+
+  it("menghormati batas hop (tidak loop selamanya)", async () => {
+    // Selalu 301 ke dirinya sendiri → harus berhenti di maxHops.
+    fetchSpy.mockResolvedValue(
+      new Response(null, {
+        status: 301,
+        headers: { location: "https://account.kemnaker.go.id/loop" },
+      }),
+    );
+    const r = await catchOAuthCode("http://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+      maxHops: 3,
+    });
+    expect(r.status).toBe("ERROR");
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it("halaman SSO tanpa redirect code → ERROR jujur", async () => {
+    fetchSpy.mockResolvedValueOnce(new Response("<html>login</html>", { status: 200 }));
+    const r = await catchOAuthCode("http://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("ERROR");
+  });
+
+  it("code di body HTML (meta refresh) saat 200 → tertangkap", async () => {
+    const html =
+      `<html><head><meta http-equiv="refresh" ` +
+      `content="0;url=https://monev.maganghub.kemnaker.go.id/sso/callback?code=BODY-1&state=S1">` +
+      `</head></html>`;
+    fetchSpy.mockResolvedValueOnce(new Response(html, { status: 200 }));
+    const r = await catchOAuthCode("http://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") {
+      expect(r.code).toBe("BODY-1");
+      expect(r.state).toBe("S1");
+    }
+  });
+
+  it("meneruskan cookie yang di-set hop sebelumnya ke hop berikutnya (jar)", async () => {
+    // Hop 1: 302 men-set sesi SSO + mengarah ke halaman internal.
+    fetchSpy.mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: {
+          location: "https://account.kemnaker.go.id/authorize/step2",
+          "set-cookie": "kemnaker_ri_session=SESI-ABC; Path=/; HttpOnly",
+        },
+      }),
+    );
+    // Hop 2: HANYA bila cookie diteruskan, ia mengeluarkan code di callback.
+    fetchSpy.mockImplementationOnce((_url: string, init?: RequestInit) => {
+      const sentCookie = (init?.headers as Record<string, string> | undefined)?.cookie;
+      if (sentCookie && sentCookie.includes("kemnaker_ri_session=SESI-ABC")) {
+        return Promise.resolve(
+          new Response(null, {
+            status: 302,
+            headers: {
+              location:
+                "https://monev.maganghub.kemnaker.go.id/auth/login/callback?code=JAR-1&state=S",
+            },
+          }),
+        );
+      }
+      // Tanpa cookie → SSO menganggap belum login → halaman 200 tanpa code.
+      return Promise.resolve(new Response("<html>login</html>", { status: 200 }));
+    });
+
+    const r = await catchOAuthCode("http://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") expect(r.code).toBe("JAR-1");
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("tanpa cookie jar, hop berikutnya tak membawa cookie → tak ada code", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: {
+          location: "https://account.kemnaker.go.id/authorize/step2",
+          "set-cookie": "kemnaker_ri_session=SESI-ABC; Path=/",
+        },
+      }),
+    );
+    // Hop 2 selalu 200 tanpa code (persis bukti lapangan).
+    fetchSpy.mockResolvedValueOnce(new Response("<html>halaman sso</html>", { status: 200 }));
+    const r = await catchOAuthCode("http://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("ERROR");
+    if (r.status === "ERROR") {
+      // Diagnostic memuat jejak dengan host tujuan + petunjuk halaman akhir.
+      expect(r.message).toContain("302@account.kemnaker.go.id→account.kemnaker.go.id");
+      expect(r.message).toContain("halaman akhir: body");
+      expect(r.message).not.toContain("SESI-ABC");
+    }
+  });
+});
+
+describe("describeHtmlHint (murni, aman)", () => {
+  it("mengenali form login/password tanpa membocorkan isi", () => {
+    const html = `<form><input type="email" name="email"><input type="password" name="password">Rahasia!</form>`;
+    const hint = describeHtmlHint(html);
+    expect(hint).toContain("ada-form-password");
+    expect(hint).toContain("ada-field-user");
+    expect(hint).toContain("ada-<form>");
+    expect(hint).toContain("byte");
+    expect(hint).not.toContain("Rahasia!");
+  });
+
+  it("mengenali nuansa dashboard", () => {
+    const hint = describeHtmlHint(`<html><body>Selamat datang di dashboard</body></html>`);
+    expect(hint).toContain("nuansa-dashboard");
+  });
+
+  it("mengenali shell SPA (code dirakit JS, bukan redirect)", () => {
+    const html =
+      `<html><head><script src="/static/js/app.js"></script></head>` +
+      `<body><div id="app"></div><div id="root"></div></body></html>`;
+    const hint = describeHtmlHint(html);
+    expect(hint).toContain("ada-<script src>");
+    expect(hint).toContain("ada-mount-spa");
+  });
+
+  it("halaman tanpa penanda → label netral + panjang", () => {
+    const hint = describeHtmlHint(`<html><body>...</body></html>`);
+    expect(hint).toContain("tanpa-penanda-khusus");
+    expect(hint).toMatch(/body \d+ byte/);
+  });
+});
+
+describe("helper diagnostik & body HTML (murni)", () => {
+  it("extractCallbackUrlFromHtml: meta refresh", () => {
+    const html = `<meta http-equiv="refresh" content="0;url=https://x/sso/callback?code=C1&state=S">`;
+    expect(extractCallbackUrlFromHtml(html)).toBe(
+      "https://x/sso/callback?code=C1&state=S",
+    );
+  });
+
+  it("extractCallbackUrlFromHtml: window.location di script", () => {
+    const html = `<script>window.location = "https://x/sso/callback?code=C2&state=S"</script>`;
+    expect(extractCallbackUrlFromHtml(html)).toBe(
+      "https://x/sso/callback?code=C2&state=S",
+    );
+  });
+
+  it("extractCallbackUrlFromHtml: &amp; dinormalkan", () => {
+    const html = `<a href="/sso/callback?code=C3&amp;state=S">lanjut</a>`;
+    expect(extractCallbackUrlFromHtml(html)).toBe("/sso/callback?code=C3&state=S");
+  });
+
+  it("extractCallbackUrlFromHtml: tanpa code → undefined", () => {
+    expect(extractCallbackUrlFromHtml("<html>halaman login</html>")).toBeUndefined();
+    expect(extractCallbackUrlFromHtml("")).toBeUndefined();
+  });
+
+  it("extractCookieNames: hanya nama, nilai dibuang", () => {
+    expect(
+      extractCookieNames([
+        "acw_tc=abc; Path=/",
+        "monev_refresh_token=RAHASIA; HttpOnly",
+      ]),
+    ).toEqual(["acw_tc", "monev_refresh_token"]);
+  });
+
+  it("describeSsoRedirectResponse: ringkas status, host, ada/tidak code", () => {
+    const s = describeSsoRedirectResponse({
+      status: 302,
+      location: "https://monev.maganghub.kemnaker.go.id/sso/callback?code=X",
+      cookieNames: ["acw_tc"],
+    });
+    expect(s).toContain("HTTP 302");
+    expect(s).toContain("monev.maganghub.kemnaker.go.id");
+    expect(s).toContain("mengandung 'code'");
+    expect(s).toContain("acw_tc");
+
+    const noLoc = describeSsoRedirectResponse({ status: 200, cookieNames: [] });
+    expect(noLoc).toContain("Location: (tidak ada)");
+    expect(noLoc).toContain("set-cookie: (tidak ada)");
   });
 });

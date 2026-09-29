@@ -14,6 +14,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/lib/crypto";
 import { credentialsSchema } from "@/lib/validate";
+import { rateLimitKey } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 
 /** Ambil id user dari sesi; null kalau belum login. */
 async function currentUserId(): Promise<string | null> {
@@ -59,6 +61,18 @@ export async function PUT(request: Request) {
   const userId = await currentUserId();
   if (!userId) {
     return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
+  }
+
+  // Menulis rahasia = operasi sensitif → batasi agar tidak dibrute-ubah.
+  const gate = await enforceRateLimit(
+    "credentials",
+    rateLimitKey("credentials", userId),
+  );
+  if (!gate.decision.allowed) {
+    return NextResponse.json(
+      { error: "Terlalu banyak perubahan kredensial. Coba lagi nanti." },
+      { status: 429, headers: gate.headers },
+    );
   }
 
   let body: unknown;

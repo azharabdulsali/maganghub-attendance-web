@@ -77,3 +77,24 @@ export const reportTemplatesSchema = z.object({
 });
 
 export type ReportTemplatesInput = z.infer<typeof reportTemplatesSchema>;
+
+/**
+ * Pengaturan otomasi (AutomationConfig, SPEC.md §7). Zona waktu TIDAK
+ * diserahkan ke klien — selalu "Asia/Jakarta" (server yang mengisi) supaya
+ * jadwal tidak bisa disalah-set ke zona lain tanpa sengaja.
+ */
+export const automationSchema = z.object({
+  isEnabled: z.boolean(),
+  hour: z
+    .number()
+    .int("Jam harus bilangan bulat")
+    .min(0, "Jam minimal 0")
+    .max(23, "Jam maksimal 23"),
+  minute: z
+    .number()
+    .int("Menit harus bilangan bulat")
+    .min(0, "Menit minimal 0")
+    .max(59, "Menit maksimal 59"),
+});
+
+export type AutomationInput = z.infer<typeof automationSchema>;

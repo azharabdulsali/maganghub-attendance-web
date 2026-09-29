@@ -5,7 +5,10 @@
 //
 //   (1) GET  /api/v1/auth/login                 → SSO URL + `state`  [startOAuthFlow]
 //   (2) GET  account.kemnaker.go.id/auth        → x-csrf-token + cookie [primeSsoSession]
-//   (3) POST account.kemnaker.go.id/auth/login  → `code` OAuth        [loginToSso]
+//   (3) POST account.kemnaker.go.id/auth/login  → sesi autentikasi (set-cookie) [loginToSso]
+//   (3b) IKUTI authorizeUrl/rantai redirect SSO → cari `code`         [catchOAuthCode]
+//        ⚠️  Cookie sesi dari langkah (3) WAJIB dibawa ke sini — tanpa itu SSO
+//        melihat kita anonim dan membalas halaman SPA, bukan redirect `code`.
 //   (4) GET  /api/v1/auth/login/callback?code=&state= → access_token   [exchangeCodeForSession]
 //
 // Rujukan: docs/MONEV-API.md §4.0 (alur end-to-end, terverifikasi).
@@ -20,7 +23,9 @@
 
 import {
   loginToSso,
+  catchOAuthCode,
   parseOAuthCallbackParams,
+  extractCallbackUrl,
   KEMNAKER_SSO_ORIGIN,
   type SsoCredentials,
 } from "./kemnaker-sso";
@@ -47,17 +52,64 @@ export type SsoPrimeResult =
   | { status: "ERROR"; message: string };
 
 /**
+ * Cari token CSRF di dalam **HTML** halaman login — MURNI, tanpa jaringan.
+ *
+ * ⚠️  Konteks: `GET /auth` mengembalikan **HTML**, bukan JSON. Uji lapangan
+ * menunjukkan responsnya TIDAK memuat header `x-csrf-token`, melainkan token
+ * ditanam di dalam markup. Karena itu kita memindai pola-pola umum:
+ *
+ *   1. `<meta name="csrf-token" content="...">`  (Laravel/Rails)
+ *   2. `<input type="hidden" name="_csrf" value="...">`  (Spring/Laravel)
+ *   3. `csrfToken = "..."` / `"csrfToken":"..."`  (state JS / JSON inline)
+ *
+ * Fungsi ini **tidak** mengklaim pola mana yang benar; ia mengembalikan kandidat
+ * pertama yang cocok. Setelah bentuk halaman direkam, persempit ke pola nyata.
+ * Mengembalikan `undefined` bila tak ada yang cocok — supaya pemanggil jujur
+ * memberi `ERROR`, bukan token palsu.
+ */
+export function extractCsrfTokenFromHtml(html: string): string | undefined {
+  if (!html) return undefined;
+
+  // (1) <meta name="csrf-token" content="...">  — urutan atribut bisa bolak-balik.
+  const metaA = /<meta[^>]*name=["']csrf-token["'][^>]*content=["']([^"']+)["']/i.exec(html);
+  if (metaA?.[1]) return metaA[1].trim();
+  const metaB = /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']csrf-token["']/i.exec(html);
+  if (metaB?.[1]) return metaB[1].trim();
+
+  // (2) <input type="hidden" name="_csrf" value="...">
+  const inputA =
+    /<input[^>]*name=["']_csrf["'][^>]*value=["']([^"']+)["']/i.exec(html);
+  if (inputA?.[1]) return inputA[1].trim();
+  const inputB =
+    /<input[^>]*value=["']([^"']+)["'][^>]*name=["']_csrf["']/i.exec(html);
+  if (inputB?.[1]) return inputB[1].trim();
+
+  // (3) csrfToken = "<token>"  |  "csrfToken":"<token>"
+  const jsEq = /\bcsrf_?token\b\s*[:=]\s*["']([^"']{8,})["']/i.exec(html);
+  if (jsEq?.[1]) return jsEq[1].trim();
+
+  return undefined;
+}
+
+/**
  * Ambil `x-csrf-token` & cookie dari halaman login SSO — MURNI, tanpa jaringan.
  *
- * Dipisah supaya bisa diuji dengan header mentah saja. Sumber token yang
- * diterima (berurutan): header `x-csrf-token` respons, lalu cookie bernama
- * `csrf_token`/`XSRF-TOKEN`. Cookie yang digabung HANYA yang relevan untuk
- * login (cf/acw/session/csrf) — memakai daftar **awalan nama**, bukan menyalin
- * seluruh header `set-cookie` mentah.
+ * Sumber token diterima **berurutan** (yang pertama cocok menang):
+ *   1. header respons `x-csrf-token` (bila portal memang mengirimnya),
+ *   2. cookie `csrf_token`/`XSRF-TOKEN`/`_csrf`,
+ *   3. **HTML body** via `extractCsrfTokenFromHtml` (jalur paling mungkin untuk
+ *      halaman login berbasis markup).
+ *
+ * Cookie yang digabung HANYA yang relevan untuk login (cf/acw/session/csrf) —
+ * memakai daftar **awalan nama**, bukan menyalin seluruh header `set-cookie`.
  */
 export function interpretSsoPrimeResponse(
   httpCode: number,
-  headers: { csrfToken?: string | null; setCookies?: string[] },
+  headers: {
+    csrfToken?: string | null;
+    setCookies?: string[];
+    html?: string;
+  },
 ): SsoPrimeResult {
   if (httpCode < 200 || httpCode >= 400) {
     return { status: "ERROR", message: `Priming SSO gagal (HTTP ${httpCode}).` };
@@ -87,15 +139,18 @@ export function interpretSsoPrimeResponse(
     }
   }
 
+  const csrfFromHtml = extractCsrfTokenFromHtml(headers.html ?? "");
+
   const csrfToken =
-    (headers.csrfToken ?? "").trim() || csrfFromCookie || undefined;
+    (headers.csrfToken ?? "").trim() || csrfFromCookie || csrfFromHtml || undefined;
 
   if (!csrfToken) {
     return {
       status: "ERROR",
       message:
-        "x-csrf-token tidak ditemukan pada respons GET /auth SSO. Bentuk " +
-        "halaman login perlu direkam ulang (docs/MONEV-API.md §7).",
+        "Token CSRF tidak ditemukan pada respons GET /auth SSO (dicari di " +
+        "header, cookie, dan HTML). Bentuk halaman login perlu direkam ulang " +
+        "(docs/MONEV-API.md §7).",
     };
   }
 
@@ -108,13 +163,19 @@ export function interpretSsoPrimeResponse(
 }
 
 /**
- * GET halaman login SSO untuk mendapatkan `x-csrf-token` + cookie. **GATED.**
+ * GET halaman login SSO untuk mendapatkan token CSRF + cookie. **GATED.**
  *
  * ⚠️  Menembak jaringan ke `account.kemnaker.go.id`. Butuh
  * `confirmLivePortalRequest: true`; tanpa itu → `ERROR` tanpa jaringan.
+ *
+ * `authorizeUrl` (dari langkah 1) **sebaiknya** diteruskan: halaman login
+ * sebenarnya butuh query `?client_id=&redirect_uri=&state=&...`. Memanggil
+ * `/auth` tanpa query bisa mengembalikan halaman/challenge yang berbeda.
+ * Bila tak diberikan, kita jatuh ke `${ORIGIN}/auth` (perilaku lama).
  */
 export async function primeSsoSession(opts: {
   confirmLivePortalRequest: boolean;
+  authorizeUrl?: string;
   timeoutMs?: number;
 }): Promise<SsoPrimeResult> {
   if (!opts.confirmLivePortalRequest) {
@@ -130,15 +191,21 @@ export async function primeSsoSession(opts: {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+  // Pakai URL authorize lengkap bila ada; kalau tidak, fallback ke /auth.
+  const targetUrl =
+    opts.authorizeUrl && /^https?:\/\//.test(opts.authorizeUrl)
+      ? opts.authorizeUrl
+      : `${KEMNAKER_SSO_ORIGIN}/auth`;
+
   try {
-    const res = await fetch(`${KEMNAKER_SSO_ORIGIN}/auth`, {
+    const res = await fetch(targetUrl, {
       method: "GET",
       headers: {
         "User-Agent": LOGIN_USER_AGENT,
         accept: "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
       },
       cache: "no-store",
-      redirect: "manual",
+      redirect: "follow",
       signal: controller.signal,
     });
 
@@ -147,9 +214,14 @@ export async function primeSsoSession(opts: {
         ? res.headers.getSetCookie()
         : [];
 
+    // Baca HTML body: token CSRF kemungkinan besar ditanam di markup, BUKAN
+    // di header. Isi body tidak pernah ditulis ke log/error — hanya dipindai.
+    const html = await res.text().catch(() => "");
+
     return interpretSsoPrimeResponse(res.status, {
       csrfToken: res.headers.get("x-csrf-token"),
       setCookies,
+      html,
     });
   } catch (err) {
     const message =
@@ -174,6 +246,12 @@ export type LoginFlowResult =
       accessToken: string;
       userId?: string;
       name?: string;
+      /**
+       * Cookie `monev_refresh_token` bila portal mengirimkannya saat callback.
+       * Sesi 30 hari — jauh lebih tahan lama dari access token (6 jam). Tidak
+       * selalu ada; pemanggil harus siap menerima `undefined`.
+       */
+      refreshToken?: string;
     }
   | {
       status: "REJECTED";
@@ -190,6 +268,33 @@ export type LoginStep =
   | "sso-prime"
   | "sso-login"
   | "code-exchange";
+
+/**
+ * Gabungkan header cookie dari dua sumber menjadi satu — MURNI, bisa diuji.
+ *
+ * Dipakai untuk menyatukan cookie priming (langkah 2) dengan cookie sesi hasil
+ * login (langkah 3). Bila nama cookie sama, nilai dari sumber **berikutnya**
+ * (login) menang — karena ia yang paling baru. Hanya `nama=nilai` yang
+ * dipertahankan; atribut (`Path`, `HttpOnly`, dst.) dibuang.
+ */
+export function mergeCookieHeader(
+  baseCookies: string | undefined,
+  setCookies: string[] | undefined,
+): string | undefined {
+  const jar = new Map<string, string>();
+  const absorb = (raw: string) => {
+    const first = raw.split(";")[0];
+    const eq = first.indexOf("=");
+    if (eq <= 0) return;
+    const name = first.slice(0, eq).trim();
+    const value = first.slice(eq + 1).trim();
+    if (name && value.length > 0) jar.set(name, value);
+  };
+  if (baseCookies) for (const part of baseCookies.split(";")) absorb(part);
+  if (setCookies) for (const raw of setCookies) absorb(raw);
+  if (jar.size === 0) return undefined;
+  return [...jar.entries()].map(([n, v]) => `${n}=${v}`).join("; ");
+}
 
 /**
  * Ringkasan langkah untuk UI/audit — MURNI. Sengaja tidak memuat rahasia:
@@ -254,10 +359,14 @@ export async function runLoginFlow(input: {
         "diikuti. Bentuk respons perlu dicek ulang (docs/MONEV-API.md §4.0).",
     };
   }
-  const { state, authorizeUrl } = start;
+  const { state: stateFromStep1, authorizeUrl } = start;
 
   // --- Langkah 2: priming SSO → csrf + cookie --------------------------------
-  const prime = await primeSsoSession({ confirmLivePortalRequest: true, timeoutMs });
+  const prime = await primeSsoSession({
+    confirmLivePortalRequest: true,
+    authorizeUrl,
+    timeoutMs,
+  });
   if (prime.status !== "OK") {
     return { status: "ERROR", step: "sso-prime", message: prime.message };
   }
@@ -281,21 +390,75 @@ export async function runLoginFlow(input: {
     };
   }
 
-  // `code` bisa ada di `redirectUri` (respons login) atau di `authorizeUrl`
-  // (URL SSO dari langkah 1, yang kini sudah berisi code setelah autentikasi).
-  const fromRedirect = login.redirectUri
-    ? parseOAuthCallbackParams(login.redirectUri)
-    : {};
-  const fromAuthorize = parseOAuthCallbackParams(authorizeUrl);
-  const code = fromRedirect.code ?? fromAuthorize.code;
+  // `code` OAuth hanya diterbitkan saat SSO memproses **permintaan otorisasi** —
+  // yaitu `authorizeUrl` dari langkah (1), yang memuat
+  // `client_id`/`response_type=code`/`state`. Mengikuti `redirectUri` dari
+  // langkah (3) TERBUKTI buntu (jejak hop `301→302→200` tanpa `code`, §4.0):
+  // halaman itu halaman SSO biasa, bukan permintaan otorisasi. Karena itu urutan
+  // percobaan: (a) `authorizeUrl` (permintaan otorisasi — paling mungkin),
+  // (b) `redirect_uri` dari respons login (cadangan), (c) `code` langsung di
+  // keduanya, (d) apa pun di `Location`/body saat mengikuti.
+  let code = authorizeUrl ? parseOAuthCallbackParams(authorizeUrl).code : undefined;
+  let state = authorizeUrl
+    ? (parseOAuthCallbackParams(authorizeUrl).state ?? stateFromStep1)
+    : stateFromStep1;
+  if (!code && login.redirectUri) {
+    code = parseOAuthCallbackParams(login.redirectUri).code;
+    if (code) {
+      state = parseOAuthCallbackParams(login.redirectUri).state ?? stateFromStep1;
+    }
+  }
+
+  // Jejak diagnostik (aman, tanpa token) untuk pesan galat bila `code` tak ada.
+  const catchDiags: string[] = [];
+  const followTargets: Array<{ label: string; url: string }> = [];
+  // (a) Permintaan otorisasi asli dari langkah (1) — pihak yang benar-benar
+  // menerbitkan `code`. Dilewati bila URL sudah membawa `code` (sudah ditangkap).
+  if (!code && authorizeUrl && !parseOAuthCallbackParams(authorizeUrl).code) {
+    followTargets.push({ label: "authorizeUrl(langkah 1)", url: authorizeUrl });
+  }
+  // (b) Cadangan: `redirect_uri` dari respons login (halaman SSO).
+  if (!code && login.redirectUri && !extractCallbackUrl(login.redirectUri)) {
+    followTargets.push({ label: "redirect_uri(langkah 3)", url: login.redirectUri });
+  }
+
+  for (const target of followTargets) {
+    if (code) break;
+    // Gabungkan cookie priming (langkah 2) DENGAN cookie sesi hasil login
+    // (langkah 3). Cookie login-lah yang menandai sesi AUTENTIKASI; tanpa itu
+    // SSO membalas halaman SPA, bukan redirect `code` (lihat `loginToSso`).
+    const mergedCookies = mergeCookieHeader(prime.cookies, login.setCookies);
+    const caught = await catchOAuthCode(target.url, {
+      cookies: mergedCookies,
+      confirmLivePortalRequest: true,
+      timeoutMs,
+    });
+    if (caught.status === "OK") {
+      code = caught.code;
+      state = caught.state ?? state;
+    } else {
+      catchDiags.push(`${target.label}: ${caught.message}`);
+    }
+  }
+
   if (!code) {
+    code = parseOAuthCallbackParams(authorizeUrl).code;
+  }
+
+  if (!code) {
+    // Pesan galat memuat DIAGNOSTIK asli dari (3b) supaya bisa direkam — bukan
+    // diringkas jadi "bentuk respons berbeda" yang menghapus bukti.
+    const detail = catchDiags.length
+      ? ` Detail (3b): ${catchDiags.join(" | ")}`
+      : "(3b tidak dijalankan: tidak ada authorizeUrl/redirect_uri yang bisa diikuti).";
     return {
       status: "ERROR",
       step: "sso-login",
       message:
-        "Login SSO berhasil tetapi 'code' OAuth tidak ditemukan di " +
-        "redirect_uri/authorizeUrl. Bentuk respons perlu direkam ulang " +
-        "(docs/MONEV-API.md §4.0).",
+        "Login SSO diterima (authenticated: true) tetapi 'code' OAuth tidak " +
+        "berhasil ditangkap. Kirim detail ini untuk memastikan bentuk langkah " +
+        "(3b) (docs/MONEV-API.md §4.0/§7)." +
+        detail,
     };
   }
 
@@ -311,6 +474,7 @@ export async function runLoginFlow(input: {
       accessToken: exchanged.accessToken,
       userId: exchanged.userId,
       name: exchanged.name,
+      refreshToken: exchanged.refreshToken,
     };
   }
   if (exchanged.status === "REJECTED") {

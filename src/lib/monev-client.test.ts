@@ -10,6 +10,7 @@ import {
   verifySession,
   buildCodeExchangeUrl,
   interpretCallbackResponse,
+  extractRefreshTokenFromSetCookies,
   startOAuthFlow,
   exchangeCodeForSession,
   OAUTH_CALLBACK_PATH,
@@ -151,6 +152,55 @@ describe("verifySession — §4.1 & §6", () => {
 
     const res = await verifySession("a.b.c");
     expect(res.status).toBe("ERROR");
+  });
+});
+
+describe("extractRefreshTokenFromSetCookies — §4.0 langkah 4", () => {
+  it("mengambil nilai monev_refresh_token dari Set-Cookie", () => {
+    const cookies = [
+      "acw_tc=abc; Path=/",
+      "monev_refresh_token=eyJhbGciOi.INITOKEN.zzz; Path=/; HttpOnly; Secure",
+    ];
+    expect(extractRefreshTokenFromSetCookies(cookies)).toBe(
+      "eyJhbGciOi.INITOKEN.zzz",
+    );
+  });
+
+  it("mengabaikan penghapusan cookie (nilai kosong)", () => {
+    const cookies = ["monev_refresh_token=; Path=/; Max-Age=0"];
+    expect(extractRefreshTokenFromSetCookies(cookies)).toBeUndefined();
+  });
+
+  it("mengembalikan undefined bila token tidak ada", () => {
+    expect(extractRefreshTokenFromSetCookies(["acw_tc=1"])).toBeUndefined();
+    expect(extractRefreshTokenFromSetCookies([])).toBeUndefined();
+  });
+});
+
+describe("interpretCallbackResponse — refresh token dari Set-Cookie", () => {
+  const okBody = JSON.stringify({
+    access_token: "ACCESS",
+    user_id: "u-1",
+    name: "Budi",
+  });
+
+  it("menyertakan refreshToken bila Set-Cookie memuatnya", () => {
+    const res = interpretCallbackResponse(200, okBody, [
+      "monev_refresh_token=REFRESH.JWT.VAL; Path=/",
+    ]);
+    expect(res.status).toBe("OK");
+    if (res.status === "OK") {
+      expect(res.accessToken).toBe("ACCESS");
+      expect(res.refreshToken).toBe("REFRESH.JWT.VAL");
+    }
+  });
+
+  it("refreshToken undefined bila Set-Cookie tidak memuatnya", () => {
+    const res = interpretCallbackResponse(200, okBody, ["acw_tc=1"]);
+    expect(res.status).toBe("OK");
+    if (res.status === "OK") {
+      expect(res.refreshToken).toBeUndefined();
+    }
   });
 });
 

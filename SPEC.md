@@ -158,7 +158,7 @@ Bentuk sistem:
 - Submit berupa HTTP request langsung ke API Monev dari dalam serverless
   function. Tidak ada Chromium, tidak ada proses yang selalu nyala.
 - Pemicu jadwal dari **cron eksternal gratis** (cron-job.org atau GitHub
-  Actions) yang memanggil `POST /api/cron/trigger`.
+  Actions) yang memanggil `GET /api/cron/submit?key=<webhookKey>`.
 
 **Biaya bulanan: Rp0.** Semua komponen memakai paket gratis.
 
@@ -223,11 +223,22 @@ Batasan: `Report` unik per `(userId, date)` — mencegah draf ganda.
 | Method | Endpoint | Deskripsi | Auth | Rate limit |
 | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/api/register` | Daftar akun baru (email + password) | Publik | **3/jam per IP** |
-| `POST` | `/api/cron/trigger` | Memicu submit untuk pemilik webhook | `Bearer <key>` | 10/menit per IP |
+| `GET` | `/api/cron/submit?key=<webhookKey>` | Memicu submit otomatis (dipanggil cron eksternal) | Query `key` | 30/5 menit per IP |
+| `GET/PUT` | `/api/automation` | Baca/simpan jadwal otomasi + webhook key | Cookie sesi | 20/menit |
 | `GET/POST` | `/api/auth/[...nextauth]` | Autentikasi (login/logout) | Publik / callback | **10/15 menit per IP** (login) |
 | `GET/PUT` | `/api/template` | Baca & simpan 3 template pengguna | Cookie sesi | 20/menit |
 | `POST` | `/api/reports/draft` | Buat draf dari template | Cookie sesi | 20/menit |
-| `POST` | `/api/reports/submit` | Kirim draf langsung ke Monev | Cookie sesi | 10/menit |
+| `POST` | `/api/reports/submit` | Kirim draf langsung ke Monev | Cookie sesi | 20/10 menit per pengguna |
+
+**Implementasi rate limit (Tahap 5):** kebijakan murni di `src/lib/rate-limit.ts`
+(jendela tetap, teruji dengan waktu disuntik), penyimpanan di
+`src/lib/rate-limit-store.ts` — **in-memory** secara default, atau **Upstash
+Redis** bila `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` diisi (akurat
+lintas instance Vercel). Penegakan terpusat di `src/lib/enforce-rate-limit.ts`;
+respons 429 menyertakan header `Retry-After` + `X-RateLimit-*`. Semua endpoint
+sensitif (login, register, submit manual, webhook cron, ubah kredensial) dijaga.
+Store mati → **fail open** (ketersediaan diutamakan; rate limit adalah lapisan
+pertahanan, bukan gerbang tunggal).
 
 **Dihapus:** `/api/github/commits` dan `/api/reports/generate` (yang dulu
 memanggil AI). Keduanya tidak lagi punya alasan untuk ada.
@@ -250,6 +261,13 @@ pendaftaran langsung aktif tanpa verifikasi email.
    SIAKAD yang tersimpan.
 4. **HTTPS wajib** di produksi; header keamanan (HSTS, `X-Frame-Options: DENY`,
    `nosniff`, `Referrer-Policy`) dipasang di `next.config`.
+   *Status: SELESAI.* `src/lib/security-headers.ts` (daftar header + CSP,
+   diuji) dipakai `next.config.ts` lewat `headers()`. **Diverifikasi nyata**
+   pada build produksi: `curl` melihat HSTS, CSP, `X-Frame-Options: DENY`,
+   `X-Content-Type-Options: nosniff`, `Referrer-Policy`,
+   `Permissions-Policy`; Playwright memastikan halaman login tetap render
+   **tanpa satu pun pelanggaran CSP di console**. HSTS hanya dikirim di
+   produksi (agar localhost http tetap bisa dikembangkan).
 5. **Validasi semua input** dengan Zod di server sebelum menyentuh DB.
 6. **Rate limit wajib** (bukan opsional) pada `/api/register`, login, webhook,
    dan template — mencegah pembuatan akun massal dan brute force. Karena
@@ -436,6 +454,44 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 
 
 | **5** | Audit log, rate limit, deploy Vercel + daftar cron eksternal | Siap dipakai publik |
+
+> **Status Tahap 5 (sebagian — sedang berjalan):**
+> - `src/lib/audit-log.ts` + `src/app/dashboard/history/page.tsx` — **riwayat
+>   audit log**: daftar 100 `SubmitLog` terbaru milik pengguna + ringkasan
+>   (total/terkirim/duplikat/gagal). Read-only (bukti, bukan editor).
+> - `src/lib/automation.ts` — aturan jadwal murni & teruji (`generateWebhookKey`,
+>   `isValidSchedule`, `minutesUntilNext`, `describeNextRun` — memakai
+>   `Intl` Asia/Jakarta, bukan zona server).
+> - `src/app/api/automation/route.ts` — GET/PUT `AutomationConfig`; `webhookKey`
+>   dibuat acak 32 byte saat pertama dan **dipertahankan** pada setiap update.
+> - `src/app/api/cron/submit/route.ts` — webhook cron **gated**: dijaga
+>   `?key=<webhookKey>` (401 generik bila salah), hormati `isEnabled` dan
+>   `ALLOW_LIVE_SUBMIT`, policy libur/akhir program diperiksa lebih dulu, semua
+>   percobaan dicatat dengan `trigger: CRON`.
+> - `src/app/dashboard/automation/page.tsx` + form — atur jam/menit, sakelar,
+>   dan salin URL webhook untuk cron-job.org.
+> - **Rate limit (SPEC §8/§10 poin 6) — SELESAI.** `src/lib/rate-limit.ts`
+>   (murni) + `rate-limit-store.ts` (in-memory / Upstash opsional) +
+>   `enforce-rate-limit.ts`; dipasang di login, register, submit manual, webhook
+>   cron, dan ubah kredensial. 20 tes baru; total 235 lulus.
+> - **Panduan cron eksternal — SELESAI.** `docs/CRON-SETUP.md`: langkah demi
+>   langkah cron-job.org / GitHub Actions / `crontab`, tabel arti respons,
+>   urutan uji aman, dan bagian pemecahan masalah.
+> - **Ekstraksi inti pengiriman — SELESAI.** `src/lib/perform-submit.ts`:
+>   `performSubmit()` menyatukan alur (kesiapan → token → tukar → kirim →
+>   catat) yang sebelumnya disalin di dua route. Bentuk respons HTTP tetap
+>   per-route (`manualResponse`/`cronResponse`) karena memang berbeda. 13 tes
+>   baru (mock jaringan/DB, offline); total 256 lulus.
+> - **Header keamanan — SELESAI.** `src/lib/security-headers.ts` dipakai
+>   `next.config.ts`; diverifikasi nyata (curl + Playwright, 0 pelanggaran CSP).
+> - **Jalur re-auth yang jelas — SELESAI (SPEC §397).** Dua celah ditutup:
+>   (1) `performSubmit` kini menandai kredensial `INVALID` saat `SESSION_DEAD`
+>   — sebelumnya hanya `POST /credentials/verify` yang melakukannya, jadi status
+>   di DB tetap `ACTIVE` walau token sudah mati; error jaringan **tidak**
+>   menandai (token belum terbukti buruk). (2) Tombol submit menampilkan tombol
+>   "Buka halaman kredensial", dan kartu dashboard menampilkan status nyata.
+>   +3 tes; total 259 lulus.
+> - **Belum:** deploy Vercel.
 
 **Rekomendasi:** mulai dari Tahap 1 saja. Buktikan jalan, baru lanjut.
 

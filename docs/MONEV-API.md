@@ -189,17 +189,78 @@ dilakukan tanpa browser dirangkai jadi satu di `src/lib/monev-login.ts`:
 | :-- | :-- | :-- |
 | `startOAuthFlow` (`monev-client`) | (1) `GET /auth/login` → `state` + URL SSO | ✅ |
 | `primeSsoSession` (`monev-login`) | (2) `GET account.kemnaker.go.id/auth` → `x-csrf-token` + cookie | ✅ |
-| `loginToSso` (`kemnaker-sso`) | (3) `POST .../auth/login` → `code` | ✅ |
-| `exchangeCodeForSession` (`monev-client`) | (4) `GET /callback?code=&state=` → `access_token` | ✅ |
-| **`runLoginFlow`** (`monev-login`) | **(1)→(2)→(3)→(4) sekaligus** | ✅ |
+| `loginToSso` (`kemnaker-sso`) | (3) `POST .../auth/login` → `authenticated` + `redirect_uri` | ✅ |
+| `catchOAuthCode` (`kemnaker-sso`) | (3b) **ikuti rantai redirect halaman SSO** → `code` dari `Location` | ✅ |
+| `exchangeCodeForSession` (`monev-client`) | (4) `GET /auth/login/callback?code=&state=` → `access_token` | ✅ |
+| **`runLoginFlow`** (`monev-login`) | **(1)→(2)→(3)→(3b)→(4) sekaligus** | ✅ |
 
 - `interpretSsoPrimeResponse` (murni) + `summarizeLoginStep` (murni) teruji tanpa
   jaringan; `runLoginFlow` memeriksa gerbang **sekali di muka** sehingga tanpa
   `confirmLivePortalRequest: true` **tidak ada** panggilan jaringan sama sekali
   (ditegakkan tes: `fetch` di-mock dan diperiksa `not.toHaveBeenCalled()`).
-- **Belum pernah dijalankan.** Sisa yang belum terekam: apakah `code` muncul di
-  `redirect_uri` respons login (langkah 3) atau perlu diambil dari `authorizeUrl`.
-  `runLoginFlow` menerima **keduanya** dan memberi `ERROR` jujur bila tak ketemu.
+- **⚠️ §4.6 mengoreksi asumsi lama:** `redirect_uri` yang dikembalikan
+  `POST /auth/login` (langkah 3) **BUKAN** callback Monev. Ia menunjuk
+  **halaman SSO** (`account.kemnaker.go.id/auth?...`) — `code` **tidak ada** di
+  sana. Karena itu langkah **(3b) WAJIB**: ikuti halaman SSO itu sampai `code`
+  muncul.
+- **🔴 BUG NYATA DITEMUKAN & DIPERBAIKI (langkah 3→3b):** `loginToSso` dahulu
+  **membuang `set-cookie`** dari respons `POST /auth/login` yang sukses (hanya
+  membaca `redirect_uri`). Akibatnya permintaan otorisasi (`authorizeUrl`) dikirim
+  dengan cookie **anonim** (`prime.cookies`) → SSO melihat kita belum login dan
+  membalas halaman SPA `3214` byte, **bukan** redirect `code`. Perbaikan:
+  `loginToSso` kini mengembalikan `setCookies`, dan `runLoginFlow` menggabungkannya
+  (`mergeCookieHeader`) dengan cookie priming sebelum `catchOAuthCode`. Inilah
+  kandidat utama penyebab `code` tak pernah terbit — sesi autentikasi tidak pernah
+  dibawa ke permintaan otorisasi.
+- **✅ (3b) TEREKAM & TERJAWAB (2026-09-28, trial live, DIREVISI FINAL):**
+  mengikuti halaman SSO **tidak pernah** menghasilkan `code` lewat HTTP.
+  Bukti berlapis dari beberapa jalankan:
+  - Rantai `3xx` **selalu berakhir** di `200` pada
+    `account.kemnaker.go.id`, **tanpa `code`** di `Location`, `res.url`, maupun
+    HTML tiap hop.
+  - Baik `authorizeUrl` (langkah 1) **maupun** `redirect_uri` (langkah 3)
+    berakhir di **halaman yang identik**: `body 3214 byte (ada-<script src>,
+    marker-framework)`. Dua target berbeda → halaman akhir sama persis ⇒ keduanya
+    sudah **konvergen**, bukan "salah URL".
+  - Halaman `3214`-byte itu **bukan** form login (`ada-form-password` tak ada),
+    bukan OTP, bukan `<meta refresh>` — ia **shell SPA**: HTML hanya memuat
+    `<script src>` + marker framework; isi sesungguhnya **dirakit JavaScript**.
+  - Rantai **tidak pernah menyeberang** ke host callback
+    (`monev.maganghub.kemnaker.go.id`) — selalu `→account.kemnaker.go.id`.
+  - **KESIMPULAN DEFINITIF:** `code` dihasilkan di **lapisan JS SPA**, **bukan**
+    lewat redirect/fetch HTTP. Karena itu mengikuti rantai `3xx` — berapa kali
+    pun, dengan target apa pun — **mustahil** menghasilkan `code`; ia selalu
+    menabrak dinding `200` SPA yang sama. Ini **batas arsitektur**, bukan bug
+    yang bisa diperbaiki dengan variasi HTTP.
+  - **Konsekuensi:** penangkapan `code` end-to-end **butuh eksekusi JS**
+    (mis. headless browser seperti Playwright) **atau** penangkapan manual dari
+    browser asli. Automasi murni-HTTP **tidak dapat** menyelesaikan langkah ini.
+- **🔧 Perbaikan yang tetap berlaku (tak sia-sia):**
+  - `catchOAuthCode` mengikuti rantai redirect (`redirect: "manual"`, maks 8 hop,
+    `maxHops` diatur), memeriksa `code` di **setiap** hop (`Location` → `res.url`
+    → body HTML), dan resolve `Location` relatif ke absolut.
+  - **Cookie jar antar-hop:** `set-cookie` tiap hop diserap & diteruskan ke hop
+    berikutnya (perilaku browser asli) — hop pertama `authorizeUrl` **terbukti**
+    men-set `kemnaker_ri_session`, jadi ini tetap benar meski bukan (lagi) alasan
+    kegagalan. (⚠️ Mengoreksi catatan lama yang menyebut cookie "tidak
+    diperlukan".)
+  - **Diagnostik aman diperkaya:** jejak hop `<status>@<host-asal>→<host-tujuan>`
+    plus **petunjuk halaman akhir** `describeHtmlHint` (panjang body + kategori:
+    `ada-form-password` / `ada-otp` / `nuansa-dashboard` / `ada-<script src>` /
+    `ada-mount-spa` / `marker-framework`) — inilah yang **membuktikan** sifat SPA.
+    Tetap **tanpa** nilai `code`/token/kredensial.
+  - `runLoginFlow` mencoba `authorizeUrl` (langkah 1) **lebih dulu**, lalu
+    `redirect_uri` (langkah 3) sebagai cadangan, dan menggabungkan jejak **kedua**
+    target di pesan galat.
+
+- **Bila `code` tetap tak ketemu**, pesan `ERROR` memuat diagnostik **aman**
+  berupa **jejak hop**: `[jejak hop: <status>@<host> -> <status>@<host>; set-cookie:
+  <nama-nama saja>]` — **tanpa** nilai `code`/token. Kirim jejak itu untuk
+  memastikan bentuk (3b), bukan menebak.
+- **✅ Rute callback (4):** `GET
+  /api/v1/auth/login/callback?code=<code>&state=<state>` (bukan `/sso/callback`
+  — `/sso/callback` adalah halaman *frontend* jembatan, tak pernah dimuat karena
+  `code` sudah ditangkap di (3b)). `access_token` dibaca dari **body JSON**.
 
 
 ### 4.1 `POST /api/v1/auth/refresh`
@@ -431,7 +492,7 @@ HTML challenge Cloudflare. `version.json` juga `200` tanpa cookie.
 - ✅ `SPEC.md` §6 "Direct REST API tanpa browser" **AMAN** dan bisa
   dijalankan dari server mana pun (termasuk serverless/Vercel).
 
-### Langkah SSO — ✅ TERJAWAB (2026-09-28)
+### Langkah SSO — ⚠️ SEBAGIAN TERJAWAB (2026-09-28, DIREVISI)
 
 Awalnya dikira "di luar jangkauan kita". Rekaman menunjukkan **SSO ternyata
 REST biasa** — `POST` JSON biasa ke `account.kemnaker.go.id`. Bukan form HTML,
@@ -442,10 +503,33 @@ POST https://account.kemnaker.go.id/auth/login
 content-type: application/json;charset=UTF-8
 origin:   https://account.kemnaker.go.id
 referer:  https://account.kemnaker.go.id/auth/login
-x-csrf-token: <token dari cookie/halaman>
+x-csrf-token: <token CSRF>     ← ASAL BELUM TEREKAM (lihat catatan)
 x-requested-with: XMLHttpRequest
 cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 ```
+
+> ⚠️ **KOREKSI — dari mana token CSRF diambil? (masih TERBUKA)**
+>
+> Versi dokumen sebelumnya menyiratkan `x-csrf-token` didapat dari **respons
+> `GET /auth`** (header). **Uji lapangan membuktikan itu SALAH:** header
+> respons `GET /auth` **tidak** memuat `x-csrf-token` → alur berhenti di
+> langkah (2) dengan pesan "token CSRF tidak ditemukan".
+>
+> Dugaan paling kuat sekarang: `GET /auth` mengembalikan **HTML**, dan token
+> ditanam di **markup** (`<meta name="csrf-token">`, `<input name="_csrf">`,
+> atau state JS) — persis seperti halaman login pada umumnya. Namun **bentuk
+> halaman ini BELUM direkam**, jadi ini masih dugaan.
+>
+> **Tindakan yang diperlukan:** rekam satu kali `GET /auth` (atau
+> `GET /auth?client_id=...&state=...`) → simpan **HTML lengkap** + seluruh
+> `set-cookie`. Dari situ tentukan asal token yang benar, lalu persempit
+> `extractCsrfTokenFromHtml` ke pola nyata dan hapus tebakan yang tak terpakai.
+>
+> **Status kode:** `primeSsoSession` kini (a) menembak **authorizeUrl lengkap**
+> dari langkah (1) — bukan `/auth` polos tanpa query — dan (b) memindai token
+> di **tiga sumber berurutan**: header `x-csrf-token` → cookie
+> `csrf_token`/`XSRF-TOKEN`/`_csrf` → **HTML body**. Ini tahan banting, tapi
+> **belum tervalidasi di portal sungguhan** sampai rekaman di atas ada.
 
 Body (JSON): dua field — **`username`** (email) dan **`password`**. Nilai
 sengaja **TIDAK dicatat** di dokumen ini.
@@ -456,8 +540,8 @@ sengaja **TIDAK dicatat** di dokumen ini.
 > - Password hanya hidup **terenkripsi** di DB (kolom `ciphertext`/`iv`/
 >   `authTag` — sama seperti sejak awal) dan **hanya didekripsi sesaat** untuk
 >   satu panggilan login.
-> - `x-csrf-token` + `kemnaker_ri_session` diperoleh dari **`GET /auth`**
->   (halaman login) lebih dulu; keduanya berumur pendek.
+> - `kemnaker_ri_session` diperoleh dari **`GET /auth`** (halaman login) lebih
+>   dulu; berumur pendek. Asal token CSRF **belum pasti** (lihat koreksi di atas).
 
 **Yang belum direkam:** respons sukses (`200`?) dan bagaimana `code` OAuth
 mengalir balik (`account.kemnaker.go.id` → `.../sso/callback?code=...`).
@@ -481,6 +565,33 @@ aktif dengan `confirmLivePortalRequest: true`. Pemilik tetap yang memutuskan
 risiko "password diamankan-server" sebelum mengaktifkannya.
 Menaruh password di server yang bisa didekripsi memang memperbesar tanggung
 jawab — karena itu tetap **opt-in**, bukan pengganti C1.
+
+> **Status implementasi (diperbarui 2):** **Opsi A SUDAH DIAKTIFKAN** sebagai
+> jalur utama, setelah pemilik memutuskan menerima risiko password terenkripsi
+> di server. Titik masuk: `POST /api/credentials/login`
+> (`src/app/api/credentials/login/route.ts`) — satu-satunya tempat yang
+> melewatkan `confirmLivePortalRequest: true`. Penyimpanan sesi:
+> `src/lib/credential-session.ts` (+ `credential-session-policy.ts` yang murni),
+> kolom `accessCiphertext`/`accessIv`/`accessAuthTag`/`accessExpiresAt` di
+> `maganghub_credentials` (terpisah dari kolom refresh token). Rate limit
+> `credentialsLogin`. UI: kartu "Hubungkan sesi Monev" di
+> `src/app/dashboard/credentials/page.tsx`. Opsi C1 (tempel token) tetap
+> tersedia sebagai cadangan.
+>
+> **Konsumsi access token (diperbarui):** jalur submit
+> (`src/lib/perform-submit.ts`) memakai access token tersimpan **langsung** bila
+> masih segar (`isAccessTokenFresh`, margin 1 menit) — melewati tukar refresh
+> token sepenuhnya. Bila access token tidak ada/kedaluwarsa, baru fallback ke
+> `exchangeRefreshForAccess(refreshToken)`. Artinya: meski portal **tidak**
+> mengirim refresh token, sesi login otomatis tetap bisa dipakai untuk submit
+> selama ±6 jam.
+>
+> **Yang MASIH belum diuji ke portal sungguhan:** (a) apakah `code` OAuth
+> muncul di `redirect_uri` respons login SSO; (b) apakah callback
+> `GET /api/v1/auth/login/callback` mengirim `monev_refresh_token` via
+> Set-Cookie. Kode menerima kedua kemungkinan: bila `code` tak ketemu → `ERROR`
+> jujur; bila refresh token tak ada → hanya access token yang disimpan.
+> Perlu diuji pemilik akun sekali untuk menutup celah ini.
 
 **Catatan soal `fingerprint`:** JWT refresh token memuat klaim
 `fingerprint` (hash). **Belum diketahui** apakah server memvalidasi

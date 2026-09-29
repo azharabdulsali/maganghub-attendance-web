@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
+import { prisma } from "@/lib/prisma";
 import SignOutButton from "./sign-out-button";
 import SubmitReportButton from "./submit-report-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,15 @@ export default async function DashboardPage() {
 
   const role = (session.user as { role?: string }).role ?? "USER";
   const isAdmin = role === "ADMIN";
+
+  // Status kredensial nyata — supaya kartu ini jujur saat sesi Monev mati,
+  // bukan selalu menyuruh "Atur kredensial" walau semuanya sehat.
+  const credential = await prisma.maganghubCredential.findUnique({
+    where: { userId: session.user.id },
+    select: { status: true, tokenCiphertext: true, emailMonev: true },
+  });
+  const punyaToken = Boolean(credential?.tokenCiphertext);
+  const perluPerhatian = credential?.status === "INVALID";
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-12">
@@ -52,17 +62,43 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Card className="mb-6">
+      <Card className={`mb-6 ${perluPerhatian ? "border-2 border-destructive" : ""}`}>
         <CardHeader>
           <CardTitle>Kredensial Monev</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-foreground/70">
-            Simpan email &amp; password portal Maganghub untuk absensi otomatis.
-            Password disimpan terenkripsi.
-          </p>
-          <Button render={<Link href="/dashboard/credentials" />}>
-            Atur kredensial
+          {!credential ? (
+            <p className="text-sm text-foreground/70">
+              Belum ada kredensial. Simpan email &amp; password portal Maganghub
+              untuk absensi otomatis. Password disimpan terenkripsi.
+            </p>
+          ) : perluPerhatian ? (
+            <p className="text-sm text-foreground/80">
+              <strong className="font-heading">Sesi Monev tidak valid.</strong>{" "}
+              Login ulang di portal, lalu tempel token baru agar absensi otomatis
+              bisa jalan lagi. Tersimpan: {credential.emailMonev}.
+            </p>
+          ) : punyaToken ? (
+            <p className="text-sm text-foreground/70">
+              Kredensial tersimpan untuk {credential.emailMonev}, token Monev sudah
+              ada. Siap mengirim.
+            </p>
+          ) : (
+            <p className="text-sm text-foreground/70">
+              Kredensial tersimpan untuk {credential.emailMonev}, tetapi{" "}
+              <strong className="font-heading">token Monev belum ada</strong> —
+              pengiriman belum bisa jalan sampai token ditempel.
+            </p>
+          )}
+          <Button
+            variant={perluPerhatian ? "default" : "neutral"}
+            render={<Link href="/dashboard/credentials" />}
+          >
+            {perluPerhatian
+              ? "Perbarui token"
+              : credential
+                ? "Perbarui kredensial"
+                : "Atur kredensial"}
           </Button>
         </CardContent>
       </Card>
@@ -93,6 +129,24 @@ export default async function DashboardPage() {
             otomatis dilewati.
           </p>
           <SubmitReportButton />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Otomasi Absensi</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-foreground/70">
+            Minta layanan cron menembak webhook tiap hari pada jam pilihan Anda.
+            Hari libur &amp; akhir program tetap dilewati otomatis.
+          </p>
+          <Button
+            variant="neutral"
+            render={<Link href="/dashboard/automation" />}
+          >
+            Atur otomasi
+          </Button>
         </CardContent>
       </Card>
 
@@ -136,20 +190,16 @@ export default async function DashboardPage() {
 
       <Card className="mb-6 border-dashed">
         <CardHeader>
-          <CardTitle>Tahap 1 selesai — fondasi siap</CardTitle>
+          <CardTitle>Status proyek</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="mb-4 text-sm text-foreground/70">
-            Login, sesi, dan database sudah bekerja. Fitur absensi menyusul pada
-            tahap berikutnya.
-          </p>
           <ol className="space-y-1 text-sm text-foreground/70">
-            <li>✅ Skema database tersinkron ke Neon</li>
-            <li>✅ Tampilan neobrutalism (responsif tablet &amp; HP)</li>
+            <li>✅ Login, sesi, dan database (Tahap 1)</li>
             <li>✅ Simpan kredensial Monev (Tahap 2)</li>
             <li>✅ Isi 3 template laporan (Tahap 2–3)</li>
             <li>✅ Kirim absensi ke portal (Tahap 4)</li>
-            <li>✅ Riwayat audit log submit (Tahap 5)</li>
+            <li>✅ Riwayat audit log + otomasi webhook cron (Tahap 5)</li>
+            <li>⏳ Belum: deploy Vercel</li>
           </ol>
         </CardContent>
       </Card>

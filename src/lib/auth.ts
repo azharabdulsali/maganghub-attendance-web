@@ -10,10 +10,13 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
+import { headers } from "next/headers";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { env, isAdminEmail } from "@/lib/env";
+import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -37,6 +40,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+
+        // Rate limit per IP untuk mencegah brute force. Dipasang SEBELUM
+        // menyentuh DB/auth supaya percobaan berulang tak membebani server.
+        // `headers()` memberi IP dari proxy (Vercel: x-forwarded-for).
+        let limitKey = "unknown";
+        try {
+          const h = await headers();
+          limitKey = clientIpFromHeaders((name) => h.get(name));
+        } catch {
+          // Di luar konteks request (mis. pemanggilan internal) — pakai default.
+        }
+
+        const gate = await enforceRateLimit(
+          "login",
+          rateLimitKey("login", limitKey),
+        );
+        if (!gate.decision.allowed) return null;
 
         const user = await prisma.user.findUnique({
           where: { email: email.trim().toLowerCase() },

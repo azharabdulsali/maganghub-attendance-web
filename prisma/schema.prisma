@@ -128,6 +128,16 @@ model MaganghubCredential {
   tokenCiphertext String?
   tokenIv         String?
   tokenAuthTag    String?
+  // Access token hasil login otomatis (Opsi A). Berumur pendek (6 jam), jadi
+  // disimpan terpisah dari refresh token (30 hari). Diisi oleh
+  // `POST /api/credentials/login`; kalau kosong, `access_token` akan
+  // diterbitkan ulang saat dibutuhkan. Terenkripsi AES-256-GCM sama seperti
+  // password. Boleh NULL: pengguna yang menempel refresh token manual tidak
+  // punya access token tersimpan sampai login otomatis dijalankan.
+  accessCiphertext String?
+  accessIv         String?
+  accessAuthTag    String?
+  accessExpiresAt  DateTime?
   status     CredentialStatus @default(UNVERIFIED)
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt

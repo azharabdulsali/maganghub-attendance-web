@@ -12,6 +12,8 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { env, isAdminEmail } from "@/lib/env";
+import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 
 const BCRYPT_COST = 12;
 
@@ -24,49 +26,19 @@ const registerSchema = z.object({
     .max(200, "Password terlalu panjang"),
 });
 
-// Rate limit sederhana berbasis memori.
-// Cukup untuk melindungi dari pembuatan akun massal pada skala kecil.
-// Catatan: di Vercel, memori bisa di-reset antar invocation — lihat §9 poin 6
-// dan §15. Kalau penyalahgunaan mulai terlihat, ganti ke Upstash Redis.
-const attempts = new Map<string, { count: number; resetAt: number }>();
-const WINDOW_MS = 60 * 60 * 1000; // 1 jam
-const MAX_PER_WINDOW = 3;
-
-function rateLimit(ip: string): { ok: boolean; retryAfterSec: number } {
-  const now = Date.now();
-  const entry = attempts.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return { ok: true, retryAfterSec: 0 };
-  }
-
-  if (entry.count >= MAX_PER_WINDOW) {
-    return {
-      ok: false,
-      retryAfterSec: Math.ceil((entry.resetAt - now) / 1000),
-    };
-  }
-
-  entry.count += 1;
-  return { ok: true, retryAfterSec: 0 };
-}
-
 export async function POST(request: Request) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
-
-  const limit = rateLimit(ip);
-  if (!limit.ok) {
+  // Rate limit 3 pendaftaran/jam per IP (SPEC.md §8) — memakai modul bersama
+  // (rate-limit.ts) agar aturannya satu sumber kebenaran dengan endpoint lain.
+  const ip = clientIpFromHeaders((name) => request.headers.get(name));
+  const gate = await enforceRateLimit("register", rateLimitKey("register", ip));
+  if (!gate.decision.allowed) {
     return NextResponse.json(
       {
         error: `Terlalu banyak pendaftaran. Coba lagi dalam ${Math.ceil(
-          limit.retryAfterSec / 60,
+          gate.decision.retryAfterSeconds / 60,
         )} menit.`,
       },
-      { status: 429 },
+      { status: 429, headers: gate.headers },
     );
   }
 

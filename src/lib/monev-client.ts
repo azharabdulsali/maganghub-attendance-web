@@ -223,6 +223,13 @@ export type CodeExchangeResult =
       accessToken: string;
       userId?: string;
       name?: string;
+      /**
+       * Cookie `monev_refresh_token` bila portal mengirimkannya (Set-Cookie).
+       * ⚠️ Belum terverifikasi apakah callback memang mengirimnya — kalau ada,
+       * ini sesi 30 hari yang jauh lebih tahan lama daripada access token
+       * (6 jam), sehingga layak disimpan.
+       */
+      refreshToken?: string;
     }
   | { status: "REJECTED"; httpCode: number; message: string }
   | { status: "ERROR"; message: string };
@@ -231,10 +238,15 @@ export type CodeExchangeResult =
  * Tafsirkan respons `GET /api/v1/auth/login/callback` — MURNI, tanpa jaringan.
  * `200 { "access_token", "user_id", "name" }` (§4.0 langkah 4). Bila `200`
  * tanpa `access_token` → `ERROR`, bukan `OK` palsu.
+ *
+ * @param setCookies  header Set-Cookie mentah (opsional). Bila memuat
+ *   `monev_refresh_token`, nilainya ikut dikembalikan supaya bisa disimpan
+ *   sebagai sesi panjang. Ini MURNI: tidak menyentuh jaringan.
  */
 export function interpretCallbackResponse(
   httpCode: number,
   bodyText: string,
+  setCookies: string[] = [],
 ): CodeExchangeResult {
   if (httpCode < 200 || httpCode >= 300) {
     return {
@@ -259,8 +271,8 @@ export function interpretCallbackResponse(
     return {
       status: "ERROR",
       message:
-        "Respons 200 tetapi tanpa 'access_token'. Bentuk respons perlu " +
-        "direkam ulang (docs/MONEV-API.md §4.0 langkah 4).",
+        `Respons HTTP ${httpCode} tetapi tanpa 'access_token'. Bentuk respons ` +
+        "perlu direkam ulang (docs/MONEV-API.md §4.0 langkah 4).",
     };
   }
   return {
@@ -269,7 +281,28 @@ export function interpretCallbackResponse(
     accessToken,
     userId: typeof rec?.user_id === "string" ? rec.user_id : undefined,
     name: typeof rec?.name === "string" ? rec.name : undefined,
+    refreshToken: extractRefreshTokenFromSetCookies(setCookies),
   };
+}
+
+/**
+ * Ambil nilai `monev_refresh_token` dari daftar header Set-Cookie mentah.
+ * MURNI. Mengembalikan `undefined` bila tidak ada — itu bukan error, hanya
+ * berarti portal tidak memperbarui sesi panjang lewat callback ini.
+ */
+export function extractRefreshTokenFromSetCookies(
+  setCookies: string[],
+): string | undefined {
+  for (const raw of setCookies) {
+    // Cocokkan "monev_refresh_token=<nilai>" di awal salah satu cookie.
+    const m = /(?:^|;\s*)monev_refresh_token=([^;]*)/.exec(raw.trim());
+    if (m) {
+      const value = m[1].trim();
+      // Cookie kosong (Max-Age=0) = penghapusan, bukan token baru.
+      if (value.length > 0) return value;
+    }
+  }
+  return undefined;
 }
 
 /** Hasil mulai OAuth (langkah 1). */
@@ -429,7 +462,13 @@ export async function exchangeCodeForSession(
     );
 
     const text = await res.text().catch(() => "");
-    return interpretCallbackResponse(res.status, text);
+    // Cookie bisa memuat `monev_refresh_token` (sesi 30 hari). Ambil bila ada;
+    // kalau tidak, tak apa — access token tetap berguna.
+    const setCookies =
+      typeof res.headers.getSetCookie === "function"
+        ? res.headers.getSetCookie()
+        : [];
+    return interpretCallbackResponse(res.status, text, setCookies);
   } catch (err) {
     const message =
       err instanceof Error && err.name === "AbortError"

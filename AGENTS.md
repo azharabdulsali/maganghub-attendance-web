@@ -176,6 +176,33 @@ maganghub-attendance-web/
 - Periksa otorisasi **sebelum** parsing body (sudah diterapkan) — supaya
   penyerang tanpa sesi tidak bisa membedakan respons.
 
+### Login otomatis ke Monev (Opsi A) — jalur utama
+- Pengguna cukup isi email+password Monev sekali; server yang login ke SSO
+  memakai kredensial tersimpan, lalu menyimpan **access token** (6 jam) dan —
+  bila portal mengirimkannya — **refresh token** (30 hari). Semua terenkripsi.
+- Endpoint: `POST /api/credentials/login` (`src/app/api/credentials/login/route.ts`).
+  Ini **satu-satunya** tempat yang sengaja mengaktifkan
+  `confirmLivePortalRequest: true`. Jangan tambah tempat lain.
+- Penyimpanan sesi: `src/lib/credential-session.ts` (menyentuh DB) +
+  `src/lib/credential-session-policy.ts` (murni & teruji: `ACCESS_TTL_MS` = 6
+  jam, `isAccessTokenFresh`). Kolom DB:
+  `accessCiphertext`/`accessIv`/`accessAuthTag`/`accessExpiresAt` — TERPISAH
+  dari kolom refresh token (`tokenCiphertext`/…).
+- **Konsumsi di jalur submit** (`src/lib/perform-submit.ts`): bila access
+  token tersimpan masih **segar** (`isAccessTokenFresh`, margin 1 menit),
+  kirim **langsung** memakainya — tanpa menukar refresh token. Bila tidak
+  segar, baru fallback ke `exchangeRefreshForAccess(refreshToken)`. Karena itu
+  `SubmitCredential` memuat kolom access token, dan **kedua** pemanggil
+  (`reports/submit`, `cron/submit`) wajib meng-`select`-nya.
+- Rate limit scope `credentialsLogin` (6 / 10 menit) — tiap percobaan
+  mengirim kredensial ke portal sungguhan.
+- **Cadangan**: tempel `monev_refresh_token` manual (`POST /api/credentials/verify`)
+  tetap ada bila login otomatis tidak berhasil.
+- ⚠️ **Belum diuji ke portal sungguhan.** Yang masih perlu dipastikan pemilik
+  akun: apakah `code` muncul di `redirect_uri` respons login, dan apakah
+  callback mengirim `monev_refresh_token` lewat Set-Cookie. Kode sudah jujur
+  memberi `ERROR`/menyimpan apa adanya bila bentuknya berbeda.
+
 
 ---
 

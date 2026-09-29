@@ -63,6 +63,58 @@ export default function CredentialsForm({
   >("idle");
   const [tokenLoading, setTokenLoading] = useState(false);
 
+  // --- Login otomatis (Opsi A — docs/MONEV-API.md §7) ---
+  const [loginMsg, setLoginMsg] = useState<string | null>(null);
+  const [loginState, setLoginState] = useState<
+    "idle" | "ok" | "rejected" | "error"
+  >("idle");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  async function loginOtomatis() {
+    setLoginMsg(null);
+    setLoginState("idle");
+    setLoginLoading(true);
+
+    try {
+      const res = await fetch("/api/credentials/login", { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as {
+        status?: string;
+        message?: string;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        setLoginState("error");
+        setLoginMsg(data.error ?? "Login otomatis gagal dijalankan.");
+        return;
+      }
+
+      if (data.status === "ACTIVE") {
+        setLoginState("ok");
+        setLoginMsg(data.message ?? "Login otomatis berhasil.");
+        router.refresh();
+      } else if (data.status === "REJECTED") {
+        setLoginState("rejected");
+        setLoginMsg(
+          data.message ??
+            "Portal menolak login. Periksa email & password Monev Anda.",
+        );
+        router.refresh();
+      } else {
+        setLoginState("error");
+        setLoginMsg(
+          data.message ??
+            "Login otomatis belum bisa memastikan hasilnya. Coba lagi, atau pakai tempel token.",
+        );
+      }
+    } catch {
+      setLoginState("error");
+      setLoginMsg("Tidak dapat menghubungi server. Periksa koneksi Anda.");
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
   async function tesKoneksi(denganToken: boolean) {
     setTokenMsg(null);
     setTokenState("idle");
@@ -283,14 +335,54 @@ export default function CredentialsForm({
         </Card>
       )}
 
+      {/* Login otomatis — jalur utama (Opsi A, docs/MONEV-API.md §7). Server
+          yang login ke SSO memakai kredensial tersimpan; pengguna tidak perlu
+          menyentuh DevTools. Hanya menyimpan sesi, tidak mengirim laporan. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Hubungkan sesi Monev</CardTitle>
+          <CardDescription>
+            Cara mudah: cukup klik tombol di bawah. Kami akan login ke portal
+            memakai email &amp; password yang tersimpan, lalu menyimpan sesinya
+            secara terenkripsi. Tidak ada laporan yang dikirim.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button onClick={loginOtomatis} disabled={loginLoading || !hasExisting}>
+            {loginLoading ? "Menghubungkan..." : "Login otomatis"}
+          </Button>
+
+          {!hasExisting && (
+            <p className="text-xs text-foreground/70">
+              Isi email &amp; password Monev terlebih dahulu di kartu atas,
+              lalu kembali ke sini.
+            </p>
+          )}
+
+          {loginMsg && (
+            <p
+              className={
+                "rounded-base border-2 border-border px-3 py-2 text-sm " +
+                (loginState === "ok"
+                  ? "bg-main text-main-foreground"
+                  : "bg-background text-foreground")
+              }
+            >
+              {loginMsg}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Tes Koneksi — docs/MONEV-API.md §6. Hanya memeriksa sesi, tidak pernah
           mengirim laporan (SPEC.md §10). */}
       <Card>
         <CardHeader>
-          <CardTitle>Tes Koneksi ke portal Monev</CardTitle>
+          <CardTitle>Cara cadangan: tempel token sesi</CardTitle>
           <CardDescription>
-            Tempel token sesi dari portal. Kami hanya memeriksa apakah sesi
-            masih hidup — tidak ada laporan yang dikirim.
+            Pakai ini bila login otomatis tidak berhasil. Tempel token sesi
+            dari portal — kami hanya memeriksa apakah sesi masih hidup, tidak
+            ada laporan yang dikirim.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

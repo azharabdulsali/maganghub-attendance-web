@@ -7,6 +7,7 @@
 // tidak bisa memilih hari yang salah karena jam perangkat.
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
@@ -17,25 +18,36 @@ type Hasil = {
   date?: string;
 };
 
+/**
+ * Kode status yang berarti "token Monev perlu diganti" — pengguna harus pergi
+ * ke halaman kredensial dan menempel token baru. SPEC.md §397 mewajibkan jalur
+ * re-auth yang jelas, bukan sekadar teks error mentah.
+ */
+const BUTUH_TOKEN_BARU = new Set(["SESSION_DEAD", "INVALID", "TOKEN_UNREADABLE"]);
+
 export default function SubmitReportButton() {
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [butuhToken, setButuhToken] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function kirim() {
     setError(null);
     setHasil(null);
+    setButuhToken(false);
     setLoading(true);
     try {
       const res = await fetch("/api/reports/submit", { method: "POST" });
       const data = (await res.json().catch(() => ({}))) as Partial<Hasil> & {
         error?: string;
+        status?: string;
       };
       if (!res.ok) {
         setError(data.error ?? data.message ?? "Pengiriman gagal.");
         return;
       }
       setHasil(data as Hasil);
+      setButuhToken(BUTUH_TOKEN_BARU.has(data.status ?? ""));
     } catch {
       setError("Tidak dapat menghubungi server.");
     } finally {
@@ -63,6 +75,15 @@ export default function SubmitReportButton() {
             <p className="mt-1 text-xs text-foreground/60">
               Tanggal target: {hasil.date}
             </p>
+          )}
+          {/* Jalur re-auth yang jelas (SPEC.md §397) — bukan sekadar pesan error. */}
+          {butuhToken && (
+            <Button
+              className="mt-3"
+              render={<Link href="/dashboard/credentials" />}
+            >
+              Buka halaman kredensial
+            </Button>
           )}
         </div>
       )}
