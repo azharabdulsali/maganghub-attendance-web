@@ -12,9 +12,13 @@
 //     di layar tidak mungkin berbeda dari yang divalidasi server.
 
 import { useMemo, useState } from "react";
+import { CircleCheck, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Message } from "@/components/ui/message";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 import {
   MIN_REPORT_LENGTH,
   MAX_REPORT_LENGTH,
@@ -67,6 +71,8 @@ export default function ReportTemplatesForm({
   const [serverError, setServerError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(updatedAt);
   const [exists, setExists] = useState(hasExisting);
+  const [confirmHapusOpen, setConfirmHapusOpen] = useState(false);
+  const toast = useToast();
 
   // Hitung status tiap kolom sekali per perubahan isi.
   const status = useMemo(() => {
@@ -110,6 +116,7 @@ export default function ReportTemplatesForm({
 
       setExists(true);
       setSavedAt(data.updatedAt ?? new Date().toISOString());
+      toast.success("Template tersimpan", "Absensi otomatis memakai isi terbaru.");
     } catch {
       setServerError("Tidak bisa menghubungi server. Periksa koneksi Anda.");
     } finally {
@@ -119,11 +126,6 @@ export default function ReportTemplatesForm({
 
   async function hapus() {
     if (deleting) return;
-    // Penghapusan tidak bisa dibatalkan, jadi minta konfirmasi lebih dulu.
-    const yakin = window.confirm(
-      "Hapus ketiga template? Absensi otomatis tidak bisa jalan tanpa template.",
-    );
-    if (!yakin) return;
 
     setDeleting(true);
     setServerError(null);
@@ -133,15 +135,20 @@ export default function ReportTemplatesForm({
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setServerError(data.error ?? "Gagal menghapus. Coba lagi.");
+        const pesan = data.error ?? "Gagal menghapus. Coba lagi.";
+        setServerError(pesan);
+        toast.error("Gagal menghapus template", pesan);
         return;
       }
 
       setValues({ activity: "", learning: "", obstacles: "" });
       setExists(false);
       setSavedAt(null);
+      toast.success("Template dihapus", "Isi template sudah dikosongkan.");
     } catch {
-      setServerError("Tidak bisa menghubungi server. Periksa koneksi Anda.");
+      const pesan = "Tidak bisa menghubungi server. Periksa koneksi Anda.";
+      setServerError(pesan);
+      toast.error("Gagal menghapus template", pesan);
     } finally {
       setDeleting(false);
     }
@@ -151,16 +158,22 @@ export default function ReportTemplatesForm({
     <div className="flex flex-col gap-6">
       {/* Ringkasan status penyimpanan */}
       <div className="border-2 border-border bg-secondary-background px-4 py-3 shadow-shadow">
-        <p className="text-sm">
+        <p className="flex items-center gap-2 text-sm">
           {exists ? (
             <>
-              ✅ Template tersimpan
-              {savedAt
-                ? ` — terakhir diubah ${new Date(savedAt).toLocaleString("id-ID")}`
-                : null}
+              <CircleCheck className="size-4 shrink-0 text-emerald-600" aria-hidden />
+              <span>
+                Template tersimpan
+                {savedAt
+                  ? ` — terakhir diubah ${new Date(savedAt).toLocaleString("id-ID")}`
+                  : null}
+              </span>
             </>
           ) : (
-            <>⚠️ Belum ada template tersimpan</>
+            <>
+              <TriangleAlert className="size-4 shrink-0 text-amber-600" aria-hidden />
+              <span>Belum ada template tersimpan</span>
+            </>
           )}
         </p>
       </div>
@@ -195,12 +208,20 @@ export default function ReportTemplatesForm({
             />
 
             <div className="flex items-center justify-between gap-2 text-xs">
-              <span className={warna}>
-                {s.panjang === 0
-                  ? `Minimal ${MIN_REPORT_LENGTH} karakter`
-                  : s.error
-                    ? s.error
-                    : "✓ Sudah memenuhi syarat"}
+              <span className={`flex items-center gap-1 ${warna}`}>
+                {s.panjang === 0 ? (
+                  `Minimal ${MIN_REPORT_LENGTH} karakter`
+                ) : s.error ? (
+                  <>
+                    <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
+                    {s.error}
+                  </>
+                ) : (
+                  <>
+                    <CircleCheck className="size-3.5 shrink-0" aria-hidden />
+                    Sudah memenuhi syarat
+                  </>
+                )}
               </span>
               <span className="tabular-nums text-foreground/60">
                 {s.panjang}/{MIN_REPORT_LENGTH}
@@ -211,11 +232,7 @@ export default function ReportTemplatesForm({
         );
       })}
 
-      {serverError ? (
-        <div className="border-2 border-border bg-red-100 px-4 py-3 shadow-shadow">
-          <p className="text-sm text-red-800">{serverError}</p>
-        </div>
-      ) : null}
+      {serverError ? <Message tone="bad">{serverError}</Message> : null}
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button
@@ -231,7 +248,11 @@ export default function ReportTemplatesForm({
         </Button>
 
         {exists ? (
-          <Button onClick={hapus} disabled={saving || deleting} variant="neutral">
+          <Button
+            onClick={() => setConfirmHapusOpen(true)}
+            disabled={saving || deleting}
+            variant="neutral"
+          >
             {deleting ? "Menghapus..." : "Hapus"}
           </Button>
         ) : null}
@@ -243,6 +264,15 @@ export default function ReportTemplatesForm({
           {MIN_REPORT_LENGTH} karakter.
         </p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmHapusOpen}
+        onOpenChange={setConfirmHapusOpen}
+        title="Hapus ketiga template?"
+        description="Tindakan ini tidak bisa dibatalkan. Tanpa template, absensi otomatis tidak bisa dijalankan."
+        confirmLabel="Hapus template"
+        onConfirm={() => void hapus()}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
+import { useToast } from "@/components/ui/toast";
 import {
   Card,
   CardContent,
@@ -35,6 +36,7 @@ type Hasil = {
 };
 
 export default function AnalyzeCaptureForm() {
+  const toast = useToast();
   const [raw, setRaw] = useState("");
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,12 +56,20 @@ export default function AnalyzeCaptureForm() {
         error?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? "Analisis gagal.");
+        const pesan = data.error ?? "Analisis gagal.";
+        setError(pesan);
+        toast.error("Analisis gagal", pesan);
         return;
       }
       setHasil(data as Hasil);
+      toast.success(
+        "Analisis selesai",
+        `${(data as Hasil).candidates.length} kandidat ditemukan.`,
+      );
     } catch {
-      setError("Tidak dapat menghubungi server.");
+      const pesan = "Tidak dapat menghubungi server.";
+      setError(pesan);
+      toast.error("Analisis gagal", pesan);
     } finally {
       setLoading(false);
     }

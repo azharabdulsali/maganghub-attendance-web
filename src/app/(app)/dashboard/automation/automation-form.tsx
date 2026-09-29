@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
+import { useToast } from "@/components/ui/toast";
 import {
   Card,
   CardContent,
@@ -32,6 +33,7 @@ export default function AutomationForm({
   initialWebhookKey,
 }: Props) {
   const router = useRouter();
+  const toast = useToast();
 
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
   const [hour, setHour] = useState(String(initialHour));
@@ -78,15 +80,25 @@ export default function AutomationForm({
       };
 
       if (!res.ok) {
-        setError(data.error ?? "Gagal menyimpan pengaturan.");
+        const pesan = data.error ?? "Gagal menyimpan pengaturan.";
+        setError(pesan);
+        toast.error("Gagal menyimpan otomasi", pesan);
         return;
       }
 
       if (data.webhookKey) setWebhookKey(data.webhookKey);
       setSukses("Pengaturan otomasi tersimpan.");
+      toast.success(
+        "Otomasi tersimpan",
+        isEnabled
+          ? "Absensi otomatis akan dikirim sesuai jadwal."
+          : "Sementara dimatikan — tidak ada pengiriman otomatis.",
+      );
       router.refresh();
     } catch {
-      setError("Tidak dapat menghubungi server. Periksa koneksi Anda.");
+      const pesan = "Tidak dapat menghubungi server. Periksa koneksi Anda.";
+      setError(pesan);
+      toast.error("Gagal menyimpan otomasi", pesan);
     } finally {
       setLoading(false);
     }
@@ -97,9 +109,12 @@ export default function AutomationForm({
     try {
       await navigator.clipboard.writeText(webhookUrl);
       setTersalin(true);
+      toast.success("URL webhook tersalin", "Tempel ke layanan cron Anda.");
       setTimeout(() => setTersalin(false), 2000);
     } catch {
-      setError("Tidak bisa menyalin otomatis. Salin tautan secara manual.");
+      const pesan = "Tidak bisa menyalin otomatis. Salin tautan secara manual.";
+      setError(pesan);
+      toast.error("Gagal menyalin URL", pesan);
     }
   }
 

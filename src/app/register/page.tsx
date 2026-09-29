@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Message } from "@/components/ui/message";
 import {
   Card,
   CardContent,
@@ -99,11 +100,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            {error && (
-              <p className="rounded-base border-2 border-border bg-background px-3 py-2 text-sm font-base text-foreground">
-                {error}
-              </p>
-            )}
+            {error && <Message tone="bad">{error}</Message>}
 
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Memproses..." : "Daftar"}

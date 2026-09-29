@@ -11,6 +11,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Message } from "@/components/ui/message";
+import { useToast } from "@/components/ui/toast";
 
 const MAX_NAME = 80;
 
@@ -19,6 +21,7 @@ export default function ProfileForm({ initialName }: { initialName: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const toast = useToast();
 
   const terlaluPanjang = name.trim().length > MAX_NAME;
   const berubah = name.trim() !== initialName.trim();
@@ -37,12 +40,17 @@ export default function ProfileForm({ initialName }: { initialName: string }) {
         | { error?: string }
         | null;
       if (!res.ok) {
-        setError(data?.error ?? "Gagal menyimpan profil");
+        const pesan = data?.error ?? "Gagal menyimpan profil";
+        setError(pesan);
+        toast.error("Gagal menyimpan profil", pesan);
         return;
       }
       setSaved(true);
+      toast.success("Profil tersimpan", "Nama tampilan Anda diperbarui.");
     } catch {
-      setError("Tidak bisa menghubungi server. Coba lagi.");
+      const pesan = "Tidak bisa menghubungi server. Coba lagi.";
+      setError(pesan);
+      toast.error("Gagal menyimpan profil", pesan);
     } finally {
       setSaving(false);
     }
@@ -78,10 +86,8 @@ export default function ProfileForm({ initialName }: { initialName: string }) {
           Nama maksimal {MAX_NAME} karakter.
         </p>
       )}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      {saved && (
-        <p className="text-sm text-foreground/80">✅ Profil tersimpan.</p>
-      )}
+      {error && <Message tone="bad">{error}</Message>}
+      {saved && <Message tone="good">Profil tersimpan.</Message>}
 
       <div>
         <Button type="submit" disabled={saving || terlaluPanjang || !berubah}>

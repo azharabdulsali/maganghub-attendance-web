@@ -26,7 +26,6 @@ import {
   Clock,
   KeyRound,
   LayoutDashboard,
-  LogOut,
   Menu,
   ShieldAlert,
   Sparkles,
@@ -37,7 +36,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { signOutAction } from "@/components/sign-out-action";
+import { SignOutButton } from "@/components/sign-out-button";
 
 type SidebarUser = {
   name: string | null;
@@ -157,17 +156,7 @@ function SidebarContent({
         >
           {user.role}
         </span>
-        <form action={signOutAction} className="mt-3">
-          <Button
-            type="submit"
-            variant="neutral"
-            size="sm"
-            className="w-full justify-center"
-          >
-            <LogOut className="size-4" />
-            Keluar
-          </Button>
-        </form>
+        <SignOutButton />
       </div>
     </div>
   );

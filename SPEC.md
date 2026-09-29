@@ -305,6 +305,57 @@ sekali di `src/lib/admin.ts` dan dipakai oleh `<Badge>`, `<Message>`, dan
 > `src/components/ui/badge.test.ts` (tanpa DOM) supaya pemetaan nada tidak
 > berubah tanpa sengaja.
 
+### 5.11 Umpan balik aksi: dialog konfirmasi & toast
+
+Dua mekanisme untuk menjawab "apakah klik saya berhasil?" — keduanya sengaja
+dibangun di atas **Base UI** (sudah jadi dependensi), bukan ditulis dari nol:
+fokus, tombol Esc, dan atribut ARIA jangan dibuat sendiri kalau sudah ada.
+
+- **`src/components/ui/confirm-dialog.tsx` — `<ConfirmDialog>`.** Pengganti
+  `window.confirm` untuk aksi yang tidak bisa dibatalkan. Dialog bawaan browser
+  memblokir tab, tampil beda tiap OS, dan tidak bisa memuat konteks. Yang ini
+  memakai Base UI `AlertDialog` sehingga dapat focus trap, Esc, `role="alertdialog"`,
+  dan fokus awal pada tombol batal — gratis. Dipakai di halaman template laporan
+  saat menekan **Hapus**.
+- **`src/components/ui/toast.tsx` — `<ToastProvider>` + `useToast()`.** Notifikasi
+  sudut layar. Muncul karena **banyak form menaruh tombol di bawah sementara
+  pesan suksesnya di atas** — pengguna yang harus menggulir tidak melihatnya.
+  Toast selalu di posisi sama. Provider dipasang sekali di `src/app/providers.tsx`.
+
+> **Batasan penting — toast ≠ `<Message>`.** Pesan yang perlu dibaca sambil
+> memperbaiki isian (mis. "nama minimal 3 karakter") tetap **inline** memakai
+> `<Message>`; toast untuk hasil akhir yang tidak perlu ditindaklanjuti. Jangan
+> menaruh toast pada aksi yang sudah punya kotak hasil kaya — mis. tombol
+> [Kirim Absen] atau [Analisis] sengaja **tidak** memunculkan toast karena
+> kotaknya sudah memuat status, pesan, tanggal, dan jalur re-auth. Toast di sana
+> hanya menduplikasi. Begitu pula [Masuk]/[Daftar]: keduanya langsung berpindah
+> halaman, sehingga toast akan buyar sebelum terbaca.
+
+> **Nada tetap satu sumber.** Toast, Badge, dan Message memakai peta warna dan
+> `Tone` yang sama. `src/components/ui/toast.test.ts` mengunci agar `good`
+> tidak pernah berbeda dari badge.
+
+**Cakupan.** Dialog & toast dipakai di **seluruh menu**, bukan satu halaman:
+
+| Menu | Dialog | Toast |
+| --- | --- | --- |
+| `/dashboard/report-templates` | Hapus template | simpan, hapus (sukses & gagal) |
+| `/dashboard/credentials` | Hapus kredensial | simpan, hapus, login otomatis, tes token |
+| `/dashboard/automation` | — | simpan, salin URL |
+| `/dashboard/profile` | — | simpan nama |
+| `/dashboard/dev-tools` | — | analisis selesai/gagal |
+| Sidebar (semua halaman) | Keluar | — (halaman pindah, toast akan buyar) |
+| `/login`, `/register` | — | — (lihat batasan di atas) |
+
+Tombol [Kirim Absen] **tanpa** toast: kotak hasilnya sudah memuat status,
+pesan, tanggal, dan tombol jalur re-auth. Menambah toast di sana hanya akan
+mengabarkan dua hal sekaligus untuk satu kejadian.
+
+> **Aturan menambah aksi baru.** Setiap tombol yang mengubah data harus
+> menjawab pertanyaan ini: apakah pengguna tahu hasilnya tanpa menggulir?
+> Jika tidak — tambahkan toast. Jika aksinya tidak bisa dibatalkan —
+> pakai `<ConfirmDialog>`, jangan `window.confirm` atau `confirm`.
+
 
 
 ---

@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { CircleCheck, Square } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
+import { cn } from "@/lib/utils";
 import SubmitReportButton from "./submit-report-button";
 import StatsCards from "./stats-cards";
 import TrendChart from "./trend-chart";
@@ -45,7 +47,7 @@ export default async function DashboardPage() {
   const { stats, trend } = await getDashboardStats(userId);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       <div className="mb-8">
         <h1 className="font-heading text-3xl">Dashboard</h1>
         <p className="mt-1 text-sm text-foreground/70">
@@ -99,28 +101,13 @@ export default async function DashboardPage() {
           )}
           <Button
             variant={perluPerhatian ? "default" : "neutral"}
-            render={<Link href="/credentials" />}
+            render={<Link href="/dashboard/credentials" />}
           >
             {perluPerhatian
               ? "Perbarui token"
               : credential
                 ? "Perbarui kredensial"
                 : "Atur kredensial"}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-6 border-dashed">
-        <CardHeader>
-          <CardTitle>Template Laporan</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-foreground/70">
-            Isi 3 template laporan yang dipakai berulang setiap hari absensi.
-            Minimal 100 karakter per kolom.
-          </p>
-          <Button render={<Link href="/report-templates" />}>
-            Atur template
           </Button>
         </CardContent>
       </Card>
@@ -139,81 +126,54 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Otomasi Absensi</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-foreground/70">
-            Minta layanan cron menembak webhook tiap hari pada jam pilihan Anda.
-            Hari libur &amp; akhir program tetap dilewati otomatis.
-          </p>
-          <Button
-            variant="neutral"
-            render={<Link href="/automation" />}
-          >
-            Atur otomasi
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Riwayat Absensi</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-foreground/70">
-            Lihat catatan setiap percobaan kirim — sukses, duplikat, maupun
-            gagal. Berguna sebagai bukti bila ada sengketa kehadiran.
-          </p>
-          <Button
-            variant="neutral"
-            render={<Link href="/history" />}
-          >
-            Buka riwayat
-          </Button>
-        </CardContent>
-      </Card>
-
-      {isAdmin && (
-        <Card className="mb-6 border-dashed">
-          <CardHeader>
-            <CardTitle>Alat Diagnostik (khusus admin)</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-foreground/70">
-              Rekam bentuk endpoint submit laporan dari browser Anda sendiri
-              (docs/MONEV-API.md §8). Tidak menyimpan atau mengirim apa pun.
-            </p>
-            <Button
-              variant="neutral"
-              render={<Link href="/dev-tools" />}
-            >
-              Buka alat diagnostik
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
       <Card className="mb-6 border-dashed">
         <CardHeader>
           <CardTitle>Kesiapan akun</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-1 text-sm text-foreground/70">
-            <li>
-              {credential ? "✅" : "⬜"} Kredensial Monev tersimpan
-            </li>
-            <li>{punyaToken ? "✅" : "⬜"} Token sesi Monev aktif</li>
-            <li>
-              {punyaToken && !perluPerhatian
-                ? "✅"
-                : "⬜"}{" "}
+          <ul className="space-y-2 text-sm text-foreground/70">
+            <ReadinessItem ok={Boolean(credential)}>
+              Kredensial Monev tersimpan
+            </ReadinessItem>
+            <ReadinessItem ok={punyaToken}>Token sesi Monev aktif</ReadinessItem>
+            <ReadinessItem ok={punyaToken && !perluPerhatian}>
               Siap mengirim absensi harian
-            </li>
+            </ReadinessItem>
           </ul>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+/**
+ * Satu baris daftar "Kesiapan akun".
+ *
+ * Ikon menggantikan emoji ✅/⬜: emoji dirender berbeda di tiap OS (Windows,
+ * Android, iOS) dan tidak mewarisi warna teks, sehingga tampilannya tidak
+ * konsisten dengan garis tebal neo-brutal yang dipakai sekitarnya. lucide
+ * memberi ikon vektor yang warnanya ikut token tema.
+ */
+function ReadinessItem({
+  ok,
+  children,
+}: {
+  ok: boolean;
+  children: React.ReactNode;
+}) {
+  const Icon = ok ? CircleCheck : Square;
+  return (
+    <li className="flex items-center gap-2">
+      <Icon
+        className={cn(
+          "size-4 shrink-0",
+          ok ? "text-emerald-600" : "text-foreground/40",
+        )}
+        aria-hidden
+      />
+      <span className={ok ? "text-foreground" : "text-foreground/60"}>
+        {children}
+      </span>
+    </li>
   );
 }
