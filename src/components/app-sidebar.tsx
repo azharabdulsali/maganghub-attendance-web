@@ -31,6 +31,7 @@ import {
   ShieldAlert,
   Sparkles,
   UserRound,
+  Users,
   X,
 } from "lucide-react";
 
@@ -69,6 +70,7 @@ const MENU_UMUM: MenuItem[] = [
 // (kelola pengguna, audit lintas pengguna) terbuka di sini tanpa mengubah
 // komponen lain.
 const MENU_ADMIN: MenuItem[] = [
+  { href: "/dashboard/admin", label: "Panel Admin", icon: Users },
   { href: "/dashboard/dev-tools", label: "Alat Diagnostik", icon: ShieldAlert },
 ];
 

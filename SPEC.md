@@ -181,6 +181,7 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
 | Template laporan | `/dashboard/report-templates` |
 | Riwayat absensi | `/dashboard/history` |
 | Otomasi | `/dashboard/automation` |
+| Panel admin | `/dashboard/admin` |
 | Alat diagnostik (admin) | `/dashboard/dev-tools` |
 | Profil | `/dashboard/profile` |
 
@@ -233,14 +234,48 @@ tampak "masih login". Jangan kembali ke pola itu.
 
 **Navigasi:** `src/components/app-sidebar.tsx` — sidebar tetap di layar lebar
 (≥ `md`) dan laci geser (*drawer*) di layar kecil. Menu **berbeda antara USER
-dan ADMIN**: item khusus admin (`/dashboard/dev-tools`) hanya muncul bila `role
-=== "ADMIN"`. Penyembunyian tautan ini **bukan** pengaman; penjagaan sesungguhnya
-tetap di server (layout + pemeriksaan peran di tiap halaman).
+dan ADMIN**: item khusus admin (`/dashboard/admin`, `/dashboard/dev-tools`) hanya
+muncul bila `role === "ADMIN"`. Penyembunyian tautan ini **bukan** pengaman;
+penjagaan sesungguhnya tetap di server (layout + pemeriksaan peran di tiap
+halaman).
 
 **Profil:** `/dashboard/profile` menampilkan email (read-only), peran, tanggal
 bergabung, dan status kredensial Monev. Hanya `name` yang dapat diubah pengguna,
 lewat `PATCH /api/profile`. Email & peran **tidak** dapat diubah dari halaman
 ini.
+
+### 5.9 Panel Admin (`/dashboard/admin`)
+
+> **Keputusan (UI/UX putaran 2):** halaman admin pertama dibangun **hanya-baca**.
+> SPEC §4 menyebut admin dapat "kelola semua pengguna, lihat audit log,
+> statistik, paksa submit". Dari daftar itu, **statistik** dan **audit lintas
+> pengguna** sudah punya data & aturan yang jelas, jadi dikerjakan lebih dulu.
+> Mengubah peran, menghapus pengguna, dan memaksa submit **belum** dibuat: ketiga
+> tindakan itu mengubah data orang lain dan belum punya aturan aman/backend.
+> Menampilkannya sebagai tombol kosong akan menjanjikan hal yang tidak ada.
+
+Halaman ini memuat tiga bagian:
+
+1. **Ringkasan** — kartu: total pengguna, jumlah admin, kredensial aktif, otomasi
+   aktif, dan berapa pengguna yang pernah submit. Dihitung dari daftar pengguna
+   (`summarizeUsers`, murni & teruji).
+2. **Daftar pengguna** — tabel per pengguna: identitas (nama/email), peran,
+   status kredensial, otomasi, jumlah laporan, jumlah submit, dan waktu kirim
+   terakhir. Diurutkan admin lebih dulu, lalu yang terbaru bergabung.
+3. **Audit lintas pengguna** — `SubmitLog` semua pengguna, memakai **filter status
+   & paginasi yang sama** seperti `/dashboard/history` (20 baris/halaman,
+   `?status=&page=` di URL). Logika murni dipakai ulang dari
+   `src/lib/audit-log.ts` supaya tampilan kedua halaman konsisten.
+
+Penjagaan peran ada di **server** halaman: sesi tanpa `role === "ADMIN"` langsung
+dialihkan ke `/dashboard`. Helper murni ada di `src/lib/admin.ts` (label status
+kredensial, `summarizeUsers`, `formatJoinDate`, `initialsFor`) dan diuji tanpa DB
+di `src/lib/admin.test.ts`. Query DB dipisah di `admin-query.ts` (pola sama
+seperti `stats-query.ts`).
+
+> **⚠️ Sama seperti riwayat:** jangan kirim `take: 0` ke Prisma — halaman audit
+> yang tersaring kosong tetap memakai `take` minimal 1.
+
 
 
 ---
