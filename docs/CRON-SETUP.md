@@ -37,7 +37,7 @@ libur/kelengkapan — semua keputusan ada di sisi server aplikasi.
 
 ## 2. Ambil URL webhook Anda
 
-1. Buka **Dashboard → Otomasi Absensi** (`/dashboard/automation`).
+1. Buka **Dashboard → Otomasi Absensi** (`/automation`).
 2. Di sana tertampil **URL webhook lengkap** dengan `webhookKey` Anda, siap
    disalin (tombol salin).
 3. Set jam & menit yang Anda mau (zona **Asia/Jakarta**), lalu aktifkan sakelar.

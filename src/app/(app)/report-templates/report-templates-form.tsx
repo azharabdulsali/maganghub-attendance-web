@@ -1,6 +1,6 @@
 "use client";
 
-// src/app/dashboard/report-templates/report-templates-form.tsx — form 3 template.
+// src/app/(app)/report-templates/report-templates-form.tsx — form 3 template.
 //
 // Alasan bentuknya begini:
 //   - Penghitung karakter tampil LANGSUNG saat mengetik. Aturan 100 karakter

@@ -1,4 +1,4 @@
-// src/app/dashboard/history/page.tsx — riwayat audit log submit (Tahap 5).
+// src/app/(app)/history/page.tsx — riwayat audit log submit (Tahap 5).
 //
 // Server component: memeriksa sesi, mengambil SubmitLog milik pengguna (paling
 // baru 100), lalu menampilkan ringkasan + tabel. Semua pemformatan diserahkan
@@ -39,7 +39,7 @@ function historyUrl(status: StatusFilter, page: number): string {
   if (status !== "ALL") params.set("status", status);
   if (page > 1) params.set("page", String(page));
   const qs = params.toString();
-  return qs ? `/dashboard/history?${qs}` : "/dashboard/history";
+  return qs ? `/history?${qs}` : "/history";
 }
 
 type HistoryPageProps = {

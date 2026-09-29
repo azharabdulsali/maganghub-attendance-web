@@ -1,7 +1,7 @@
-// src/app/(app)/dashboard/report-templates/recent-submit-history.tsx
+// src/app/(app)/report-templates/recent-submit-history.tsx
 //
 // Server component: kutipan singkat "Riwayat Laporan Terakhir" di bawah halaman
-// Template Laporan. Sumbernya SAMA dengan halaman /dashboard/history, yaitu
+// Template Laporan. Sumbernya SAMA dengan halaman /history, yaitu
 // tabel SubmitLog — setiap percobaan kirim (sukses, sudah-ada, gagal) tercatat
 // di sana sesuai SPEC.md §7 & §10.
 //
@@ -102,7 +102,7 @@ export default async function RecentSubmitHistory({
           variant="neutral"
           size="sm"
           className="self-start sm:self-auto"
-          render={<Link href="/dashboard/history" />}
+          render={<Link href="/history" />}
         >
           Halaman Riwayat Lengkap
           <ArrowRight className="size-3.5" aria-hidden />

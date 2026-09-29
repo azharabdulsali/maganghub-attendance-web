@@ -1,0 +1,294 @@
+// src/app/(app)/calendar/page.tsx — kalender kehadiran & laporan (Tahap 7).
+//
+// Server component: memeriksa sesi, mengambil SubmitLog + Report milik pengguna
+// untuk SATU bulan (dari `?month=YYYY-MM`), lalu merender kisi kalender. Seluruh
+// perhitungan tanggal diserahkan ke lib/calendar.ts yang murni & teruji.
+//
+// Prinsip:
+//   - Hanya baca data milik sendiri (difilter userId). Admin melihat kalender
+//     SENDIRI, sama seperti pengguna biasa.
+//   - Jujur: sel tanpa data tampil "—". Tidak ada klaim "terkirim" dari data
+//     yang tidak ada.
+
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  buildMonthGrid,
+  classifyDay,
+  collectReportDates,
+  currentJakartaMonth,
+  daysInMonth,
+  MONTH_LABELS,
+  monthToParam,
+  nextMonth,
+  parseMonth,
+  prevMonth,
+  WEEKDAY_LABELS,
+  type DayStatus,
+  type YearMonth,
+} from "@/lib/calendar";
+
+/** Rentang UTC [awal, akhir) yang mencakup seluruh bulan di zona WIB. */
+function jakartaMonthRange({ year, month }: YearMonth): { gte: Date; lt: Date } {
+  // Awal hari pertama bulan di WIB, dikembalikan sebagai UTC.
+  const startUtc = Date.UTC(year, month - 1, 1) - 7 * 60 * 60 * 1000;
+  const endUtc = Date.UTC(year, month, 1) - 7 * 60 * 60 * 1000;
+  return { gte: new Date(startUtc), lt: new Date(endUtc) };
+}
+
+/** URL halaman ini untuk bulan tertentu. */
+function calendarUrl(target: YearMonth): string {
+  return `/calendar?month=${monthToParam(target)}`;
+}
+
+type CalendarPageProps = {
+  // Di Next.js 16, `searchParams` adalah Promise yang harus di-await.
+  searchParams: Promise<{ month?: string }>;
+};
+
+const STATUS_TEXT: Record<DayStatus, string> = {
+  SUBMITTED: "Terkirim",
+  FAILED: "Gagal",
+  DRAFT: "Draft",
+  NONE: "Belum diisi",
+};
+
+/** Kelas Tailwind per status — SATU-satunya peta warna kalender. */
+const STATUS_CELL_CLASS: Record<DayStatus, string> = {
+  SUBMITTED: "bg-main text-main-foreground border-border",
+  FAILED: "bg-foreground text-background border-border",
+  DRAFT: "border-border bg-background",
+  NONE: "border-border/40 bg-background",
+};
+
+export default async function CalendarPage({ searchParams }: CalendarPageProps) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const params = await searchParams;
+  const month = parseMonth(params.month);
+  const current = currentJakartaMonth();
+  const isCurrentMonth =
+    month.year === current.year && month.month === current.month;
+
+  const range = jakartaMonthRange(month);
+
+  // Ambil paralel: log submit pada bulan ini, dan report/draft pada bulan ini.
+  const [logs, reports] = await Promise.all([
+    prisma.submitLog.findMany({
+      where: {
+        userId: session.user.id,
+        createdAt: { gte: range.gte, lt: range.lt },
+      },
+      select: { status: true, createdAt: true },
+    }),
+    prisma.report.findMany({
+      where: {
+        userId: session.user.id,
+        date: { gte: range.gte, lt: range.lt },
+      },
+      select: { date: true, status: true },
+    }),
+  ]);
+
+  // Kelompokkan log per tanggal (WIB); status paling penting menang.
+  const logsByDate = new Map<string, "SUCCESS" | "FAILED" | "DUPLICATE">();
+  {
+    const rank = { SUCCESS: 3, FAILED: 2, DUPLICATE: 1 } as const;
+    for (const log of logs) {
+      const key = new Date(log.createdAt.getTime() + 7 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+      const prev = logsByDate.get(key);
+      if (!prev || rank[log.status] > rank[prev]) logsByDate.set(key, log.status);
+    }
+  }
+
+  const reportDates = collectReportDates(reports);
+  const weeks = buildMonthGrid(month);
+  const totalDays = daysInMonth(month);
+
+  // Ringkasan bulan ini — dihitung dari kisi, bukan query tambahan.
+  const counts: Record<DayStatus, number> = {
+    SUBMITTED: 0,
+    FAILED: 0,
+    DRAFT: 0,
+    NONE: 0,
+  };
+  for (const week of weeks) {
+    for (const cell of week) {
+      if (!cell) continue;
+      counts[classifyDay(cell.iso, logsByDate, reportDates)] += 1;
+    }
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="font-heading text-2xl sm:text-3xl">
+          Kalender Kehadiran &amp; Laporan
+        </h1>
+        <p className="mt-1 text-sm text-foreground/70">
+          Pantau status submit absensi dan laporan harian per bulan.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <CardTitle className="text-base">
+            {MONTH_LABELS[month.month]} {month.year}
+          </CardTitle>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="neutral"
+              size="icon-sm"
+              aria-label="Bulan sebelumnya"
+              render={<Link href={calendarUrl(prevMonth(month))} />}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              variant="neutral"
+              size="icon-sm"
+              aria-label="Bulan berikutnya"
+              render={<Link href={calendarUrl(nextMonth(month))} />}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!isCurrentMonth && (
+            <div>
+              <Link
+                href="/calendar"
+                className="text-xs font-heading underline underline-offset-4"
+              >
+                ← Kembali ke bulan ini
+              </Link>
+            </div>
+          )}
+
+          {/* Header hari. */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            {WEEKDAY_LABELS.map((label) => (
+              <div
+                key={label}
+                className="text-center text-[10px] font-heading text-foreground/60 sm:text-[11px]"
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+
+          {/* Kisi tanggal. */}
+          <div className="space-y-1 sm:space-y-2">
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="grid grid-cols-7 gap-1 sm:gap-2">
+                {week.map((cell, cellIndex) => {
+                  if (!cell) {
+                    return <div key={`blank-${cellIndex}`} aria-hidden />;
+                  }
+                  const status = classifyDay(cell.iso, logsByDate, reportDates);
+                  const isToday =
+                    isCurrentMonth &&
+                    cell.day <= totalDays &&
+                    isTodayInJakarta(cell.iso);
+                  return (
+                    <div
+                      key={cell.iso}
+                      className={cn(
+                        "flex h-14 flex-col justify-between rounded-base border-2 p-1 sm:h-16 sm:p-1.5",
+                        STATUS_CELL_CLASS[status],
+                        status === "NONE" && "text-foreground/50",
+                      )}
+                      aria-label={`${cell.day}: ${STATUS_TEXT[status]}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={cn(
+                            "font-mono text-[10px] sm:text-[11px]",
+                            status === "SUBMITTED"
+                              ? "text-main-foreground"
+                              : "text-foreground/70",
+                          )}
+                        >
+                          {cell.day}
+                        </span>
+                        {isToday && (
+                          <span
+                            className="size-1.5 rounded-full bg-foreground"
+                            aria-hidden
+                          />
+                        )}
+                      </div>
+                      <span
+                        className={cn(
+                          "truncate text-[9px] sm:text-[10px]",
+                          status === "NONE" && "text-foreground/40",
+                        )}
+                      >
+                        {status === "NONE" ? "—" : STATUS_TEXT[status]}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* Keterangan warna + ringkasan angka bulan ini. */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t-2 border-border pt-3 text-xs">
+            <LegendItem status="SUBMITTED" count={counts.SUBMITTED} />
+            <LegendItem status="DRAFT" count={counts.DRAFT} />
+            <LegendItem status="FAILED" count={counts.FAILED} />
+            <LegendItem status="NONE" count={counts.NONE} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <p className="mt-4 text-xs text-foreground/50">
+        Tanggal dihitung memakai zona Asia/Jakarta. Hanya pengiriman{" "}
+        <strong>sukses</strong> yang ditandai terkirim; percobaan duplikat saja
+        tetap tampil sebagai draft/belum diisi.
+      </p>
+    </div>
+  );
+}
+
+/** Satu item keterangan warna + jumlahnya bulan ini. */
+function LegendItem({ status, count }: { status: DayStatus; count: number }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span
+        className={cn(
+          "size-3 shrink-0 rounded-sm border-2",
+          STATUS_CELL_CLASS[status],
+        )}
+        aria-hidden
+      />
+      <span className="text-foreground/70">
+        {STATUS_TEXT[status]}{" "}
+        <span className="font-heading text-foreground">{count}</span>
+      </span>
+    </span>
+  );
+}
+
+/** Apakah `iso` (YYYY-MM-DD) sama dengan hari ini di WIB? */
+function isTodayInJakarta(iso: string): boolean {
+  const todayWib = new Date(Date.now() + 7 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  return iso === todayWib;
+}

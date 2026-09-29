@@ -93,25 +93,25 @@ const PANDUAN = [
     icon: KeyRound,
     judul: "Akun Monev",
     isi: "Simpan & tes login",
-    href: "/dashboard/credentials",
+    href: "/credentials",
   },
   {
     icon: BookText,
     judul: "Template Laporan",
     isi: "Isi tiga kolom wajib",
-    href: "/dashboard/report-templates",
+    href: "/report-templates",
   },
   {
     icon: Clock,
     judul: "Jadwal Otomatis",
     isi: "Atur kirim tiap sore",
-    href: "/dashboard/automation",
+    href: "/automation",
   },
   {
     icon: CalendarCheck,
     judul: "Riwayat Absensi",
     isi: "Pantau submit harian",
-    href: "/dashboard/history",
+    href: "/history",
   },
 ];
 

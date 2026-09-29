@@ -1,4 +1,4 @@
-// src/app/(app)/dashboard/admin/page.tsx — halaman admin (khusus ADMIN).
+// src/app/(app)/admin/page.tsx — halaman admin (khusus ADMIN).
 //
 // Isi halaman ini, sesuai SPEC.md §4 ("Admin: kelola semua pengguna, lihat audit
 // log, statistik"):
@@ -52,7 +52,7 @@ function adminAuditUrl(status: StatusFilter, page: number): string {
   if (status !== "ALL") params.set("status", status);
   if (page > 1) params.set("page", String(page));
   const qs = params.toString();
-  return qs ? `/dashboard/admin?${qs}` : "/dashboard/admin";
+  return qs ? `/admin?${qs}` : "/admin";
 }
 
 type AdminPageProps = {

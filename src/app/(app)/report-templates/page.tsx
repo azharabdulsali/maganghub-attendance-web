@@ -1,4 +1,4 @@
-// src/app/dashboard/report-templates/page.tsx — halaman 3 template laporan.
+// src/app/(app)/report-templates/page.tsx — halaman 3 template laporan.
 //
 // Server component: memeriksa sesi & mengambil template awal dari database,
 // lalu menyerahkan tampilan ke form (client component).

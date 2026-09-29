@@ -1,4 +1,4 @@
-// src/app/dashboard/automation/page.tsx — pengaturan otomasi harian (Tahap 5).
+// src/app/(app)/automation/page.tsx — pengaturan otomasi harian (Tahap 5).
 //
 // Server component: sesi → ambil AutomationConfig. Form (client) menyunting
 // jam/menit & sakelar. Webhook key ditampilkan agar bisa ditempel ke layanan

@@ -1,4 +1,4 @@
-// src/app/dashboard/credentials/page.tsx — halaman simpan kredensial Monev.
+// src/app/(app)/credentials/page.tsx — halaman simpan kredensial Monev.
 //
 // Server component: memeriksa sesi & mengambil status awal dari database,
 // lalu menyerahkan tampilan ke form (client component). Password TIDAK
@@ -23,7 +23,6 @@ export default async function CredentialsPage() {
       emailMonev: true,
       status: true,
       updatedAt: true,
-      tokenCiphertext: true,
     },
   });
 
@@ -41,7 +40,6 @@ export default async function CredentialsPage() {
         existingEmail={credential?.emailMonev ?? null}
         existingStatus={credential?.status ?? null}
         updatedAt={credential?.updatedAt?.toISOString() ?? null}
-        hasToken={Boolean(credential?.tokenCiphertext)}
       />
     </div>
   );

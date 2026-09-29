@@ -364,7 +364,7 @@ function TopikQuickstart() {
           </Langkah>
           <Langkah nomor="2" judul="Simpan kredensial Monev">
             Buka{" "}
-            <TautanPanduan href="/dashboard/credentials">
+            <TautanPanduan href="/credentials">
               Akun Monev
             </TautanPanduan>{" "}
             , masukkan email &amp; password Kemnaker, lalu tekan{" "}
@@ -372,7 +372,7 @@ function TopikQuickstart() {
           </Langkah>
           <Langkah nomor="3" judul="Isi tiga template">
             Buka{" "}
-            <TautanPanduan href="/dashboard/report-templates">
+            <TautanPanduan href="/report-templates">
               Template Laporan
             </TautanPanduan>{" "}
             dan isi ketiga kolom, masing-masing lebih dari 100 karakter.
@@ -383,7 +383,7 @@ function TopikQuickstart() {
           <Langkah nomor="5" judul="Submit kehadiran">
             Klik <em>Kirim Sekarang</em> untuk mode manual, atau aktifkan jadwal
             otomatis di{" "}
-            <TautanPanduan href="/dashboard/automation">
+            <TautanPanduan href="/automation">
               Jadwal Otomatis
             </TautanPanduan>
             .
@@ -408,7 +408,7 @@ function TopikKredensial() {
       <div className="space-y-2 text-xs text-foreground/80">
         <p>
           Buka halaman{" "}
-          <TautanPanduan href="/dashboard/credentials">Akun Monev</TautanPanduan>{" "}
+          <TautanPanduan href="/credentials">Akun Monev</TautanPanduan>{" "}
           untuk menyimpan email dan password akun Kemnaker Anda.
         </p>
       </div>
@@ -448,7 +448,7 @@ function TopikTemplate() {
       <div className="space-y-2 text-xs text-foreground/80">
         <p>
           Laporan magang Monev terdiri dari tiga kolom wajib. Isi ketiganya di{" "}
-          <TautanPanduan href="/dashboard/report-templates">
+          <TautanPanduan href="/report-templates">
             Template Laporan
           </TautanPanduan>
           , sekali saja, lalu pakai ulang setiap hari.
@@ -509,7 +509,7 @@ function TopikJadwal() {
         <p>
           Ada dua cara mengirim laporan: manual 1-klik, atau otomatis lewat
           jadwal. Atur di{" "}
-          <TautanPanduan href="/dashboard/automation">
+          <TautanPanduan href="/automation">
             Jadwal Otomatis
           </TautanPanduan>
           .
@@ -596,7 +596,7 @@ function TopikRiwayat() {
       <div className="space-y-2 text-xs text-foreground/80">
         <p>
           Halaman{" "}
-          <TautanPanduan href="/dashboard/history">Riwayat Absensi</TautanPanduan>{" "}
+          <TautanPanduan href="/history">Riwayat Absensi</TautanPanduan>{" "}
           menampilkan setiap percobaan kirim beserta statusnya, sehingga Anda
           bisa memastikan laporan hari ini benar-benar masuk.
         </p>

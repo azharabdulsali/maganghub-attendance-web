@@ -111,7 +111,7 @@ export default async function ProfilePage() {
               Belum ada kredensial Monev tersimpan. Buka halaman{" "}
               <a
                 className="font-heading underline"
-                href="/dashboard/credentials"
+                href="/credentials"
               >
                 Kredensial Monev
               </a>{" "}

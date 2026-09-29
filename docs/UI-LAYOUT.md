@@ -14,26 +14,35 @@ src/app/
 ├─ login/  register/             # halaman publik
 ├─ api/                          # route API (tak terpengaruh)
 └─ (app)/                        # ── route group, TIDAK muncul di URL ──
-   └─ dashboard/                 # URL: /dashboard (tampilan setelah login)
-      ├─ layout.tsx              # cek sesi + pasang sidebar SEKALI
-      ├─ page.tsx                # /dashboard
-      ├─ profile/                # /dashboard/profile
-      ├─ credentials/            # /dashboard/credentials
-      ├─ report-templates/       # /dashboard/report-templates
-      ├─ history/                # /dashboard/history
-      ├─ automation/             # /dashboard/automation
-      └─ dev-tools/              # /dashboard/dev-tools (khusus ADMIN)
+   ├─ layout.tsx                 # cek sesi + pasang sidebar SEKALI (SEMUA halaman)
+   ├─ dashboard/                 # URL: /dashboard (beranda setelah login)
+   │  ├─ page.tsx                # /dashboard
+   │  └─ … komponen statistik di sini (stats-*, trend-chart, submit-report-button)
+   ├─ calendar/                  # /calendar   (kalender kehadiran & laporan)
+   ├─ profile/                   # /profile
+   ├─ credentials/               # /credentials
+   ├─ report-templates/          # /report-templates
+   ├─ history/                   # /history
+   ├─ automation/                # /automation
+   ├─ admin/                     # /admin       (khusus ADMIN)
+   └─ dev-tools/                 # /dev-tools   (khusus ADMIN)
 ```
+
+> **Revisi (putaran 3):** dulu `layout.tsx` tinggal di `(app)/dashboard/` sehingga
+> hanya membungkus `/dashboard/*`. Setelah halaman lain dipindah ke route root
+> (`/calendar`, `/credentials`, …), `layout.tsx` **dinaikkan** ke `(app)/` agar
+> sidebar & penjagaan sesi tetap membungkus SEMUA halaman. Hanya beranda yang
+> masih di bawah `/dashboard`.
 
 **Dua wilayah berbeda, jangan dicampur:**
 
 | Wilayah | URL | Siapa yang boleh lihat | Dijaga oleh |
 | :--- | :--- | :--- | :--- |
 | **Publik** | `/` | Semua orang | — (landing biasa) |
-| **Setelah login** | `/dashboard/*` | Hanya pengguna login | `(app)/dashboard/layout.tsx` |
+| **Setelah login** | `/dashboard`, `/calendar`, `/credentials`, … | Hanya pengguna login | `(app)/layout.tsx` |
 
 **Kenapa route group `(app)`?** Supaya sidebar dipasang **sekali** di
-`(app)/dashboard/layout.tsx`, bukan disalin ke tiap halaman. Tanda `(app)` adalah
+`(app)/layout.tsx`, bukan disalin ke tiap halaman. Tanda `(app)` adalah
 konvensi Next.js: nama grup dalam tanda kurung **tidak** muncul di URL. Jadi
 `src/app/(app)/dashboard/page.tsx` melayani `/dashboard`, bukan
 `/(app)/dashboard`.
@@ -83,6 +92,7 @@ tambahkan satu entri — tidak perlu mengubah tata letak:
 
 ```ts
 const MENU_UMUM: MenuItem[] = [
+  { href: "/calendar", label: "Kalender", icon: CalendarDays },
   { href: "/history", label: "Riwayat Absensi", icon: CalendarCheck },
   // tambahkan di sini
 ];
@@ -94,7 +104,7 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 
 ## 4. Profil
 
-- Halaman: `src/app/(app)/dashboard/profile/page.tsx` (server) + `profile-form.tsx` (klien).
+- Halaman: `src/app/(app)/profile/page.tsx` (server) + `profile-form.tsx` (klien).
 - **Yang bisa diubah pengguna:** hanya nama tampilan.
 - **Read-only:** email (identitas login), peran, tanggal bergabung.
 - **Status kredensial Monev** ditampilkan sebagai *label* (`ACTIVE`,
@@ -110,14 +120,14 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 ```powershell
 npm run typecheck   # tipe
 npm run lint        # gaya
-npm test            # 312 tes (logika tak berubah)
+npm test            # 356 tes (logika tak berubah)
 npm run build       # daftar rute harus benar
 ```
 
 Saat `npm run build`, pastikan daftar rute memuat `/` (landing) dan
-`/dashboard`, `/dashboard/profile`, `/dashboard/credentials`,
-`/dashboard/report-templates`, `/dashboard/history`, `/dashboard/automation`,
-`/dashboard/dev-tools` (app). Tidak boleh ada rute `/(app)/...` yang tampil.
+`/dashboard`, `/calendar`, `/profile`, `/credentials`,
+`/report-templates`, `/history`, `/automation`, `/admin`,
+`/dev-tools` (app). Tidak boleh ada rute `/(app)/...` yang tampil.
 
 ### Jebakan: logout
 

@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import {
   BookText,
   CalendarCheck,
+  CalendarDays,
   Clock,
   KeyRound,
   LayoutDashboard,
@@ -52,25 +53,32 @@ type MenuItem = {
 };
 
 // Menu yang sama dilihat semua pengguna. Urutannya sengaja mengikuti alur
-// kerja harian: lihat ringkasan → siapkan template → kirim → periksa riwayat.
+// kerja harian: lihat ringkasan → periksa kalender → siapkan template → kirim →
+// periksa riwayat.
+//
+// Catatan rute: sejak perombakan struktur, hanya beranda yang tinggal di bawah
+// /dashboard. Halaman lain memakai rute root (/calendar, /credentials, …)
+// supaya URL lebih pendek & seragam. Jangan kembalikan ke /dashboard/… tanpa
+// memindahkan berkas halamannya juga.
 const MENU_UMUM: MenuItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/credentials", label: "Kredensial Monev", icon: KeyRound },
+  { href: "/calendar", label: "Kalender", icon: CalendarDays },
+  { href: "/credentials", label: "Kredensial Monev", icon: KeyRound },
   {
-    href: "/dashboard/report-templates",
+    href: "/report-templates",
     label: "Template Laporan",
     icon: BookText,
   },
-  { href: "/dashboard/history", label: "Riwayat Absensi", icon: CalendarCheck },
-  { href: "/dashboard/automation", label: "Otomasi", icon: Clock },
+  { href: "/history", label: "Riwayat Absensi", icon: CalendarCheck },
+  { href: "/automation", label: "Otomasi", icon: Clock },
 ];
 
 // Menu khusus ADMIN. Saat ini alat diagnostik; ruang untuk halaman admin lain
 // (kelola pengguna, audit lintas pengguna) terbuka di sini tanpa mengubah
 // komponen lain.
 const MENU_ADMIN: MenuItem[] = [
-  { href: "/dashboard/admin", label: "Panel Admin", icon: Users },
-  { href: "/dashboard/dev-tools", label: "Alat Diagnostik", icon: ShieldAlert },
+  { href: "/admin", label: "Panel Admin", icon: Users },
+  { href: "/dev-tools", label: "Alat Diagnostik", icon: ShieldAlert },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -130,7 +138,7 @@ function SidebarContent({
 
       <div className="rounded-base border-2 border-border bg-secondary-background p-3">
         <Link
-          href="/dashboard/profile"
+          href="/profile"
           onClick={onNavigate}
           className="flex items-center gap-2.5"
         >

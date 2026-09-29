@@ -1,4 +1,4 @@
-// src/app/(app)/dashboard/admin/admin-query.ts — pengambilan data halaman admin.
+// src/app/(app)/admin/admin-query.ts — pengambilan data halaman admin.
 //
 // Semua query di sini HANYA MEMBACA dan sengaja dipisah dari halaman supaya
 // halaman tetap ringkas (pola sama seperti stats-query.ts). Bentuk hasilnya

@@ -575,7 +575,7 @@ jawab — karena itu tetap **opt-in**, bukan pengganti C1.
 > kolom `accessCiphertext`/`accessIv`/`accessAuthTag`/`accessExpiresAt` di
 > `maganghub_credentials` (terpisah dari kolom refresh token). Rate limit
 > `credentialsLogin`. UI: kartu "Hubungkan sesi Monev" di
-> `src/app/(app)/dashboard/credentials/page.tsx`. Opsi C1 (tempel token) tetap
+> `src/app/(app)/credentials/page.tsx`. Opsi C1 (tempel token) tetap
 > tersedia sebagai cadangan.
 >
 > **Konsumsi access token (diperbarui):** jalur submit
@@ -604,7 +604,7 @@ perangkat mungkin **ditolak** dari server lain — perlu diuji.
 > AES-256-GCM di kolom terpisah (`tokenCiphertext`) pada
 > `maganghub_credentials`, berdampingan dengan password asli yang tidak
 > tersentuh. UI: kartu "Tes Koneksi" di
-> `src/app/(app)/dashboard/credentials/page.tsx`.
+> `src/app/(app)/credentials/page.tsx`.
 >
 > **Yang belum diuji terhadap portal sungguhan:** apakah klaim `fingerprint`
 > di JWT refresh token divalidasi lintas-IP (butuh token asli dari pengguna).
@@ -691,7 +691,7 @@ access token — kemungkinan lewat `POST /api/v1/auth/refresh` (§4.1) yang
 
 `src/lib/monev-submit.ts` — `TODO §8` kini diisi dari §8.1 (lihat tabel di
 sana). **Status HTTP sudah TERVERIFIKASI lewat uji nyata (2026-09-28):**
-`409 Conflict` = laporan tanggal itu sudah ada (terlihat di `/dashboard/history`
+`409 Conflict` = laporan tanggal itu sudah ada (terlihat di `/history`
 sebagai `HTTP 409` + status `DUPLICATE`). Karena tanggal uji sudah pernah diabsen,
 inilah respons pertama yang bisa direkam; **kode sukses (`200`/`201`) masih perlu
 direkam** pada kirim sungguhan pertama untuk tanggal yang belum ada. Fungsi murni
@@ -719,7 +719,7 @@ Asia/Jakarta (`todayInJakarta`), bukan zona perangkat.
 
 ### 8.6 Alat diagnostik (untuk rekaman berikutnya)
 
-Halaman `/dashboard/dev-tools` (khusus ADMIN) + `POST /api/dev-tools/analyze-capture`
+Halaman `/dev-tools` (khusus ADMIN) + `POST /api/dev-tools/analyze-capture`
 memakai `src/lib/har-capture.ts` (murni): tempel "Copy as cURL"/HAR → langsung
 terbaca method/path/field, rahasia disembunyikan. **Tidak mengirim** apa pun ke
 portal.

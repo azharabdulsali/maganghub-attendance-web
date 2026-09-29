@@ -159,7 +159,10 @@ maganghub-attendance-web/
 - `src/lib/` — `env.ts`, `auth.ts`, `prisma.ts`, `crypto.ts` (+test),
   `validate.ts` (+test), `utils.ts`
 - `src/app/api/` — `auth/[...nextauth]`, `register`, `credentials`
-- `src/app/dashboard/` — `page.tsx`, `credentials/` (halaman + form)
+- `src/app/(app)/` — rute terlindungi: `dashboard/` (beranda), `calendar/`,
+  `credentials/`, `report-templates/`, `history/`, `automation/`, `admin/`,
+  `dev-tools/`, `profile/`. Sidebar & cek sesi dipasang sekali di
+  `src/app/(app)/layout.tsx`.
 
 ### Aturan penyimpanan kredensial Monev
 - Password Monev **TIDAK di-hash** (beda dari password akun aplikasi) — harus

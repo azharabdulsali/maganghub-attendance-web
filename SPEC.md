@@ -146,7 +146,7 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
   ke-berapa.
 - Berguna untuk membuktikan "sudah dikirim" bila ada sengketa dengan pembimbing.
 
-**Halaman riwayat (`/dashboard/history`):** menyajikan audit log sebagai
+**Halaman riwayat (`/history`):** menyajikan audit log sebagai
 **tabel** dengan **filter status** dan **paginasi** (20 baris/halaman).
 
 - Filter & halaman disimpan di **URL** (`?status=FAILED&page=2`), bukan di state
@@ -170,20 +170,29 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
 > **Keputusan pemilik (UI/UX putaran 1):** `/` adalah **landing page publik**
 > (menjelaskan aplikasi), sedangkan `/dashboard` adalah **tampilan setelah
 > login**. Halaman terlindungi dikelompokkan di route group `(app)` supaya
-> sidebar dipasang sekali di `src/app/(app)/dashboard/layout.tsx`. Tanda `(app)`
+> sidebar dipasang sekali di `src/app/(app)/layout.tsx`. Tanda `(app)`
 > **tidak muncul di URL**.
+>
+> **Revisi struktur URL (putaran 3):** hanya beranda yang tinggal di bawah
+> `/dashboard`. Halaman lain dipindah ke rute **root** agar URL lebih pendek
+> dan seragam (`/credentials`, `/history`, `/calendar`, …). Karena itu
+> `layout.tsx` dinaikkan dari `(app)/dashboard/` ke `(app)/` supaya sidebar &
+> penjagaan sesi tetap membungkus SEMUA halaman, bukan hanya `/dashboard/*`.
+> URL lama (`/credentials`, dst.) tetap hidup lewat `redirects()` di
+> `next.config.ts` (307, sementara).
 
 | Halaman | URL |
 | :--- | :--- |
 | Landing publik (belum login) | `/` |
 | Dashboard (setelah login) | `/dashboard` |
-| Kredensial Monev | `/dashboard/credentials` |
-| Template laporan | `/dashboard/report-templates` |
-| Riwayat absensi | `/dashboard/history` |
-| Otomasi | `/dashboard/automation` |
-| Panel admin | `/dashboard/admin` |
-| Alat diagnostik (admin) | `/dashboard/dev-tools` |
-| Profil | `/dashboard/profile` |
+| Kalender kehadiran & laporan | `/calendar` |
+| Kredensial Monev | `/credentials` |
+| Template laporan | `/report-templates` |
+| Riwayat absensi | `/history` |
+| Otomasi | `/automation` |
+| Panel admin | `/admin` |
+| Alat diagnostik (admin) | `/dev-tools` |
+| Profil | `/profile` |
 
 **Alur:** pengunjung membuka `/` (landing). Landing di sini **selalu**
 ditampilkan — termasuk untuk pengguna yang sudah login — karena `/` adalah
@@ -191,7 +200,8 @@ halaman penjelasan aplikasi. **Jangan** menambahkan redirect otomatis dari `/`
 ke `/dashboard`: dulu sempat ada, dan akibatnya setelah logout `/` langsung
 memantul ke login lagi. Setelah login, pengguna diarahkan ke `/dashboard` lewat
 `callbackUrl` di form login (bukan lewat `/`). Belum login namun membuka
-`/dashboard/*`? Layout mengalihkan ke `/login`.
+halaman terlindungi (mis. `/calendar`) — atau URL lama `/dashboard/*`? Layout
+mengalihkan ke `/login`.
 
 **Statistik dashboard (`/dashboard`):** halaman ini menampilkan empat kartu
 ringkas — **Total kirim, Berhasil, Gagal, Duplikat** — plus kartu **"Kirim sukses
@@ -234,17 +244,39 @@ tampak "masih login". Jangan kembali ke pola itu.
 
 **Navigasi:** `src/components/app-sidebar.tsx` — sidebar tetap di layar lebar
 (≥ `md`) dan laci geser (*drawer*) di layar kecil. Menu **berbeda antara USER
-dan ADMIN**: item khusus admin (`/dashboard/admin`, `/dashboard/dev-tools`) hanya
+dan ADMIN**: item khusus admin (`/admin`, `/dev-tools`) hanya
 muncul bila `role === "ADMIN"`. Penyembunyian tautan ini **bukan** pengaman;
 penjagaan sesungguhnya tetap di server (layout + pemeriksaan peran di tiap
 halaman).
 
-**Profil:** `/dashboard/profile` menampilkan email (read-only), peran, tanggal
+**Profil:** `/profile` menampilkan email (read-only), peran, tanggal
 bergabung, dan status kredensial Monev. Hanya `name` yang dapat diubah pengguna,
 lewat `PATCH /api/profile`. Email & peran **tidak** dapat diubah dari halaman
 ini.
 
-### 5.9 Panel Admin (`/dashboard/admin`)
+### 5.9 Kalender Kehadiran & Laporan (`/calendar`)
+
+Halaman **baca-saja** yang menampilkan status submit absensi & laporan per
+**bulan**, satu kotak per tanggal. Tujuan: memberi gambaran visual "hari mana
+sudah terkirim, mana yang masih kosong", melengkapi tabel linear di `/history`.
+
+- **Sumber data:** `SubmitLog` (dikelompokkan per tanggal WIB; status paling
+  penting menang — SUCCESS > FAILED > DUPLICATE) dan `Report` (menandai draft).
+  Semua disaring `userId` — pengguna (termasuk ADMIN) hanya melihat kalendernya
+  SENDIRI; kalender lintas pengguna adalah pekerjaan terpisah.
+- **Warna sel** (`DayStatus`): **Terkirim** (SUCCESS) · **Draft** (ada `Report`,
+  belum sukses) · **Gagal** (FAILED tanpa sukses) · **Belum diisi** (`—`).
+- **Jujur:** kiriman `DUPLICATE` saja tidak dinaikkan ke "Terkirim"; sel tanpa
+  data menampilkan `—`, bukan klaim palsu.
+- **Navigasi bulan** lewat query param `?month=YYYY-MM` (server-rendered,
+  tanpa state klien). Bulan tak sah jatuh ke bulan berjalan — URL salah ketik
+  tidak pernah membuat halaman error.
+- **Logika murni** ada di `src/lib/calendar.ts` (kisi bulan, batas WIB,
+  klasifikasi) + ujinya `src/lib/calendar.test.ts`. Batas hari memakai WIB
+  (UTC+7) yang sama dengan `stats-query.ts`.
+
+
+### 5.10 Panel Admin (`/admin`)
 
 > **Keputusan (UI/UX putaran 2):** halaman admin pertama dibangun **hanya-baca**.
 > SPEC §4 menyebut admin dapat "kelola semua pengguna, lihat audit log,
@@ -263,7 +295,7 @@ Halaman ini memuat tiga bagian:
    status kredensial, otomasi, jumlah laporan, jumlah submit, dan waktu kirim
    terakhir. Diurutkan admin lebih dulu, lalu yang terbaru bergabung.
 3. **Audit lintas pengguna** — `SubmitLog` semua pengguna, memakai **filter status
-   & paginasi yang sama** seperti `/dashboard/history` (20 baris/halaman,
+   & paginasi yang sama** seperti `/history` (20 baris/halaman,
    `?status=&page=` di URL). Logika murni dipakai ulang dari
    `src/lib/audit-log.ts` supaya tampilan kedua halaman konsisten.
 
@@ -276,7 +308,7 @@ seperti `stats-query.ts`).
 > **⚠️ Sama seperti riwayat:** jangan kirim `take: 0` ke Prisma — halaman audit
 > yang tersaring kosong tetap memakai `take` minimal 1.
 
-### 5.10 Komponen bersama UI (badge & kotak pesan)
+### 5.11 Komponen bersama UI (badge & kotak pesan)
 
 Dua pola tampilan sebelumnya **disalin-tempel berulang**; keduanya kini punya
 satu sumber kebenaran. Jangan menulis ulang polanya secara inline.
@@ -305,7 +337,7 @@ sekali di `src/lib/admin.ts` dan dipakai oleh `<Badge>`, `<Message>`, dan
 > `src/components/ui/badge.test.ts` (tanpa DOM) supaya pemetaan nada tidak
 > berubah tanpa sengaja.
 
-### 5.11 Umpan balik aksi: dialog konfirmasi & toast
+### 5.12 Umpan balik aksi: dialog konfirmasi & toast
 
 Dua mekanisme untuk menjawab "apakah klik saya berhasil?" — keduanya sengaja
 dibangun di atas **Base UI** (sudah jadi dependensi), bukan ditulis dari nol:
@@ -339,11 +371,11 @@ fokus, tombol Esc, dan atribut ARIA jangan dibuat sendiri kalau sudah ada.
 
 | Menu | Dialog | Toast |
 | --- | --- | --- |
-| `/dashboard/report-templates` | Hapus template | simpan, hapus (sukses & gagal) |
-| `/dashboard/credentials` | Hapus kredensial | simpan, hapus, login otomatis, tes token |
-| `/dashboard/automation` | — | simpan, salin URL |
-| `/dashboard/profile` | — | simpan nama |
-| `/dashboard/dev-tools` | — | analisis selesai/gagal |
+| `/report-templates` | Hapus template | simpan, hapus (sukses & gagal) |
+| `/credentials` | Hapus kredensial | simpan, hapus, login otomatis, tes token |
+| `/automation` | — | simpan, salin URL |
+| `/profile` | — | simpan nama |
+| `/dev-tools` | — | analisis selesai/gagal |
 | Sidebar (semua halaman) | Keluar | — (halaman pindah, toast akan buyar) |
 | `/login`, `/register` | — | — (lihat batasan di atas) |
 
@@ -669,7 +701,7 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 | **5** | Audit log, rate limit, deploy Vercel + daftar cron eksternal | Siap dipakai publik |
 
 > **Status Tahap 5 (sebagian — sedang berjalan):**
-> - `src/lib/audit-log.ts` + `src/app/(app)/dashboard/history/page.tsx` — **riwayat
+> - `src/lib/audit-log.ts` + `src/app/(app)/history/page.tsx` — **riwayat
 >   audit log**: daftar 100 `SubmitLog` terbaru milik pengguna + ringkasan
 >   (total/terkirim/duplikat/gagal). Read-only (bukti, bukan editor).
 > - `src/lib/automation.ts` — aturan jadwal murni & teruji (`generateWebhookKey`,
@@ -681,7 +713,7 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 >   `?key=<webhookKey>` (401 generik bila salah), hormati `isEnabled` dan
 >   `ALLOW_LIVE_SUBMIT`, policy libur/akhir program diperiksa lebih dulu, semua
 >   percobaan dicatat dengan `trigger: CRON`.
-> - `src/app/(app)/dashboard/automation/page.tsx` + form — atur jam/menit, sakelar,
+> - `src/app/(app)/automation/page.tsx` + form — atur jam/menit, sakelar,
 >   dan salin URL webhook untuk cron-job.org.
 > - **Rate limit (SPEC §8/§10 poin 6) — SELESAI.** `src/lib/rate-limit.ts`
 >   (murni) + `rate-limit-store.ts` (in-memory / Upstash opsional) +

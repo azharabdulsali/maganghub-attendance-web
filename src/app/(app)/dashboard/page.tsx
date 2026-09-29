@@ -51,12 +51,15 @@ export default async function DashboardPage() {
   const perluPerhatian = credential?.status === "INVALID";
 
   // Statistik ringkas — dihitung di server, hanya membaca data milik pengguna.
-  const { stats, trend } = await getDashboardStats(userId);
+  // Satu `now` dipakai ulang untuk panel "Status Hari Ini" supaya batas harinya
+  // tidak bisa berbeda dengan hari-hari di grafik (lihat stats-query.ts).
+  const now = new Date();
+  const { stats, trend } = await getDashboardStats(userId, now);
 
   // Tanggal hari ini di zona Asia/Jakarta (YYYY-MM-DD) — dipakai panel
   // "Status Hari Ini". Memakai helper yang sama dengan penghitung tren supaya
   // batas harinya konsisten (bukan tanggal jam perangkat pengguna).
-  const hariIni = todayJakartaISODate();
+  const hariIni = todayJakartaISODate(now);
 
   // Apakah hari ini sudah ada pengiriman sukses? Trend hanya memuat 30 hari
   // terakhir, cukup untuk menjawab pertanyaan ini.
@@ -109,7 +112,7 @@ export default async function DashboardPage() {
             </div>
             <Button
               className="shrink-0"
-              render={<Link href="/dashboard/credentials" />}
+              render={<Link href="/credentials" />}
             >
               {perluPerhatian ? "Perbarui token" : "Atur kredensial"}
             </Button>

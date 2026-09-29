@@ -1,6 +1,6 @@
 // src/lib/admin.ts — logika tampilan halaman admin (murni, tanpa DB/jaringan).
 //
-// Tujuan: halaman admin (src/app/(app)/dashboard/admin/page.tsx) menampilkan
+// Tujuan: halaman admin (src/app/(app)/admin/page.tsx) menampilkan
 // daftar pengguna + audit lintas pengguna. Keputusan yang bisa diuji (format
 // ringkasan, penyaringan role, pemetaan status kredensial) dikumpulkan di sini
 // supaya tidak perlu DB untuk mengujinya — pola sama seperti audit-log.ts.
