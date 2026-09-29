@@ -12,12 +12,25 @@ export type DashboardStats = {
 };
 
 /** Awal hari ini di zona Asia/Jakarta, dikembalikan sebagai UTC Date. */
-function startOfTodayJakarta(): Date {
+export function startOfTodayJakarta(): Date {
   const now = new Date();
   // Geser ke WIB (UTC+7), potong ke awal hari, lalu kembalikan ke UTC.
   const wib = new Date(now.getTime() + 7 * 60 * 60 * 1000);
   wib.setUTCHours(0, 0, 0, 0);
   return new Date(wib.getTime() - 7 * 60 * 60 * 1000);
+}
+
+/**
+ * Tanggal hari ini di zona Asia/Jakarta sebagai string `YYYY-MM-DD`.
+ *
+ * Dipakai untuk membandingkan dengan `TrendPoint.date` (yang juga dihitung
+ * dengan geseran WIB). Ditaruh di sini supaya perhitungan zona waktu hanya ada
+ * di SATU berkas — kalau logika WIB berubah, keduanya ikut berubah bersama.
+ */
+export function todayJakartaISODate(): string {
+  return new Date(startOfTodayJakarta().getTime() + 7 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
 }
 
 /** Rentetan hari (YYYY-MM-DD) untuk N hari terakhir, tertua → terbaru. */

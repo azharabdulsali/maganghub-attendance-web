@@ -19,6 +19,7 @@ import { isAccessTokenFresh } from "@/lib/credential-session-policy";
 import {
   assessReadiness,
   payloadFromTemplate,
+  plainDateToUtcDate,
   policyMessage,
   submitStatusFor,
   type SubmitReadiness,
@@ -95,6 +96,8 @@ export async function safeLog(entry: {
   message: string;
   httpCode?: number;
   trigger: SubmitTrigger;
+  /** Bila ada, hubungkan log ke baris Report terkait (SPEC.md §7). */
+  reportId?: string;
 }): Promise<void> {
   try {
     await prisma.submitLog.create({
@@ -104,10 +107,75 @@ export async function safeLog(entry: {
         message: entry.message.slice(0, 1000),
         httpCode: entry.httpCode,
         trigger: entry.trigger,
+        reportId: entry.reportId,
       },
     });
   } catch {
     // Sengaja diabaikan — lihat komentar di atas.
+  }
+}
+
+/** Terjemahkan `SubmitStatus` (SubmitLog) → `ReportStatus` (Report). MURNI. */
+function reportStatusFor(
+  status: "SUCCESS" | "FAILED" | "DUPLICATE",
+): "SUBMITTED" | "FAILED" | "PRESENT_ALREADY_EXISTS" {
+  if (status === "SUCCESS") return "SUBMITTED";
+  if (status === "DUPLICATE") return "PRESENT_ALREADY_EXISTS";
+  return "FAILED";
+}
+
+/**
+ * Simpan isi laporan yang BENAR-BENAR dikirim ke portal ke tabel Report.
+ *
+ * Kenapa ini perlu: SubmitLog hanya menyimpan status/pesan/HTTP code — isi
+ * laporan (uraian, pembelajaran, kendala) hilang begitu saja. Akibatnya
+ * halaman Template Laporan tidak bisa menampilkan isi laporan historis per
+ * tanggal, padahal itu yang diminta. Model `Report` sudah ada di skema (§7)
+ * beserta relasi `Report.submitLogs`, tetapi selama ini belum pernah ditulis.
+ *
+ * `upsert` pada kunci unik `(userId, date)`: template hari yang sama dikirim
+ * berulang (mis. percobaan gagal lalu berhasil) tidak menggandakan baris —
+ * cukup diperbarui isinya & statusnya. `date` disimpan sebagai tanggal murni
+ * (@db.Date) lewat `plainDateToUtcDate`.
+ *
+ * Mengembalikan `id` Report, atau `undefined` bila tanggal tidak sah / DB
+ * menolak — kegagalan menyimpan isi TIDAK boleh menggagalkan respons portal,
+ * sama seperti `safeLog`.
+ */
+async function persistReport(opts: {
+  userId: string;
+  date: string;
+  template: { activity: string; learning: string; obstacles: string };
+  status: "SUCCESS" | "FAILED" | "DUPLICATE";
+}): Promise<string | undefined> {
+  const dateValue = plainDateToUtcDate(opts.date);
+  if (!dateValue) return undefined;
+
+  try {
+    const report = await prisma.report.upsert({
+      where: { userId_date: { userId: opts.userId, date: dateValue } },
+      create: {
+        userId: opts.userId,
+        date: dateValue,
+        activity: opts.template.activity,
+        learning: opts.template.learning,
+        obstacles: opts.template.obstacles,
+        source: "TEMPLATE",
+        status: reportStatusFor(opts.status),
+      },
+      update: {
+        activity: opts.template.activity,
+        learning: opts.template.learning,
+        obstacles: opts.template.obstacles,
+        source: "TEMPLATE",
+        status: reportStatusFor(opts.status),
+      },
+      select: { id: true },
+    });
+    return report.id;
+  } catch {
+    // Senyap — lihat doc comment di atas.
+    return undefined;
   }
 }
 
@@ -283,12 +351,23 @@ export async function performSubmit(opts: {
         ? (result.message ?? "Laporan untuk tanggal ini sudah ada di portal.")
         : "Laporan terkirim ke portal.";
 
+  // Simpan isi laporan lebih dulu (bila tanggal sah), lalu catat log dengan
+  // tautan ke Report tersebut. Urutan ini penting: log adalah bukti utama dan
+  // harus menunjuk ke Report yang sudah ada.
+  const reportId = await persistReport({
+    userId,
+    date: readiness.date,
+    template: template!,
+    status,
+  });
+
   await safeLog({
     userId,
     status,
     message,
     httpCode: "httpCode" in result ? result.httpCode : undefined,
     trigger,
+    reportId,
   });
 
   return {

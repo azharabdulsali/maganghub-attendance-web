@@ -31,6 +31,25 @@ export function todayInJakarta(now: Date = new Date()): PlainDate {
   return fmt.format(now); // en-CA → YYYY-MM-DD
 }
 
+/**
+ * Ubah tanggal `YYYY-MM-DD` → `Date` pada tengah malam UTC — MURNI.
+ *
+ * Dipakai untuk kolom `Report.date` yang bertipe `@db.Date` (tanpa jam).
+ * `new Date("2024-05-01")` di JS memang sudah diartikan sebagai 00:00 UTC, jadi
+ * hasilnya sama di server zona mana pun — tidak seperti `new Date("2024-05-01
+ * 00:00")` yang memakai zona setempat dan bisa bergeser sehari.
+ *
+ * Mengembalikan `null` untuk input yang tidak berbentuk `YYYY-MM-DD` (mis.
+ * "2024-5-1" atau "besok") supaya pemanggil memutuskan fallback, bukan diam-
+ * diam menyimpan tanggal rusak ke DB.
+ */
+export function plainDateToUtcDate(date: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+
 /** Terjemahan keputusan policy → pesan Indonesia untuk UI. */
 export function policyMessage(decision: PolicyDecision): string {
   switch (decision) {

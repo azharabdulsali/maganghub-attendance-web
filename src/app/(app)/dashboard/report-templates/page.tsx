@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import ReportTemplatesForm from "./report-templates-form";
+import RecentSubmitHistory from "./recent-submit-history";
 
 export default async function ReportTemplatesPage() {
   const session = await auth();
@@ -25,7 +26,7 @@ export default async function ReportTemplatesPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
+    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
       <div className="mb-8">
         <h1 className="font-heading text-3xl">Template Laporan</h1>
         <p className="mt-1 text-sm text-foreground/70">
@@ -41,6 +42,10 @@ export default async function ReportTemplatesPage() {
         initialObstacles={template?.obstacles ?? ""}
         updatedAt={template?.updatedAt?.toISOString() ?? null}
       />
+
+      {/* Ringkasan riwayat submit — ditaruh SETELAH template karena sifatnya
+          informasi pendukung, bukan aksi utama halaman ini. */}
+      <RecentSubmitHistory userId={session.user.id} />
     </div>
   );
 }

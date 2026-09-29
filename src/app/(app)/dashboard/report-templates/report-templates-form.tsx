@@ -234,11 +234,16 @@ export default function ReportTemplatesForm({
 
       {serverError ? <Message tone="bad">{serverError}</Message> : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      {/* Tombol aksi: keduanya seukuran (size="sm") dan hanya selebar isinya.
+          Sebelumnya "Perbarui template" memakai `sm:flex-1` sehingga melebar
+          penuh dan terlihat jauh lebih besar dari "Hapus" di sebelahnya —
+          padahal keduanya sederajat. Sisi utama tetap dibedakan lewat
+          variant (bukan ukuran). */}
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           onClick={simpan}
           disabled={!semuaValid || saving || deleting}
-          className="sm:flex-1"
+          size="sm"
         >
           {saving
             ? "Menyimpan..."
@@ -252,6 +257,7 @@ export default function ReportTemplatesForm({
             onClick={() => setConfirmHapusOpen(true)}
             disabled={saving || deleting}
             variant="neutral"
+            size="sm"
           >
             {deleting ? "Menghapus..." : "Hapus"}
           </Button>
