@@ -7,6 +7,9 @@ import {
   describeSubmitStatus,
   describeTrigger,
   formatJakartaTimestamp,
+  paginate,
+  parsePage,
+  parseStatusFilter,
   summarizeLogs,
   type AuditRow,
 } from "./audit-log";
@@ -79,5 +82,78 @@ describe("summarizeLogs", () => {
       failed: 0,
       lastAt: null,
     });
+  });
+});
+
+describe("parseStatusFilter", () => {
+  it("menerima nilai yang sah (case-insensitive)", () => {
+    expect(parseStatusFilter("SUCCESS")).toBe("SUCCESS");
+    expect(parseStatusFilter("failed")).toBe("FAILED");
+    expect(parseStatusFilter("Duplicate")).toBe("DUPLICATE");
+    expect(parseStatusFilter("ALL")).toBe("ALL");
+  });
+
+  it("jatuh ke ALL untuk nilai kosong/tak dikenal", () => {
+    expect(parseStatusFilter(undefined)).toBe("ALL");
+    expect(parseStatusFilter("")).toBe("ALL");
+    expect(parseStatusFilter("ERROR")).toBe("ALL");
+    expect(parseStatusFilter("'; DROP TABLE")).toBe("ALL");
+  });
+});
+
+describe("parsePage", () => {
+  it("mengembalikan angka halaman yang sah", () => {
+    expect(parsePage("1")).toBe(1);
+    expect(parsePage("7")).toBe(7);
+    expect(parsePage(" 12 ")).toBe(12);
+  });
+
+  it("menjepit masukan tidak sah ke 1", () => {
+    expect(parsePage(undefined)).toBe(1);
+    expect(parsePage("")).toBe(1);
+    expect(parsePage("abc")).toBe(1);
+    expect(parsePage("0")).toBe(1);
+    expect(parsePage("-5")).toBe(1);
+    expect(parsePage("NaN")).toBe(1);
+  });
+});
+
+describe("paginate", () => {
+  it("menghitung jendela untuk halaman tengah", () => {
+    expect(paginate(100, 3, 10)).toEqual({
+      page: 3,
+      pageCount: 10,
+      start: 20,
+      end: 30,
+    });
+  });
+
+  it("menutup halaman terakhir dengan sisa item", () => {
+    expect(paginate(25, 3, 10)).toEqual({
+      page: 3,
+      pageCount: 3,
+      start: 20,
+      end: 25,
+    });
+  });
+
+  it("menjepit halaman di luar rentang ke halaman terakhir", () => {
+    expect(paginate(25, 999, 10).page).toBe(3);
+    expect(paginate(25, 999, 10).start).toBe(20);
+  });
+
+  it("daftar kosong menghasilkan satu halaman kosong, bukan NaN", () => {
+    expect(paginate(0, 1, 10)).toEqual({
+      page: 1,
+      pageCount: 1,
+      start: 0,
+      end: 0,
+    });
+  });
+
+  it("menahan pageSize <= 0 agar tidak bagi nol", () => {
+    const p = paginate(10, 1, 0);
+    expect(p.pageCount).toBe(10);
+    expect(Number.isFinite(p.start)).toBe(true);
   });
 });

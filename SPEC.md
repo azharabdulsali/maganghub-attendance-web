@@ -146,6 +146,103 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
   ke-berapa.
 - Berguna untuk membuktikan "sudah dikirim" bila ada sengketa dengan pembimbing.
 
+**Halaman riwayat (`/dashboard/history`):** menyajikan audit log sebagai
+**tabel** dengan **filter status** dan **paginasi** (20 baris/halaman).
+
+- Filter & halaman disimpan di **URL** (`?status=FAILED&page=2`), bukan di state
+  React. Konsekuensinya: tanpa JS, bisa di-bookmark, dan tombol "Back" browser
+  berfungsi wajar. Nilai tak dikenal diam-diam jatuh ke "semua" (lihat
+  `parseStatusFilter`) sehingga URL yang salah ketik tidak pernah error.
+- Filter diterapkan **di database** (`where.status`), dan `count` memakai `where`
+  yang sama — jadi angka "Halaman X dari Y" selalu cocok dengan isi tabel.
+- Kartu **Ringkasan** sengaja dihitung dari **seluruh** log, bukan hanya halaman
+  yang sedang tampil; kalau tidak, angkanya akan berubah tiap pindah halaman.
+- Logika murni (`parseStatusFilter`, `parsePage`, `paginate`) ada di
+  `src/lib/audit-log.ts` dan **teruji tanpa DB**.
+- ⚠️ Jangan kirim `take: 0` ke Prisma (error). Halaman yang tersaring kosong
+  tetap memakai `take` minimal 1 — lihat `Math.max(1, ...)` di halaman.
+- ⚠️ Di Next.js 16, `searchParams` adalah **Promise** — wajib `await`.
+- Tidak ada tombol edit/hapus di sini: audit log adalah bukti, bukan data yang
+  bisa diubah.
+
+### 5.8 Kerangka Tampilan & Struktur URL
+
+> **Keputusan pemilik (UI/UX putaran 1):** `/` adalah **landing page publik**
+> (menjelaskan aplikasi), sedangkan `/dashboard` adalah **tampilan setelah
+> login**. Halaman terlindungi dikelompokkan di route group `(app)` supaya
+> sidebar dipasang sekali di `src/app/(app)/dashboard/layout.tsx`. Tanda `(app)`
+> **tidak muncul di URL**.
+
+| Halaman | URL |
+| :--- | :--- |
+| Landing publik (belum login) | `/` |
+| Dashboard (setelah login) | `/dashboard` |
+| Kredensial Monev | `/dashboard/credentials` |
+| Template laporan | `/dashboard/report-templates` |
+| Riwayat absensi | `/dashboard/history` |
+| Otomasi | `/dashboard/automation` |
+| Alat diagnostik (admin) | `/dashboard/dev-tools` |
+| Profil | `/dashboard/profile` |
+
+**Alur:** pengunjung membuka `/` (landing). Landing di sini **selalu**
+ditampilkan — termasuk untuk pengguna yang sudah login — karena `/` adalah
+halaman penjelasan aplikasi. **Jangan** menambahkan redirect otomatis dari `/`
+ke `/dashboard`: dulu sempat ada, dan akibatnya setelah logout `/` langsung
+memantul ke login lagi. Setelah login, pengguna diarahkan ke `/dashboard` lewat
+`callbackUrl` di form login (bukan lewat `/`). Belum login namun membuka
+`/dashboard/*`? Layout mengalihkan ke `/login`.
+
+**Statistik dashboard (`/dashboard`):** halaman ini menampilkan empat kartu
+ringkas — **Total kirim, Berhasil, Gagal, Duplikat** — plus kartu **"Kirim sukses
+terakhir"** bila sudah ada, dan **grafik batang 30 hari**. Semua angka dihitung
+di server dari tabel `SubmitLog` (dan disaring `userId` pengguna yang sedang
+login; tidak ada agregasi lintas pengguna). Implementasinya terpisah agar
+halaman tetap ringkas:
+
+- `stats-query.ts` — perhitungan; memakai `prisma.submitLog.groupBy` untuk total
+  per status dan `findMany` 30 hari untuk grafik.
+- `stats-cards.tsx` — kartu angka (komponen tampilan murni).
+- `trend-chart.tsx` — grafik batang **SVG murni**, tanpa library chart (menghindari
+  dependensi baru; lihat AGENTS.md §2).
+
+Zona waktu: hari dihitung pada **Asia/Jakarta (UTC+7)**, bukan UTC, supaya
+"hari ini" cocok dengan hari kerja pengguna. Karena `Report.date` bertipe
+`@db.Date` (tanpa jam), tren dihitung dari `SubmitLog.createdAt` yang punya
+stempel waktu penuh.
+
+**Keluar (logout):** tombol Keluar di sidebar memakai **Server Action** di
+`src/components/sign-out-action.ts` yang memanggil `signOut({ redirectTo: "/" })`
+dari `@/lib/auth` (NextAuth v5). Lalu lintas lama memakai `<form
+action="/api/auth/signout" method="post">` — **itu salah**: tanpa CSRF token,
+NextAuth menolaknya sehingga sesi **tidak** benar-benar terhapus dan pengguna
+tampak "masih login". Jangan kembali ke pola itu.
+
+> **⚠️ Jebakan Next.js:** direktif `"use server"` **tidak boleh** ditulis inline
+> di dalam file yang `"use client"` (mis. sidebar). Turbopack akan menolak build
+> dengan pesan menyesatkan *"'use client' directive must be placed before other
+> expressions"* — padahal `"use client"` sudah di baris 1. **Aturannya: satu
+> file, satu direktif.** Taruh Server Action di file `.ts` terpisah.
+
+> **⚠️ Pelajaran (jangan diulang):** sempat terjadi **loop redirect tak
+> berujung** (`ERR_TOO_MANY_REDIRECTS`) karena dua file mengklaim URL `/` yang
+> sama — `src/app/page.tsx` (landing) dan `src/app/(app)/page.tsx` (dashboard) —
+> lalu landing (`src/app/page.tsx`) mengarahkan sesi aktif ke `/`. Karena
+> route group tidak muncul di URL, keduanya bertabrakan di `/`. **Aturan:**
+> satu URL, satu file. Setelah login, tujuannya **wajib** `/dashboard`, bukan
+> `/`.
+
+**Navigasi:** `src/components/app-sidebar.tsx` — sidebar tetap di layar lebar
+(≥ `md`) dan laci geser (*drawer*) di layar kecil. Menu **berbeda antara USER
+dan ADMIN**: item khusus admin (`/dashboard/dev-tools`) hanya muncul bila `role
+=== "ADMIN"`. Penyembunyian tautan ini **bukan** pengaman; penjagaan sesungguhnya
+tetap di server (layout + pemeriksaan peran di tiap halaman).
+
+**Profil:** `/dashboard/profile` menampilkan email (read-only), peran, tanggal
+bergabung, dan status kredensial Monev. Hanya `name` yang dapat diubah pengguna,
+lewat `PATCH /api/profile`. Email & peran **tidak** dapat diubah dari halaman
+ini.
+
+
 ---
 
 ## 6. Cara Submit — Keputusan Kunci
@@ -229,6 +326,7 @@ Batasan: `Report` unik per `(userId, date)` — mencegah draf ganda.
 | `GET/PUT` | `/api/template` | Baca & simpan 3 template pengguna | Cookie sesi | 20/menit |
 | `POST` | `/api/reports/draft` | Buat draf dari template | Cookie sesi | 20/menit |
 | `POST` | `/api/reports/submit` | Kirim draf langsung ke Monev | Cookie sesi | 20/10 menit per pengguna |
+| `PATCH` | `/api/profile` | Ubah nama tampilan pengguna sendiri | Cookie sesi | — (belum dibatasi) |
 
 **Implementasi rate limit (Tahap 5):** kebijakan murni di `src/lib/rate-limit.ts`
 (jendela tetap, teruji dengan waktu disuntik), penyimpanan di
@@ -456,7 +554,7 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 | **5** | Audit log, rate limit, deploy Vercel + daftar cron eksternal | Siap dipakai publik |
 
 > **Status Tahap 5 (sebagian — sedang berjalan):**
-> - `src/lib/audit-log.ts` + `src/app/dashboard/history/page.tsx` — **riwayat
+> - `src/lib/audit-log.ts` + `src/app/(app)/dashboard/history/page.tsx` — **riwayat
 >   audit log**: daftar 100 `SubmitLog` terbaru milik pengguna + ringkasan
 >   (total/terkirim/duplikat/gagal). Read-only (bukti, bukan editor).
 > - `src/lib/automation.ts` — aturan jadwal murni & teruji (`generateWebhookKey`,
@@ -468,7 +566,7 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 >   `?key=<webhookKey>` (401 generik bila salah), hormati `isEnabled` dan
 >   `ALLOW_LIVE_SUBMIT`, policy libur/akhir program diperiksa lebih dulu, semua
 >   percobaan dicatat dengan `trigger: CRON`.
-> - `src/app/dashboard/automation/page.tsx` + form — atur jam/menit, sakelar,
+> - `src/app/(app)/dashboard/automation/page.tsx` + form — atur jam/menit, sakelar,
 >   dan salin URL webhook untuk cron-job.org.
 > - **Rate limit (SPEC §8/§10 poin 6) — SELESAI.** `src/lib/rate-limit.ts`
 >   (murni) + `rate-limit-store.ts` (in-memory / Upstash opsional) +

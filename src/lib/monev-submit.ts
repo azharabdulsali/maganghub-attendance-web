@@ -5,7 +5,7 @@
 // File ini dibangun SEBELUM §8 diketahui, sengaja, supaya struktur, validasi,
 // penafsiran respons, dan tesnya sudah siap. Yang belum pasti HANYA nama-nama
 // field body — semuanya dikumpulkan di satu blok `TODO §8` di bawah. Saat Anda
-// merekam "Simpan dan Kirim" sekali (via /dashboard/dev-tools atau Copy as
+// merekam "Simpan dan Kirim" sekali (via /dev-tools atau Copy as
 // cURL), cukup ganti nilai di blok itu; sisa file tidak perlu diubah.
 //
 // Batas etika: modul ini TIDAK PERNAH dipanggil selama fase uji koneksi.
@@ -68,7 +68,9 @@ export const REFRESH_ENDPOINT = "/api/v1/auth/refresh";
 /** Kode HTTP sukses. ⚠️ Belum terverifikasi dari rekaman — amati saat uji. */
 const HTTP_SUCCESS_CODES = new Set([200, 201]);
 
-/** Kode "laporan sudah ada". ⚠️ Belum terverifikasi — dari dugaan awal (§8.7). */
+/** Kode "laporan sudah ada". ✅ TERVERIFIKASI (2026-09-28): portal membalas
+ *  `409 Conflict` saat tanggal tsb sudah ada — terlihat di Riwayat
+ *  (`HTTP 409` + status `DUPLICATE`). Rekaman: docs/MONEV-API.md §8.7. */
 const HTTP_ALREADY_EXISTS = 409;
 // ---------------------------------------------------------------------------
 
@@ -125,6 +127,40 @@ export function buildSubmitBody(
 }
 
 /**
+ * Ambil pesan manusia dari body respons portal, bila ada. MURNI.
+ *
+ * Portal Monev bisa membalas JSON (`{"message": "..."}`, kadang dibungkus
+ * `{"data": {...}}`) atau teks polos. Fungsi ini mencoba bentuk-bentuk umum dan
+ * mengembalikan `undefined` bila tak ada yang layak — pemanggil memakai teks
+ * cadangannya sendiri. Selalu batasi panjang supaya log tak memuat body besar.
+ */
+function extractMessage(bodyText: string): string | undefined {
+  const trimmed = bodyText.trim();
+  if (trimmed.length === 0) return undefined;
+
+  const tryObj = (o: unknown): string | undefined => {
+    if (!o || typeof o !== "object") return undefined;
+    const rec = o as Record<string, unknown>;
+    for (const key of ["message", "error", "detail"]) {
+      const v = rec[key];
+      if (typeof v === "string" && v.trim().length > 0) {
+        return v.trim().slice(0, 300);
+      }
+    }
+    return tryObj(rec.data);
+  };
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    return tryObj(parsed) ?? undefined;
+  } catch {
+    // Bukan JSON: pakai teks polos bila cukup pendek & bukan tag HTML.
+    if (trimmed.length <= 300 && !trimmed.startsWith("<")) return trimmed;
+    return undefined;
+  }
+}
+
+/**
  * Tafsirkan respons HTTP menjadi SubmitResult. MURNI — dipisah dari jaringan
  * supaya bisa diuji dengan angka status saja.
  *
@@ -147,10 +183,13 @@ export function interpretSubmitResponse(
     return { status: "SUCCESS", httpCode, raw };
   }
   if (httpCode === HTTP_ALREADY_EXISTS) {
+    // Pakai pesan portal bila ada (lebih informatif untuk audit log); jatuh ke
+    // teks kita sendiri bila portal tidak menyertakan body yang bisa dibaca.
+    const fromPortal = extractMessage(bodyText);
     return {
       status: "ALREADY_SUBMITTED",
       httpCode,
-      message: "Laporan untuk tanggal ini sudah ada di portal.",
+      message: fromPortal ?? "Laporan untuk tanggal ini sudah ada di portal.",
     };
   }
   return {

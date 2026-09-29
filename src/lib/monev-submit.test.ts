@@ -88,10 +88,31 @@ describe("interpretSubmitResponse", () => {
     expect(interpretSubmitResponse(201, "").status).toBe("SUCCESS");
   });
 
-  it("409 → ALREADY_SUBMITTED (bukan ERROR)", () => {
+  it("409 → ALREADY_SUBMITTED (bukan ERROR) + pesan portal dipakai", () => {
     const r = interpretSubmitResponse(409, '{"message":"Presensi sudah ada"}');
     expect(r.status).toBe("ALREADY_SUBMITTED");
-    if (r.status === "ALREADY_SUBMITTED") expect(r.httpCode).toBe(409);
+    if (r.status === "ALREADY_SUBMITTED") {
+      expect(r.httpCode).toBe(409);
+      // Pesan portal lebih informatif daripada teks cadangan kita.
+      expect(r.message).toBe("Presensi sudah ada");
+    }
+  });
+
+  it("409 tanpa body JSON → pakai teks cadangan kita", () => {
+    const r = interpretSubmitResponse(409, "");
+    expect(r.status).toBe("ALREADY_SUBMITTED");
+    if (r.status === "ALREADY_SUBMITTED") {
+      expect(r.message).toContain("sudah ada di portal");
+    }
+  });
+
+  it("409 body HTML/panjang → tidak bocorkan HTML ke log, pakai cadangan", () => {
+    const r = interpretSubmitResponse(409, "<html><body>error</body></html>");
+    expect(r.status).toBe("ALREADY_SUBMITTED");
+    if (r.status === "ALREADY_SUBMITTED") {
+      expect(r.message).not.toContain("<html>");
+      expect(r.message).toContain("sudah ada di portal");
+    }
   });
 
   it("401/500 → ERROR", () => {

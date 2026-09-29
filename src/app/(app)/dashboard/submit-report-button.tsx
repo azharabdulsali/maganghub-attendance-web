@@ -80,7 +80,7 @@ export default function SubmitReportButton() {
           {butuhToken && (
             <Button
               className="mt-3"
-              render={<Link href="/dashboard/credentials" />}
+              render={<Link href="/credentials" />}
             >
               Buka halaman kredensial
             </Button>

@@ -26,7 +26,7 @@ export default async function ReportTemplatesPage() {
   });
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
+    <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
       <div className="mb-8">
         <Link
           href="/dashboard"
@@ -48,6 +48,6 @@ export default async function ReportTemplatesPage() {
         initialObstacles={template?.obstacles ?? ""}
         updatedAt={template?.updatedAt?.toISOString() ?? null}
       />
-    </main>
+    </div>
   );
 }

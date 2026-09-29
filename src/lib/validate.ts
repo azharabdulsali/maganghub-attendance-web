@@ -98,3 +98,22 @@ export const automationSchema = z.object({
 });
 
 export type AutomationInput = z.infer<typeof automationSchema>;
+
+/**
+ * Profil akun aplikasi ini (bukan akun Monev). Saat ini hanya `name` yang boleh
+ * diubah pengguna; email adalah identitas login dan peran ditentukan server,
+ * jadi keduanya TIDAK diterima dari klien di sini.
+ *
+ * `name` boleh dikosongkan (kirim string kosong) untuk menghapus nama — UI akan
+ * menampilkan "Pengguna" sebagai gantinya. Batas 80 karakter sudah lebih dari
+ * cukup untuk nama orang dan mencegah data sampah.
+ */
+export const profileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .max(80, "Nama maksimal 80 karakter"),
+});
+
+export type ProfileInput = z.infer<typeof profileSchema>;
+

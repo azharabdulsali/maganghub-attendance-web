@@ -1,6 +1,6 @@
 // src/lib/audit-log.ts — penampil audit log submit (murni, tanpa DB/jaringan).
 //
-// Halaman riwayat (src/app/dashboard/history/page.tsx) menyerahkan baris
+// Halaman riwayat (src/app/(app)/history/page.tsx) menyerahkan baris
 // SubmitLog mentah ke fungsi-fungsi di sini. Tujuannya sama seperti modul murni
 // lain (submit-service, report-policy): keputusan tampilan diuji tanpa DB.
 //
@@ -116,4 +116,73 @@ export function summarizeLogs(rows: readonly AuditRow[]): AuditSummary {
   }
 
   return { total: rows.length, success, duplicate, failed, lastAt };
+}
+
+// ---------------------------------------------------------------------------
+// Filter & paginasi halaman riwayat (murni, teruji tanpa DB)
+// ---------------------------------------------------------------------------
+
+/** Nilai filter yang dikenali dari URL. Selain ini diabaikan (dianggap "semua"). */
+export const STATUS_FILTERS = ["ALL", "SUCCESS", "DUPLICATE", "FAILED"] as const;
+export type StatusFilter = (typeof STATUS_FILTERS)[number];
+
+/** Label manusia untuk tiap pilihan filter, dipakai tombol filter di halaman. */
+export const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
+  ALL: "Semua",
+  SUCCESS: "Terkirim",
+  DUPLICATE: "Sudah ada",
+  FAILED: "Gagal",
+};
+
+/**
+ * Ubah nilai mentah dari `?status=` menjadi StatusFilter yang sah. Nilai tak
+ * dikenal (termasuk `undefined`) jatuh ke "ALL" — jadi URL yang salah ketik
+ * tidak pernah membuat halaman kosong atau error, hanya menampilkan semua.
+ */
+export function parseStatusFilter(raw: string | undefined): StatusFilter {
+  if (!raw) return "ALL";
+  const upper = raw.toUpperCase();
+  return (STATUS_FILTERS as readonly string[]).includes(upper)
+    ? (upper as StatusFilter)
+    : "ALL";
+}
+
+/**
+ * Ubah nilai mentah `?page=` menjadi nomor halaman >= 1. Bukan angka, nol,
+ * negatif, atau NaN → 1. Tidak ada batas atas di sini karena `paginate`
+ * yang akan menjepitnya ke jumlah halaman sebenarnya.
+ */
+export function parsePage(raw: string | undefined): number {
+  if (!raw) return 1;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
+export interface Pagination {
+  /** Halaman yang benar-benar ditampilkan (sudah dijepit ke rentang sah). */
+  page: number;
+  pageCount: number;
+  /** Indeks awal (0-based, inklusif) untuk `slice`. */
+  start: number;
+  /** Indeks akhir (0-based, eksklusif) untuk `slice`. */
+  end: number;
+}
+
+/**
+ * Hitung jendela paginasi. MURNI. `pageSize` minimal 1 (dijaga agar tidak
+ * terjadi pembagian nol). Bila `page` melebihi jumlah halaman, ia dijepit ke
+ * halaman terakhir yang ada — jadi `?page=999` tetap menampilkan data, bukan
+ * tabel kosong. Daftar kosong menghasilkan pageCount = 1, page = 1.
+ */
+export function paginate(
+  totalItems: number,
+  page: number,
+  pageSize: number,
+): Pagination {
+  const size = Math.max(1, Math.floor(pageSize));
+  const pageCount = Math.max(1, Math.ceil(totalItems / size));
+  const safePage = Math.min(Math.max(1, Math.floor(page)), pageCount);
+  const start = (safePage - 1) * size;
+  const end = Math.min(start + size, totalItems);
+  return { page: safePage, pageCount, start, end };
 }

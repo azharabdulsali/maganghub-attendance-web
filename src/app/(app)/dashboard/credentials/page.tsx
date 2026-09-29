@@ -29,7 +29,7 @@ export default async function CredentialsPage() {
   });
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
+    <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
       <div className="mb-8">
         <Link
           href="/dashboard"
@@ -50,6 +50,6 @@ export default async function CredentialsPage() {
         updatedAt={credential?.updatedAt?.toISOString() ?? null}
         hasToken={Boolean(credential?.tokenCiphertext)}
       />
-    </main>
+    </div>
   );
 }

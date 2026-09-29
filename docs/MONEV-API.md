@@ -575,7 +575,7 @@ jawab — karena itu tetap **opt-in**, bukan pengganti C1.
 > kolom `accessCiphertext`/`accessIv`/`accessAuthTag`/`accessExpiresAt` di
 > `maganghub_credentials` (terpisah dari kolom refresh token). Rate limit
 > `credentialsLogin`. UI: kartu "Hubungkan sesi Monev" di
-> `src/app/dashboard/credentials/page.tsx`. Opsi C1 (tempel token) tetap
+> `src/app/(app)/dashboard/credentials/page.tsx`. Opsi C1 (tempel token) tetap
 > tersedia sebagai cadangan.
 >
 > **Konsumsi access token (diperbarui):** jalur submit
@@ -604,7 +604,7 @@ perangkat mungkin **ditolak** dari server lain — perlu diuji.
 > AES-256-GCM di kolom terpisah (`tokenCiphertext`) pada
 > `maganghub_credentials`, berdampingan dengan password asli yang tidak
 > tersentuh. UI: kartu "Tes Koneksi" di
-> `src/app/dashboard/credentials/page.tsx`.
+> `src/app/(app)/dashboard/credentials/page.tsx`.
 >
 > **Yang belum diuji terhadap portal sungguhan:** apakah klaim `fingerprint`
 > di JWT refresh token divalidasi lintas-IP (butuh token asli dari pengguna).
@@ -690,9 +690,14 @@ access token — kemungkinan lewat `POST /api/v1/auth/refresh` (§4.1) yang
 ### 8.5 Kerangka yang sudah diisi
 
 `src/lib/monev-submit.ts` — `TODO §8` kini diisi dari §8.1 (lihat tabel di
-sana). Status HTTP sukses/"sudah ada" **belum terverifikasi** (rekaman tidak
-memuat kode balasan) — perlu diamati saat uji pertama. Fungsi murni
-(`buildSubmitBody`, `interpretSubmitResponse`) + tesnya tetap hijau.
+sana). **Status HTTP sudah TERVERIFIKASI lewat uji nyata (2026-09-28):**
+`409 Conflict` = laporan tanggal itu sudah ada (terlihat di `/dashboard/history`
+sebagai `HTTP 409` + status `DUPLICATE`). Karena tanggal uji sudah pernah diabsen,
+inilah respons pertama yang bisa direkam; **kode sukses (`200`/`201`) masih perlu
+direkam** pada kirim sungguhan pertama untuk tanggal yang belum ada. Fungsi murni
+(`buildSubmitBody`, `interpretSubmitResponse`) + tesnya tetap hijau. Saat `409`
+membawa body JSON, pesan portal kini dipakai di audit log (fallback ke teks
+internal bila body kosong/HTML).
 
 ### 8.5b Route submit (Tahap 4) — ✅ TERPASANG, gated
 
