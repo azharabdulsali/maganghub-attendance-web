@@ -21,6 +21,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
 import { getAdminUsers } from "./admin-query";
 import {
   credentialStatusTone,
@@ -28,7 +29,6 @@ import {
   initialsFor,
   isAdminRole,
   summarizeUsers,
-  type Tone,
 } from "@/lib/admin";
 import {
   badgeVariant,
@@ -40,22 +40,9 @@ import {
   parseStatusFilter,
   STATUS_FILTER_LABELS,
   STATUS_FILTERS,
-  type BadgeVariant,
   type StatusFilter,
 } from "@/lib/audit-log";
 import type { SubmitStatus } from "@/generated/prisma/enums";
-
-const BADGE_CLASS: Record<BadgeVariant, string> = {
-  success: "bg-main text-main-foreground",
-  warning: "bg-secondary-background text-foreground",
-  failure: "bg-foreground text-background",
-};
-
-const TONE_CLASS: Record<Tone, string> = {
-  good: "bg-main text-main-foreground",
-  bad: "bg-foreground text-background",
-  neutral: "bg-secondary-background text-foreground",
-};
 
 const AUDIT_PAGE_SIZE = 20;
 
@@ -143,7 +130,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </div>
       </section>
 
-
       <Card className="mb-10">
         <CardHeader>
           <CardTitle>Daftar pengguna ({users.length})</CardTitle>
@@ -190,24 +176,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         </div>
                       </td>
                       <td className="p-3">
-                        <span
-                          className={`inline-flex items-center rounded-base border-2 border-border px-2 py-0.5 text-xs font-heading ${
-                            isAdminRole(u.role)
-                              ? "bg-main text-main-foreground"
-                              : "bg-secondary-background text-foreground"
-                          }`}
-                        >
+                        <Badge tone={isAdminRole(u.role) ? "good" : "neutral"}>
                           {u.role}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="p-3">
-                        <span
-                          className={`inline-flex items-center rounded-base border-2 border-border px-2 py-0.5 text-xs font-heading ${
-                            TONE_CLASS[credentialStatusTone(u.credentialStatus)]
-                          }`}
-                        >
+                        <Badge tone={credentialStatusTone(u.credentialStatus)}>
                           {describeCredentialStatus(u.credentialStatus)}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="p-3 text-xs text-foreground/70">
                         {u.automationEnabled ? "Aktif" : "Mati"}
@@ -231,7 +207,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           )}
         </CardContent>
       </Card>
-
 
       <Card>
         <CardHeader>
@@ -290,13 +265,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           {log.user.email}
                         </td>
                         <td className="p-3">
-                          <span
-                            className={`inline-flex items-center rounded-base border-2 border-border px-2 py-0.5 text-xs font-heading ${
-                              BADGE_CLASS[badgeVariant(log.status)]
-                            }`}
-                          >
+                          <Badge tone={toneForBadgeVariant(badgeVariant(log.status))}>
                             {describeSubmitStatus(log.status)}
-                          </span>
+                          </Badge>
                         </td>
                         <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
                           {describeTrigger(log.trigger)}

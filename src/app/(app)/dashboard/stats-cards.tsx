@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import type { Tone } from "@/lib/admin";
 
 // Kartu statistik dashboard — komponen tampilan murni (tanpa state/fetch),
 // menerima angka yang sudah dihitung di server. Lihat SPEC.md §5.6.
@@ -11,10 +12,10 @@ export type Stat = {
   value: string;
   hint?: string;
   /** "good" menghijaukan angka, "bad" memerahkan, kosong = netral. */
-  tone?: "good" | "bad" | "neutral";
+  tone?: Tone;
 };
 
-const TONE_CLASS: Record<NonNullable<Stat["tone"]>, string> = {
+const TONE_CLASS: Record<Tone, string> = {
   good: "text-emerald-600",
   bad: "text-destructive",
   neutral: "text-foreground",

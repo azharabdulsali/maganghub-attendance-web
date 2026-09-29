@@ -10,6 +10,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Message } from "@/components/ui/message";
 
 type Hasil = {
   ok: boolean;
@@ -61,14 +62,10 @@ export default function SubmitReportButton() {
         {loading ? "Mengirim..." : "Kirim Absen Hari Ini"}
       </Button>
 
-      {error && (
-        <p className="rounded-base border-2 border-border px-3 py-2 text-sm">
-          {error}
-        </p>
-      )}
+      {error && <Message tone="bad">{error}</Message>}
 
       {hasil && (
-        <div className="rounded-base border-2 border-border px-3 py-2 text-sm">
+        <Message tone="neutral" as="div">
           <p className="font-heading">{hasil.status}</p>
           <p className="mt-1 text-foreground/80">{hasil.message}</p>
           {hasil.date && (
@@ -85,7 +82,7 @@ export default function SubmitReportButton() {
               Buka halaman kredensial
             </Button>
           )}
-        </div>
+        </Message>
       )}
     </div>
   );

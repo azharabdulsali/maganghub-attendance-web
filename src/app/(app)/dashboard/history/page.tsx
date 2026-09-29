@@ -14,6 +14,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
 import {
   badgeVariant,
   describeSubmitStatus,
@@ -25,17 +26,9 @@ import {
   summarizeLogs,
   STATUS_FILTER_LABELS,
   STATUS_FILTERS,
-  type BadgeVariant,
   type StatusFilter,
 } from "@/lib/audit-log";
 import type { SubmitStatus } from "@/generated/prisma/enums";
-
-/** Kelas Tailwind per warna badge (pola sama dengan badge peran di dashboard). */
-const BADGE_CLASS: Record<BadgeVariant, string> = {
-  success: "bg-main text-main-foreground",
-  warning: "bg-secondary-background text-foreground",
-  failure: "bg-foreground text-background",
-};
 
 /** Jumlah baris per halaman. */
 const PAGE_SIZE = 20;
@@ -200,13 +193,9 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
                         {when ?? "waktu tidak diketahui"}
                       </td>
                       <td className="p-3">
-                        <span
-                          className={`inline-flex items-center rounded-base border-2 border-border px-2 py-0.5 text-xs font-heading ${
-                            BADGE_CLASS[badgeVariant(log.status)]
-                          }`}
-                        >
+                        <Badge tone={toneForBadgeVariant(badgeVariant(log.status))}>
                           {describeSubmitStatus(log.status)}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
                         {describeTrigger(log.trigger)}

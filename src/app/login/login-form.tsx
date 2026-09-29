@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Message } from "@/components/ui/message";
 import {
   Card,
   CardContent,
@@ -101,9 +102,9 @@ export default function LoginForm() {
 
         <CardContent>
           {justRegistered && (
-            <p className="mb-4 rounded-base border-2 border-border bg-main px-3 py-2 text-sm text-main-foreground">
+            <Message tone="good" className="mb-4">
               Akun berhasil dibuat. Silakan masuk.
-            </p>
+            </Message>
           )}
 
           <form onSubmit={onSubmit} className="space-y-4">
@@ -129,11 +130,7 @@ export default function LoginForm() {
               />
             </div>
 
-            {error && (
-              <p className="rounded-base border-2 border-border bg-background px-3 py-2 text-sm font-base text-foreground">
-                {error}
-              </p>
-            )}
+            {error && <Message tone="bad">{error}</Message>}
 
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Memproses..." : "Masuk"}

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Message } from "@/components/ui/message";
 import {
   Card,
   CardContent,
@@ -121,11 +122,7 @@ export default function AnalyzeCaptureForm() {
             {loading ? "Menganalisis..." : "Analisis"}
           </Button>
 
-          {error && (
-            <p className="rounded-base border-2 border-border px-3 py-2 text-sm">
-              {error}
-            </p>
-          )}
+          {error && <Message tone="bad">{error}</Message>}
         </CardContent>
       </Card>
 

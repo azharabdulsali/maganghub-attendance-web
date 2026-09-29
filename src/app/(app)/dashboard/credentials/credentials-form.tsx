@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Message } from "@/components/ui/message";
 import {
   Card,
   CardContent,
@@ -360,16 +361,9 @@ export default function CredentialsForm({
           )}
 
           {loginMsg && (
-            <p
-              className={
-                "rounded-base border-2 border-border px-3 py-2 text-sm " +
-                (loginState === "ok"
-                  ? "bg-main text-main-foreground"
-                  : "bg-background text-foreground")
-              }
-            >
+            <Message tone={loginState === "ok" ? "good" : "bad"}>
               {loginMsg}
-            </p>
+            </Message>
           )}
         </CardContent>
       </Card>
@@ -432,16 +426,9 @@ export default function CredentialsForm({
           )}
 
           {tokenMsg && (
-            <p
-              className={
-                "rounded-base border-2 border-border px-3 py-2 text-sm " +
-                (tokenState === "ok"
-                  ? "bg-main text-main-foreground"
-                  : "bg-background text-foreground")
-              }
-            >
+            <Message tone={tokenState === "ok" ? "good" : "bad"}>
               {tokenMsg}
-            </p>
+            </Message>
           )}
         </CardContent>
       </Card>

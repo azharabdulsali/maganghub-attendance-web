@@ -276,6 +276,35 @@ seperti `stats-query.ts`).
 > **⚠️ Sama seperti riwayat:** jangan kirim `take: 0` ke Prisma — halaman audit
 > yang tersaring kosong tetap memakai `take` minimal 1.
 
+### 5.10 Komponen bersama UI (badge & kotak pesan)
+
+Dua pola tampilan sebelumnya **disalin-tempel berulang**; keduanya kini punya
+satu sumber kebenaran. Jangan menulis ulang polanya secara inline.
+
+- **`src/components/ui/badge.tsx` — `<Badge tone>`.** Sebelumnya peta warna
+  (`bg-main`/`bg-secondary-background`/`bg-foreground`) dan markup `<span>`
+  badge disalin di `history/page.tsx` (`BADGE_CLASS`), `admin/page.tsx`
+  (`BADGE_CLASS` + `TONE_CLASS`), dan `dashboard/page.tsx`. Bila salah satu
+  diubah, halaman lain bisa **berbeda warna diam-diam** untuk status yang sama.
+  Kini semuanya memakai `<Badge>`. Terjemahan dari kosakata `lib/audit-log.ts`
+  (`success`/`failure`/`warning`) ke `Tone` dilakukan oleh
+  `toneForBadgeVariant()` — **ditaruh di komponen, bukan di halaman** — sehingga
+  tabel riwayat & tabel audit admin dijamin sewarna.
+- **`src/components/ui/message.tsx` — `<Message tone>`.** Menggantikan pola
+  `rounded-base border-2 border-border px-3 py-2 text-sm` + logika "ini kotak
+  sukses atau error?" yang dulu diulang di ~6 berkas (login, credentials,
+  automation, dev-tools, submit). `role`/`aria-live` sudah diisi: `bad` →
+  `alert`, nada lain → `status`.
+
+**Kosakata nada tunggal.** `Tone = "good" | "bad" | "neutral"` didefinisikan
+sekali di `src/lib/admin.ts` dan dipakai oleh `<Badge>`, `<Message>`, dan
+`stats-cards.tsx`. Jangan mendeklarasikan ulang union `"good" | "bad" |
+"neutral"` di berkas baru — impor `Tone` saja.
+
+> **Uji murni:** `toneForBadgeVariant()` dikunci di
+> `src/components/ui/badge.test.ts` (tanpa DOM) supaya pemetaan nada tidak
+> berubah tanpa sengaja.
+
 
 
 ---

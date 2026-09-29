@@ -8,6 +8,7 @@ import StatsCards from "./stats-cards";
 import TrendChart from "./trend-chart";
 import { getDashboardStats } from "./stats-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 // Dashboard — halaman utama setelah login, di URL /dashboard.
@@ -58,15 +59,7 @@ export default async function DashboardPage() {
       <Card className="mb-6">
         <CardContent className="flex flex-wrap items-center gap-3">
           <span className="text-sm text-foreground/70">Peran akun:</span>
-          <span
-            className={`inline-flex items-center rounded-base border-2 border-border px-3 py-1 text-xs font-heading ${
-              isAdmin
-                ? "bg-main text-main-foreground"
-                : "bg-secondary-background text-foreground"
-            }`}
-          >
-            {role}
-          </span>
+          <Badge tone={isAdmin ? "good" : "neutral"}>{role}</Badge>
           {!env.ADMIN_EMAIL && (
             <p className="w-full text-xs text-foreground/60">
               Catatan: <code>ADMIN_EMAIL</code> belum diisi, jadi tidak ada admin

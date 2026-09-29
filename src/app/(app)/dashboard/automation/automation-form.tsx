@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Message } from "@/components/ui/message";
 import {
   Card,
   CardContent,
@@ -157,16 +158,8 @@ export default function AutomationForm({
               {loading ? "Menyimpan..." : hasExisting ? "Simpan perubahan" : "Aktifkan"}
             </Button>
 
-            {error && (
-              <p className="rounded-base border-2 border-border px-3 py-2 text-sm text-foreground">
-                {error}
-              </p>
-            )}
-            {sukses && (
-              <p className="rounded-base border-2 border-border bg-main px-3 py-2 text-sm text-main-foreground">
-                {sukses}
-              </p>
-            )}
+            {error && <Message tone="bad">{error}</Message>}
+            {sukses && <Message tone="good">{sukses}</Message>}
           </form>
         </CardContent>
       </Card>
