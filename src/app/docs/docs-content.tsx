@@ -167,7 +167,7 @@ export default function DocsContent() {
                     type="button"
                     onClick={() => setAktif(t.id)}
                     aria-current={dipilih ? "true" : undefined}
-                    className={`flex w-full items-center justify-between gap-2 rounded-base border-2 px-3 py-2.5 text-left text-xs transition-colors ${
+                    className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-base border-2 px-3 py-2.5 text-left text-xs transition-colors ${
                       dipilih
                         ? "border-border bg-main font-heading"
                         : "border-transparent text-foreground/70 hover:bg-background hover:text-foreground"
@@ -195,7 +195,7 @@ export default function DocsContent() {
                     type="button"
                     onClick={() => setAktif(t.id)}
                     aria-current={dipilih ? "true" : undefined}
-                    className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border-2 px-3 py-2 text-xs transition-colors ${
+                    className={`flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-2 px-3 py-2 text-xs transition-colors ${
                       dipilih
                         ? "border-border bg-main font-heading"
                         : "border-border text-foreground/70 hover:bg-background"

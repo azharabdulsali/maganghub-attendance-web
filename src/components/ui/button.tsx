@@ -6,7 +6,11 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm font-base ring-offset-white transition-all gap-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50",
+  // `cursor-pointer`: Tailwind v4 mengubah default `button` menjadi
+  // `cursor: default`, jadi tanpa ini tombol tampak tidak bisa diklik.
+  // `touch-action-manipulation` menghapus delay 300ms tap di layar sentuh.
+  // Keduanya memenuhi aturan ui-ux-pro-max `cursor-pointer` + `tap-delay`.
+  "inline-flex cursor-pointer touch-manipulation items-center justify-center whitespace-nowrap rounded-base text-sm font-base ring-offset-background transition-all gap-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50",
   {
     variants: {
       variant: {

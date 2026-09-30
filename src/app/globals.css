@@ -210,3 +210,18 @@
     scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
   }
 }
+/* Hormati preferensi "kurangi gerakan" (WCAG 2.3.3). `tw-animate-css` diimpor
+   di atas, jadi tanpa blok ini animasi tetap berjalan bagi pengguna yang secara
+   eksplisit memintanya berhenti. Durasi dipangkas ke nilai nyaris nol, bukan
+   `animation: none`, supaya animasi ber-`fill-mode: forwards` tetap mencapai
+   keadaan akhirnya dan tidak ada elemen yang tertinggal di posisi awal. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

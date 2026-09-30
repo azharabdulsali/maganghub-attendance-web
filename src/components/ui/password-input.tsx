@@ -45,7 +45,7 @@ function PasswordInput({
         aria-label={terlihat ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
         aria-pressed={terlihat}
         title={terlihat ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-base text-foreground/70 hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-base text-foreground/70 hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         {terlihat ? (
           <EyeOff className="size-4" aria-hidden />

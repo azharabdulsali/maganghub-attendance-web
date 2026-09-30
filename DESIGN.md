@@ -89,6 +89,53 @@ Diputuskan dan dieksekusi (R-21, opsi b):
   warna scrollbar kini memakai token (`--secondary-background` / `--border`)
   alih-alih putih/hitam hard-code.
 
+## Aksesibilitas (audit UI/UX)
+
+Diaudit terhadap kategori prioritas 1-2 (aksesibilitas, sentuhan/interaksi).
+Dua perbaikan dieksekusi karena keduanya bug nyata di mode gelap / pengguna
+yang meminta gerakan dikurangi:
+
+- **Cincin fokus memakai token, bukan warna hard-code.** Sebelumnya `button.tsx`,
+  `input.tsx`, `textarea.tsx`, dan `password-input.tsx` memakai
+  `ring-black` + `ring-offset-white`. Di mode gelap cincin hitam nyaris tak
+  terlihat di atas latar gelap, dan halo offset putih tetap menyala. Sekarang
+  memakai `ring-ring` + `ring-offset-background` sehingga fokus selalu terbaca
+  di kedua tema (WCAG 2.4.7 / 2.4.11).
+- **`prefers-reduced-motion` dihormati.** `tw-animate-css` diimpor di
+  `globals.css` dan token animasi (`--animate-slide-in-right`) sudah ada, tetapi
+  tidak ada satu pun media query yang mematikan gerakan. Ditambahkan blok
+  `@media (prefers-reduced-motion: reduce)` yang memangkas durasi ke nyaris nol
+  (bukan `animation: none`, agar `fill-mode: forwards` tetap sampai keadaan
+  akhir). WCAG 2.3.3.
+
+Ditemukan tetapi **tidak** diubah: `icon-sm` = 36px, di bawah sasaran sentuh
+44px yang disarankan Apple HIG. Ini **tetap patuh** WCAG 2.2 AA, yang hanya
+menuntut 24×24 CSS px (kriteria 2.5.8) — 44pt adalah pedoman native iOS/Android,
+bukan ambang web. Karena kontrol ini hanya muncul di header/sidebar desktop
+(penunjuk presisi), 36px diterima dan dicatat sebagai pengecualian resmi.
+
+### Putaran kedua (crosscheck penuh 10 kategori)
+
+Audit diperluas ke seluruh `quick-reference.md` (≈180 aturan, 10 kategori).
+Hasil: mayoritas sudah sesuai. Tiga perbaikan tambahan dieksekusi:
+
+- **`cursor-pointer` pada kontrol klik.** Tailwind v4 mengubah default `<button>`
+  menjadi `cursor: default`, jadi tombol tampak tidak bisa diklik (aturan
+  `cursor-pointer`). Ditambahkan di kelas dasar `button.tsx` dan pada dua `<button>`
+  mentah di `docs-content.tsx`.
+- **`touch-action: manipulation` di `button.tsx`.** Menghapus delay tap 300ms
+  di layar sentuh (aturan `tap-delay`).
+- **`export const viewport` eksplisit di `layout.tsx`.** Next.js sebenarnya sudah
+  menyuntikkan viewport yang benar, jadi ini bukan bug — tetapi ekspor eksplisit
+  mengunci `width=device-width, initial-scale=1` dan mencegah siapa pun
+  menambahkan `maximum-scale`/`user-scalable=no` (pelanggaran WCAG 1.4.4).
+  Sekaligus memberi `themeColor` untuk kedua tema (aturan `viewport-meta`).
+
+Diterima sebagai pengecualian (bukan cacat): `icon-sm` 36px di atas; tidak ada
+`role="button"` pada elemen non-fokusabel (tidak ada `<div onClick>` — semua
+interaksi lewat `<button>`/`<a>` asli); tabel lebar sudah dibungkus
+`role="region"` + `tabIndex={0}`.
+
 ## Status: perlu keputusan Anda
 
 Tidak ada lagi keputusan yang memblokir. R-04 (ikon) dan R-21 (tema) sudah

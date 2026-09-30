@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
@@ -17,6 +17,20 @@ export const metadata: Metadata = {
   title: "Maganghub Autoabsen",
   description:
     "Kirim absensi MagangHub dari tiga template laporan Anda, otomatis dan tanpa biaya bulanan.",
+};
+
+// Next.js menyuntikkan <meta name="viewport" content="width=device-width,
+// initial-scale=1"> secara default, jadi zoom TIDAK pernah dimatikan. Ekspor ini
+// membuat nilai itu eksplisit dan mengunci aturan ui-ux-pro-max `viewport-meta`
+// supaya tidak ada yang tanpa sengaja menambahkan `maximum-scale` /
+// `user-scalable=no` di kemudian hari (itu pelanggaran WCAG 1.4.4).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#5294ff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
