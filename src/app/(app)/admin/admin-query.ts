@@ -19,6 +19,7 @@ export async function getAdminUsers(): Promise<AdminUserRow[]> {
   const users = await prisma.user.findMany({
     orderBy: [{ role: "desc" }, { createdAt: "desc" }],
     select: {
+      id: true,
       email: true,
       name: true,
       role: true,
@@ -35,6 +36,7 @@ export async function getAdminUsers(): Promise<AdminUserRow[]> {
   });
 
   return users.map((u) => ({
+    id: u.id,
     email: u.email,
     name: u.name,
     role: u.role,

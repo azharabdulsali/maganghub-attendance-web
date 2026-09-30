@@ -14,6 +14,7 @@ import {
 
 function row(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
   return {
+    id: "user-1",
     email: "user@example.com",
     name: null,
     role: "USER",

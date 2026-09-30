@@ -7,11 +7,13 @@
 //   3. Audit lintas pengguna (SubmitLog semua orang), dengan filter status yang
 //      sama seperti halaman riwayat, supaya pengalaman tidak berbeda.
 //
-// Yang SENGAJA belum ada: mengubah peran, menghapus pengguna, memaksa submit.
-// Ketiganya mengubah data orang lain dan belum punya backend/aturan yang aman;
-// menambahkannya sebagai tombol kosong akan menjanjikan hal yang tidak ada.
-// Halaman ini murni BACA, audit log adalah bukti, bukan data yang bisa diubah
-// (SPEC.md §5.7).
+// Yang masih SENGAJA belum ada: mengubah peran dan memaksa submit. Keduanya
+// mengubah data orang lain dan belum punya aturan yang aman.
+//
+// Sejak fitur ini, admin BISA mengatur ulang kata sandi pengguna dan
+// menghapusnya (soft delete). Aturannya murni di src/lib/admin-user-actions.ts
+// (diri sendiri & admin lain ditolak), tombolnya di ./user-actions.tsx, dan
+// endpoint di /api/admin/users/[id]. Audit log SubmitLog tetap hanya-baca.
 //
 // ⚠️ Penjagaan sesungguhnya ada di sini (server) lewat pemeriksaan role. Sidebar
 // hanya menyembunyikan tautan, lihat catatan di components/app-sidebar.tsx.
@@ -24,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
 import { getAdminUsers } from "./admin-query";
 import { DispatchPanel } from "./dispatch-panel";
+import { UserRowActions } from "./user-actions";
 import {
   credentialStatusTone,
   describeCredentialStatus,
@@ -71,6 +74,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (!isAdminRole(role)) {
     redirect("/dashboard");
   }
+  // Setelah guard di atas, id dijamin ada; disimpan supaya TS tidak mengeluh
+  // di dalam JSX dan supaya perbandingan "diri sendiri" memakai satu sumber.
+  const actorId = session.user.id;
 
   const params = await searchParams;
   const statusFilter = parseStatusFilter(params.status);
@@ -159,6 +165,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <th className="p-3 font-heading">Laporan</th>
                     <th className="p-3 font-heading">Submit</th>
                     <th className="p-3 font-heading">Terakhir kirim</th>
+                    <th className="p-3 font-heading">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -208,6 +215,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         {u.lastSubmitAt
                           ? (formatJakartaTimestamp(u.lastSubmitAt) ?? ",")
                           : "Belum pernah"}
+                      </td>
+                      <td className="p-3">
+                        <UserRowActions
+                          userId={u.id}
+                          userEmail={u.email}
+                          isSelf={u.id === actorId}
+                          isAdmin={isAdminRole(u.role)}
+                        />
                       </td>
                     </tr>
                   ))}

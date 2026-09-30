@@ -193,6 +193,14 @@ export const RATE_LIMITS = {
    * dipakai menebak kata sandi atau memindai email yang sudah terdaftar.
    */
   emailChange: { limit: 5, windowMs: 10 * 60_000 },
+  /**
+   * Aksi admin atas pengguna (atribut ulang kata sandi / hapus): 20 / 10 menit
+   * per admin. Batas ini melindungi dari salah-klik beruntun, bukan dari brute
+   * force (admin sudah terautentikasi), karena itu lebih longgar dari scope
+   * pemilik-akun. Dihitung per admin, bukan per sasaran, supaya satu admin
+   * tetap bisa menangani banyak pengguna dalam satu sesi kerja.
+   */
+  adminUserAction: { limit: 20, windowMs: 10 * 60_000 },
   /** Pendaftaran: 3 / jam per IP (SPEC.md §8). */
   register: { limit: 3, windowMs: 60 * 60_000 },
 } as const;

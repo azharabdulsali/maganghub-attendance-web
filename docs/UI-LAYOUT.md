@@ -142,6 +142,30 @@ Dibagi dua supaya batas *melihat* vs *mengubah* jelas:
 - **Invalidasi sesi** (ketiga pemicu di atas) memakai `User.sessionVersion` +
   pemeriksaan di callback `jwt`, penjelasan lengkap di `SPEC.md` §5.8b.
 
+### Aksi admin atas pengguna (`/admin`)
+
+- Tabel pengguna di `src/app/(app)/admin/page.tsx` kini punya kolom **Aksi**;
+  tombolnya di `src/app/(app)/admin/user-actions.tsx` (klien). Aturan murni di
+  `src/lib/admin-user-actions.ts`, endpoint di `src/app/api/admin/users/[id]`
+  (`DELETE` untuk hapus, `reset-password` untuk atur ulang).
+- **Atur ulang kata sandi**: server membuat kata sandi sementara acak
+  (16 karakter, tanpa `0/O/1/I/l`), menyimpan hash bcrypt cost 12, menaikkan
+  `sessionVersion` (semua sesi pengguna tercabut), lalu mengembalikan kata sandi
+  **mentah sekali** ke admin. Dialog menampilkan kata sandi itu dengan tombol
+  Salin dan gerbang centang "sudah menyalin" sebelum bisa ditutup. Respons
+  memakai `Cache-Control: no-store`; kata sandi tidak pernah masuk log.
+- **Hapus** dirancang **soft delete** (menandai `deletedAt`), agar riwayat laporan
+  & audit tetap utuh. ⚠️ Kolom `deletedAt` belum ada di skema → endpoint masih
+  membalas `501` sampai migrasi dijalankan (tahap 2). Menghapus data sungguhan
+  tanpa kolom itu tidak dilakukan.
+- **Penjagaan**: diri sendiri & admin lain selalu ditolak (403), sasaran tak ada
+  → 404. Rate limit scope `adminUserAction` (20/10 menit per admin). Aksi dicatat
+  lewat `src/lib/admin-action-log.ts` (sementara ke log server; tabel
+  `AdminActionLog` menyusul di tahap 2).
+- **Tahap 2 (belum)**: kolom `User.mustChangePassword` + spanduk paksa-ganti
+  setelah reset, tabel `AdminActionLog`, dan kolom `deletedAt` — semuanya butuh
+  satu migrasi Neon.
+
 ---
 
 ## 5. Cara memeriksa setelah mengubah UI

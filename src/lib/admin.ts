@@ -55,6 +55,8 @@ export function credentialStatusTone(
 
 /** Ringkas data pengguna untuk kolom tabel admin. */
 export interface AdminUserRow {
+  /** Id user — dipakai tombol aksi (reset/hapus) untuk menyebut sasaran. */
+  id: string;
   email: string;
   name: string | null;
   role: string;
