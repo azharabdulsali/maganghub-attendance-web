@@ -23,8 +23,8 @@ const TONE_CLASS: Record<Tone, string> = {
 
 /**
  * Terjemahkan `BadgeVariant` (kosakata lib/audit-log.ts: success/failure/warning)
- * ke `Tone` (kosakata komponen ini: good/bad/neutral). Ditaruh di sini — bukan
- * di halaman — supaya tabel audit di riwayat & admin tidak pernah berbeda warna.
+ * ke `Tone` (kosakata komponen ini: good/bad/neutral). Ditaruh di sini, bukan
+ * di halaman, supaya tabel audit di riwayat & admin tidak pernah berbeda warna.
  */
 export function toneForBadgeVariant(variant: BadgeVariant): Tone {
   switch (variant) {

@@ -1,4 +1,4 @@
-// src/app/api/dev-tools/analyze-capture/route.ts — menganalisis rekaman HAR/curl
+// src/app/api/dev-tools/analyze-capture/route.ts: menganalisis rekaman HAR/curl
 // untuk menemukan endpoint submit laporan (docs/MONEV-API.md §8).
 //
 // Endpoint ini HANYA membaca teks yang sudah direkam pengguna. Ia tidak
@@ -12,7 +12,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { analyzeCapture } from "@/lib/har-capture";
 
-const MAKS_PANJANG = 2_000_000; // 2 MB — cukup untuk HAR, mencegah penyalahgunaan.
+const MAKS_PANJANG = 2_000_000; // 2 MB, cukup untuk HAR, mencegah penyalahgunaan.
 
 export async function POST(request: Request) {
   const session = await auth();

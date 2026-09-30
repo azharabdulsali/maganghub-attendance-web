@@ -1,6 +1,6 @@
 "use client";
 
-// src/app/(app)/report-templates/report-templates-form.tsx — form 3 template.
+// src/app/(app)/report-templates/report-templates-form.tsx: form 3 template.
 //
 // Alasan bentuknya begini:
 //   - Penghitung karakter tampil LANGSUNG saat mengetik. Aturan 100 karakter
@@ -165,7 +165,7 @@ export default function ReportTemplatesForm({
               <span>
                 Template tersimpan
                 {savedAt
-                  ? ` — terakhir diubah ${new Date(savedAt).toLocaleString("id-ID")}`
+                  ? `, terakhir diubah ${new Date(savedAt).toLocaleString("id-ID")}`
                   : null}
               </span>
             </>
@@ -182,7 +182,7 @@ export default function ReportTemplatesForm({
         const s = status[f.name];
         const kurang = MIN_REPORT_LENGTH - s.panjang;
         // Merah kalau sudah mulai diketik tapi belum cukup; teks normal
-        // (tanpa warna khusus) kalau sudah memenuhi syarat — status "lolos"
+        // (tanpa warna khusus) kalau sudah memenuhi syarat, status "lolos"
         // dibedakan lewat ikon, bukan warna, supaya aman untuk buta warna.
         const warna =
           s.panjang === 0
@@ -237,7 +237,7 @@ export default function ReportTemplatesForm({
 
       {/* Tombol aksi: keduanya seukuran (size="sm") dan hanya selebar isinya.
           Sebelumnya "Perbarui template" memakai `sm:flex-1` sehingga melebar
-          penuh dan terlihat jauh lebih besar dari "Hapus" di sebelahnya —
+          penuh dan terlihat jauh lebih besar dari "Hapus" di sebelahnya,
           padahal keduanya sederajat. Sisi utama tetap dibedakan lewat
           variant (bukan ukuran). */}
       <div className="flex flex-wrap items-center gap-3">

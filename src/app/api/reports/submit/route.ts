@@ -1,8 +1,8 @@
-// src/app/api/reports/submit/route.ts — kirim laporan absensi ke portal Monev.
+// src/app/api/reports/submit/route.ts: kirim laporan absensi ke portal Monev.
 //
 // Alur (SPEC.md §10, §11B):
 //   1. Pastikan pengguna sudah masuk (NextAuth).
-//   2. Ambil template & kredensial, lalu serahkan ke performSubmit() — yang
+//   2. Ambil template & kredensial, lalu serahkan ke performSubmit(), yang
 //      menjalankan policy + kesiapan + tukar token + kirim + audit log.
 //   3. Petakan hasilnya ke bentuk respons HTTP yang diharapkan UI.
 //
@@ -30,7 +30,7 @@ import {
   performSubmit,
 } from "@/lib/perform-submit";
 
-/** POST — kirim laporan untuk tanggal target (default: hari ini WIB). */
+/** POST, kirim laporan untuk tanggal target (default: hari ini WIB). */
 export async function POST(request: Request) {
   const session = await auth();
   const userId = session?.user?.id;
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
   }
 
-  // Rate limit per pengguna — mencegah dobel-klik & spam tombol kirim.
+  // Rate limit per pengguna, mencegah dobel-klik & spam tombol kirim.
   const gate = await enforceRateLimit("submitManual", rateLimitKey("submit", userId));
   if (!gate.decision.allowed) {
     return NextResponse.json(
@@ -53,13 +53,13 @@ export async function POST(request: Request) {
   //
   // `trigger` SENGAJA tidak dibaca dari body: label audit (MANUAL vs CRON)
   // ditentukan SERVER, bukan klien. Route ini adalah jalur manual, jadi
-  // pemicunya selalu "MANUAL" — klien tidak boleh bisa memalsukan jejak audit
+  // pemicunya selalu "MANUAL", klien tidak boleh bisa memalsukan jejak audit
   // dengan mengirim `trigger: "CRON"`.
   let body: { date?: unknown } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
-    // Body kosong bukan kesalahan — pakai default.
+    // Body kosong bukan kesalahan, pakai default.
     body = {};
   }
 

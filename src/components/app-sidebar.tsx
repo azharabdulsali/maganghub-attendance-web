@@ -1,11 +1,11 @@
 "use client";
 
-// src/components/app-sidebar.tsx — navigasi utama aplikasi.
+// src/components/app-sidebar.tsx: navigasi utama aplikasi.
 //
 // Alasan bentuknya begini:
 //   - Satu komponen menangani dua tata letak: sidebar tetap di layar lebar
 //     (md ke atas) dan laci geser (drawer) di layar kecil. Tidak ada dependensi
-//     baru — hanya state React + kelas Tailwind, karena AGENTS.md §2 melarang
+//     baru, hanya state React + kelas Tailwind, karena AGENTS.md §2 melarang
 //     menambah paket tanpa alasan kuat.
 //   - Menu BERSIFAT DATA (`MENU_*`), dipisah antara USER dan ADMIN. Peran
 //     ditentukan di layout (server) lalu diturunkan sebagai prop `isAdmin`,
@@ -30,7 +30,6 @@ import {
   Menu,
   Settings,
   ShieldAlert,
-  Sparkles,
   UserRound,
   Users,
   X,
@@ -38,6 +37,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
 
 type SidebarUser = {
@@ -105,7 +105,7 @@ function SidebarContent({
         onClick={onNavigate}
         className="flex items-center gap-2 rounded-base border-2 border-border bg-main px-3 py-2 text-main-foreground shadow-shadow"
       >
-        <Sparkles className="size-5" />
+        <CalendarCheck className="size-5" />
         <span className="font-heading text-base leading-tight">
           MagangHub
           <span className="block text-[11px] font-base opacity-90">
@@ -156,16 +156,19 @@ function SidebarContent({
             </span>
           </span>
         </Link>
-        <span
-          className={cn(
-            "mt-2 inline-flex items-center rounded-base border-2 border-border px-2 py-0.5 text-[11px] font-heading",
-            user.isAdmin
-              ? "bg-main text-main-foreground"
-              : "bg-background text-foreground",
-          )}
-        >
-          {user.role}
-        </span>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span
+            className={cn(
+              "inline-flex items-center rounded-base border-2 border-border px-2 py-0.5 text-[11px] font-heading",
+              user.isAdmin
+                ? "bg-main text-main-foreground"
+                : "bg-background text-foreground",
+            )}
+          >
+            {user.role}
+          </span>
+          <ThemeToggle />
+        </div>
         <SignOutButton />
       </div>
     </div>

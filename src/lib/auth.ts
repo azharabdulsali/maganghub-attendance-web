@@ -1,4 +1,4 @@
-// src/lib/auth.ts — konfigurasi NextAuth v5 (SPEC.md §9 poin 2, §13 baris 6).
+// src/lib/auth.ts: konfigurasi NextAuth v5 (SPEC.md §9 poin 2, §13 baris 6).
 //
 // Keputusan yang tercermin di sini:
 //   - Login memakai email + password (tanpa OAuth).
@@ -50,7 +50,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const h = await headers();
           limitKey = clientIpFromHeaders((name) => h.get(name));
         } catch {
-          // Di luar konteks request (mis. pemanggilan internal) — pakai default.
+          // Di luar konteks request (mis. pemanggilan internal), pakai default.
         }
 
         const gate = await enforceRateLimit(
@@ -64,7 +64,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         // Pesan gagal sengaja tidak membedakan "email tidak ada" dan
-        // "password salah" — supaya tidak bisa dipakai menebak email terdaftar.
+        // "password salah", supaya tidak bisa dipakai menebak email terdaftar.
         if (!user) return null;
 
         const ok = await bcrypt.compare(password, user.passwordHash);
@@ -100,7 +100,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // `sessionVersion` di DB lalu mengirim nilai BARU lewat `update()`,
       // sehingga sesi yang sedang dipakai tidak ikut ter-logout.
       //
-      // `session` datang dari KLIEN — jangan dipercaya begitu saja. Hanya
+      // `session` datang dari KLIEN, jangan dipercaya begitu saja. Hanya
       // terima angka bulat non-negatif; selain itu diabaikan (dan sesi nanti
       // gagal dicocokkan dengan DB, yang tetap aman).
       if (trigger === "update") {
@@ -145,7 +145,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         // Email diambil dari token (bukan default Auth.js) supaya perubahan
-        // lewat `useSession().update({ email })` langsung tampil di klien —
+        // lewat `useSession().update({ email })` langsung tampil di klien,
         // lihat callback `jwt`.
         if (typeof token.email === "string") {
           session.user.email = token.email;

@@ -1,11 +1,11 @@
-// src/lib/rate-limit.ts — pembatas laju permintaan (rate limit).
+// src/lib/rate-limit.ts: pembatas laju permintaan (rate limit).
 //
 // Kenapa ada: SPEC.md §10 poin 6 mewajibkan perlindungan terhadap percobaan
 // berulang pada endpoint sensitif (login, submit, webhook cron, ubah
 // kredensial). Tanpa ini, kunci webhook bisa ditebak berulang dan endpoint
 // submit bisa dibanjiri permintaan.
 //
-// Desain — DUA lapis, sengaja dipisah:
+// Desain, DUA lapis, sengaja dipisah:
 //
 //   1. BAGIAN MURNI (berkas ini): keputusan rate limit berbasis jendela tetap
 //      (fixed window). Tidak menyentuh jaringan/DB sama sekali, sehingga bisa
@@ -52,7 +52,7 @@ export interface RateLimitCounter {
  * @param counter   Penghitung saat ini. `null` = belum ada.
  * @param limit     Batas permintaan per jendela (harus > 0).
  * @param windowMs  Panjang jendela milidetik (harus > 0).
- * @param now       Waktu sekarang (epoch ms) — disuntik agar bisa diuji.
+ * @param now       Waktu sekarang (epoch ms), disuntik agar bisa diuji.
  */
 export function decideRateLimit(
   counter: RateLimitCounter | null,
@@ -123,7 +123,7 @@ export function rateLimitKey(scope: string, id: string): string {
  * Ambil IP klien dari header proxy yang lazim. MURNI (hanya baca string).
  *
  * Vercel menaruh IP asli paling kiri di `x-forwarded-for`. Bila tak ada,
- * "unknown" — semua permintaan tanpa header berbagi satu jatah, pilihan yang
+ * "unknown", semua permintaan tanpa header berbagi satu jatah, pilihan yang
  * aman (lebih baik membatasi diri sendiri daripada membiarkan terbuka).
  */
 export function clientIpFromHeaders(
@@ -154,24 +154,24 @@ export function rateLimitHeaders(
 
 /** Batas lazim per kebijakan (satu sumber kebenaran). */
 export const RATE_LIMITS = {
-  /** Login: 10 / 5 menit per IP — cukup untuk salah ketik, bukan brute force. */
+  /** Login: 10 / 5 menit per IP, cukup untuk salah ketik, bukan brute force. */
   login: { limit: 10, windowMs: 5 * 60_000 },
-  /** Submit manual: 20 / 10 menit per pengguna — cegah dobel-klik & spam. */
+  /** Submit manual: 20 / 10 menit per pengguna, cegah dobel-klik & spam. */
   submitManual: { limit: 20, windowMs: 10 * 60_000 },
-  /** Webhook cron: 30 / 5 menit per IP — cron normal 1×/hari; jaring pengaman. */
+  /** Webhook cron: 30 / 5 menit per IP, cron normal 1×/hari; jaring pengaman. */
   cron: { limit: 30, windowMs: 5 * 60_000 },
   /** Ubah kredensial: 10 / 10 menit per pengguna. */
   credentials: { limit: 10, windowMs: 10 * 60_000 },
   /**
    * Ubah kata sandi akun sendiri: 5 / 10 menit per pengguna. Lebih ketat dari
-   * `credentials` karena tiap percobaan memverifikasi kata sandi lama (bcrypt) —
+   * `credentials` karena tiap percobaan memverifikasi kata sandi lama (bcrypt),
    * batas rendah membuat tebak-kata-sandi-lama lewat UI tidak ekonomis.
    */
   passwordChange: { limit: 5, windowMs: 10 * 60_000 },
   /**
    * Login otomatis ke portal Monev: 6 / 10 menit per pengguna. Lebih ketat
    * dari `credentials` karena tiap percobaan mengirim kredensial ke portal
-   * sungguhan — salah password berulang bisa memicu penguncian akun di SSO.
+   * sungguhan, salah password berulang bisa memicu penguncian akun di SSO.
    */
   credentialsLogin: { limit: 6, windowMs: 10 * 60_000 },
   /**
@@ -183,7 +183,7 @@ export const RATE_LIMITS = {
   /**
    * Ubah email akun sendiri: 5 / 10 menit per pengguna. Sama ketatnya dengan
    * `passwordChange` karena keduanya memverifikasi kata sandi lama (bcrypt) dan
-   * karena email adalah identitas login — batas rendah mencegah endpoint ini
+   * karena email adalah identitas login, batas rendah mencegah endpoint ini
    * dipakai menebak kata sandi atau memindai email yang sudah terdaftar.
    */
   emailChange: { limit: 5, windowMs: 10 * 60_000 },

@@ -1,9 +1,9 @@
-// src/app/(app)/report-templates/page.tsx — halaman 3 template laporan.
+// src/app/(app)/report-templates/page.tsx: halaman 3 template laporan.
 //
 // Server component: memeriksa sesi & mengambil template awal dari database,
 // lalu menyerahkan tampilan ke form (client component).
 //
-// Berbeda dari kredensial, isi template memang dikirim ke halaman — pengguna
+// Berbeda dari kredensial, isi template memang dikirim ke halaman, pengguna
 // harus bisa melihat dan menyuntingnya sendiri.
 
 import { redirect } from "next/navigation";
@@ -43,7 +43,7 @@ export default async function ReportTemplatesPage() {
         updatedAt={template?.updatedAt?.toISOString() ?? null}
       />
 
-      {/* Ringkasan riwayat submit — ditaruh SETELAH template karena sifatnya
+      {/* Ringkasan riwayat submit, ditaruh SETELAH template karena sifatnya
           informasi pendukung, bukan aksi utama halaman ini. */}
       <RecentSubmitHistory userId={session.user.id} />
     </div>

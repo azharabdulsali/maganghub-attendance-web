@@ -1,4 +1,4 @@
-# AGENTS.md — MagangHub Attendance Web
+# AGENTS.md: MagangHub Attendance Web
 
 Panduan untuk AI agent (dan kontributor) yang bekerja di repo ini.
 
@@ -16,12 +16,12 @@ ke portal Monev MagangHub Kemnaker.
 Tiga kemampuan inti:
 1. Menyimpan kredensial Monev pengguna secara terenkripsi (AES-256-GCM).
 2. Menyusun laporan harian dari **3 template tetap** (Uraian Aktivitas,
-   Pembelajaran yang Diperoleh, Kendala) — **tanpa AI, tanpa integrasi GitHub**.
-3. Mengirim laporan lewat **Direct REST API** — tanpa browser, tanpa worker,
+   Pembelajaran yang Diperoleh, Kendala), **tanpa AI, tanpa integrasi GitHub**.
+3. Mengirim laporan lewat **Direct REST API**, tanpa browser, tanpa worker,
    tanpa biaya bulanan.
 
 **Status saat ini: Tahap 1 selesai** (fondasi autentikasi: register, login,
-dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat —
+dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat,
 khususnya bahwa **AI dan integrasi GitHub sudah dibatalkan**.
 
 ---
@@ -40,7 +40,7 @@ khususnya bahwa **AI dan integrasi GitHub sudah dibatalkan**.
 - **Jangan pernah menulis password, API key, atau `ENCRYPTION_KEY` ke dalam
   kode, test, log, atau commit.** Nilai rahasia hanya lewat `.env`, dan
   `.env` wajib ada di `.gitignore`.
-- **Jangan log atau tampilkan password** dalam bentuk apa pun — tidak di
+- **Jangan log atau tampilkan password** dalam bentuk apa pun, tidak di
   console, tidak di audit log, tidak di pesan error.
 - **Jangan memalsukan User-Agent** atau memakai proxy untuk menembus `403`
   portal. Batas etika ini ada di `SPEC.md` §6 dan §10.
@@ -56,7 +56,7 @@ khususnya bahwa **AI dan integrasi GitHub sudah dibatalkan**.
 - **Periksa `SPEC.md` dulu** sebelum mengambil keputusan arsitektur. Kalau
   ingin menyimpang, tulis alasannya di `SPEC.md`, jangan diam-diam.
 - **Jalankan `npm run lint`, `npm run typecheck`, dan `npm run build`** sebelum
-  menyatakan selesai. (`npm test` belum terpasang — lihat §7.)
+  menyatakan selesai. (`npm test` belum terpasang, lihat §7.)
 
 ---
 
@@ -66,12 +66,12 @@ khususnya bahwa **AI dan integrasi GitHub sudah dibatalkan**.
 | :--- | :--- |
 | Framework | Next.js (App Router), TypeScript |
 | Styling | Tailwind CSS v4 + **neobrutalism.dev** (via shadcn CLI) |
-| UI base | **Base UI** (`@base-ui/react`) — komponen neobrutalism memakai ini |
+| UI base | **Base UI** (`@base-ui/react`), komponen neobrutalism memakai ini |
 | Database | PostgreSQL (Neon) |
 | ORM | Prisma 7 (driver adapter `@prisma/adapter-neon`) |
-| Auth | NextAuth.js v5 (**email/password saja** — tanpa OAuth) |
+| Auth | NextAuth.js v5 (**email/password saja**, tanpa OAuth) |
 | Enkripsi | AES-256-GCM (`node:crypto`) |
-| AI | **Tidak dipakai** — template tetap menggantikan peringkasan AI |
+| AI | **Tidak dipakai**, template tetap menggantikan peringkasan AI |
 | Test | Vitest 3.2.7 (environment `node`) |
 | Deploy | Vercel (serverless, paket gratis) |
 
@@ -85,16 +85,16 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
   ```ts
   import { prisma } from "@/lib/prisma"; // BENAR
   ```
-- Skema **tidak lagi** memuat `url` di `datasource` — koneksi diberikan lewat
+- Skema **tidak lagi** memuat `url` di `datasource`, koneksi diberikan lewat
   adapter `PrismaNeon({ connectionString: env.DATABASE_URL })`.
 - **Menjalankan skrip di luar Next.js** (mis. `npx tsx scripts/foo.ts`):
-  1. `tsx` **tidak** memuat `.env.local` otomatis (itu tugas Next.js) — panggil
+  1. `tsx` **tidak** memuat `.env.local` otomatis (itu tugas Next.js), panggil
      `config({ path: ".env.local" })` dari `dotenv` **sebelum** mengimpor modul
      yang membaca env (`env.ts` melempar error kalau variabel kosong).
   2. Impor `prisma` dari `@/lib/prisma`, jangan `new PrismaClient()`.
   3. Kolom katalog Postgres bertipe `name` (mis. `table_name`) **tidak bisa**
-     dideserialisasi Prisma — `SELECT table_name::text AS table_name`.
-  4. **Top-level `await` tidak didukung** — `tsx` memakai output **CJS** di
+     dideserialisasi Prisma, `SELECT table_name::text AS table_name`.
+  4. **Top-level `await` tidak didukung**, `tsx` memakai output **CJS** di
      proyek ini, error: *"Top-level await is currently not supported with the
      cjs output format"*. Bungkus dalam `async function main()` lalu
      `main().catch(...).finally(() => prisma.$disconnect())`.
@@ -103,14 +103,14 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
   dengan 9 model di schema.
   - **Tambahan kolom (bukan tabel):** `User.sessionVersion` (fitur invalidasi
     sesi, SPEC.md §5.8b). Menambah kolom tetap butuh `npm run db:push` supaya
-    schema Neon ikut berubah — jalankan **sebelum** deploy kode yang memakainya,
+    schema Neon ikut berubah, jalankan **sebelum** deploy kode yang memakainya,
     kalau tidak semua query `User` akan gagal.
 - Klien hasil generate berformat **TypeScript** di `src/generated/prisma/`
   (`client.ts`, bukan `index.js`).
 
 ### Aturan UI (penting)
 
-- Komponen ada di `src/components/ui/` — **jangan diedit gayanya sembarangan**;
+- Komponen ada di `src/components/ui/`, **jangan diedit gayanya sembarangan**;
   tambah komponen baru lewat `npx shadcn@latest add <url-neobrutalism>`.
 - Komponen neobrutalism dibangun di atas **Base UI**, **bukan Radix**. Karena itu
   prop `asChild` **tidak ada**. Untuk merender `Button` sebagai link, pakai
@@ -121,7 +121,7 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
 - Warna **wajib** pakai token, bukan warna mentah: `bg-main`,
   `text-main-foreground`, `bg-secondary-background`, `text-foreground`,
   `border-border`, `rounded-base`, `shadow-shadow`, `font-heading`, `font-base`.
-  Hindari `slate-*`/`gray-*`/`rounded-md` — tidak mengenal tema neobrutalism.
+  Hindari `slate-*`/`gray-*`/`rounded-md`, tidak mengenal tema neobrutalism.
 - **Responsif wajib** untuk tablet & HP (aplikasi ini web, tapi tetap dipakai di
   layar kecil). Uji di `sm:`, `md:`, `lg:`. Jangan buat layout yang hanya rapi
   di desktop.
@@ -150,60 +150,60 @@ maganghub-attendance-web/
 │   └── utils/        # fungsi kecil (cn, filter)
 ├── prisma/           # schema.prisma
 ├── tests/            # vitest
-├── .env              # RAHASIA — jangan pernah commit
+├── .env              # RAHASIA, jangan pernah commit
 └── SPEC.md / AGENTS.md
 ```
 
 **Aturan penempatan:**
 - Kode yang menyentuh rahasia (dekripsi, API key) hanya di `src/lib/` dan
   `src/services/`, tidak pernah di `components/`.
-- Komponen UI tidak boleh mengimpor Prisma langsung — lewat server action.
+- Komponen UI tidak boleh mengimpor Prisma langsung, lewat server action.
 
 **Yang sudah ada (per 2026-09):**
-- `src/lib/` — `env.ts`, `auth.ts`, `prisma.ts`, `crypto.ts` (+test),
+- `src/lib/`, `env.ts`, `auth.ts`, `prisma.ts`, `crypto.ts` (+test),
   `validate.ts` (+test), `utils.ts`
-- `src/app/api/` — `auth/[...nextauth]`, `register`, `credentials`,
+- `src/app/api/`, `auth/[...nextauth]`, `register`, `credentials`,
   `profile`, `account/password`, `automation`, `cron/submit`, `cron/run-all`,
   `admin/dispatch`, `reports/submit`
-- `src/app/(app)/` — rute terlindungi: `dashboard/` (beranda), `calendar/`,
+- `src/app/(app)/`, rute terlindungi: `dashboard/` (beranda), `calendar/`,
   `credentials/`, `report-templates/`, `history/`, `automation/`, `admin/`,
   `dev-tools/`, `profile/`. Sidebar & cek sesi dipasang sekali di
   `src/app/(app)/layout.tsx`.
 
 ### Aturan penyimpanan kredensial Monev
-- Password Monev **TIDAK di-hash** (beda dari password akun aplikasi) — harus
+- Password Monev **TIDAK di-hash** (beda dari password akun aplikasi), harus
   bisa dipakai ulang untuk login ke portal, jadi disimpan terenkripsi dua arah.
 - **Jangan pernah mengembalikan password Monev ke klien.** `GET /api/credentials`
-  hanya mengembalikan `emailMonev`, `status`, dan `updatedAt` — pemiliknya pun
+  hanya mengembalikan `emailMonev`, `status`, dan `updatedAt`, pemiliknya pun
   tidak bisa melihat password lama, hanya bisa menggantinya.
 - Saat `SELECT` kredensial, pilih kolom spesifik (`select: {...}`), jangan
-  seluruh baris — supaya `ciphertext`/`iv`/`authTag` tidak ikut terbawa.
+  seluruh baris, supaya `ciphertext`/`iv`/`authTag` tidak ikut terbawa.
 - Endpoint memakai `upsert` (satu kredensial per user, `userId @unique`).
-  Setiap penyimpanan menerbitkan IV baru — JANGAN pakai ulang IV lama.
+  Setiap penyimpanan menerbitkan IV baru, JANGAN pakai ulang IV lama.
 - Status dimulai `UNVERIFIED`; naik ke `ACTIVE` hanya setelah berhasil dicoba
   ke portal Monev, `INVALID` kalau ditolak.
-- Periksa otorisasi **sebelum** parsing body (sudah diterapkan) — supaya
+- Periksa otorisasi **sebelum** parsing body (sudah diterapkan), supaya
   penyerang tanpa sesi tidak bisa membedakan respons.
 
-### Login otomatis ke Monev (Opsi A) — jalur utama
+### Login otomatis ke Monev (Opsi A), jalur utama
 - Pengguna cukup isi email+password Monev sekali; server yang login ke SSO
-  memakai kredensial tersimpan, lalu menyimpan **access token** (6 jam) dan —
-  bila portal mengirimkannya — **refresh token** (30 hari). Semua terenkripsi.
+  memakai kredensial tersimpan, lalu menyimpan **access token** (6 jam) dan,
+  bila portal mengirimkannya, **refresh token** (30 hari). Semua terenkripsi.
 - Endpoint: `POST /api/credentials/login` (`src/app/api/credentials/login/route.ts`).
   Ini **satu-satunya** tempat yang sengaja mengaktifkan
   `confirmLivePortalRequest: true`. Jangan tambah tempat lain.
 - Penyimpanan sesi: `src/lib/credential-session.ts` (menyentuh DB) +
   `src/lib/credential-session-policy.ts` (murni & teruji: `ACCESS_TTL_MS` = 6
   jam, `isAccessTokenFresh`). Kolom DB:
-  `accessCiphertext`/`accessIv`/`accessAuthTag`/`accessExpiresAt` — TERPISAH
+  `accessCiphertext`/`accessIv`/`accessAuthTag`/`accessExpiresAt`, TERPISAH
   dari kolom refresh token (`tokenCiphertext`/…).
 - **Konsumsi di jalur submit** (`src/lib/perform-submit.ts`): bila access
   token tersimpan masih **segar** (`isAccessTokenFresh`, margin 1 menit),
-  kirim **langsung** memakainya — tanpa menukar refresh token. Bila tidak
+  kirim **langsung** memakainya, tanpa menukar refresh token. Bila tidak
   segar, baru fallback ke `exchangeRefreshForAccess(refreshToken)`. Karena itu
   `SubmitCredential` memuat kolom access token, dan **kedua** pemanggil
   (`reports/submit`, `cron/submit`) wajib meng-`select`-nya.
-- Rate limit scope `credentialsLogin` (6 / 10 menit) — tiap percobaan
+- Rate limit scope `credentialsLogin` (6 / 10 menit), tiap percobaan
   mengirim kredensial ke portal sungguhan.
 - **Cadangan**: tempel `monev_refresh_token` manual (`POST /api/credentials/verify`)
   tetap ada bila login otomatis tidak berhasil.
@@ -230,7 +230,7 @@ Aturan praktis saat menulis kode:
   memuat password ke dalam pesan error atau log.
 - Setiap fungsi yang menerima kredensial harus mengembalikan objek tanpa
   field password.
-- Jika menemukan kode yang menuliskan password ke log, itu **bug kritis** —
+- Jika menemukan kode yang menuliskan password ke log, itu **bug kritis**,
   perbaiki atau laporkan, jangan diabaikan.
 
 ### Aturan `ENCRYPTION_KEY` (jangan sampai salah)
@@ -239,9 +239,9 @@ Aturan praktis saat menulis kode:
 - Boleh ditulis **dengan atau tanpa tanda kutip** di `.env.local`; `dotenv`
   mengupas kutipnya otomatis, jadi yang dilihat kode tetap 64 karakter. (Kalau
   memeriksa bentuk kunci lewat PowerShell `Get-Content`, Anda melihat teks
-  mentah — itu bisa tampak 66 karakter. Itu **bukan** bug. Verifikasi lewat
+  mentah, itu bisa tampak 66 karakter. Itu **bukan** bug. Verifikasi lewat
   nilai yang sudah dimuat `dotenv`, bukan teks mentah.)
-- **Jangan pernah mengganti kunci ini setelah ada data kredensial tersimpan** —
+- **Jangan pernah mengganti kunci ini setelah ada data kredensial tersimpan**,
   data lama menjadi tidak bisa didekripsi. Ganti hanya saat tabel kosong.
 
 Kripto ada di `src/lib/crypto.ts` (AES-256-GCM, IV 12 byte acak per enkripsi,
@@ -283,13 +283,13 @@ npm run build     # pastikan build produksi lolos
 Sudah ada: **Vitest 3.2.7** (`vitest.config.ts`, environment `node`).
 
 > **Jebakan versi:** pakai **Vitest 3**, JANGAN Vitest 5. Vitest 5 menuntut
-> `@types/node` v22+, sedangkan proyek ini di `@types/node` v20 — `npm install
+> `@types/node` v22+, sedangkan proyek ini di `@types/node` v20, `npm install
 > vitest` polos akan gagal `ERESOLVE`. Selain itu `@vitejs/plugin-react`
 > **bentrok** dengan `@babel/*` bawaan `shadcn`; plugin itu tidak dibutuhkan
 > selama test hanya menguji fungsi Node (tanpa JSX).
 
 Prioritas test:
-1. ✅ **Enkripsi** (`src/lib/crypto.test.ts`, 14 test) — round-trip, IV selalu
+1. ✅ **Enkripsi** (`src/lib/crypto.test.ts`, 14 test), round-trip, IV selalu
    baru, anti-tamper (ciphertext & authTag diubah → gagal), kunci salah → gagal,
    `safeEqual`.
 2. ✅ **Validasi kredensial** (`src/lib/validate.test.ts`, 12 test).
@@ -303,7 +303,7 @@ Prioritas test:
   bukti dari portal. Sumber tunggal: `src/lib/report-rules.ts`.
 - Perhitungan memakai **panjang setelah trim** (`len(value.strip()) < 100` di
   bot Python). Teks 100 karakter yang diapit spasi tetap sah.
-- `trim()` di JS memangkas NBSP (U+00A0) dan ideographic space (U+3000) —
+- `trim()` di JS memangkas NBSP (U+00A0) dan ideographic space (U+3000),
   sudah diuji, penting karena pengguna sering menempel dari Word.
 - Zero-width space (U+200B) **tidak** dipangkas dan tetap dihitung. Jangan
   membuangnya otomatis (itu mengubah isi tulisan orang).
@@ -314,7 +314,7 @@ Prioritas test:
 ### Struktur data template
 - `ReportTemplate` = **satu baris per user** (`userId @unique`) dengan **3
   kolom**: `activity`, `learning`, `obstacles`. Bukan banyak baris.
-- Isi template **bukan rahasia** — boleh dikembalikan penuh ke klien (beda dari
+- Isi template **bukan rahasia**, boleh dikembalikan penuh ke klien (beda dari
   password Monev). Pengguna harus bisa melihat & menyuntingnya.
 - Penghitung karakter di form memakai `countReportLength` yang **sama** dengan
   server, jadi angka di layar tidak mungkin berbeda dari yang divalidasi.
@@ -328,13 +328,13 @@ kembalikan), karena test yang selalu hijau belum tentu menguji apa pun.
 `npm audit` melaporkan 6 kerentanan (`vitest`, `@vitest/mocker`, `deepmerge-ts`,
 `mysql2`). Semuanya **dev/transitif** dan tidak masuk bundle produksi; `mysql2`
 (driver MySQL) bahkan tidak pernah dirujuk karena proyek memakai Postgres.
-**Jangan** jalankan `npm audit fix --force` — risikonya breaking change demi
+**Jangan** jalankan `npm audit fix --force`, risikonya breaking change demi
 paket yang tidak terpakai.
 
 
 ---
 
-## 8. Git — Commit & Push Hanya oleh Pemilik
+## 8. Git, Commit & Push Hanya oleh Pemilik
 
 **Aturan ini berlaku untuk SEMUA agent, tanpa terkecuali.**
 
@@ -352,7 +352,7 @@ Agent **TIDAK boleh**:
 
 Repo ini nanti memuat kode yang menyentuh kredensial orang lain dan melakukan
 submit otomatis. Riwayat git adalah jejak audit. Pemilik ingin **melihat setiap
-perubahan sebelum tercatat** — termasuk memastikan tidak ada rahasia yang
+perubahan sebelum tercatat**, termasuk memastikan tidak ada rahasia yang
 tidak sengaja ikut ter-commit.
 
 ### Cara kerja yang benar
@@ -371,8 +371,7 @@ tidak sengaja ikut ter-commit.
 ### Kalau pemilik secara eksplisit meminta commit
 
 Pemilik tetap boleh memerintahkan commit untuk sesi tertentu, misalnya
-*"commit dan push sekarang"*. Kalau itu terjadi, agent **boleh** melakukannya
-— tetapi tetap wajib:
+*"commit dan push sekarang"*. Kalau itu terjadi, agent **boleh** melakukannya, tetapi tetap wajib:
 - memeriksa `git status` dan `git diff` **sebelum** `git add`,
 - memastikan **tidak ada** file `.env`, kredensial, atau rahasia yang ikut,
 - memakai pesan commit yang jelas dan jujur (tidak melebih-lebihkan).
@@ -406,8 +405,7 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 - **Jangan submit di hari yang sama** dari dua sistem (`409`).
 - **Jangan menyalin file** dari proyek Python ke sini (bahasa & arsitektur
   berbeda; menyalin menimbulkan kode mati).
-- Kalau ragu soal perilaku proyek lama, **baca** `../maganghub-autoabsen/AGENTS.md`
-  — jangan mengubahnya.
+- Kalau ragu soal perilaku proyek lama, **baca** `../maganghub-autoabsen/AGENTS.md`, jangan mengubahnya.
 
 ---
 
@@ -423,6 +421,6 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 | Input dari pengguna | Validasi dengan Zod dulu, di server |
 | Menyimpan kredensial | Enkripsi AES-256-GCM dulu, baru masuk DB |
 | Gagal submit | Catat gagal apa adanya; jangan tandai sukses |
-| Portal balas `409` | Sudah ada presensi hari itu — catat, jangan ulangi |
+| Portal balas `409` | Sudah ada presensi hari itu, catat, jangan ulangi |
 | Ragu perubahan aman | `npm test` + `npm run typecheck` + `npm run build` |
 

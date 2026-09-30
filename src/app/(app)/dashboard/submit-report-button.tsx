@@ -1,6 +1,6 @@
 "use client";
 
-// Tombol "Kirim Absen Hari Ini" — memanggil /api/reports/submit (trigger MANUAL).
+// Tombol "Kirim Absen Hari Ini", memanggil /api/reports/submit (trigger MANUAL).
 //
 // Sengaja TIDAK menyediakan pemilih tanggal: pengguna cukup mengirim untuk
 // hari ini. Tanggal target dihitung server dalam zona Asia/Jakarta, supaya
@@ -20,7 +20,7 @@ type Hasil = {
 };
 
 /**
- * Kode status yang berarti "token Monev perlu diganti" — pengguna harus pergi
+ * Kode status yang berarti "token Monev perlu diganti", pengguna harus pergi
  * ke halaman kredensial dan menempel token baru. SPEC.md §397 mewajibkan jalur
  * re-auth yang jelas, bukan sekadar teks error mentah.
  */
@@ -73,7 +73,7 @@ export default function SubmitReportButton() {
               Tanggal target: {hasil.date}
             </p>
           )}
-          {/* Jalur re-auth yang jelas (SPEC.md §397) — bukan sekadar pesan error. */}
+          {/* Jalur re-auth yang jelas (SPEC.md §397), bukan sekadar pesan error. */}
           {butuhToken && (
             <Button
               className="mt-3"

@@ -3,7 +3,7 @@ name: Absensi Monev (dispatcher massal)
 # Satu workflow ini melayani SEMUA user. Yang diperlukan:
 #   - Secret repo: APP_URL   (mis. https://maganghub-xyz.vercel.app, tanpa slash)
 #   - Secret repo: CRON_SECRET (sama persis dengan env di Vercel)
-# User TIDAK perlu memasang apa pun — cukup menyalakan sakelar Otomasi di dashboard.
+# User TIDAK perlu memasang apa pun, cukup menyalakan sakelar Otomasi di dashboard.
 on:
   schedule:
     # Tiap jam, tepat 5 menit lewat. Jam Jakarta = UTC+7, jadi ini memicu pada
@@ -32,7 +32,7 @@ jobs:
           echo "HTTP $code"
           cat response.json
           if [ "$code" != "200" ]; then
-            echo "Dispatcher tidak membalas 200 — gagal."
+            echo "Dispatcher tidak membalas 200, gagal."
             exit 1
           fi
         env:

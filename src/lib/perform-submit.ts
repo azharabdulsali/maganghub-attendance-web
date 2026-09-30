@@ -1,7 +1,7 @@
-// src/lib/perform-submit.ts — inti pengiriman laporan, dipakai bersama dua route.
+// src/lib/perform-submit.ts: inti pengiriman laporan, dipakai bersama dua route.
 //
 // Latar belakang: `POST /api/reports/submit` (manual) dan `GET /api/cron/submit`
-// (webhook) melakukan LANGKAH yang sama — cek kesiapan → dekripsi token →
+// (webhook) melakukan LANGKAH yang sama, cek kesiapan → dekripsi token →
 // tukar access token → kirim → catat audit log. Sebelumnya blok itu disalin
 // nyaris identik di dua berkas; setiap perubahan aturan harus dilakukan dua
 // kali, sumber bug yang jelas.
@@ -40,7 +40,7 @@ export type SubmitCredential = {
   tokenAuthTag: string | null;
   /**
    * Access token hasil login otomatis (opsional). Bila masih segar, dipakai
-   * LANGSUNG tanpa menukar refresh token — lebih hemat & tidak menyentuh
+   * LANGSUNG tanpa menukar refresh token, lebih hemat & tidak menyentuh
    * jaringan portal dua kali.
    */
   accessCiphertext?: string | null;
@@ -49,7 +49,7 @@ export type SubmitCredential = {
   accessExpiresAt?: Date | null;
 } | null;
 
-/** Hasil terstruktur — satu cabang per kemungkinan akhir. */
+/** Hasil terstruktur, satu cabang per kemungkinan akhir. */
 export type SubmitOutcome =
   | { kind: "NOT_READY"; reason: string; message: string; date: string }
   | { kind: "BAD_DATE"; date: string }
@@ -111,7 +111,7 @@ export async function safeLog(entry: {
       },
     });
   } catch {
-    // Sengaja diabaikan — lihat komentar di atas.
+    // Sengaja diabaikan, lihat komentar di atas.
   }
 }
 
@@ -127,19 +127,19 @@ function reportStatusFor(
 /**
  * Simpan isi laporan yang BENAR-BENAR dikirim ke portal ke tabel Report.
  *
- * Kenapa ini perlu: SubmitLog hanya menyimpan status/pesan/HTTP code — isi
+ * Kenapa ini perlu: SubmitLog hanya menyimpan status/pesan/HTTP code, isi
  * laporan (uraian, pembelajaran, kendala) hilang begitu saja. Akibatnya
  * halaman Template Laporan tidak bisa menampilkan isi laporan historis per
  * tanggal, padahal itu yang diminta. Model `Report` sudah ada di skema (§7)
  * beserta relasi `Report.submitLogs`, tetapi selama ini belum pernah ditulis.
  *
  * `upsert` pada kunci unik `(userId, date)`: template hari yang sama dikirim
- * berulang (mis. percobaan gagal lalu berhasil) tidak menggandakan baris —
+ * berulang (mis. percobaan gagal lalu berhasil) tidak menggandakan baris,
  * cukup diperbarui isinya & statusnya. `date` disimpan sebagai tanggal murni
  * (@db.Date) lewat `plainDateToUtcDate`.
  *
  * Mengembalikan `id` Report, atau `undefined` bila tanggal tidak sah / DB
- * menolak — kegagalan menyimpan isi TIDAK boleh menggagalkan respons portal,
+ * menolak, kegagalan menyimpan isi TIDAK boleh menggagalkan respons portal,
  * sama seperti `safeLog`.
  */
 async function persistReport(opts: {
@@ -174,7 +174,7 @@ async function persistReport(opts: {
     });
     return report.id;
   } catch {
-    // Senyap — lihat doc comment di atas.
+    // Senyap, lihat doc comment di atas.
     return undefined;
   }
 }
@@ -185,13 +185,13 @@ async function persistReport(opts: {
  * Kenapa ini ada: `POST /api/credentials/verify` sudah menulis INVALID saat
  * `POST /auth/refresh` membalas 401. Tapi jalur yang paling sering menemui
  * sesi mati adalah pengiriman itu sendiri. Sebelumnya `performSubmit` mencatat
- * FAILED lalu berhenti — status di DB tetap ACTIVE, jadi dashboard tetap
+ * FAILED lalu berhenti, status di DB tetap ACTIVE, jadi dashboard tetap
  * bilang "sehat" padahal token sudah mati, dan pengguna tak tahu sampai menekan
  * "Tes ulang" manual. Dua jalur yang menemukan fakta sama tidak boleh berbeda
  * soal menyimpannya.
  *
  * HANYA untuk SESSION_DEAD. Error jaringan juga berarti tukar-token gagal,
- * tetapi tidak membuktikan token buruk — jangan menghukum token yang sah
+ * tetapi tidak membuktikan token buruk, jangan menghukum token yang sah
  * karena Wi-Fi putus. Sama seperti verify route yang tak mengubah status saat ERROR.
  */
 export async function markCredentialInvalid(userId: string): Promise<void> {
@@ -208,7 +208,7 @@ export async function markCredentialInvalid(userId: string): Promise<void> {
 /**
  * Jalankan alur pengiriman lengkap dan kembalikan hasil terstruktur.
  *
- * Tidak menyentuh `NextResponse`, tidak membaca session/webhook — pemanggil
+ * Tidak menyentuh `NextResponse`, tidak membaca session/webhook, pemanggil
  * menyediakan `userId`, `date`, template & credential yang sudah diambil.
  *
  * @param opts.logOnNotReady  true (cron): setiap alasan tidak-siap dicatat.

@@ -1,4 +1,4 @@
-// src/lib/email-change-policy.test.ts — uji aturan ubah email (MURNI).
+// src/lib/email-change-policy.test.ts: uji aturan ubah email (MURNI).
 //
 // Yang diuji di sini adalah bagian yang, kalau salah, langsung jadi celah
 // keamanan atau data rusak:
@@ -26,7 +26,7 @@ describe("normalisasiEmail", () => {
   });
 });
 
-describe("bolehUbahKeEmail — guard eskalasi peran", () => {
+describe("bolehUbahKeEmail, guard eskalasi peran", () => {
   it("mengizinkan USER ke email non-admin", () => {
     expect(bolehUbahKeEmail("USER", false)).toBe(true);
   });

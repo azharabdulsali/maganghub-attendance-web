@@ -1,4 +1,4 @@
-// src/lib/kemnaker-sso.ts — KERANGKA login otomatis via SSO Kemnaker.
+// src/lib/kemnaker-sso.ts: KERANGKA login otomatis via SSO Kemnaker.
 //
 // ⚠️  STATUS: BELUM PERNAH DIJALANKAN. Endpoint & bentuknya sudah terekam
 // (docs/MONEV-API.md §7), tapi fungsi yang benar-benar menembak jaringan
@@ -15,7 +15,7 @@
 //          (BUKAN callback Monev). `code` TIDAK ada di sini → lanjut 2b.
 //   2b. IKUTI `redirect_uri`/`authorizeUrl`/rantai redirect SSO → cari `code`
 //        (catchOAuthCode). ⚠️  BUKTI FINAL (2026-09-28): rantai `3xx` SELALU
-//        berakhir di `200` pada account.kemnaker.go.id TANPA `code` — halaman
+//        berakhir di `200` pada account.kemnaker.go.id TANPA `code`, halaman
 //        akhir adalah SHELL SPA (3214 byte; hanya `<script src>` + marker
 //        framework, tanpa form/OTP/meta-refresh). `code` dirakit JavaScript,
 //        BUKAN lewat HTTP. Automasi murni-HTTP tak dapat menyelesaikan langkah
@@ -31,7 +31,7 @@
 
 export const KEMNAKER_SSO_ORIGIN = "https://account.kemnaker.go.id";
 
-/** User-Agent resmi pemilik akun — dipakai konsisten dengan monev-client. */
+/** User-Agent resmi pemilik akun, dipakai konsisten dengan monev-client. */
 const SSO_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
@@ -52,7 +52,7 @@ export class SsoCredentials {
     this.password = password;
   }
 
-  /** JSON.stringify(ssoCredentials) akan menghasilkan ini — tanpa password. */
+  /** JSON.stringify(ssoCredentials) akan menghasilkan ini, tanpa password. */
   toJSON(): { username: string; password: "<disembunyikan>" } {
     return { username: this.username, password: "<disembunyikan>" };
   }
@@ -80,7 +80,7 @@ export type SsoLoginResult =
       httpCode: number;
       redirectUri?: string;
       /**
-       * Cookie mentah (`set-cookie`) dari respons login — sesi AUTENTIKASI yang
+       * Cookie mentah (`set-cookie`) dari respons login, sesi AUTENTIKASI yang
        * harus dibawa ke permintaan otorisasi (`catchOAuthCode`). Tanpa ini SSO
        * menganggap permintaan anonim dan tak menerbitkan `code`.
        */
@@ -90,7 +90,7 @@ export type SsoLoginResult =
   | { status: "ERROR"; message: string };
 
 /**
- * Tafsirkan respons `POST /auth/login` SSO — MURNI, tanpa jaringan.
+ * Tafsirkan respons `POST /auth/login` SSO, MURNI, tanpa jaringan.
  *
  * ✅ Terverifikasi (§4.6): `200` dengan body
  * `{ data: { authenticated: true, redirect_uri: "http://account.kemnaker.go.id/auth?..." } }`.
@@ -156,11 +156,11 @@ export function parseOAuthCallbackParams(url: string): {
 }
 
 /**
- * Ambil URL callback Monev dari sebuah nilai `redirect_uri` — MURNI.
+ * Ambil URL callback Monev dari sebuah nilai `redirect_uri`, MURNI.
  *
  * ⚠️  Konteks penting (§4.6): `redirect_uri` yang dikembalikan `POST /auth/login`
  * **bukan** callback Monev. Ia adalah **halaman SSO** (`account.kemnaker.go.id/
- * auth?...`). `code` baru muncul setelah URL itu **diikuti** — SSO-lah yang
+ * auth?...`). `code` baru muncul setelah URL itu **diikuti**, SSO-lah yang
  * me-redirect ke `.../sso/callback?code=...`. Jadi fungsi ini memeriksa apakah
  * `redirect_uri` SUDAH berupa callback (mengandung `code=`); bila belum, ia
  * mengembalikan `undefined` supaya pemanggil tahu "harus diikuti dulu".
@@ -189,13 +189,13 @@ export function isSsoAuthPageUrl(url: string | undefined): boolean {
 }
 
 /**
- * Cari URL callback ber-`code=` di **body HTML** — MURNI.
+ * Cari URL callback ber-`code=` di **body HTML**, MURNI.
  *
  * Dipakai bila halaman SSO membalas `200` (bukan `302 + Location`): `code`
  * sering muncul di `<meta http-equiv="refresh" content="0;url=...">`, di
  * `<script>` (mis. `window.location = "...code=..."`), atau di sebuah anchor.
  * Fungsi ini hanya mengembalikan URL yang **mengandung `code=`**; kalau tidak
- * ada, `undefined` — jangan menebak.
+ * ada, `undefined`, jangan menebak.
  */
 export function extractCallbackUrlFromHtml(html: string): string | undefined {
   if (!html || html.length === 0) return undefined;
@@ -223,11 +223,11 @@ export function extractCallbackUrlFromHtml(html: string): string | undefined {
 }
 
 /**
- * Petunjuk ringan isi halaman HTML non-redirect — MURNI, aman.
+ * Petunjuk ringan isi halaman HTML non-redirect, MURNI, aman.
  *
  * Dipakai saat `code` tak ditemukan dan rantai berhenti di halaman `200`.
  * Hanya mengembalikan **kategori** berdasarkan kata kunci umum (mis. "form
- * login", "otp", "dashboard") + panjang body — **tidak pernah** isi/teks asli,
+ * login", "otp", "dashboard") + panjang body, **tidak pernah** isi/teks asli,
  * sehingga tak ada rahasia yang bocor ke log.
  */
 export function describeHtmlHint(html: string): string {
@@ -250,7 +250,7 @@ export function describeHtmlHint(html: string): string {
 }
 
 /**
- * Ringkasan diagnostik AMAN dari respons halaman SSO — MURNI.
+ * Ringkasan diagnostik AMAN dari respons halaman SSO, MURNI.
  *
  * ⚠️  Hanya mengungkap **metadata** (status, keberadaan/host `Location`, nama
  * cookie). **Tidak pernah** nilai `code`/token/kredensial. Dipakai untuk pesan
@@ -280,7 +280,7 @@ export function describeSsoRedirectResponse(res: {
 }
 
 /**
- * Ambil **nama** cookie dari header `set-cookie` mentah (nilai dibuang) — MURNI.
+ * Ambil **nama** cookie dari header `set-cookie` mentah (nilai dibuang), MURNI.
  * Nilai sengaja TIDAK diambil supaya tidak ada rahasia yang bisa bocor ke log.
  */
 export function extractCookieNames(setCookies: string[]): string[] {
@@ -364,7 +364,7 @@ export async function loginToSso(
     // lewat `set-cookie`. Cookie ini WAJIB dibawa ke permintaan otorisasi
     // (`catchOAuthCode`), jika tidak SSO menganggap kita anonim dan membalas
     // halaman SPA alih-alih me-redirect dengan `code`. Sebelumnya cookie ini
-    // dibuang — itulah sebab `code` tak pernah terbit.
+    // dibuang, itulah sebab `code` tak pernah terbit.
     const setCookies = readSetCookies(res.headers);
 
     const interpreted = interpretSsoLoginResponse(res.status, text);
@@ -384,7 +384,7 @@ export async function loginToSso(
 }
 
 // ---------------------------------------------------------------------------
-// Menangkap `code` OAuth — ikuti halaman SSO sampai ia me-redirect ke callback
+// Menangkap `code` OAuth, ikuti halaman SSO sampai ia me-redirect ke callback
 // ---------------------------------------------------------------------------
 
 /** Hasil menangkap `code` setelah mengikuti halaman SSO. */
@@ -396,7 +396,7 @@ export type CatchCodeResult =
 const MAX_REDIRECT_HOPS = 8;
 
 /**
- * Ikuti `redirect_uri` (halaman SSO) — **termasuk seluruh rantai redirect** —
+ * Ikuti `redirect_uri` (halaman SSO) (**termasuk seluruh rantai redirect**)
  * untuk menangkap `code` OAuth. Jaringan, **DILINDUNGI GERBANG.**
  *
  * Mengapa mengikuti RANTAI (bukti §4.0 langkah 3b): mengikuti `redirect_uri`
@@ -443,7 +443,7 @@ export async function catchOAuthCode(
   const trail: string[] = [];
   let cookieNames: string[] = [];
   // Petunjuk halaman non-redirect terakhir (mis. apakah form login / dashboard),
-  // hanya metadata ringan — TANPA nilai rahasia.
+  // hanya metadata ringan, TANPA nilai rahasia.
   let lastBodyHint: string | undefined;
 
   // Cookie jar antar-hop: browser asli meneruskan cookie yang di-set hop
@@ -499,7 +499,7 @@ export async function catchOAuthCode(
       });
 
       // Catat nama cookie hop ini (untuk diagnostik) lalu serap ke jar agar
-      // diteruskan ke hop berikutnya — inti perbaikan sesi SSO lintas-hop.
+      // diteruskan ke hop berikutnya, inti perbaikan sesi SSO lintas-hop.
       cookieNames = extractCookieNames(readSetCookies(res.headers));
       absorbSetCookies(res.headers);
 

@@ -1,11 +1,11 @@
-// src/app/api/account/email/route.ts — ubah email akun sendiri.
+// src/app/api/account/email/route.ts: ubah email akun sendiri.
 //
 // Ini endpoint paling sensitif di aplikasi: email adalah identitas login DAN
 // penentu peran admin (`isAdminEmail`). Karena tidak ada verifikasi email,
-// perubahan langsung berlaku — tidak ada langkah konfirmasi lewat kotak masuk.
+// perubahan langsung berlaku, tidak ada langkah konfirmasi lewat kotak masuk.
 // Yang dijaga di sini:
 //
-//   - userId diambil dari SESI, bukan body — tidak bisa mengubah email orang lain.
+//   - userId diambil dari SESI, bukan body, tidak bisa mengubah email orang lain.
 //   - Kata sandi lama WAJIB diverifikasi (bcrypt) sebelum email berubah.
 //   - ESCALATION GUARD: pengguna non-admin tidak boleh menetapkan email yang
 //     sama dengan ADMIN_EMAIL. Tanpa ini, siapa pun bisa menaikkan dirinya jadi
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
   }
 
   const { currentPassword } = parsed.data;
-  // Normalisasi di server (satu bentuk per email — lihat email-change-policy).
+  // Normalisasi di server (satu bentuk per email, lihat email-change-policy).
   const newEmail = normalisasiEmail(parsed.data.newEmail);
 
   const user = await prisma.user.findUnique({
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (e: unknown) {
-    // P2002 = unique constraint (email) dilanggar — balapan dengan request lain.
+    // P2002 = unique constraint (email) dilanggar, balapan dengan request lain.
     if (
       typeof e === "object" &&
       e !== null &&

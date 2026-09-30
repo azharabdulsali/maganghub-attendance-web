@@ -1,6 +1,6 @@
-// src/lib/kemnaker-sso.test.ts — uji kerangka login SSO (docs/MONEV-API.md §7).
+// src/lib/kemnaker-sso.test.ts: uji kerangka login SSO (docs/MONEV-API.md §7).
 //
-// Fokus utama: menegakkan JANJI KEAMANAN — password tidak boleh bocor lewat
+// Fokus utama: menegakkan JANJI KEAMANAN, password tidak boleh bocor lewat
 // `JSON.stringify`, log, atau pesan hasil. Dan membuktikan gerbang opt-in
 // benar-benar mencegah panggilan jaringan.
 
@@ -44,7 +44,7 @@ describe("buildSsoLoginRequest (murni)", () => {
   });
 });
 
-describe("SsoCredentials — pengaman anti-bocor", () => {
+describe("SsoCredentials, pengaman anti-bocor", () => {
   it("JSON.stringify membuang password", () => {
     const creds = new SsoCredentials("a@b.com", SECRET);
     const json = JSON.stringify(creds);
@@ -61,7 +61,7 @@ describe("SsoCredentials — pengaman anti-bocor", () => {
   });
 });
 
-describe("loginToSso — gerbang opt-in (TIDAK menyentuh jaringan)", () => {
+describe("loginToSso, gerbang opt-in (TIDAK menyentuh jaringan)", () => {
   it("tanpa izin eksplisit → ERROR & fetch tidak dipanggil", async () => {
     const spy = vi.fn();
     vi.stubGlobal("fetch", spy);
@@ -212,7 +212,7 @@ describe("loginToSso — gerbang opt-in (TIDAK menyentuh jaringan)", () => {
   });
 });
 
-describe("interpretSsoLoginResponse (murni) — §4.6", () => {
+describe("interpretSsoLoginResponse (murni), §4.6", () => {
   it("authenticated:true → OK dengan redirect_uri (http polos tetap diikuti)", () => {
     const r = interpretSsoLoginResponse(
       200,
@@ -285,7 +285,7 @@ describe("extractCallbackUrl & isSsoAuthPageUrl (murni)", () => {
   });
 });
 
-describe("catchOAuthCode — GERBANG & penangkapan code (fetch di-mock)", () => {
+describe("catchOAuthCode, GERBANG & penangkapan code (fetch di-mock)", () => {
   let fetchSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {

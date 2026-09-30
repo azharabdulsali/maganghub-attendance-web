@@ -1,4 +1,4 @@
-// src/lib/rate-limit-store.ts — penyimpanan penghitung rate limit.
+// src/lib/rate-limit-store.ts: penyimpanan penghitung rate limit.
 //
 // Dipisah dari `rate-limit.ts` (kebijakan murni) supaya kebijakan tak pernah
 // bergantung pada jaringan. Dua implementasi:
@@ -26,7 +26,7 @@ export interface RateLimitStore {
 }
 
 // ---------------------------------------------------------------------------
-// In-memory — default dev / 1 instance. TIDAK akurat lintas instance Vercel.
+// In-memory, default dev / 1 instance. TIDAK akurat lintas instance Vercel.
 // ---------------------------------------------------------------------------
 
 /** Map kunci → penghitung. Modul-level agar bertahan antar-invokasi (per proses). */
@@ -67,7 +67,7 @@ export function __resetInMemoryRateLimitStore(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Upstash REST — opsional. Dipakai tanpa SDK: cukup REST API-nya.
+// Upstash REST, opsional. Dipakai tanpa SDK: cukup REST API-nya.
 //
 // Menghindari dependency tambahan: cukup fetch + header Authorization. Bila
 // env tidak ada, kelas ini tak pernah dibuat (lihat createRateLimitStore).

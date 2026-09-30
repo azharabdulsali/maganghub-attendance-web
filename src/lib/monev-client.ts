@@ -1,21 +1,21 @@
-// src/lib/monev-client.ts — klien HTTP ke portal Monev MagangHub Kemnaker.
+// src/lib/monev-client.ts: klien HTTP ke portal Monev MagangHub Kemnaker.
 //
 // Acuan tunggal: docs/MONEV-API.md. Jangan menambah endpoint atau tebakan di
 // luar yang tercatat di sana.
 //
 // Prinsip yang dipegang:
 //   1. TIDAK ada browser, TIDAK ada Playwright. API tidak diblokir Cloudflare
-//      (MONEV-API §7) — cukup fetch biasa dari server.
+//      (MONEV-API §7), cukup fetch biasa dari server.
 //   2. `x-frontend-build-id` diambil DINAMIS dari `version.json` (§3), karena
 //      nilainya berubah tiap deploy frontend.
-//   3. Fase ini HANYA login/verifikasi. TIDAK ADA fungsi submit di file ini —
+//   3. Fase ini HANYA login/verifikasi. TIDAK ADA fungsi submit di file ini,
 //      endpoint submit belum diketahui (§8) dan tidak boleh dikirim apa pun
 //      selama fase uji koneksi (§9).
 //
 // File ini sengaja tidak menyentuh database maupun file env aplikasi, supaya
 // bisa diuji unit tanpa menjalankan Next maupun menyentuh rahasia.
 
-/** Origin frontend — WAJIB dikirim sebagai `Origin`, jika tidak → CORS gagal (§2). */
+/** Origin frontend, WAJIB dikirim sebagai `Origin`, jika tidak → CORS gagal (§2). */
 export const MONEV_FRONTEND_ORIGIN = "https://monev.maganghub.kemnaker.go.id";
 
 /** Host backend REST. Semua endpoint di bawah `/api/v1/...` (§1). */
@@ -66,7 +66,7 @@ async function fetchWithTimeout(
  * Ambil `x-frontend-build-id` terbaru dari endpoint publik (§3).
  * Menyertakan `?t=<epoch-ms>` untuk menembus cache.
  *
- * Melempar error bila respons tidak sesuai bentuk — lebih baik gagal terang
+ * Melempar error bila respons tidak sesuai bentuk, lebih baik gagal terang
  * daripada mengirim build-id kosong yang membuat server bingung.
  */
 export async function fetchBuildId(options?: {
@@ -101,7 +101,7 @@ export async function fetchBuildId(options?: {
 }
 
 // ---------------------------------------------------------------------------
-// Cek sesi — POST /auth/refresh (§4.1, §6)
+// Cek sesi, POST /auth/refresh (§4.1, §6)
 // ---------------------------------------------------------------------------
 
 /**
@@ -184,7 +184,7 @@ export async function verifySession(
 }
 
 // ---------------------------------------------------------------------------
-// Alur OAuth authorization-code — §4.0 (DILINDUNGI GERBANG)
+// Alur OAuth authorization-code, §4.0 (DILINDUNGI GERBANG)
 // ---------------------------------------------------------------------------
 //
 // Alur terverifikasi (docs/MONEV-API.md §4.0):
@@ -225,7 +225,7 @@ export type CodeExchangeResult =
       name?: string;
       /**
        * Cookie `monev_refresh_token` bila portal mengirimkannya (Set-Cookie).
-       * ⚠️ Belum terverifikasi apakah callback memang mengirimnya — kalau ada,
+       * ⚠️ Belum terverifikasi apakah callback memang mengirimnya, kalau ada,
        * ini sesi 30 hari yang jauh lebih tahan lama daripada access token
        * (6 jam), sehingga layak disimpan.
        */
@@ -235,7 +235,7 @@ export type CodeExchangeResult =
   | { status: "ERROR"; message: string };
 
 /**
- * Tafsirkan respons `GET /api/v1/auth/login/callback` — MURNI, tanpa jaringan.
+ * Tafsirkan respons `GET /api/v1/auth/login/callback`, MURNI, tanpa jaringan.
  * `200 { "access_token", "user_id", "name" }` (§4.0 langkah 4). Bila `200`
  * tanpa `access_token` → `ERROR`, bukan `OK` palsu.
  *
@@ -287,7 +287,7 @@ export function interpretCallbackResponse(
 
 /**
  * Ambil nilai `monev_refresh_token` dari daftar header Set-Cookie mentah.
- * MURNI. Mengembalikan `undefined` bila tidak ada — itu bukan error, hanya
+ * MURNI. Mengembalikan `undefined` bila tidak ada, itu bukan error, hanya
  * berarti portal tidak memperbarui sesi panjang lewat callback ini.
  */
 export function extractRefreshTokenFromSetCookies(
@@ -375,7 +375,7 @@ export async function startOAuthFlow(opts: {
       }
     }
 
-    // URL authorize: dari body (§4.0 — terverifikasi) atau Location (cadangan).
+    // URL authorize: dari body (§4.0, terverifikasi) atau Location (cadangan).
     const rawBody = await res.text().catch(() => "");
     const bodyUrl = rawBody.trim();
     const authorizeUrl =
@@ -463,7 +463,7 @@ export async function exchangeCodeForSession(
 
     const text = await res.text().catch(() => "");
     // Cookie bisa memuat `monev_refresh_token` (sesi 30 hari). Ambil bila ada;
-    // kalau tidak, tak apa — access token tetap berguna.
+    // kalau tidak, tak apa, access token tetap berguna.
     const setCookies =
       typeof res.headers.getSetCookie === "function"
         ? res.headers.getSetCookie()

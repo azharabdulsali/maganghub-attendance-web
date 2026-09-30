@@ -1,4 +1,4 @@
-// src/lib/monev-client.test.ts — uji klien Monev tanpa jaringan nyata.
+// src/lib/monev-client.test.ts: uji klien Monev tanpa jaringan nyata.
 //
 // Yang diuji adalah KONTRAK, bukan portal: apakah kita mengirim header yang
 // benar dan menafsirkan 200/401 sebagaimana docs/MONEV-API.md. Uji ini TIDAK
@@ -41,7 +41,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("fetchBuildId — §3", () => {
+describe("fetchBuildId, §3", () => {
   it("mengembalikan build_id dari version.json", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ build_id: BUILD_ID }));
     await expect(fetchBuildId()).resolves.toBe(BUILD_ID);
@@ -65,7 +65,7 @@ describe("fetchBuildId — §3", () => {
   });
 });
 
-describe("verifySession — §4.1 & §6", () => {
+describe("verifySession, §4.1 & §6", () => {
   it("menolak token kosong tanpa memanggil jaringan", async () => {
     const res = await verifySession("");
     expect(res.status).toBe("INVALID");
@@ -155,7 +155,7 @@ describe("verifySession — §4.1 & §6", () => {
   });
 });
 
-describe("extractRefreshTokenFromSetCookies — §4.0 langkah 4", () => {
+describe("extractRefreshTokenFromSetCookies, §4.0 langkah 4", () => {
   it("mengambil nilai monev_refresh_token dari Set-Cookie", () => {
     const cookies = [
       "acw_tc=abc; Path=/",
@@ -177,7 +177,7 @@ describe("extractRefreshTokenFromSetCookies — §4.0 langkah 4", () => {
   });
 });
 
-describe("interpretCallbackResponse — refresh token dari Set-Cookie", () => {
+describe("interpretCallbackResponse, refresh token dari Set-Cookie", () => {
   const okBody = JSON.stringify({
     access_token: "ACCESS",
     user_id: "u-1",
@@ -204,7 +204,7 @@ describe("interpretCallbackResponse — refresh token dari Set-Cookie", () => {
   });
 });
 
-describe("alur OAuth code-exchange — §4.0", () => {
+describe("alur OAuth code-exchange, §4.0", () => {
   it("buildCodeExchangeUrl menyusun GET callback?code=&state=", () => {
     const url = buildCodeExchangeUrl(MONEV_API_BASE, "CODE-1", "STATE-1");
     expect(url).toContain(OAUTH_CALLBACK_PATH);

@@ -126,7 +126,7 @@
   --secondary-background: oklch(100% 0 0);
   --main: hsl(217, 100%, 66%);
   --main-foreground: oklch(0% 0 0);
-  /* Hijau "berhasil" — dipakai di grafik tren & status. Dipisah sebagai token
+  /* Hijau "berhasil", dipakai di grafik tren & status. Dipisah sebagai token
      (bukan kelas warna mentah) supaya tema bisa menggantinya nanti. */
   --success: #059669;
   --overlay: oklch(0% 0 0 / 0.8);
@@ -166,6 +166,11 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  /* Di mode terang, --shadow diturunkan dari --border (hitam). Di mode gelap
+     --border jadi putih 10% (nyaris tak terlihat), sehingga shadow keras akan
+     hilang sama sekali. Jadi di sini kami mengikat --shadow ke putih penuh
+     supaya border tebal + shadow tetap terbaca sebagai satu gestur. */
+  --shadow: 4px 4px 0px 0px oklch(1 0 0);
   /* Hijau sedikit lebih terang agar tetap terbaca di latar gelap. */
   --success: #34d399;
 }
@@ -187,8 +192,8 @@
   }
 }
   body, .scrollbar {
-    --sb-track-color: #ffffff;
-    --sb-thumb-color: #000000;
+    --sb-track-color: var(--secondary-background);
+    --sb-thumb-color: var(--border);
 }
   .scrollbar::-webkit-scrollbar {
     width: 16px;

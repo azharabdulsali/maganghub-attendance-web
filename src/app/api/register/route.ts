@@ -1,4 +1,4 @@
-// src/app/api/register/route.ts — pendaftaran terbuka (SPEC.md §13 baris 5).
+// src/app/api/register/route.ts: pendaftaran terbuka (SPEC.md §13 baris 5).
 //
 // Pengaman yang wajib ada:
 //   - Validasi Zod di sisi server (§9 poin 5).
@@ -27,7 +27,7 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  // Rate limit 3 pendaftaran/jam per IP (SPEC.md §8) — memakai modul bersama
+  // Rate limit 3 pendaftaran/jam per IP (SPEC.md §8), memakai modul bersama
   // (rate-limit.ts) agar aturannya satu sumber kebenaran dengan endpoint lain.
   const ip = clientIpFromHeaders((name) => request.headers.get(name));
   const gate = await enforceRateLimit("register", rateLimitKey("register", ip));

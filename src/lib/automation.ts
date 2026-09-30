@@ -1,4 +1,4 @@
-// src/lib/automation.ts — aturan jadwal otomasi (murni, tanpa DB/jaringan).
+// src/lib/automation.ts: aturan jadwal otomasi (murni, tanpa DB/jaringan).
 //
 // Otomasi dipicu oleh layanan cron eksternal (mis. cron-job.org) yang menembak
 // endpoint webhook kita dengan `?key=<webhookKey>`. Modul ini mengurus:
@@ -11,7 +11,7 @@
 
 import { randomBytes } from "node:crypto";
 
-/** Zona waktu tunggal demi kesederhanaan — bot Python juga memakai WIB. */
+/** Zona waktu tunggal demi kesederhanaan, bot Python juga memakai WIB. */
 export const AUTOMATION_TIMEZONE = "Asia/Jakarta";
 
 /**
@@ -102,7 +102,7 @@ export function minutesUntilNext(
  * Label "jadwal berikutnya" untuk UI: "hari ini" / "besok" + jam:menit WIB, atau
  * `null` bila jadwal tidak sah. Tidak pernah melempar.
  *
- * "hari ini" hanya bila jadwal belum lewat pada hari WIB yang sama — bukan
+ * "hari ini" hanya bila jadwal belum lewat pada hari WIB yang sama, bukan
  * sekadar "kurang dari 24 jam" (jam yang sudah lewat pagi ini bisa tertutupi).
  */
 export function describeNextRun(

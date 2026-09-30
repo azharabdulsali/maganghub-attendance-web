@@ -1,10 +1,10 @@
-// src/lib/har-capture.ts — menganalisis rekaman lalu lintas (HAR atau curl)
+// src/lib/har-capture.ts: menganalisis rekaman lalu lintas (HAR atau curl)
 // untuk menemukan endpoint submit laporan (lihat docs/MONEV-API.md §8).
 //
 // KENAPA ADA: endpoint submit laporan belum diketahui. Satu-satunya cara
 // etis untuk mengetahuinya adalah meminta pemilik akun menekan "Simpan dan
 // Kirim" SEKALI di browsernya sendiri, lalu menyerahkan rekamannya ke sini.
-// Modul ini TIDAK PERNAH mengirim apa pun ke jaringan — ia hanya membaca teks
+// Modul ini TIDAK PERNAH mengirim apa pun ke jaringan, ia hanya membaca teks
 // yang sudah direkam.
 //
 // KEAMANAN: modul ini sengaja menapis nilai rahasia (cookie, Authorization,
@@ -15,18 +15,18 @@
 /** Ringkasan satu permintaan yang relevan, sudah dibersihkan dari rahasia. */
 export type CapturedRequest = {
   method: string;
-  /** Hanya path (tanpa host) — mis. `/api/v1/report` — supaya aman ditampilkan. */
+ /** Hanya path (tanpa host) (mis. `/api/v1/report`) supaya aman ditampilkan. */
   path: string;
   /** Nama header yang dikirim (nilai tidak disertakan). */
   headerNames: string[];
   contentType: string | null;
-  /** Nama field body saja — nilainya dibuang. */
+  /** Nama field body saja, nilainya dibuang. */
   fieldNames: string[];
   /** Bentuk body: "json" | "form" | "multipart" | "unknown". */
   bodyKind: "json" | "form" | "multipart" | "unknown";
   /** Kode status respons yang terekam, bila ada. */
   responseStatus: number | null;
-  /** Cuplikan respons (dipotong, sudah ditapis) — untuk melihat pesan sukses. */
+  /** Cuplikan respons (dipotong, sudah ditapis), untuk melihat pesan sukses. */
   responseSnippet: string | null;
 };
 
@@ -64,7 +64,7 @@ export function redactValue(name: string, value: unknown): string {
   return s.length > 200 ? `${s.slice(0, 200)}…` : s;
 }
 
-/** Ambil hanya nama field dari body JSON — nilainya dibuang. */
+/** Ambil hanya nama field dari body JSON, nilainya dibuang. */
 function fieldNamesFromJson(body: string): string[] {
   try {
     const parsed = JSON.parse(body) as unknown;
@@ -104,7 +104,7 @@ function bodyKindOf(
 /** Apakah permintaan ini kandidat submit laporan? (POST ke API, bukan auth). */
 export function isSubmitCandidate(method: string, path: string): boolean {
   if (!/^(post|put|patch)$/i.test(method)) return false;
-  // Bukan endpoint auth/refresh/login — itu sudah kita pahami (§4).
+  // Bukan endpoint auth/refresh/login, itu sudah kita pahami (§4).
   if (/\/auth\//i.test(path)) return false;
   // Harus berada di API Monev.
   if (!/^\/api\/v1\//i.test(path)) return false;

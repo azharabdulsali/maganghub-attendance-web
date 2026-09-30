@@ -1,4 +1,4 @@
-// src/lib/holidays.ts — DAFTAR LIBUR NASIONAL Indonesia (data murni).
+// src/lib/holidays.ts: DAFTAR LIBUR NASIONAL Indonesia (data murni).
 //
 // Konteks penting: entri di sini HANYA perlu mencakup tanggal yang MASIH BISA
 // terjadi. Tanggal yang sudah lewat tak akan pernah dicek lagi (mis. Jan–Agu
@@ -6,7 +6,7 @@
 // hanyalah tanggal >= sekarang.
 //
 // Blok tersisa: 24–25 Des 2026 (terkonfirmasi dari web absensi Maganghub) dan
-// 2027-01-01 (perkiraan; belum dicocokkan — verifikasi bila ragu).
+// 2027-01-01 (perkiraan; belum dicocokkan, verifikasi bila ragu).
 //
 // Batas relevansi: program berhenti 2027-02-09 (lihat LAST_ACTIVE_DATE di
 // report-policy.ts), jadi setelah itu tak ada tanggal yang perlu didaftarkan.

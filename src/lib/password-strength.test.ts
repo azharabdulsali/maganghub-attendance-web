@@ -1,4 +1,4 @@
-// src/lib/password-strength.test.ts — uji indikator kekuatan kata sandi.
+// src/lib/password-strength.test.ts: uji indikator kekuatan kata sandi.
 //
 // Indikator ini hanya memberi umpan balik visual, tetapi kalau perkiraannya
 // ngawur (mis. menyebut "password123" kuat) ia justru menyesatkan pengguna.
@@ -7,7 +7,7 @@
 import { describe, it, expect } from "vitest";
 import { hitungKekuatan } from "./password-strength";
 
-describe("hitungKekuatan — indikator kekuatan kata sandi", () => {
+describe("hitungKekuatan, indikator kekuatan kata sandi", () => {
   it("mengembalikan level 'kosong' untuk string kosong", () => {
     const s = hitungKekuatan("");
     expect(s.level).toBe("kosong");
@@ -20,7 +20,7 @@ describe("hitungKekuatan — indikator kekuatan kata sandi", () => {
   });
 
   it("menolak menilai kata sandi umum sebagai kuat berapa pun panjangnya", () => {
-    // 12 karakter — panjangnya "memadai", tetapi sering dipakai orang.
+    // 12 karakter, panjangnya "memadai", tetapi sering dipakai orang.
     expect(hitungKekuatan("password1234").level).toBe("lemah");
     expect(hitungKekuatan("qwertyuiopas").level).toBe("lemah");
   });

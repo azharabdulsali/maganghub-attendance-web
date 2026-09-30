@@ -1,4 +1,4 @@
-// src/lib/report-rules.test.ts — uji aturan 100 karakter.
+// src/lib/report-rules.test.ts: uji aturan 100 karakter.
 //
 // Ini aturan milik PORTAL, bukan selera kita. Kalau salah hitung, pengguna
 // mengira laporannya sah lalu ditolak portal tanpa penjelasan yang berguna.
@@ -16,7 +16,7 @@ import {
 /** Teks valid: tepat 100 karakter setelah dipangkas. */
 const VALID = "a".repeat(100);
 
-describe("countReportLength — cara menghitung", () => {
+describe("countReportLength, cara menghitung", () => {
   it("menghitung teks biasa", () => {
     expect(countReportLength("abc")).toBe(3);
   });
@@ -56,7 +56,7 @@ describe("countReportLength — cara menghitung", () => {
   });
 });
 
-describe("checkReportField — tolak/terima", () => {
+describe("checkReportField, tolak/terima", () => {
   it("menolak teks kosong", () => {
     expect(checkReportField("")).toBe("Wajib diisi.");
   });
@@ -94,21 +94,21 @@ describe("checkReportField — tolak/terima", () => {
   });
 
   it("pesan error selalu dalam bahasa Indonesia yang bisa dibaca", () => {
-    // Pesan ini tampil langsung di layar pengguna — jangan bocorkan istilah
+    // Pesan ini tampil langsung di layar pengguna, jangan bocorkan istilah
     // teknis seperti "minLength" atau "invalid input".
     const pesan = checkReportField("pendek");
     expect(pesan).toMatch(/karakter/);
     expect(pesan).not.toMatch(/invalid|undefined|null|NaN|minLength/i);
   });
 
-  it("menghitung emoji sebagai 2 (surrogate pair) — sama seperti portal", () => {
+  it("menghitung emoji sebagai 2 (surrogate pair), sama seperti portal", () => {
     // Portal (JavaScript di browser) memakai .length yang sama, jadi perilaku
     // kita konsisten. Kalau nanti terasa aneh, yang menentukan tetap portal.
     expect(countReportLength("\u{1F512}")).toBe(2);
   });
 });
 
-describe("normalizeReportText — penyeragaman sebelum simpan", () => {
+describe("normalizeReportText, penyeragaman sebelum simpan", () => {
   it("memangkas spasi tepi", () => {
     expect(normalizeReportText("  halo  ")).toBe("halo");
   });
@@ -139,7 +139,7 @@ describe("normalizeReportText — penyeragaman sebelum simpan", () => {
   });
 });
 
-describe("normalizeReportText + countReportLength — dipakai bersama", () => {
+describe("normalizeReportText + countReportLength, dipakai bersama", () => {
   it("panjang setelah normalisasi sama dengan yang dihitung pengguna", () => {
     const mentah = `\u00A0${VALID}\r\n`;
     const bersih = normalizeReportText(mentah);

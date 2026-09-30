@@ -1,20 +1,20 @@
-// src/app/(app)/admin/page.tsx — halaman admin (khusus ADMIN).
+// src/app/(app)/admin/page.tsx: halaman admin (khusus ADMIN).
 //
 // Isi halaman ini, sesuai SPEC.md §4 ("Admin: kelola semua pengguna, lihat audit
 // log, statistik"):
 //   1. Ringkasan lintas pengguna (jumlah pengguna, admin, kredensial aktif, dst).
 //   2. Tabel daftar pengguna + ringkasan aktivitas masing-masing.
-//   3. Audit lintas pengguna (SubmitLog semua orang) — dengan filter status yang
+//   3. Audit lintas pengguna (SubmitLog semua orang), dengan filter status yang
 //      sama seperti halaman riwayat, supaya pengalaman tidak berbeda.
 //
 // Yang SENGAJA belum ada: mengubah peran, menghapus pengguna, memaksa submit.
 // Ketiganya mengubah data orang lain dan belum punya backend/aturan yang aman;
 // menambahkannya sebagai tombol kosong akan menjanjikan hal yang tidak ada.
-// Halaman ini murni BACA — audit log adalah bukti, bukan data yang bisa diubah
+// Halaman ini murni BACA, audit log adalah bukti, bukan data yang bisa diubah
 // (SPEC.md §5.7).
 //
 // ⚠️ Penjagaan sesungguhnya ada di sini (server) lewat pemeriksaan role. Sidebar
-// hanya menyembunyikan tautan — lihat catatan di components/app-sidebar.tsx.
+// hanya menyembunyikan tautan, lihat catatan di components/app-sidebar.tsx.
 
 import { redirect } from "next/navigation";
 
@@ -206,7 +206,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       </td>
                       <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
                         {u.lastSubmitAt
-                          ? (formatJakartaTimestamp(u.lastSubmitAt) ?? "—")
+                          ? (formatJakartaTimestamp(u.lastSubmitAt) ?? ",")
                           : "Belum pernah"}
                       </td>
                     </tr>
@@ -289,10 +289,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           {log.attempt > 1 && ` (ke-${log.attempt})`}
                         </td>
                         <td className="p-3 text-xs text-foreground/70">
-                          {typeof log.httpCode === "number" ? log.httpCode : "—"}
+                          {typeof log.httpCode === "number" ? log.httpCode : ","}
                         </td>
                         <td className="p-3 text-xs text-foreground/80">
-                          {log.message ?? "—"}
+                          {log.message ?? ","}
                         </td>
                       </tr>
                     );

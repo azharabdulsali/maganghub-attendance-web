@@ -1,4 +1,4 @@
-// src/app/api/profile/route.ts — ubah nama profil pengguna sendiri.
+// src/app/api/profile/route.ts: ubah nama profil pengguna sendiri.
 //
 // Kenapa terpisah dari /api/credentials: kredensial berisi rahasia portal Monev
 // dan penanganannya ketat (rate limit, dekripsi). Profil hanyalah data biasa
@@ -6,7 +6,7 @@
 //
 // Yang dijaga di sini:
 //   - Hanya pemilik sesi yang boleh mengubah profilnya sendiri (userId dari
-//     sesi, BUKAN dari body — supaya tidak bisa mengubah milik orang lain).
+//     sesi, BUKAN dari body, supaya tidak bisa mengubah milik orang lain).
 //   - Email & peran TIDAK diterima dari klien. Email adalah identitas login;
 //     peran hanya boleh diubah lewat jalur admin/ADMIN_EMAIL (§13 baris 8).
 //   - Input divalidasi Zod di server sebelum menyentuh DB (AGENTS.md §2).
@@ -17,7 +17,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { profileSchema } from "@/lib/validate";
 
-/** PATCH — perbarui nama profil user yang sedang login. */
+/** PATCH, perbarui nama profil user yang sedang login. */
 export async function PATCH(request: Request) {
   const session = await auth();
   const userId = session?.user?.id;
@@ -47,7 +47,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  // Nama kosong disimpan sebagai NULL, bukan "" — supaya "belum diisi" hanya
+  // Nama kosong disimpan sebagai NULL, bukan "", supaya "belum diisi" hanya
   // punya satu bentuk di DB.
   const nama = parsed.data.name.length > 0 ? parsed.data.name : null;
 

@@ -1,4 +1,4 @@
-// src/lib/monev-login.ts — orkestrasi login penuh ke portal Monev.
+// src/lib/monev-login.ts: orkestrasi login penuh ke portal Monev.
 //
 // Menyatukan tiga langkah yang sebelumnya terpisah menjadi SATU fungsi, supaya
 // pemanggil (mis. route cron/webhook) tidak perlu menyusun urutannya sendiri:
@@ -7,7 +7,7 @@
 //   (2) GET  account.kemnaker.go.id/auth        → x-csrf-token + cookie [primeSsoSession]
 //   (3) POST account.kemnaker.go.id/auth/login  → sesi autentikasi (set-cookie) [loginToSso]
 //   (3b) IKUTI authorizeUrl/rantai redirect SSO → cari `code`         [catchOAuthCode]
-//        ⚠️  Cookie sesi dari langkah (3) WAJIB dibawa ke sini — tanpa itu SSO
+//        ⚠️  Cookie sesi dari langkah (3) WAJIB dibawa ke sini, tanpa itu SSO
 //        melihat kita anonim dan membalas halaman SPA, bukan redirect `code`.
 //   (4) GET  /api/v1/auth/login/callback?code=&state= → access_token   [exchangeCodeForSession]
 //
@@ -43,7 +43,7 @@ const LOGIN_USER_AGENT =
   "(KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
 
 // ---------------------------------------------------------------------------
-// Langkah (2): priming sesi SSO — ambil x-csrf-token + cookie
+// Langkah (2): priming sesi SSO, ambil x-csrf-token + cookie
 // ---------------------------------------------------------------------------
 
 /** Hasil priming: token CSRF + nilai cookie yang harus diteruskan ke login. */
@@ -52,7 +52,7 @@ export type SsoPrimeResult =
   | { status: "ERROR"; message: string };
 
 /**
- * Cari token CSRF di dalam **HTML** halaman login — MURNI, tanpa jaringan.
+ * Cari token CSRF di dalam **HTML** halaman login, MURNI, tanpa jaringan.
  *
  * ⚠️  Konteks: `GET /auth` mengembalikan **HTML**, bukan JSON. Uji lapangan
  * menunjukkan responsnya TIDAK memuat header `x-csrf-token`, melainkan token
@@ -64,13 +64,13 @@ export type SsoPrimeResult =
  *
  * Fungsi ini **tidak** mengklaim pola mana yang benar; ia mengembalikan kandidat
  * pertama yang cocok. Setelah bentuk halaman direkam, persempit ke pola nyata.
- * Mengembalikan `undefined` bila tak ada yang cocok — supaya pemanggil jujur
+ * Mengembalikan `undefined` bila tak ada yang cocok, supaya pemanggil jujur
  * memberi `ERROR`, bukan token palsu.
  */
 export function extractCsrfTokenFromHtml(html: string): string | undefined {
   if (!html) return undefined;
 
-  // (1) <meta name="csrf-token" content="...">  — urutan atribut bisa bolak-balik.
+  // (1) <meta name="csrf-token" content="...">, urutan atribut bisa bolak-balik.
   const metaA = /<meta[^>]*name=["']csrf-token["'][^>]*content=["']([^"']+)["']/i.exec(html);
   if (metaA?.[1]) return metaA[1].trim();
   const metaB = /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']csrf-token["']/i.exec(html);
@@ -92,7 +92,7 @@ export function extractCsrfTokenFromHtml(html: string): string | undefined {
 }
 
 /**
- * Ambil `x-csrf-token` & cookie dari halaman login SSO — MURNI, tanpa jaringan.
+ * Ambil `x-csrf-token` & cookie dari halaman login SSO, MURNI, tanpa jaringan.
  *
  * Sumber token diterima **berurutan** (yang pertama cocok menang):
  *   1. header respons `x-csrf-token` (bila portal memang mengirimnya),
@@ -100,7 +100,7 @@ export function extractCsrfTokenFromHtml(html: string): string | undefined {
  *   3. **HTML body** via `extractCsrfTokenFromHtml` (jalur paling mungkin untuk
  *      halaman login berbasis markup).
  *
- * Cookie yang digabung HANYA yang relevan untuk login (cf/acw/session/csrf) —
+ * Cookie yang digabung HANYA yang relevan untuk login (cf/acw/session/csrf),
  * memakai daftar **awalan nama**, bukan menyalin seluruh header `set-cookie`.
  */
 export function interpretSsoPrimeResponse(
@@ -215,7 +215,7 @@ export async function primeSsoSession(opts: {
         : [];
 
     // Baca HTML body: token CSRF kemungkinan besar ditanam di markup, BUKAN
-    // di header. Isi body tidak pernah ditulis ke log/error — hanya dipindai.
+    // di header. Isi body tidak pernah ditulis ke log/error, hanya dipindai.
     const html = await res.text().catch(() => "");
 
     return interpretSsoPrimeResponse(res.status, {
@@ -248,7 +248,7 @@ export type LoginFlowResult =
       name?: string;
       /**
        * Cookie `monev_refresh_token` bila portal mengirimkannya saat callback.
-       * Sesi 30 hari — jauh lebih tahan lama dari access token (6 jam). Tidak
+       * Sesi 30 hari, jauh lebih tahan lama dari access token (6 jam). Tidak
        * selalu ada; pemanggil harus siap menerima `undefined`.
        */
       refreshToken?: string;
@@ -270,11 +270,11 @@ export type LoginStep =
   | "code-exchange";
 
 /**
- * Gabungkan header cookie dari dua sumber menjadi satu — MURNI, bisa diuji.
+ * Gabungkan header cookie dari dua sumber menjadi satu, MURNI, bisa diuji.
  *
  * Dipakai untuk menyatukan cookie priming (langkah 2) dengan cookie sesi hasil
  * login (langkah 3). Bila nama cookie sama, nilai dari sumber **berikutnya**
- * (login) menang — karena ia yang paling baru. Hanya `nama=nilai` yang
+ * (login) menang, karena ia yang paling baru. Hanya `nama=nilai` yang
  * dipertahankan; atribut (`Path`, `HttpOnly`, dst.) dibuang.
  */
 export function mergeCookieHeader(
@@ -297,7 +297,7 @@ export function mergeCookieHeader(
 }
 
 /**
- * Ringkasan langkah untuk UI/audit — MURNI. Sengaja tidak memuat rahasia:
+ * Ringkasan langkah untuk UI/audit, MURNI. Sengaja tidak memuat rahasia:
  * hanya nama langkah.
  */
 export function summarizeLoginStep(step: LoginStep): string {
@@ -314,7 +314,7 @@ export function summarizeLoginStep(step: LoginStep): string {
 }
 
 /**
- * Jalankan alur login penuh. **GATED** — butuh `confirmLivePortalRequest: true`.
+ * Jalankan alur login penuh. **GATED**, butuh `confirmLivePortalRequest: true`.
  *
  * Tanpa gerbang itu, fungsi mengembalikan `ERROR` di langkah pertama dan
  * **tidak** memanggil satu pun fungsi jaringan. Password hanya dilihat oleh
@@ -390,12 +390,12 @@ export async function runLoginFlow(input: {
     };
   }
 
-  // `code` OAuth hanya diterbitkan saat SSO memproses **permintaan otorisasi** —
+  // `code` OAuth hanya diterbitkan saat SSO memproses **permintaan otorisasi**,
   // yaitu `authorizeUrl` dari langkah (1), yang memuat
   // `client_id`/`response_type=code`/`state`. Mengikuti `redirectUri` dari
   // langkah (3) TERBUKTI buntu (jejak hop `301→302→200` tanpa `code`, §4.0):
   // halaman itu halaman SSO biasa, bukan permintaan otorisasi. Karena itu urutan
-  // percobaan: (a) `authorizeUrl` (permintaan otorisasi — paling mungkin),
+  // percobaan: (a) `authorizeUrl` (permintaan otorisasi, paling mungkin),
   // (b) `redirect_uri` dari respons login (cadangan), (c) `code` langsung di
   // keduanya, (d) apa pun di `Location`/body saat mengikuti.
   let code = authorizeUrl ? parseOAuthCallbackParams(authorizeUrl).code : undefined;
@@ -412,7 +412,7 @@ export async function runLoginFlow(input: {
   // Jejak diagnostik (aman, tanpa token) untuk pesan galat bila `code` tak ada.
   const catchDiags: string[] = [];
   const followTargets: Array<{ label: string; url: string }> = [];
-  // (a) Permintaan otorisasi asli dari langkah (1) — pihak yang benar-benar
+  // (a) Permintaan otorisasi asli dari langkah (1), pihak yang benar-benar
   // menerbitkan `code`. Dilewati bila URL sudah membawa `code` (sudah ditangkap).
   if (!code && authorizeUrl && !parseOAuthCallbackParams(authorizeUrl).code) {
     followTargets.push({ label: "authorizeUrl(langkah 1)", url: authorizeUrl });
@@ -446,7 +446,7 @@ export async function runLoginFlow(input: {
   }
 
   if (!code) {
-    // Pesan galat memuat DIAGNOSTIK asli dari (3b) supaya bisa direkam — bukan
+    // Pesan galat memuat DIAGNOSTIK asli dari (3b) supaya bisa direkam, bukan
     // diringkas jadi "bentuk respons berbeda" yang menghapus bukti.
     const detail = catchDiags.length
       ? ` Detail (3b): ${catchDiags.join(" | ")}`

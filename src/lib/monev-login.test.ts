@@ -1,4 +1,4 @@
-// src/lib/monev-login.test.ts — uji orkestrasi login penuh.
+// src/lib/monev-login.test.ts: uji orkestrasi login penuh.
 //
 // Fokus utama: GERBANG. Tes membuktikan bahwa tanpa `confirmLivePortalRequest:
 // true`, tidak ada satu pun panggilan jaringan yang terjadi. `fetch` di-mock
@@ -136,7 +136,7 @@ describe("summarizeLoginStep", () => {
   });
 });
 
-describe("runLoginFlow — GERBANG (tanpa jaringan)", () => {
+describe("runLoginFlow, GERBANG (tanpa jaringan)", () => {
   let fetchSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -167,7 +167,7 @@ describe("runLoginFlow — GERBANG (tanpa jaringan)", () => {
   });
 });
 
-describe("primeSsoSession — GERBANG", () => {
+describe("primeSsoSession, GERBANG", () => {
   let fetchSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -206,7 +206,7 @@ describe("primeSsoSession — GERBANG", () => {
   });
 });
 
-describe("runLoginFlow — alur lengkap (fetch di-mock berdasarkan URL)", () => {
+describe("runLoginFlow, alur lengkap (fetch di-mock berdasarkan URL)", () => {
   let fetchSpy: ReturnType<typeof vi.fn>;
 
   /** Rakit respons JSON login SSO yang sudah terautentikasi. */
@@ -361,7 +361,7 @@ describe("runLoginFlow — alur lengkap (fetch di-mock berdasarkan URL)", () => 
 
     expect(r.status).toBe("ERROR");
     if (r.status === "ERROR") {
-      // Kedua target harus dilaporkan, dengan jejak hop asli — tanpa nilai rahasia.
+      // Kedua target harus dilaporkan, dengan jejak hop asli, tanpa nilai rahasia.
       expect(r.message).toContain("authorizeUrl(langkah 1)");
       expect(r.message).toContain("redirect_uri(langkah 3)");
       // Jejak kini menyertakan host tujuan (`→host`) pada tiap redirect.

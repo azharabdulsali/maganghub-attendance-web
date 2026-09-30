@@ -1,4 +1,4 @@
-// src/lib/bearer-token.test.ts — uji pembaca rahasia bearer (murni).
+// src/lib/bearer-token.test.ts: uji pembaca rahasia bearer (murni).
 
 import { describe, it, expect } from "vitest";
 

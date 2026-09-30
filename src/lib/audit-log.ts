@@ -1,10 +1,10 @@
-// src/lib/audit-log.ts — penampil audit log submit (murni, tanpa DB/jaringan).
+// src/lib/audit-log.ts: penampil audit log submit (murni, tanpa DB/jaringan).
 //
 // Halaman riwayat (src/app/(app)/history/page.tsx) menyerahkan baris
 // SubmitLog mentah ke fungsi-fungsi di sini. Tujuannya sama seperti modul murni
 // lain (submit-service, report-policy): keputusan tampilan diuji tanpa DB.
 //
-// Tidak ada rahasia di sini — audit log hanya memuat status, pesan, tanggal.
+// Tidak ada rahasia di sini, audit log hanya memuat status, pesan, tanggal.
 
 import type { SubmitStatus, TriggerType } from "@/generated/prisma/enums";
 
@@ -50,7 +50,7 @@ export function describeTrigger(trigger: TriggerType): string {
 /**
  * Format waktu ke zona Asia/Jakarta secara eksplisit (bukan zona server).
  * Mengembalikan `null` bila `Date` tidak sah, supaya pemanggil memutuskan
- * fallback — bukan diam-diam mencetak "Invalid Date".
+ * fallback, bukan diam-diam mencetak "Invalid Date".
  */
 export function formatJakartaTimestamp(date: Date): string | null {
   if (Number.isNaN(date.getTime())) return null;
@@ -80,7 +80,7 @@ export function formatJakartaTimestamp(date: Date): string | null {
 // Ringkasan daftar (untuk kartu statistik di halaman)
 // ---------------------------------------------------------------------------
 
-/** Baris minimal yang dibutuhkan ringkasan — cukup subset kolom SubmitLog. */
+/** Baris minimal yang dibutuhkan ringkasan, cukup subset kolom SubmitLog. */
 export interface AuditRow {
   status: SubmitStatus;
   createdAt: Date;
@@ -96,7 +96,7 @@ export interface AuditSummary {
 }
 
 /**
- * Hitung ringkasan dari daftar log. MURNI — tidak menyentuh DB. Daftar kosong
+ * Hitung ringkasan dari daftar log. MURNI, tidak menyentuh DB. Daftar kosong
  * menghasilkan semua nol (bukan NaN), termasuk `lastAt: null`.
  */
 export function summarizeLogs(rows: readonly AuditRow[]): AuditSummary {
@@ -136,7 +136,7 @@ export const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
 
 /**
  * Ubah nilai mentah dari `?status=` menjadi StatusFilter yang sah. Nilai tak
- * dikenal (termasuk `undefined`) jatuh ke "ALL" — jadi URL yang salah ketik
+ * dikenal (termasuk `undefined`) jatuh ke "ALL", jadi URL yang salah ketik
  * tidak pernah membuat halaman kosong atau error, hanya menampilkan semua.
  */
 export function parseStatusFilter(raw: string | undefined): StatusFilter {
@@ -171,7 +171,7 @@ export interface Pagination {
 /**
  * Hitung jendela paginasi. MURNI. `pageSize` minimal 1 (dijaga agar tidak
  * terjadi pembagian nol). Bila `page` melebihi jumlah halaman, ia dijepit ke
- * halaman terakhir yang ada — jadi `?page=999` tetap menampilkan data, bukan
+ * halaman terakhir yang ada, jadi `?page=999` tetap menampilkan data, bukan
  * tabel kosong. Daftar kosong menghasilkan pageCount = 1, page = 1.
  */
 export function paginate(

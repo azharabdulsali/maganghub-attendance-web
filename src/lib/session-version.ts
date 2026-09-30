@@ -1,9 +1,9 @@
-// src/lib/session-version.ts — logika keputusan generasi sesi (MURNI).
+// src/lib/session-version.ts: logika keputusan generasi sesi (MURNI).
 //
 // Kenapa dipisah: callback `jwt` di `src/lib/auth.ts` bercampur dengan I/O
 // (query DB), sehingga sulit diuji tanpa menjalankan Prisma. Keputusan yang
-// sebenarnya diambil — "token ini masih satu generasi dengan DB?" dan "nilai
-// versi dari klien boleh dipercaya?" — diekstrak ke sini sebagai fungsi murni
+// sebenarnya diambil, "token ini masih satu generasi dengan DB?" dan "nilai
+// versi dari klien boleh dipercaya?", diekstrak ke sini sebagai fungsi murni
 // supaya bisa diuji tuntas.
 //
 // Model ancaman yang dicegah:
@@ -12,7 +12,7 @@
 //     kedaluwarsa). Ini yang disebut "session invalidation".
 //   - Klien boleh mengirim `sessionVersion` baru lewat `useSession().update()`
 //     untuk memperbarui sesinya sendiri. Karena datang dari klien, nilainya
-//     TIDAK dipercaya apa adanya — hanya angka bulat >= 0 yang diterima.
+//     TIDAK dipercaya apa adanya, hanya angka bulat >= 0 yang diterima.
 
 /**
  * Apakah token masih satu generasi dengan nilai di DB?
@@ -31,7 +31,7 @@ export function sesiMasihSah(
  * Ambil `sessionVersion` yang dikirim klien lewat `useSession().update(...)`.
  *
  * Mengembalikan angka bila valid, atau `null` bila tidak. Pemanggil sebaiknya
- * mengabaikan nilai `null` (biarkan token apa adanya) — bukan menganggapnya 0,
+ * mengabaikan nilai `null` (biarkan token apa adanya), bukan menganggapnya 0,
  * karena itu justru bisa menurunkan generasi sesi.
  */
 export function versiSesiDariKlien(session: unknown): number | null {

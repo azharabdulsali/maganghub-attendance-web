@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# RAHASIA — ini yang paling penting.
+# RAHASIA, ini yang paling penting.
 # Ditulis lebih dulu sebelum `git init` supaya tidak ada satu detik pun
 # di mana .env bisa ikut ter-commit. Lihat SPEC.md §9 dan §14 Tahap B.
 # ---------------------------------------------------------------------------

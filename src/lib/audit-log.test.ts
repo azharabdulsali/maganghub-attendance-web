@@ -1,4 +1,4 @@
-// src/lib/audit-log.test.ts — uji penampil audit log (murni).
+// src/lib/audit-log.test.ts: uji penampil audit log (murni).
 
 import { describe, it, expect } from "vitest";
 

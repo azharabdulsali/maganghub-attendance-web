@@ -1,4 +1,4 @@
-// src/app/(app)/profile/page.tsx — halaman profil pengguna (INFORMASI saja).
+// src/app/(app)/profile/page.tsx: halaman profil pengguna (INFORMASI saja).
 //
 // Server component: sesi + data yang boleh ditampilkan. Yang sengaja TIDAK
 // ditampilkan: password (walau ter-hash) dan isi token Monev. Status kredensial
@@ -16,9 +16,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Label status kredensial dalam bahasa manusia + warna sorot.
 const STATUS_LABEL: Record<string, { teks: string; penting: boolean }> = {
-  ACTIVE: { teks: "Aktif — siap mengirim", penting: false },
+  ACTIVE: { teks: "Aktif, siap mengirim", penting: false },
   UNVERIFIED: { teks: "Belum diverifikasi", penting: false },
-  INVALID: { teks: "Tidak valid — perlu login ulang di portal", penting: true },
+  INVALID: { teks: "Tidak valid, perlu login ulang di portal", penting: true },
 };
 
 function formatTanggal(d: Date) {

@@ -1,4 +1,4 @@
-// src/app/api/admin/dispatch/route.ts — picu dispatcher massal dari panel admin.
+// src/app/api/admin/dispatch/route.ts: picu dispatcher massal dari panel admin.
 //
 // Alternatif dari menekan "Run workflow" di GitHub: admin login bisa memicu
 // pemrosesan manual untuk user yang jadwalnya (!) jatuh pada jam WIB sekarang.
@@ -6,7 +6,7 @@
 //
 // Keamanan:
 //   - WAJIB sesi + role ADMIN (dicek di server, bukan sekadar sembunyikan tombol).
-//   - Tidak menerima parameter apa pun dari klien — tidak bisa disuruh
+//   - Tidak menerima parameter apa pun dari klien, tidak bisa disuruh
 //     memproses user sembarangan; seleksi sepenuhnya di server (runDispatch).
 //   - Logika kirim identik dengan /api/cron/run-all (lib/cron-dispatch-run.ts).
 

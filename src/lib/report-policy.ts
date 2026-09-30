@@ -1,4 +1,4 @@
-// src/lib/report-policy.ts — aturan bisnis "boleh submit kapan" (SPEC.md §11B).
+// src/lib/report-policy.ts: aturan bisnis "boleh submit kapan" (SPEC.md §11B).
 //
 // Kenapa modul terpisah & murni: aturan ini menentukan KAPAN server boleh
 // menyentuh portal Monev. Kalau salah, kita mengirim laporan di hari libur,
@@ -16,7 +16,7 @@ import { MIN_REPORT_LENGTH } from "./report-rules";
 
 /**
  * Batas akhir program. Mulai 2027-02-10 (dalam zona Jakarta) seluruh otomasi
- * WAJIB berhenti sendiri — tanpa submit, tanpa membuka apa pun (SPEC.md §11B).
+ * WAJIB berhenti sendiri, tanpa submit, tanpa membuka apa pun (SPEC.md §11B).
  * Nilai ini disalin apa adanya dari bot Python (`policy.py:11`), bukan tebakan.
  */
 export const LAST_ACTIVE_DATE = "2027-02-09";
@@ -31,7 +31,7 @@ export const JADWAL_CADANGAN = ["16:30", "20:00"] as const;
 /** Tanggal polos dalam bentuk `YYYY-MM-DD`. */
 export type PlainDate = string;
 
-/** Hasil keputusan policy — satu kata, dipakai konsisten di audit log §5.7. */
+/** Hasil keputusan policy, satu kata, dipakai konsisten di audit log §5.7. */
 export type PolicyDecision =
   | "ALLOW" // boleh submit
   | "SKIPPED" // libur / akhir pekan → dilewati (bukan error)

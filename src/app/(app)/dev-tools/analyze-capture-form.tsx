@@ -97,7 +97,7 @@ export default function AnalyzeCaptureForm() {
             </li>
             <li>
               3. Isi laporan seperti biasa (termasuk kolom kehadiran), lalu tekan{" "}
-              <strong>Simpan dan Kirim</strong> — cukup <strong>sekali</strong>.
+              <strong>Simpan dan Kirim</strong>, cukup <strong>sekali</strong>.
             </li>
             <li>
               4. Klik kanan permintaan yang muncul → <em>Copy</em> →{" "}
@@ -112,7 +112,7 @@ export default function AnalyzeCaptureForm() {
           <CardTitle>Tempel rekaman</CardTitle>
           <CardDescription>
             Tempel perintah curl <em>atau</em> isi berkas HAR. Nilai token,
-            cookie, dan password otomatis disamarkan — yang kami perlukan hanya
+            cookie, dan password otomatis disamarkan, yang kami perlukan hanya
             nama field dan bentuk body.
           </CardDescription>
         </CardHeader>
@@ -154,11 +154,11 @@ export default function AnalyzeCaptureForm() {
                 <dl className="mt-2 space-y-1 text-foreground/80">
                   <div>
                     <dt className="inline font-heading">Status respons: </dt>
-                    <dd className="inline">{c.responseStatus ?? "—"}</dd>
+                    <dd className="inline">{c.responseStatus ?? ","}</dd>
                   </div>
                   <div>
                     <dt className="inline font-heading">Content-Type: </dt>
-                    <dd className="inline">{c.contentType ?? "—"}</dd>
+                    <dd className="inline">{c.contentType ?? ","}</dd>
                   </div>
                   <div>
                     <dt className="inline font-heading">Bentuk body: </dt>
@@ -167,13 +167,13 @@ export default function AnalyzeCaptureForm() {
                   <div>
                     <dt className="inline font-heading">Nama field: </dt>
                     <dd className="inline">
-                      {c.fieldNames.length ? c.fieldNames.join(", ") : "—"}
+                      {c.fieldNames.length ? c.fieldNames.join(", ") : ","}
                     </dd>
                   </div>
                   <div>
                     <dt className="inline font-heading">Header terkirim: </dt>
                     <dd className="inline">
-                      {c.headerNames.length ? c.headerNames.join(", ") : "—"}
+                      {c.headerNames.length ? c.headerNames.join(", ") : ","}
                     </dd>
                   </div>
                 </dl>

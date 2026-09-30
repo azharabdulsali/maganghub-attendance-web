@@ -1,4 +1,4 @@
-// src/lib/cron-dispatch.ts — aturan pemilihan user untuk cron massal (MURNI).
+// src/lib/cron-dispatch.ts: aturan pemilihan user untuk cron massal (MURNI).
 //
 // Latar: alih-alih tiap pengguna memasang cronnya sendiri di cron-job.org
 // (rawan lupa & merepotkan), SATU pemicu admin (GitHub Actions) memanggil
@@ -11,7 +11,7 @@
 
 import { AUTOMATION_TIMEZONE } from "./automation";
 
-/** Satu baris kandidat — hanya field yang dibutuhkan untuk memilih. */
+/** Satu baris kandidat, hanya field yang dibutuhkan untuk memilih. */
 export type DueCandidate = {
   userId: string;
   /** Jam jadwal pengguna (0–23) di Asia/Jakarta. */
@@ -31,7 +31,7 @@ export type DispatchPlan = {
 /**
  * Ambil jam (0–23) di Asia/Jakarta dari sebuah `Date`.
  *
- * MURNI terhadap argumennya — bisa diuji dengan tanggal tetap. Memakai `Intl`
+ * MURNI terhadap argumennya, bisa diuji dengan tanggal tetap. Memakai `Intl`
  * (bukan offset tetap UTC+7) supaya benar bahkan bila aturan zona berubah.
  */
 export function jakartaHour(at: Date): number {
@@ -51,7 +51,7 @@ export function jakartaHour(at: Date): number {
  * Aturan: jadwal dianggap jatuh tempo bila `hour`-nya SAMA dengan jam sekarang.
  * Menit sengaja DIABAIKAN: cron berjalan sekali tiap jam, jadi menuntut menit
  * yang sama persis akan membuat jadwal (mis. 07:30) tak pernah tercapai. Ini
- * berarti pengguna bisa terkirim kapan saja dalam jam jadwalnya — cukup untuk
+ * berarti pengguna bisa terkirim kapan saja dalam jam jadwalnya, cukup untuk
  * absensi harian dan jauh lebih andal daripada menuntut ketepatan menit.
  */
 export function isDueNow(candidate: DueCandidate, currentHour: number): boolean {

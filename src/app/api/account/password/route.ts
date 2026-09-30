@@ -1,16 +1,16 @@
-// src/app/api/account/password/route.ts — ubah kata sandi akun sendiri (C-13).
+// src/app/api/account/password/route.ts: ubah kata sandi akun sendiri (C-13).
 //
 // Diubah **dalam sesi** (pengguna sudah login), tanpa email/token reset. Karena
 // tidak ada verifikasi email, keamanannya bersandar pada dua hal: sesi yang sah
 // DAN pembuktian kata sandi lama. Yang dijaga di sini:
 //
 //   - Hanya pemilik sesi yang boleh mengubah kata sandinya (userId dari SESI,
-//     bukan dari body — supaya tak bisa mengubah milik orang lain).
+//     bukan dari body, supaya tak bisa mengubah milik orang lain).
 //   - Rate limit per pengguna (scope `passwordChange`): tiap percobaan
 //     menjalankan bcrypt.compare pada kata sandi lama, jadi batas rendah membuat
 //     tebak-menebak lewat endpoint ini tidak ekonomis.
 //   - Kata sandi lama diverifikasi dengan bcrypt SEBELUM hash baru disimpan.
-//   - Hash baru memakai bcrypt cost 12 — persis sama dengan pendaftaran & login,
+//   - Hash baru memakai bcrypt cost 12, persis sama dengan pendaftaran & login,
 //     agar aturan satu sumber kebenaran (auth.ts, register/route.ts).
 //   - Respons tidak pernah mengembalikan hash atau detail internal.
 
@@ -77,14 +77,14 @@ export async function POST(request: Request) {
     select: { passwordHash: true },
   });
   if (!user) {
-    // Sesi ada tetapi baris user hilang (mis. dihapus) — perlakukan sebagai 401.
+    // Sesi ada tetapi baris user hilang (mis. dihapus), perlakukan sebagai 401.
     return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
   }
 
   const cocok = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!cocok) {
     // Pesan generik + status 400: tidak membocorkan apakah kata sandi lama
-    // "hampir benar". 400 (bukan 401) karena sesi tetap sah — hanya input salah.
+    // "hampir benar". 400 (bukan 401) karena sesi tetap sah, hanya input salah.
     return NextResponse.json(
       { error: "Kata sandi saat ini salah", field: "currentPassword" },
       { status: 400 },

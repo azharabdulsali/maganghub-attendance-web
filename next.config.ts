@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
   // ada di bawah /dashboard/* dipindah ke rute root (/credentials, /history,
   // …). Daftar ini menjaga tautan/bookmark lama tetap hidup alih-alih 404.
   //
-  // Catatan: /dashboard SENDIRI tetap ada (beranda setelah login) — JANGAN
+  // Catatan: /dashboard SENDIRI tetap ada (beranda setelah login), JANGAN
   // tambahkan pengalihan untuk "/dashboard" telanjang di sini.
   async redirects() {
     const moved: { from: string; to: string }[] = [
@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
     ];
 
     // `permanent: false` (307) sengaja dipilih: aplikasi belum publik, jadi
-    // pengalihan sementara lebih aman — browser tidak meng-cache-nya keras
+    // pengalihan sementara lebih aman: browser tidak meng-cache-nya keras
     // bila nanti rute ini diubah lagi. Kedua bentuk (dengan/tanpa sub-path)
     // dicakup lewat `:path*`.
     return moved.flatMap(({ from, to }) => [

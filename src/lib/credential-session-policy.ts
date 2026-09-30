@@ -1,14 +1,14 @@
-// src/lib/credential-session-policy.ts — konstanta MURNI sesi login Monev.
+// src/lib/credential-session-policy.ts: konstanta MURNI sesi login Monev.
 //
 // Dipisah dari `credential-session.ts` (yang menyentuh Prisma) supaya bisa
-// diuji tanpa env/DB — mengikuti pola report-policy vs report yang sudah ada.
+// diuji tanpa env/DB, mengikuti pola report-policy vs report yang sudah ada.
 // Tidak ada impor Prisma/env di sini.
 
 /**
  * Umur access token menurut dokumentasi (§4.0): 6 jam.
  *
  * Dipakai untuk menghitung `accessExpiresAt` saat menyimpan sesi. Jangan
- * menebak umur dari cookie — portal tidak menjanjikan bentuknya.
+ * menebak umur dari cookie, portal tidak menjanjikan bentuknya.
  */
 export const ACCESS_TTL_MS = 6 * 60 * 60 * 1000;
 
@@ -19,7 +19,7 @@ export const ACCESS_TTL_MS = 6 * 60 * 60 * 1000;
  * supaya kita tidak memulai pengiriman dengan token yang bisa kedaluwarsa di
  * tengah jalan (submit = beberapa panggilan jaringan).
  *
- * Ini murni (tanpa I/O), jadi bisa diuji tanpa DB — lihat file .test di sebelah.
+ * Ini murni (tanpa I/O), jadi bisa diuji tanpa DB, lihat file .test di sebelah.
  */
 export function isAccessTokenFresh(
   expiresAt: Date | null | undefined,

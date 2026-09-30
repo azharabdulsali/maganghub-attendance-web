@@ -4,14 +4,14 @@ import { cn } from "@/lib/utils"
 import type { Tone } from "@/lib/admin"
 
 /**
- * Kotak pesan inline (error / sukses / info) — pengganti pola yang sebelumnya
+ * Kotak pesan inline (error / sukses / info), pengganti pola yang sebelumnya
  * disalin-tempel di banyak form: `rounded-base border-2 border-border px-3
  * py-2 text-sm` + logika "warna apa ini?" yang diulang tiap berkas.
  *
  * Nada:
- *   good    — hijau (submit/tes berhasil)
- *   bad     — merah/menonjol (gagal, perlu tindakan)
- *   neutral — abu-abu (informasi, tanpa menghakimi)
+ *   good, hijau (submit/tes berhasil)
+ *   bad, merah/menonjol (gagal, perlu tindakan)
+ *   neutral, abu-abu (informasi, tanpa menghakimi)
  *
  * `role` & `aria-live` sudah diisi agar pembaca layar mengumumkan pesan yang
  * muncul setelah aksi (form submit) tanpa perlu diatur per pemanggil.

@@ -1,10 +1,10 @@
-// src/lib/password-strength.ts — perkiraan kekuatan kata sandi (murni, tanpa I/O).
+// src/lib/password-strength.ts: perkiraan kekuatan kata sandi (murni, tanpa I/O).
 //
 // Kenapa ada: aplikasi hanya mewajibkan 8 karakter (`changePasswordSchema`).
 // Itu batas minimum, tetapi tidak memberi tahu pengguna bahwa "password123"
 // jauh lebih lemah dari "Kucing-Tidur-72". Indikator ini mendorong kata sandi
 // yang lebih baik **tanpa** menambah aturan keras yang bisa mengunci orang
-// dari akunnya (tidak ada email pemulihan — lihat password-form.tsx).
+// dari akunnya (tidak ada email pemulihan, lihat password-form.tsx).
 //
 // Ini BUKAN pengukur entropi sungguhan dan bukan pengganti zxcvbn; hanya
 // perkiraan kasar yang cukup untuk memberi umpan balik visual. Aturannya
@@ -27,7 +27,7 @@ const PANJANG_MINIMUM = 8;
  * Hitung kekuatan kata sandi.
  *
  * Cara kerja: mulai dari 0, tambah satu poin untuk tiap hal yang membuat kata
- * sandi lebih sulit ditebak — panjang memadai, campuran huruf besar/kecil,
+ * sandi lebih sulit ditebak, panjang memadai, campuran huruf besar/kecil,
  * angka, dan simbol. Lalu turunkan poin bila kata sandi ada di daftar umum
  * atau hanya mengulang satu jenis karakter.
  */
@@ -98,7 +98,7 @@ export function hitungKekuatan(sandi: string): Strength {
     return {
       level: "sedang",
       skor,
-      saran: "Hampir kuat — tambah panjang atau simbol.",
+      saran: "Hampir kuat, tambah panjang atau simbol.",
     };
   }
   return { level: "kuat", skor, saran: "Kata sandi yang kuat." };

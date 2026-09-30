@@ -11,7 +11,7 @@ import type { StrengthLevel } from "@/lib/password-strength";
  *
  * Kenapa warnanya TOKEN, bukan hijau/merah mentah: agar ikut tema. `kuat`
  * memakai warna `success` yang sama dengan grafik tren, `lemah` memakai
- * `destructive`. Warna BUKAN satu-satunya penanda — ada juga teks label, jadi
+ * `destructive`. Warna BUKAN satu-satunya penanda, ada juga teks label, jadi
  * pengguna dengan buta warna tetap dapat informasinya (docs/UI-LAYOUT.md §5b).
  */
 const LEVEL_STYLE: Record<

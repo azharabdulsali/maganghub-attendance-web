@@ -1,4 +1,4 @@
-// src/app/api/credentials/login/route.ts — login otomatis ke portal Monev.
+// src/app/api/credentials/login/route.ts: login otomatis ke portal Monev.
 //
 // Ini adalah "Opsi A" (docs/MONEV-API.md §7): alih-alih meminta pengguna
 // menyalin `monev_refresh_token` dari DevTools, server yang menjalankan alur
@@ -11,7 +11,7 @@
 //   - Password Monev didekripsi SESAAAT untuk satu panggilan login, tidak
 //     pernah masuk respons/pesan error.
 //   - Gerbang `confirmLivePortalRequest: true` dilewatkan secara SADAR di sini
-//     — inilah satu-satunya tempat yang diizinkan menembak portal sungguhan.
+//, inilah satu-satunya tempat yang diizinkan menembak portal sungguhan.
 //   - Rate limit diterapkan: login = operasi sensitif.
 //   - Respons TIDAK PERNAH memuat token mentah, hanya ringkasan ada/tidak.
 
@@ -113,7 +113,7 @@ export async function POST() {
 
   if (result.status === "ERROR") {
     // Kesalahan jaringan/bentuk respons yang belum terekam. JANGAN ubah
-    // status kredensial — belum tentu kredensialnya salah.
+    // status kredensial, belum tentu kredensialnya salah.
     return NextResponse.json(
       {
         ok: false,

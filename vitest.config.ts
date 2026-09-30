@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
-    // Klien Prisma hasil generate bukan kode kita — jangan ikut dicari.
+    // Klien Prisma hasil generate bukan kode kita, jangan ikut dicari.
     exclude: ["node_modules/**", "src/generated/**", ".next/**"],
   },
 });

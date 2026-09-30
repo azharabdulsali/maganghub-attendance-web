@@ -1,6 +1,6 @@
 "use client";
 
-// src/components/sign-out-button.tsx — tombol Keluar dengan konfirmasi.
+// src/components/sign-out-button.tsx: tombol Keluar dengan konfirmasi.
 //
 // Kenapa dipisah dari app-sidebar.tsx: sidebar itu sudah panjang dan mengurus
 // dua tata letak (sidebar tetap + laci mobile). Menaruh state dialog di sana
@@ -8,7 +8,7 @@
 // hal: "minta konfirmasi sebelum keluar, lalu kirim form-nya".
 //
 // Kenapa konfirmasi sama sekali: keluar itu tidak merusak data, tapi mahal
-// untuk dibatalkan — pengguna harus mengetik ulang email & sandi. Salah tap
+// untuk dibatalkan, pengguna harus mengetik ulang email & sandi. Salah tap
 // di daftar menu yang rapat (mobile) cukup untuk mengeluarkan seseorang.
 //
 // Yang PENTING: jangan panggil signOutAction() langsung dari onClick. Kalau

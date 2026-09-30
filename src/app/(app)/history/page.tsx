@@ -1,10 +1,10 @@
-// src/app/(app)/history/page.tsx — riwayat audit log submit (Tahap 5).
+// src/app/(app)/history/page.tsx: riwayat audit log submit (Tahap 5).
 //
 // Server component: memeriksa sesi, mengambil SubmitLog milik pengguna (paling
 // baru 100), lalu menampilkan ringkasan + tabel. Semua pemformatan diserahkan
 // ke lib/audit-log.ts yang murni dan teruji.
 //
-// Prinsip (SPEC.md §7, §10): setiap percobaan submit PASTI tercatat di sini —
+// Prinsip (SPEC.md §7, §10): setiap percobaan submit PASTI tercatat di sini,
 // sukses, duplikat, maupun gagal. Halaman ini adalah bukti "sudah dikirim" bila
 // disengketakan, jadi TIDAK ada tombol edit/hapus di sini.
 
@@ -59,7 +59,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   const requestedPage = parsePage(params.page);
 
   // Filter diterapkan di database, bukan di memori: dengan begitu paginasi
-  // menghitung jumlah halaman dari hasil yang sudah tersaring — angka di
+  // menghitung jumlah halaman dari hasil yang sudah tersaring, angka di
   // tombol halaman selalu cocok dengan isi tabel.
   const where = {
     userId: session.user.id,
@@ -106,7 +106,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
         <h1 className="font-heading text-3xl">Riwayat Absensi</h1>
         <p className="mt-1 text-sm text-foreground/70">
           Catatan setiap percobaan kirim laporan. Sukses, duplikat, dan gagal
-          semuanya tercatat — ini bukti resmi bila ada sengketa kehadiran.
+          semuanya tercatat, ini bukti resmi bila ada sengketa kehadiran.
         </p>
       </div>
 
@@ -127,7 +127,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
         </CardContent>
       </Card>
 
-      {/* Filter status — tautan biasa yang mengubah URL, jadi tanpa JS dan
+      {/* Filter status, tautan biasa yang mengubah URL, jadi tanpa JS dan
           bisa di-bookmark. Nilai aktif ditandai warna bg-main. */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {STATUS_FILTERS.map((filter) => {
@@ -201,10 +201,10 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
                         {log.attempt > 1 && ` (ke-${log.attempt})`}
                       </td>
                       <td className="p-3 text-xs text-foreground/70">
-                        {typeof log.httpCode === "number" ? log.httpCode : "—"}
+                        {typeof log.httpCode === "number" ? log.httpCode : ","}
                       </td>
                       <td className="p-3 text-xs text-foreground/80">
-                        {log.message ?? "—"}
+                        {log.message ?? ","}
                       </td>
                     </tr>
                   );

@@ -1,4 +1,4 @@
-// src/app/(app)/admin/admin-query.ts — pengambilan data halaman admin.
+// src/app/(app)/admin/admin-query.ts: pengambilan data halaman admin.
 //
 // Semua query di sini HANYA MEMBACA dan sengaja dipisah dari halaman supaya
 // halaman tetap ringkas (pola sama seperti stats-query.ts). Bentuk hasilnya
@@ -6,7 +6,7 @@
 //
 // Kenapa tidak pakai `include` bertingkat untuk hitungan? Karena menghitung
 // jumlah di database (`_count`) jauh lebih murah daripada menarik semua baris
-// lalu menghitungnya di Node — penting begitu jumlah pengguna bertambah.
+// lalu menghitungnya di Node, penting begitu jumlah pengguna bertambah.
 
 import { prisma } from "@/lib/prisma";
 import type { AdminUserRow } from "@/lib/admin";

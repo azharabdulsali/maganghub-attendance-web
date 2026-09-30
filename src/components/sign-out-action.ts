@@ -1,6 +1,6 @@
 "use server";
 
-// src/components/sign-out-action.ts — Server Action untuk keluar (logout).
+// src/components/sign-out-action.ts: Server Action untuk keluar (logout).
 //
 // Kenapa dipisah ke file sendiri, bukan ditulis inline di app-sidebar.tsx:
 //   app-sidebar.tsx adalah Client Component ("use client"). Menyisipkan

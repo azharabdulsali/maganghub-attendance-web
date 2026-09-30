@@ -1,8 +1,8 @@
-// src/app/(app)/dev-tools/page.tsx — alat diagnostik (khusus admin).
+// src/app/(app)/dev-tools/page.tsx: alat diagnostik (khusus admin).
 //
 // Tujuan: membantu pemilik akun merekam SATU kali klik "Simpan dan Kirim" di
 // browsernya sendiri, lalu menemukan bentuk endpoint submit (§8). Halaman ini
-// tidak pernah mengirim apa pun ke portal Monev — ia hanya menganalisis teks
+// tidak pernah mengirim apa pun ke portal Monev, ia hanya menganalisis teks
 // rekaman yang ditempel.
 
 import { redirect } from "next/navigation";

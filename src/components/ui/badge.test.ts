@@ -4,7 +4,7 @@ import { toneForBadgeVariant } from "./badge";
 
 // Pemetaan nada badge dipakai bersama oleh tabel riwayat & tabel audit admin.
 // Bila salah, dua halaman bisa menampilkan warna berbeda untuk status yang sama
-// — persis masalah yang ingin dihindari. Jadi dikunci di sini tanpa perlu DOM.
+//, persis masalah yang ingin dihindari. Jadi dikunci di sini tanpa perlu DOM.
 describe("toneForBadgeVariant", () => {
   it("sukses → good, gagal → bad", () => {
     expect(toneForBadgeVariant("success")).toBe("good");

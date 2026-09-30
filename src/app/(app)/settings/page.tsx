@@ -1,4 +1,4 @@
-// src/app/(app)/settings/page.tsx — halaman pengaturan akun.
+// src/app/(app)/settings/page.tsx: halaman pengaturan akun.
 //
 // Dipisah dari /profile supaya ada batas yang jelas:
 //   - /profile  → INFORMASI akun (baca saja: email, peran, status Monev).

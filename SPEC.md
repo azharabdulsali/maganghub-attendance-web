@@ -1,4 +1,4 @@
-# SPEC.md — MagangHub Attendance Web
+# SPEC.md: MagangHub Attendance Web
 
 > Platform web multi-user untuk mengelola presensi dan laporan harian magang
 > ke portal Monev MagangHub Kemnaker.
@@ -15,14 +15,14 @@
 Menyediakan aplikasi web yang memungkinkan peserta magang Kemnaker:
 
 1. Menghubungkan akun Monev MagangHub mereka (kredensial disimpan terenkripsi).
-2. Menyimpan **tiga template tetap** — Uraian Aktivitas, Pembelajaran,
-   Kendala — yang sama seperti proyek Python lama, masing-masing > 100 karakter.
+2. Menyimpan **tiga template tetap**, Uraian Aktivitas, Pembelajaran,
+   Kendala, yang sama seperti proyek Python lama, masing-masing > 100 karakter.
 3. Menyusun laporan harian dari template tersebut, dengan tiga cara:
    - **Tempel template apa adanya** (perilaku sama dengan bot Python).
    - **Salin ke editor lalu ubah manual** bila ingin berbeda tiap hari.
 4. Memberi kebebasan memilih mode eksekusi:
-   - **Mode Manual (default)** — review lalu submit 1-klik dari dashboard.
-   - **Mode Terjadwal (opt-in)** — dipicu via webhook dari cron eksternal.
+   - **Mode Manual (default)**, review lalu submit 1-klik dari dashboard.
+   - **Mode Terjadwal (opt-in)**, dipicu via webhook dari cron eksternal.
 5. Mengirim laporan lewat **Direct REST API** dalam < 2 detik, tanpa browser,
    tanpa server tambahan, dan tanpa biaya bulanan.
 
@@ -47,7 +47,7 @@ Ini bagian terpenting dan harus dibaca lebih dulu.
 | Pemicu | Task Scheduler Windows | Webhook cron / 1-klik dashboard |
 | Jumlah pengguna | Satu (pemilik PC) | Multi-user |
 | Database | `data/state.json` | PostgreSQL (Neon) |
-| Laporan | Tiga template tetap, sama tiap hari | **Sama — tiga template tetap**, tapi per pengguna & bisa diedit |
+| Laporan | Tiga template tetap, sama tiap hari | **Sama, tiga template tetap**, tapi per pengguna & bisa diedit |
 | AI | Tidak dipakai | **Tidak dipakai** (dibatalkan, lihat §13) |
 | Status | **Tetap jalan apa adanya** | Proyek baru, terpisah total |
 
@@ -100,7 +100,7 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
 ### 5.1 Autentikasi
 - Login email + password, hash `bcryptjs`.
 - Sesi tersimpan di database melalui Prisma adapter.
-- Wajib HTTPS di produksi — cookie sesi tidak boleh lewat HTTP polos.
+- Wajib HTTPS di produksi, cookie sesi tidak boleh lewat HTTP polos.
 
 ### 5.2 Manajemen Kredensial Monev
 - Input email + password Monev.
@@ -112,7 +112,7 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
 
 ### 5.3 Template Laporan (pengganti Integrasi GitHub)
 - Tiga kolom tetap: **Uraian Aktivitas**, **Pembelajaran yang Diperoleh**,
-  **Kendala yang Dialami** — mengikuti proyek Python lama.
+  **Kendala yang Dialami**, mengikuti proyek Python lama.
 - Pengguna mengisi & menyimpan template sekali; dipakai ulang setiap hari.
 - **Validasi > 100 karakter per kolom**, ditegakkan di kode (bukan hanya di UI),
   mengikuti validasi portal.
@@ -122,8 +122,8 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
 ### 5.4 Penyusun Laporan (tanpa AI)
 - Laporan harian **berasal dari template pengguna**, bukan dari commit.
 - Dua jalur, keduanya sah:
-  1. **Pakai template langsung** — persis perilaku bot Python: isi sama tiap hari.
-  2. **Salin lalu edit** — template jadi titik awal, pengguna mengubahnya manual
+  1. **Pakai template langsung**, persis perilaku bot Python: isi sama tiap hari.
+  2. **Salin lalu edit**, template jadi titik awal, pengguna mengubahnya manual
      bila hari itu berbeda.
 - Tidak ada panggilan ke layanan AI mana pun. Tidak ada biaya variabel.
 
@@ -154,14 +154,14 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
   berfungsi wajar. Nilai tak dikenal diam-diam jatuh ke "semua" (lihat
   `parseStatusFilter`) sehingga URL yang salah ketik tidak pernah error.
 - Filter diterapkan **di database** (`where.status`), dan `count` memakai `where`
-  yang sama — jadi angka "Halaman X dari Y" selalu cocok dengan isi tabel.
+  yang sama, jadi angka "Halaman X dari Y" selalu cocok dengan isi tabel.
 - Kartu **Ringkasan** sengaja dihitung dari **seluruh** log, bukan hanya halaman
   yang sedang tampil; kalau tidak, angkanya akan berubah tiap pindah halaman.
 - Logika murni (`parseStatusFilter`, `parsePage`, `paginate`) ada di
   `src/lib/audit-log.ts` dan **teruji tanpa DB**.
 - ⚠️ Jangan kirim `take: 0` ke Prisma (error). Halaman yang tersaring kosong
-  tetap memakai `take` minimal 1 — lihat `Math.max(1, ...)` di halaman.
-- ⚠️ Di Next.js 16, `searchParams` adalah **Promise** — wajib `await`.
+  tetap memakai `take` minimal 1, lihat `Math.max(1, ...)` di halaman.
+- ⚠️ Di Next.js 16, `searchParams` adalah **Promise**, wajib `await`.
 - Tidak ada tombol edit/hapus di sini: audit log adalah bukti, bukan data yang
   bisa diubah.
 
@@ -196,25 +196,25 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
 | Pengaturan (ubah akun) | `/settings` |
 
 **Alur:** pengunjung membuka `/` (landing). Landing di sini **selalu**
-ditampilkan — termasuk untuk pengguna yang sudah login — karena `/` adalah
+ditampilkan (termasuk untuk pengguna yang sudah login) karena `/` adalah
 halaman penjelasan aplikasi. **Jangan** menambahkan redirect otomatis dari `/`
 ke `/dashboard`: dulu sempat ada, dan akibatnya setelah logout `/` langsung
 memantul ke login lagi. Setelah login, pengguna diarahkan ke `/dashboard` lewat
 `callbackUrl` di form login (bukan lewat `/`). Belum login namun membuka
-halaman terlindungi (mis. `/calendar`) — atau URL lama `/dashboard/*`? Layout
+halaman terlindungi (mis. `/calendar`), atau URL lama `/dashboard/*`? Layout
 mengalihkan ke `/login`.
 
 **Statistik dashboard (`/dashboard`):** halaman ini menampilkan empat kartu
-ringkas — **Total kirim, Berhasil, Gagal, Duplikat** — plus kartu **"Kirim sukses
+ringkas (**Total kirim, Berhasil, Gagal, Duplikat**) plus kartu **"Kirim sukses
 terakhir"** bila sudah ada, dan **grafik batang 30 hari**. Semua angka dihitung
 di server dari tabel `SubmitLog` (dan disaring `userId` pengguna yang sedang
 login; tidak ada agregasi lintas pengguna). Implementasinya terpisah agar
 halaman tetap ringkas:
 
-- `stats-query.ts` — perhitungan; memakai `prisma.submitLog.groupBy` untuk total
+- `stats-query.ts`, perhitungan; memakai `prisma.submitLog.groupBy` untuk total
   per status dan `findMany` 30 hari untuk grafik.
-- `stats-cards.tsx` — kartu angka (komponen tampilan murni).
-- `trend-chart.tsx` — grafik batang **SVG murni**, tanpa library chart (menghindari
+- `stats-cards.tsx`, kartu angka (komponen tampilan murni).
+- `trend-chart.tsx`, grafik batang **SVG murni**, tanpa library chart (menghindari
   dependensi baru; lihat AGENTS.md §2).
 
 Zona waktu: hari dihitung pada **Asia/Jakarta (UTC+7)**, bukan UTC, supaya
@@ -225,25 +225,25 @@ stempel waktu penuh.
 **Keluar (logout):** tombol Keluar di sidebar memakai **Server Action** di
 `src/components/sign-out-action.ts` yang memanggil `signOut({ redirectTo: "/" })`
 dari `@/lib/auth` (NextAuth v5). Lalu lintas lama memakai `<form
-action="/api/auth/signout" method="post">` — **itu salah**: tanpa CSRF token,
+action="/api/auth/signout" method="post">`, **itu salah**: tanpa CSRF token,
 NextAuth menolaknya sehingga sesi **tidak** benar-benar terhapus dan pengguna
 tampak "masih login". Jangan kembali ke pola itu.
 
 > **⚠️ Jebakan Next.js:** direktif `"use server"` **tidak boleh** ditulis inline
 > di dalam file yang `"use client"` (mis. sidebar). Turbopack akan menolak build
 > dengan pesan menyesatkan *"'use client' directive must be placed before other
-> expressions"* — padahal `"use client"` sudah di baris 1. **Aturannya: satu
+> expressions"*, padahal `"use client"` sudah di baris 1. **Aturannya: satu
 > file, satu direktif.** Taruh Server Action di file `.ts` terpisah.
 
 > **⚠️ Pelajaran (jangan diulang):** sempat terjadi **loop redirect tak
 > berujung** (`ERR_TOO_MANY_REDIRECTS`) karena dua file mengklaim URL `/` yang
-> sama — `src/app/page.tsx` (landing) dan `src/app/(app)/page.tsx` (dashboard) —
+> sama (`src/app/page.tsx` (landing) dan `src/app/(app)/page.tsx` (dashboard))
 > lalu landing (`src/app/page.tsx`) mengarahkan sesi aktif ke `/`. Karena
 > route group tidak muncul di URL, keduanya bertabrakan di `/`. **Aturan:**
 > satu URL, satu file. Setelah login, tujuannya **wajib** `/dashboard`, bukan
 > `/`.
 
-**Navigasi:** `src/components/app-sidebar.tsx` — sidebar tetap di layar lebar
+**Navigasi:** `src/components/app-sidebar.tsx`, sidebar tetap di layar lebar
 (≥ `md`) dan laci geser (*drawer*) di layar kecil. Menu **berbeda antara USER
 dan ADMIN**: item khusus admin (`/admin`, `/dev-tools`) hanya
 muncul bila `role === "ADMIN"`. Penyembunyian tautan ini **bukan** pengaman;
@@ -253,28 +253,28 @@ halaman).
 **Profil vs Pengaturan:** ada pembagian yang disengaja antara *melihat* dan
 *mengubah*:
 
-- **`/profile`** — **INFORMASI saja** (baca saja): email, peran, tanggal
+- **`/profile`**, **INFORMASI saja** (baca saja): email, peran, tanggal
   bergabung, dan status kredensial Monev. Tidak ada tombol yang mengubah apa pun
   di sini; ada tautan ke `/settings`.
-- **`/settings`** — **TINDAKAN** yang mengubah akun: ubah email, nama tampilan,
+- **`/settings`**, **TINDAKAN** yang mengubah akun: ubah email, nama tampilan,
   kata sandi, dan keluarkan perangkat lain. Semua halaman terlindungi (di dalam
   grup `(app)`) sudah otomatis butuh login.
 
 **Ubah email:** kartu "Email" di `/settings` memanggil `POST /api/account/email`.
 Ini perubahan **paling sensitif** di aplikasi karena email adalah identitas login
 **dan** penentu peran admin (`isAdminEmail`). Karena proyek ini tidak mengirim
-email verifikasi, perubahan berlaku langsung — **salah ketik = akun terkunci
+email verifikasi, perubahan berlaku langsung, **salah ketik = akun terkunci
 permanen** (tidak ada pemulihan akun); UI memperingatkan hal ini secara eksplisit.
 Pengamanannya:
 
 - `userId` diambil dari **sesi**, bukan body.
-- **Kata sandi saat ini wajib** dan diverifikasi (`bcrypt.compare`) — pengganti
+- **Kata sandi saat ini wajib** dan diverifikasi (`bcrypt.compare`), pengganti
   verifikasi email.
 - **Guard eskalasi peran:** pengguna non-admin **tidak boleh** menetapkan email
   yang sama dengan `ADMIN_EMAIL` (kalau tidak, ganti email = naik jadi admin).
   Logika murni ada di `src/lib/email-change-policy.ts`.
 - Email dinormalisasi (`trim` + `lowercase`) agar satu email hanya punya satu
-  bentuk — konsisten dengan jalur login/daftar.
+  bentuk, konsisten dengan jalur login/daftar.
 - Email harus belum dipakai akun lain (dicek lebih awal; `P2002` ditangani untuk
   balapan).
 - `sessionVersion` dinaikkan → **semua sesi lain dicabut**, dan sesi yang sedang
@@ -285,15 +285,15 @@ Pengamanannya:
 
 **Ubah kata sandi (dalam sesi, tanpa email):** kartu "Kata sandi" di `/settings`
 memanggil `POST /api/account/password`. Pengguna harus memasukkan kata sandi
-lama (diverifikasi `bcrypt.compare`) sebelum hash baru disimpan — ini pengganti
+lama (diverifikasi `bcrypt.compare`) sebelum hash baru disimpan, ini pengganti
 verifikasi email karena proyek ini tidak mengirim email. Kata sandi baru minimal
 8 karakter, harus sama dengan konfirmasi, dan harus berbeda dari yang lama.
 Mengubah kata sandi **mencabut semua sesi di perangkat lain** (lihat §5.8b);
 perangkat yang dipakai mengganti tetap aktif, jadi pengguna tidak perlu login
-ulang di situ. Sebelumnya sesi lain dibiarkan hidup — lihat §11 "Keterbatasan"
+ulang di situ. Sebelumnya sesi lain dibiarkan hidup, lihat §11 "Keterbatasan"
 untuk riwayatnya.
 
-### 5.8b Invalidasi sesi (perangkat lain) — `sessionVersion`
+### 5.8b Invalidasi sesi (perangkat lain), `sessionVersion`
 
 Sesi memakai **JWT**, jadi tidak ada daftar sesi yang bisa dihapus satu per
 satu. Invalidasi dilakukan dengan **generasi sesi**:
@@ -309,11 +309,11 @@ satu. Invalidasi dilakukan dengan **generasi sesi**:
 
 Dua pemicu:
 
-1. **Ganti kata sandi** (`POST /api/account/password`) — menaikkan versi, lalu
+1. **Ganti kata sandi** (`POST /api/account/password`), menaikkan versi, lalu
    mengembalikan `sessionVersion` baru. Perangkat yang sedang dipakai
    memperbarui sesinya lewat `useSession().update({ sessionVersion })`, sehingga
    tidak ikut ter-logout.
-2. **Tombol "Keluar dari semua perangkat lain"** — kartu "Perangkat lain" di
+2. **Tombol "Keluar dari semua perangkat lain"**, kartu "Perangkat lain" di
    `/settings` memanggil `POST /api/account/sessions/revoke` (rate limit 5/10
    menit, scope `sessionRevoke`). Berkonfirmasi dua langkah karena tidak bisa
    dibatalkan. Ganti email juga menaikkan versi (lihat §5.8 di atas), jadi
@@ -337,15 +337,15 @@ Halaman **baca-saja** yang menampilkan status submit absensi & laporan per
 sudah terkirim, mana yang masih kosong", melengkapi tabel linear di `/history`.
 
 - **Sumber data:** `SubmitLog` (dikelompokkan per tanggal WIB; status paling
-  penting menang — SUCCESS > FAILED > DUPLICATE) dan `Report` (menandai draft).
-  Semua disaring `userId` — pengguna (termasuk ADMIN) hanya melihat kalendernya
+  penting menang, SUCCESS > FAILED > DUPLICATE) dan `Report` (menandai draft).
+  Semua disaring `userId`, pengguna (termasuk ADMIN) hanya melihat kalendernya
   SENDIRI; kalender lintas pengguna adalah pekerjaan terpisah.
 - **Warna sel** (`DayStatus`): **Terkirim** (SUCCESS) · **Draft** (ada `Report`,
-  belum sukses) · **Gagal** (FAILED tanpa sukses) · **Belum diisi** (`—`).
+  belum sukses) · **Gagal** (FAILED tanpa sukses) · **Belum diisi** (`,`).
 - **Jujur:** kiriman `DUPLICATE` saja tidak dinaikkan ke "Terkirim"; sel tanpa
-  data menampilkan `—`, bukan klaim palsu.
+  data menampilkan `,`, bukan klaim palsu.
 - **Navigasi bulan** lewat query param `?month=YYYY-MM` (server-rendered,
-  tanpa state klien). Bulan tak sah jatuh ke bulan berjalan — URL salah ketik
+  tanpa state klien). Bulan tak sah jatuh ke bulan berjalan, URL salah ketik
   tidak pernah membuat halaman error.
 - **Logika murni** ada di `src/lib/calendar.ts` (kisi bulan, batas WIB,
   klasifikasi) + ujinya `src/lib/calendar.test.ts`. Batas hari memakai WIB
@@ -364,13 +364,13 @@ sudah terkirim, mana yang masih kosong", melengkapi tabel linear di `/history`.
 
 Halaman ini memuat tiga bagian:
 
-1. **Ringkasan** — kartu: total pengguna, jumlah admin, kredensial aktif, otomasi
+1. **Ringkasan**, kartu: total pengguna, jumlah admin, kredensial aktif, otomasi
    aktif, dan berapa pengguna yang pernah submit. Dihitung dari daftar pengguna
    (`summarizeUsers`, murni & teruji).
-2. **Daftar pengguna** — tabel per pengguna: identitas (nama/email), peran,
+2. **Daftar pengguna**, tabel per pengguna: identitas (nama/email), peran,
    status kredensial, otomasi, jumlah laporan, jumlah submit, dan waktu kirim
    terakhir. Diurutkan admin lebih dulu, lalu yang terbaru bergabung.
-3. **Audit lintas pengguna** — `SubmitLog` semua pengguna, memakai **filter status
+3. **Audit lintas pengguna**, `SubmitLog` semua pengguna, memakai **filter status
    & paginasi yang sama** seperti `/history` (20 baris/halaman,
    `?status=&page=` di URL). Logika murni dipakai ulang dari
    `src/lib/audit-log.ts` supaya tampilan kedua halaman konsisten.
@@ -381,7 +381,7 @@ kredensial, `summarizeUsers`, `formatJoinDate`, `initialsFor`) dan diuji tanpa D
 di `src/lib/admin.test.ts`. Query DB dipisah di `admin-query.ts` (pola sama
 seperti `stats-query.ts`).
 
-> **⚠️ Sama seperti riwayat:** jangan kirim `take: 0` ke Prisma — halaman audit
+> **⚠️ Sama seperti riwayat:** jangan kirim `take: 0` ke Prisma, halaman audit
 > yang tersaring kosong tetap memakai `take` minimal 1.
 
 ### 5.11 Komponen bersama UI (badge & kotak pesan)
@@ -389,16 +389,16 @@ seperti `stats-query.ts`).
 Dua pola tampilan sebelumnya **disalin-tempel berulang**; keduanya kini punya
 satu sumber kebenaran. Jangan menulis ulang polanya secara inline.
 
-- **`src/components/ui/badge.tsx` — `<Badge tone>`.** Sebelumnya peta warna
+- **`src/components/ui/badge.tsx`, `<Badge tone>`.** Sebelumnya peta warna
   (`bg-main`/`bg-secondary-background`/`bg-foreground`) dan markup `<span>`
   badge disalin di `history/page.tsx` (`BADGE_CLASS`), `admin/page.tsx`
   (`BADGE_CLASS` + `TONE_CLASS`), dan `dashboard/page.tsx`. Bila salah satu
   diubah, halaman lain bisa **berbeda warna diam-diam** untuk status yang sama.
   Kini semuanya memakai `<Badge>`. Terjemahan dari kosakata `lib/audit-log.ts`
   (`success`/`failure`/`warning`) ke `Tone` dilakukan oleh
-  `toneForBadgeVariant()` — **ditaruh di komponen, bukan di halaman** — sehingga
+ `toneForBadgeVariant()` (**ditaruh di komponen, bukan di halaman**) sehingga
   tabel riwayat & tabel audit admin dijamin sewarna.
-- **`src/components/ui/message.tsx` — `<Message tone>`.** Menggantikan pola
+- **`src/components/ui/message.tsx`, `<Message tone>`.** Menggantikan pola
   `rounded-base border-2 border-border px-3 py-2 text-sm` + logika "ini kotak
   sukses atau error?" yang dulu diulang di ~6 berkas (login, credentials,
   automation, dev-tools, submit). `role`/`aria-live` sudah diisi: `bad` →
@@ -407,7 +407,7 @@ satu sumber kebenaran. Jangan menulis ulang polanya secara inline.
 **Kosakata nada tunggal.** `Tone = "good" | "bad" | "neutral"` didefinisikan
 sekali di `src/lib/admin.ts` dan dipakai oleh `<Badge>`, `<Message>`, dan
 `stats-cards.tsx`. Jangan mendeklarasikan ulang union `"good" | "bad" |
-"neutral"` di berkas baru — impor `Tone` saja.
+"neutral"` di berkas baru, impor `Tone` saja.
 
 > **Uji murni:** `toneForBadgeVariant()` dikunci di
 > `src/components/ui/badge.test.ts` (tanpa DOM) supaya pemetaan nada tidak
@@ -415,25 +415,25 @@ sekali di `src/lib/admin.ts` dan dipakai oleh `<Badge>`, `<Message>`, dan
 
 ### 5.12 Umpan balik aksi: dialog konfirmasi & toast
 
-Dua mekanisme untuk menjawab "apakah klik saya berhasil?" — keduanya sengaja
+Dua mekanisme untuk menjawab "apakah klik saya berhasil?", keduanya sengaja
 dibangun di atas **Base UI** (sudah jadi dependensi), bukan ditulis dari nol:
 fokus, tombol Esc, dan atribut ARIA jangan dibuat sendiri kalau sudah ada.
 
-- **`src/components/ui/confirm-dialog.tsx` — `<ConfirmDialog>`.** Pengganti
+- **`src/components/ui/confirm-dialog.tsx`, `<ConfirmDialog>`.** Pengganti
   `window.confirm` untuk aksi yang tidak bisa dibatalkan. Dialog bawaan browser
   memblokir tab, tampil beda tiap OS, dan tidak bisa memuat konteks. Yang ini
   memakai Base UI `AlertDialog` sehingga dapat focus trap, Esc, `role="alertdialog"`,
-  dan fokus awal pada tombol batal — gratis. Dipakai di halaman template laporan
+  dan fokus awal pada tombol batal, gratis. Dipakai di halaman template laporan
   saat menekan **Hapus**.
-- **`src/components/ui/toast.tsx` — `<ToastProvider>` + `useToast()`.** Notifikasi
+- **`src/components/ui/toast.tsx`, `<ToastProvider>` + `useToast()`.** Notifikasi
   sudut layar. Muncul karena **banyak form menaruh tombol di bawah sementara
-  pesan suksesnya di atas** — pengguna yang harus menggulir tidak melihatnya.
+  pesan suksesnya di atas**, pengguna yang harus menggulir tidak melihatnya.
   Toast selalu di posisi sama. Provider dipasang sekali di `src/app/providers.tsx`.
 
-> **Batasan penting — toast ≠ `<Message>`.** Pesan yang perlu dibaca sambil
+> **Batasan penting, toast ≠ `<Message>`.** Pesan yang perlu dibaca sambil
 > memperbaiki isian (mis. "nama minimal 3 karakter") tetap **inline** memakai
 > `<Message>`; toast untuk hasil akhir yang tidak perlu ditindaklanjuti. Jangan
-> menaruh toast pada aksi yang sudah punya kotak hasil kaya — mis. tombol
+> menaruh toast pada aksi yang sudah punya kotak hasil kaya, mis. tombol
 > [Kirim Absen] atau [Analisis] sengaja **tidak** memunculkan toast karena
 > kotaknya sudah memuat status, pesan, tanggal, dan jalur re-auth. Toast di sana
 > hanya menduplikasi. Begitu pula [Masuk]/[Daftar]: keduanya langsung berpindah
@@ -449,12 +449,12 @@ fokus, tombol Esc, dan atribut ARIA jangan dibuat sendiri kalau sudah ada.
 | --- | --- | --- |
 | `/report-templates` | Hapus template | simpan, hapus (sukses & gagal) |
 | `/credentials` | Hapus kredensial | simpan, hapus, login otomatis, tes token |
-| `/automation` | — | simpan, salin URL |
-| `/profile` | — | — (halaman informasi, tak ada aksi) |
-| `/settings` | — | simpan nama, ubah kata sandi, ubah email, keluar dari perangkat lain |
-| `/dev-tools` | — | analisis selesai/gagal |
-| Sidebar (semua halaman) | Keluar | — (halaman pindah, toast akan buyar) |
-| `/login`, `/register` | — | — (lihat batasan di atas) |
+| `/automation` | - | simpan, salin URL |
+| `/profile` | (|) (halaman informasi, tak ada aksi) |
+| `/settings` | - | simpan nama, ubah kata sandi, ubah email, keluar dari perangkat lain |
+| `/dev-tools` | - | analisis selesai/gagal |
+| Sidebar (semua halaman) | Keluar | - (halaman pindah, toast akan buyar) |
+| `/login`, `/register` | (|) (lihat batasan di atas) |
 
 Tombol [Kirim Absen] **tanpa** toast: kotak hasilnya sudah memuat status,
 pesan, tanggal, dan tombol jalur re-auth. Menambah toast di sana hanya akan
@@ -462,14 +462,14 @@ mengabarkan dua hal sekaligus untuk satu kejadian.
 
 > **Aturan menambah aksi baru.** Setiap tombol yang mengubah data harus
 > menjawab pertanyaan ini: apakah pengguna tahu hasilnya tanpa menggulir?
-> Jika tidak — tambahkan toast. Jika aksinya tidak bisa dibatalkan —
+> Jika tidak (tambahkan toast. Jika aksinya tidak bisa dibatalkan)
 > pakai `<ConfirmDialog>`, jangan `window.confirm` atau `confirm`.
 
 
 
 ---
 
-## 6. Cara Submit — Keputusan Kunci
+## 6. Cara Submit, Keputusan Kunci
 
 **Keputusan (atas pilihan pemilik proyek): memakai Direct REST API, tanpa
 browser, tanpa worker, tanpa biaya bulanan.**
@@ -484,7 +484,7 @@ Bentuk sistem:
 **Biaya bulanan: Rp0.** Semua komponen memakai paket gratis.
 
 **Konsekuensi yang harus diterima (disadari, bukan tersembunyi):**
-1. Web app **pasif** — ia tidak bisa "bangun sendiri". Ia hanya submit saat
+1. Web app **pasif**, ia tidak bisa "bangun sendiri". Ia hanya submit saat
    dipanggil cron atau tombol dashboard ditekan.
 2. Jika layanan cron gratis pihak ketiga mati, absen terjadwal tidak jalan.
    Tidak ada fallback, karena tidak ada worker milik sendiri.
@@ -496,8 +496,7 @@ Bentuk sistem:
    halaman yang butuh JavaScript/anti-bot. Bila portal menambah proteksi
    semacam itu, Direct API akan langsung gagal.
 
-5. Isi laporan **sama setiap hari** bila pengguna memakai template apa adanya
-   — persis seperti bot Python. Ini bukan kekurangan tak terduga, melainkan
+5. Isi laporan **sama setiap hari** bila pengguna memakai template apa adanya, persis seperti bot Python. Ini bukan kekurangan tak terduga, melainkan
    perilaku yang diinginkan pemilik. Pengguna yang ingin berbeda cukup
    mengedit draf sebelum submit.
 
@@ -507,7 +506,7 @@ Bentuk sistem:
 - **Tidak** memakai User-Agent palsu yang mengaku Chrome.
 - **Tidak** memakai proxy untuk menembus `403`.
 - Jika `403` muncul, pesannya ditampilkan terus terang ke pengguna dan
-  dicatat di audit log — bukan ditutupi dengan penyamaran.
+  dicatat di audit log, bukan ditutupi dengan penyamaran.
 
 **Pencegahan kerapuhan:** nilai `buildId`/konstanta portal **tidak di-hardcode
 permanen**; ditaruh di satu tempat berkonfigurasi agar mudah diperbarui,
@@ -532,10 +531,10 @@ Ringkas; nama field dapat menyesuaikan saat implementasi.
 Enum: `Role`, `CredentialStatus`, `SourceType`, `ReportStatus`, `SubmitStatus`,
 `TriggerType`.
 
-`SourceType` nilainya menjadi `TEMPLATE` dan `MANUAL_EDIT` — nilai `GITHUB`
+`SourceType` nilainya menjadi `TEMPLATE` dan `MANUAL_EDIT`, nilai `GITHUB`
 **dihapus**. Model `GithubRepo` dan `AiConfig` **dihapus seluruhnya**.
 
-Batasan: `Report` unik per `(userId, date)` — mencegah draf ganda.
+Batasan: `Report` unik per `(userId, date)`, mencegah draf ganda.
 
 ---
 
@@ -545,20 +544,20 @@ Batasan: `Report` unik per `(userId, date)` — mencegah draf ganda.
 | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/api/register` | Daftar akun baru (email + password) | Publik | **3/jam per IP** |
 | `GET` | `/api/cron/submit` | Memicu submit otomatis (dipanggil cron eksternal) | Header `Authorization: Bearer` (dianjurkan) **atau** query `key` | 30/5 menit per IP |
-| `GET` | `/api/cron/run-all` | Dispatcher massal: proses semua user yang jadwalnya jatuh di jam ini | `Authorization: Bearer <CRON_SECRET>` | — (rahasia) |
-| `POST` | `/api/admin/dispatch` | Pemicu manual dispatcher massal dari Panel Admin | Cookie sesi + role **ADMIN** | — (hanya admin) |
+| `GET` | `/api/cron/run-all` | Dispatcher massal: proses semua user yang jadwalnya jatuh di jam ini | `Authorization: Bearer <CRON_SECRET>` | - (rahasia) |
+| `POST` | `/api/admin/dispatch` | Pemicu manual dispatcher massal dari Panel Admin | Cookie sesi + role **ADMIN** | - (hanya admin) |
 | `GET/PUT` | `/api/automation` | Baca/simpan jadwal otomasi + webhook key | Cookie sesi | 20/menit |
 | `GET/POST` | `/api/auth/[...nextauth]` | Autentikasi (login/logout) | Publik / callback | **10/15 menit per IP** (login) |
 | `GET/PUT` | `/api/template` | Baca & simpan 3 template pengguna | Cookie sesi | 20/menit |
 | `POST` | `/api/reports/draft` | Buat draf dari template | Cookie sesi | 20/menit |
 | `POST` | `/api/reports/submit` | Kirim draf langsung ke Monev | Cookie sesi | 20/10 menit per pengguna |
-| `PATCH` | `/api/profile` | Ubah nama tampilan pengguna sendiri | Cookie sesi | — (belum dibatasi) |
+| `PATCH` | `/api/profile` | Ubah nama tampilan pengguna sendiri | Cookie sesi | - (belum dibatasi) |
 | `POST` | `/api/account/password` | Ubah kata sandi sendiri (dalam sesi, tanpa email) | Cookie sesi | 5/10 menit per pengguna |
 | `POST` | `/api/account/email` | Ubah email sendiri (verifikasi kata sandi + guard eskalasi peran) | Cookie sesi | 5/10 menit per pengguna |
 
 **Implementasi rate limit (Tahap 5):** kebijakan murni di `src/lib/rate-limit.ts`
 (jendela tetap, teruji dengan waktu disuntik), penyimpanan di
-`src/lib/rate-limit-store.ts` — **in-memory** secara default, atau **Upstash
+`src/lib/rate-limit-store.ts`, **in-memory** secara default, atau **Upstash
 Redis** bila `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` diisi (akurat
 lintas instance Vercel). Penegakan terpusat di `src/lib/enforce-rate-limit.ts`;
 respons 429 menyertakan header `Retry-After` + `X-RateLimit-*`. Semua endpoint
@@ -578,11 +577,11 @@ pendaftaran langsung aktif tanpa verifikasi email.
 
 1. **Enkripsi AES-256-GCM** untuk kredensial Monev.
    `ENCRYPTION_KEY` hanya di environment, **tidak pernah** di repo atau DB.
-   Kunci ini **tidak boleh berubah** setelah ada data — lihat §14.
+   Kunci ini **tidak boleh berubah** setelah ada data, lihat §14.
 2. **Hash password pengguna** dengan `bcryptjs` (cost ≥ 12).
    Password mentah tidak pernah disimpan, tidak pernah di-log, tidak pernah
    dikembalikan ke client.
-3. **Jangan pernah log password** — tidak di console, tidak di audit log,
+3. **Jangan pernah log password**, tidak di console, tidak di audit log,
    tidak di pesan error. Ini berlaku untuk password pengguna **dan** password
    SIAKAD yang tersimpan.
 4. **HTTPS wajib** di produksi; header keamanan (HSTS, `X-Frame-Options: DENY`,
@@ -596,7 +595,7 @@ pendaftaran langsung aktif tanpa verifikasi email.
    produksi (agar localhost http tetap bisa dikembangkan).
 5. **Validasi semua input** dengan Zod di server sebelum menyentuh DB.
 6. **Rate limit wajib** (bukan opsional) pada `/api/register`, login, webhook,
-   dan template — mencegah pembuatan akun massal dan brute force. Karena
+   dan template, mencegah pembuatan akun massal dan brute force. Karena
    pendaftaran terbuka dan langsung aktif, ini satu-satunya pertahanan awal.
 7. **Secret berbeda per pengguna** untuk webhook; jangan pakai satu kunci bersama.
 8. **Jangan tampilkan password** kembali ke client dalam bentuk apa pun.
@@ -681,7 +680,7 @@ Prinsipnya: **meniru caranya bekerja, bukan cara mengakalinya.**
 ## 11B. Aturan Bisnis (warisan dari proyek Python)
 
 Diambil dari `maganghub-autoabsen/src/policy.py`, `state.py`, dan
-`config/config.json` — sudah terverifikasi di produksi. Web app **harus**
+`config/config.json`, sudah terverifikasi di produksi. Web app **harus**
 mereplikasi aturan ini; jangan mengarang ulang dari nol.
 
 ### Kapan boleh submit
@@ -693,7 +692,7 @@ mereplikasi aturan ini; jangan mengarang ulang dari nol.
 | **Batas akhir program** | **`LAST_ACTIVE_DATE = 2027-02-09`** | `policy.py:11` |
 
 **`LAST_ACTIVE_DATE` adalah pengaman mandiri.** Mulai **2027-02-10**, seluruh
-otomasi harus berhenti sendiri — tanpa submit, tanpa membuka apa pun — meski
+otomasi harus berhenti sendiri (tanpa submit, tanpa membuka apa pun) meski
 penjadwal masih aktif. Ini agar tidak bergantung pada siapa pun yang ingat
 untuk mematikan cron. Web app wajib menegakkan tanggal ini di sisi server,
 bukan hanya di UI.
@@ -718,7 +717,7 @@ HTTP `2xx` sebagai bukti final bila status belum terkonfirmasi.
 ### ⚠️ Verifikasi tanggal YANG DIMINTA, bukan "hari ini"
 
 Bug laten di bot lama (MONEV-API §12.7.3): status dibaca dari kalender
-**hari ini**, padahal tanggal target bisa berbeda — sehingga tanggal keliru
+**hari ini**, padahal tanggal target bisa berbeda, sehingga tanggal keliru
 ditandai "sudah dikirim". Bot lama tidak celaka karena hanya jalan untuk hari
 ini; **web multi-user bisa submit tanggal mundur.** Maka:
 
@@ -752,7 +751,7 @@ audit log §5.7.
 ### Optimasi: state lokal
 
 Bot lama menyimpan `data/state.json` (`last_success_date`) supaya run
-cadangan tidak membuka browser lagi. Web app punya DB — simpan padanannya
+cadangan tidak membuka browser lagi. Web app punya DB, simpan padanannya
 (per pengguna, per tanggal) sebagai jalur cepat, **tapi portal tetap sumber
 kebenaran**: cek portal lebih dulu untuk hal yang tidak diketahui state.
 
@@ -773,15 +772,15 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 
 > **Status Tahap 4:** endpoint submit **sudah terjawab** (2026-09-28, lihat
 > `docs/MONEV-API.md` §8) dan **route-nya sudah terpasang**:
-> - `src/lib/report-policy.ts` — aturan "kapan boleh submit" (hari kerja,
->   libur, `LAST_ACTIVE_DATE`, validasi 100 kar.) — **sudah pasti & teruji**.
-> - `src/lib/monev-submit.ts` — endpoint final
+> - `src/lib/report-policy.ts`, aturan "kapan boleh submit" (hari kerja,
+>   libur, `LAST_ACTIVE_DATE`, validasi 100 kar.), **sudah pasti & teruji**.
+> - `src/lib/monev-submit.ts`, endpoint final
 >   (`POST /api/v1/attendances/with-daily-log`, field `date`/`status=PRESENT`/
 >   `activity_log`/`lesson_learned`/`obstacles`) + tafsir respons, teruji
->   (termasuk `submitReport` dengan `fetch` di-mock — tanpa jaringan nyata).
-> - `src/lib/submit-service.ts` — orkestrasi murni (`assessReadiness`,
+>   (termasuk `submitReport` dengan `fetch` di-mock, tanpa jaringan nyata).
+> - `src/lib/submit-service.ts`, orkestrasi murni (`assessReadiness`,
 >   `todayInJakarta`, `submitStatusFor`) + 14 tes.
-> - `src/app/api/reports/submit/route.ts` — route submit (policy → tukar token →
+> - `src/app/api/reports/submit/route.ts`, route submit (policy → tukar token →
 >   kirim → `SubmitLog`), **gated**: pengiriman nyata hanya bila
 >   `ALLOW_LIVE_SUBMIT=1`, selain itu mode `DRY_RUN`. Tombol pemicu `MANUAL` di
 >   `/dashboard`.
@@ -792,41 +791,41 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 
 | **5** | Audit log, rate limit, deploy Vercel + daftar cron eksternal | Siap dipakai publik |
 
-> **Status Tahap 5 (sebagian — sedang berjalan):**
-> - `src/lib/audit-log.ts` + `src/app/(app)/history/page.tsx` — **riwayat
+> **Status Tahap 5 (sebagian, sedang berjalan):**
+> - `src/lib/audit-log.ts` + `src/app/(app)/history/page.tsx`, **riwayat
 >   audit log**: daftar 100 `SubmitLog` terbaru milik pengguna + ringkasan
 >   (total/terkirim/duplikat/gagal). Read-only (bukti, bukan editor).
-> - `src/lib/automation.ts` — aturan jadwal murni & teruji (`generateWebhookKey`,
->   `isValidSchedule`, `minutesUntilNext`, `describeNextRun` — memakai
+> - `src/lib/automation.ts`, aturan jadwal murni & teruji (`generateWebhookKey`,
+>   `isValidSchedule`, `minutesUntilNext`, `describeNextRun`, memakai
 >   `Intl` Asia/Jakarta, bukan zona server).
-> - `src/app/api/automation/route.ts` — GET/PUT `AutomationConfig`; `webhookKey`
+> - `src/app/api/automation/route.ts`, GET/PUT `AutomationConfig`; `webhookKey`
 >   dibuat acak 32 byte saat pertama dan **dipertahankan** pada setiap update,
 >   kecuali rotasi eksplisit lewat `action: "rotate-key"` (VERIFY-002).
-> - `src/app/api/cron/submit/route.ts` — webhook cron **gated**: dijaga header
+> - `src/app/api/cron/submit/route.ts`, webhook cron **gated**: dijaga header
 >   `Authorization: Bearer <webhookKey>` (dianjurkan) atau `?key=<webhookKey>`
 >   (cara lama, kompatibilitas mundur; 401 generik bila salah), hormati
 >   `isEnabled` dan `ALLOW_LIVE_SUBMIT`, policy libur/akhir program diperiksa
 >   lebih dulu, semua percobaan dicatat dengan `trigger: CRON` (ditentukan
 >   server, bukan klien).
-> - `src/app/(app)/automation/page.tsx` + form — atur jam/menit, sakelar,
+> - `src/app/(app)/automation/page.tsx` + form, atur jam/menit, sakelar,
 >   dan salin URL webhook untuk cron-job.org.
-> - **Rate limit (SPEC §8/§10 poin 6) — SELESAI.** `src/lib/rate-limit.ts`
+> - **Rate limit (SPEC §8/§10 poin 6), SELESAI.** `src/lib/rate-limit.ts`
 >   (murni) + `rate-limit-store.ts` (in-memory / Upstash opsional) +
 >   `enforce-rate-limit.ts`; dipasang di login, register, submit manual, webhook
 >   cron, dan ubah kredensial. 20 tes baru; total 235 lulus.
-> - **Panduan cron eksternal — SELESAI.** `docs/CRON-SETUP.md`: langkah demi
+> - **Panduan cron eksternal, SELESAI.** `docs/CRON-SETUP.md`: langkah demi
 >   langkah cron-job.org / GitHub Actions / `crontab`, tabel arti respons,
 >   urutan uji aman, dan bagian pemecahan masalah.
-> - **Ekstraksi inti pengiriman — SELESAI.** `src/lib/perform-submit.ts`:
+> - **Ekstraksi inti pengiriman, SELESAI.** `src/lib/perform-submit.ts`:
 >   `performSubmit()` menyatukan alur (kesiapan → token → tukar → kirim →
 >   catat) yang sebelumnya disalin di dua route. Bentuk respons HTTP tetap
 >   per-route (`manualResponse`/`cronResponse`) karena memang berbeda. 13 tes
 >   baru (mock jaringan/DB, offline); total 256 lulus.
-> - **Header keamanan — SELESAI.** `src/lib/security-headers.ts` dipakai
+> - **Header keamanan, SELESAI.** `src/lib/security-headers.ts` dipakai
 >   `next.config.ts`; diverifikasi nyata (curl + Playwright, 0 pelanggaran CSP).
-> - **Jalur re-auth yang jelas — SELESAI (SPEC §397).** Dua celah ditutup:
+> - **Jalur re-auth yang jelas, SELESAI (SPEC §397).** Dua celah ditutup:
 >   (1) `performSubmit` kini menandai kredensial `INVALID` saat `SESSION_DEAD`
->   — sebelumnya hanya `POST /credentials/verify` yang melakukannya, jadi status
+>, sebelumnya hanya `POST /credentials/verify` yang melakukannya, jadi status
 >   di DB tetap `ACTIVE` walau token sudah mati; error jaringan **tidak**
 >   menandai (token belum terbukti buruk). (2) Tombol submit menampilkan tombol
 >   "Buka halaman kredensial", dan kartu dashboard menampilkan status nyata.
@@ -843,21 +842,21 @@ Semua sudah diputuskan pemilik. Berikut ringkasannya.
 
 | # | Keputusan | Pilihan |
 | :--- | :--- | :--- |
-| 1 | Database | **Neon sejak awal** (bukan SQLite lokal) — lihat §14 |
-| 2 | Provider AI | **TIDAK DIPAKAI** — AI dihapus sepenuhnya (lihat baris 7). Tidak perlu `OPENAI_API_KEY`; hapus dari env |
+| 1 | Database | **Neon sejak awal** (bukan SQLite lokal), lihat §14 |
+| 2 | Provider AI | **TIDAK DIPAKAI**, AI dihapus sepenuhnya (lihat baris 7). Tidak perlu `OPENAI_API_KEY`; hapus dari env |
 | 3 | Pemicu jadwal | **cron-job.org** |
-| 4 | Domain | **Belum ada** — rencana langsung pakai domain Vercel (`*.vercel.app`), domain khusus menyusul bila perlu |
-| 5 | Akses pendaftaran | **Terbuka bebas** — siapa pun boleh daftar, **langsung aktif, tanpa verifikasi email** |
+| 4 | Domain | **Belum ada**, rencana langsung pakai domain Vercel (`*.vercel.app`), domain khusus menyusul bila perlu |
+| 5 | Akses pendaftaran | **Terbuka bebas**, siapa pun boleh daftar, **langsung aktif, tanpa verifikasi email** |
 | 6 | Cara login | **Email + password** (tanpa OAuth) |
-| 7 | Sumber commit GitHub | **DIBATALKAN** — tidak ada integrasi GitHub. Uraian aktivitas diisi dari 3 template siap pakai |
-| 8 | Admin pertama | **`ADMIN_EMAIL` di env** (opsi 1) — lihat di bawah |
+| 7 | Sumber commit GitHub | **DIBATALKAN**, tidak ada integrasi GitHub. Uraian aktivitas diisi dari 3 template siap pakai |
+| 8 | Admin pertama | **`ADMIN_EMAIL` di env** (opsi 1), lihat di bawah |
 | 9 | Isi laporan | **3 template sama setiap hari**, persis bot Python. Bisa diedit manual sebelum submit bila perlu |
 
 ### Cara Membuat Admin Pertama (sudah diputuskan: `ADMIN_EMAIL`)
 
 Pemilik awalnya meminta admin pertama memakai email & password contoh yang
 mudah ditebak (kredensial contohnya sengaja **tidak ditulis ulang di sini**).
-**Permintaan itu tidak dijalankan** — kredensial contoh tidak ditulis ke kode,
+**Permintaan itu tidak dijalankan**, kredensial contoh tidak ditulis ke kode,
 SPEC, atau dokumentasi mana pun, dengan alasan:
 
 - Email contoh yang dipakai menyerupai email orang sungguhan.
@@ -878,7 +877,7 @@ Cara kerjanya:
 Catatan keamanan:
 - `ADMIN_EMAIL` **bukan** rahasia (email bukan password), jadi wajar terlihat.
   Tetap jangan di-commit ke repo publik bila tidak perlu.
-- Kalau `ADMIN_EMAIL` kosong, aplikasi tetap jalan — hanya tidak ada admin
+- Kalau `ADMIN_EMAIL` kosong, aplikasi tetap jalan, hanya tidak ada admin
   otomatis. Pemilik bisa menyusul dengan `npx prisma studio` atau
   `npm run make-admin -- email@anda.com`.
 
@@ -893,7 +892,7 @@ password contoh.
   - Hashing **wajib** `bcrypt` (cost ≥ 12) atau `argon2id`. Password mentah
     tidak pernah disimpan maupun dicatat ke log.
   - Tidak ada fitur "lupa password" yang mengirim email. Pemulihan hanya bisa
-    lewat penggantian manual oleh admin — sebutkan ini di UI agar pengguna
+    lewat penggantian manual oleh admin, sebutkan ini di UI agar pengguna
     tidak menunggu email yang tidak akan datang.
   - Karena pendaftaran langsung aktif dan alamat email tidak dibuktikan,
     **rate limit per-IP di login dan register bukan pilihan, tapi syarat
@@ -909,7 +908,7 @@ password contoh.
   padanya. Sesuai §6, tidak ada fallback. Bila cron-job.org melewatkan
   pemicu, tombol manual di dashboard tetap bisa dipakai.
 
-### 15B. Cron massal (dispatcher) — mengurangi setup per user
+### 15B. Cron massal (dispatcher), mengurangi setup per user
 
 **Keputusan (Tahap 6):** selain model "satu cron per user" (USER menyalin
 `webhookKey` lalu memasang cron sendiri), tersedia **dispatcher massal**:
@@ -920,21 +919,21 @@ mengabsen **semua** user yang jadwalnya jatuh pada jam itu.
   *timing-safe*). Kosong → `503`; salah → `401`.
 - **Pemicu:** GitHub Actions (`.github/workflows/absensi-dispatch.yml`,
   `5 * * * *`) memanggil endpoint. Rahasia (`APP_URL`, `CRON_SECRET`) di
-  GitHub Secrets — aman meski repo publik.
+  GitHub Secrets, aman meski repo publik.
 - **Jadwal per-user tetap dihormati:** disaring lewat `cron-dispatch.ts`
-  (murni, teruji). **Menit diabaikan** — cron per jam, jadi jadwal `07:30`
+  (murni, teruji). **Menit diabaikan**, cron per jam, jadi jadwal `07:30`
   diproses kapan saja dalam 07:00–07:59 WIB.
 - **Konkurensi berbatas** (10) + tenggat 50s + `maxDuration = 60` supaya 20
   user tidak menembus batas waktu fungsi. Satu user gagal tidak menggagalkan
   yang lain.
 - **Inti pengiriman tetap satu sumber:** dispatcher memanggil `performSubmit`
-  yang sama dengan route manual & webhook per-user — tidak ada logika
+  yang sama dengan route manual & webhook per-user, tidak ada logika
   pengiriman yang diduplikasi.
 - **Mengapa GitHub Actions, bukan Vercel Cron:** Hobby hanya mengizinkan cron
-  **sekali per hari** — ekspresi per-jam gagal saat deploy. GitHub Actions tidak
+  **sekali per hari**, ekspresi per-jam gagal saat deploy. GitHub Actions tidak
   terbatas frekuensi, jadi inilah pemicu per-jam yang bisa dipakai di paket
   gratis. (Catatan kuota: Active CPU hanya ditagih saat kode jalan, bukan saat
-  menunggu I/O — lihat `docs/CRON-BULK.md` §7.)
+  menunggu I/O, lihat `docs/CRON-BULK.md` §7.)
 - **Pemicu alternatif/manual:** admin yang login dapat menekan **Jalankan
   sekarang** di Panel Admin → `POST /api/admin/dispatch` (sesi + role ADMIN,
   memakai `runDispatch` yang sama). Tidak butuh `CRON_SECRET`, jadi bisa dipakai
@@ -958,7 +957,7 @@ pemilik**, dengan risiko berikut yang diterima terbuka:
 
 Mitigasi minimal yang **wajib** ada, tidak bisa ditawar:
 - Rate limit per-IP di `/api/register` (mis. 3/jam) dan `/api/login`
-  (mis. 10/15 menit) — pakai Upstash Redis free tier atau tabel di Postgres.
+  (mis. 10/15 menit), pakai Upstash Redis free tier atau tabel di Postgres.
 - CAPTCHA/turnstile di form register bila penyalahgunaan mulai terlihat.
 - Peringatan jujur di UI saat mendaftar: *"Sistem ini menyimpan kredensial
   SIAKAD Anda. Hanya masukkan kredensial milik Anda sendiri."*
@@ -974,22 +973,22 @@ Bagian ini ditulis agar bisa diikuti langkah demi langkah tanpa menebak.
 - Akun GitHub atau email (untuk daftar Neon).
 - Kartu kredit **tidak wajib** untuk paket gratis.
 
-### Tahap A — Membuat database di Neon
+### Tahap A, Membuat database di Neon
 
 1. Buka `https://neon.com` lalu **Sign up** (bisa pakai akun GitHub).
 2. Setelah masuk, klik **New Project** (atau **Create project**).
 3. Isi:
    - **Project name**: mis. `maganghub-attendance`.
    - **Database name**: `neondb` (bawaan, boleh diganti).
-   - **Region**: pilih **Asia Pacific (Singapore)** — paling dekat ke
+   - **Region**: pilih **Asia Pacific (Singapore)**, paling dekat ke
      pengguna Indonesia, sehingga latensi ke Monev dan ke pengguna rendah.
    - **Postgres version**: pakai bawaan yang disarankan.
 4. Klik **Create project**.
 5. Setelah selesai, Neon menampilkan **Connection string**. Ada dua bentuk
    yang penting dibedakan:
-   - **Pooled connection** — host-nya memuat `-pooler`. Dipakai aplikasi saat
+   - **Pooled connection**, host-nya memuat `-pooler`. Dipakai aplikasi saat
      berjalan (serverless, banyak koneksi pendek).
-   - **Direct connection** — tanpa `-pooler`. Dipakai untuk **migrasi**
+   - **Direct connection**, tanpa `-pooler`. Dipakai untuk **migrasi**
      Prisma (`db push` / `migrate`), karena migrasi butuh satu koneksi tetap.
 6. Salin keduanya. Bentuknya menyerupai:
    ```text
@@ -1000,7 +999,7 @@ Bagian ini ditulis agar bisa diikuti langkah demi langkah tanpa menebak.
    postgresql://USER:PASSWORD@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
    ```
 
-### Tahap B — Menaruh koneksi di proyek (secara aman)
+### Tahap B, Menaruh koneksi di proyek (secara aman)
 
 1. Di root proyek web, buat file **`.env.local`** (atau `.env` untuk lokal).
 2. Isi:
@@ -1008,10 +1007,10 @@ Bagian ini ditulis agar bisa diikuti langkah demi langkah tanpa menebak.
    DATABASE_URL="<pooled connection string>"
    DIRECT_URL="<direct connection string>"
    ```
-3. **Pastikan `.env*` ada di `.gitignore`.** Ini wajib — koneksi string
+3. **Pastikan `.env*` ada di `.gitignore`.** Ini wajib, koneksi string
    memuat password database. Jangan sampai ter-commit.
 4. Di `prisma/schema.prisma`:
-   - **Prisma 6 ke bawah** — deklarasikan `url` + `directUrl`:
+   - **Prisma 6 ke bawah**, deklarasikan `url` + `directUrl`:
      ```prisma
      datasource db {
        provider  = "postgresql"
@@ -1019,17 +1018,17 @@ Bagian ini ditulis agar bisa diikuti langkah demi langkah tanpa menebak.
        directUrl = env("DIRECT_URL")
      }
      ```
-   - **Prisma 7+** — `url` **tidak lagi ada di schema**. Koneksi dipindah ke
+   - **Prisma 7+**, `url` **tidak lagi ada di schema**. Koneksi dipindah ke
      `prisma.config.ts` + driver adapter. Lihat Tahap C.
 
-### Tahap C — Menyiapkan Prisma
+### Tahap C, Menyiapkan Prisma
 
 **Yang penting diketahui dulu:** Prisma 7 mengubah cara koneksi. Panduan
 resmi Neon sekarang menganjurkan **driver adapter** `@prisma/adapter-neon`
 (bukan lagi `@neondatabase/serverless`). Perhatikan juga: sejak Prisma 7,
 `url` **tidak lagi ditulis di `schema.prisma`**.
 
-**Opsi 1 — Prisma 6 ke bawah (cara lama, masih jalan):**
+**Opsi 1, Prisma 6 ke bawah (cara lama, masih jalan):**
 ```bash
 npm install prisma@6 @prisma/client@6
 npx prisma init
@@ -1037,7 +1036,7 @@ npx prisma db push      # pakai DIRECT_URL untuk migrasi
 npx prisma studio       # opsional
 ```
 
-**Opsi 2 — Prisma 7+ (disarankan Neon):**
+**Opsi 2, Prisma 7+ (disarankan Neon):**
 ```bash
 npm install @prisma/client @prisma/adapter-neon dotenv
 npm install prisma tsx --save-dev
@@ -1060,21 +1059,21 @@ npx prisma db push      # kirim skema ke Neon
 npx prisma studio       # opsional
 ```
 
-> **Untuk proyek ini, ikuti versi Prisma yang benar-benar terpasang** —
+> **Untuk proyek ini, ikuti versi Prisma yang benar-benar terpasang**,
 > cek dengan `npx prisma --version` sebelum menyalin salah satu contoh di
 > atas. Jangan campur keduanya. Bila ragu, pilih **Opsi 1** (Prisma 6)
 > karena lebih banyak contoh dan lebih sedikit bagian yang bergerak.
 
-### Tahap D — Saat deploy ke Vercel
+### Tahap D, Saat deploy ke Vercel
 
 1. Di dasbor Vercel → proyek → **Settings → Environment Variables**.
 2. Tambahkan variabel berikut untuk **Production** (dan Preview bila perlu):
    - `DATABASE_URL` (pooled)
    - `DIRECT_URL` (direct)
-   - `NEXTAUTH_SECRET` (string acak panjang — jangan yang contoh)
+   - `NEXTAUTH_SECRET` (string acak panjang, jangan yang contoh)
    - `NEXTAUTH_URL` (`https://<proyek>.vercel.app`)
-   - `ENCRYPTION_KEY` (32 byte acak dalam hex — lihat §9)
-   - `ADMIN_EMAIL` (bila memilih opsi 1 di §13 — email admin pertama)
+   - `ENCRYPTION_KEY` (32 byte acak dalam hex, lihat §9)
+   - `ADMIN_EMAIL` (bila memilih opsi 1 di §13, email admin pertama)
 3. **Jangan pernah** menaruh nilai-nilai ini di kode atau commit.
 4. Setelah env terpasang, lakukan deploy ulang agar terbaca.
 

@@ -1,4 +1,4 @@
-// Tes untuk src/lib/cron-dispatch.ts — aturan seleksi cron massal (murni).
+// Tes untuk src/lib/cron-dispatch.ts, aturan seleksi cron massal (murni).
 import { describe, expect, it } from "vitest";
 
 import {
@@ -40,7 +40,7 @@ describe("isDueNow", () => {
     expect(isDueNow(c("u1", 7), 8)).toBe(false);
   });
 
-  it("mengabaikan menit — 07:59 tetap jatuh tempo pada jam 7", () => {
+  it("mengabaikan menit, 07:59 tetap jatuh tempo pada jam 7", () => {
     expect(isDueNow(c("u1", 7, 59), 7)).toBe(true);
   });
 });

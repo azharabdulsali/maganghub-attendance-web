@@ -1,8 +1,8 @@
-// src/app/(app)/credentials/page.tsx — halaman simpan kredensial Monev.
+// src/app/(app)/credentials/page.tsx: halaman simpan kredensial Monev.
 //
 // Server component: memeriksa sesi & mengambil status awal dari database,
 // lalu menyerahkan tampilan ke form (client component). Password TIDAK
-// pernah dikirim ke halaman ini — hanya status "sudah/belum ada".
+// pernah dikirim ke halaman ini, hanya status "sudah/belum ada".
 
 import { redirect } from "next/navigation";
 

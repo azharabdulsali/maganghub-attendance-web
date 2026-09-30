@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import type { Tone } from "@/lib/admin";
 
-// Kartu statistik dashboard — komponen tampilan murni (tanpa state/fetch),
+// Kartu statistik dashboard, komponen tampilan murni (tanpa state/fetch),
 // menerima angka yang sudah dihitung di server. Lihat SPEC.md §5.6.
 //
 // Semua ikon digambar dengan CSS/SVG inline alih-alih lucide-react supaya

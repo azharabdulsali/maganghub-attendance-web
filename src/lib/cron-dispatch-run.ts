@@ -1,4 +1,4 @@
-// src/lib/cron-dispatch-run.ts — INTI eksekusi dispatcher massal (Tahap 6).
+// src/lib/cron-dispatch-run.ts: INTI eksekusi dispatcher massal (Tahap 6).
 //
 // Dipisahkan dari dua route agar aturannya satu sumber:
 //   - GET /api/cron/run-all  → dijaga CRON_SECRET (dipanggil GitHub Actions).
@@ -6,7 +6,7 @@
 //
 // Yang ada di sini: query user otomasi aktif, seleksi per jam (cron-dispatch.ts),
 // lalu jalankan performSubmit PARALEL BERBATAS. Yang TIDAK di sini: bentuk
-// respons HTTP — itu urusan tiap route, sama seperti pemisahan di
+// respons HTTP, itu urusan tiap route, sama seperti pemisahan di
 // perform-submit.ts.
 
 import { prisma } from "@/lib/prisma";
@@ -23,7 +23,7 @@ export const DISPATCH_BATCH_SIZE = 40;
 /** Berhenti menerima hasil baru setelah tenggat ini (di bawah maxDuration 60s). */
 export const DISPATCH_DEADLINE_MS = 50_000;
 
-/** Satu ringkasan hasil per user — TANPA rahasia apa pun. */
+/** Satu ringkasan hasil per user, TANPA rahasia apa pun. */
 export type DispatchUserResult = { userId: string; kind: string };
 
 export type DispatchSummary = {
@@ -43,7 +43,7 @@ export type DispatchSummary = {
 
 /**
  * Jalankan dispatcher: pilih user yang jatuh tempo pada jam WIB sekarang, lalu
- * kirim laporan untuk masing-masing — paralel berbatas, satu gagal tidak
+ * kirim laporan untuk masing-masing, paralel berbatas, satu gagal tidak
  * menjatuhkan yang lain.
  *
  * @param now  Waktu acuan (bisa disuntik untuk pengujian).

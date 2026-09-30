@@ -1,8 +1,8 @@
-// src/app/api/credentials/route.ts — simpan & baca status kredensial Monev.
+// src/app/api/credentials/route.ts: simpan & baca status kredensial Monev.
 //
 // Prinsip keamanan yang dipegang di sini:
 //   - Password Monev TIDAK PERNAH dikembalikan ke klien (bahkan ke pemiliknya).
-//     Kalau user ingin tahu passwordnya, itu memang tidak bisa dilihat lagi —
+//     Kalau user ingin tahu passwordnya, itu memang tidak bisa dilihat lagi,
 //     ia hanya bisa menggantinya. Ini menutup celah XSS/CSRF membaca password.
 //   - Hanya pemilik sesi yang boleh menyentuh kredensialnya sendiri.
 //   - Email Monev disimpan apa adanya (bukan rahasia), password disandikan
@@ -23,7 +23,7 @@ async function currentUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
-/** GET — status kredensial milik user yang sedang login. */
+/** GET, status kredensial milik user yang sedang login. */
 export async function GET() {
   const userId = await currentUserId();
   if (!userId) {
@@ -51,12 +51,12 @@ export async function GET() {
     emailMonev: credential.emailMonev,
     status: credential.status,
     updatedAt: credential.updatedAt,
-    // Hanya Boolean — nilai token tidak pernah keluar dari server.
+    // Hanya Boolean, nilai token tidak pernah keluar dari server.
     hasToken: Boolean(credential.tokenCiphertext),
   });
 }
 
-/** PUT — simpan (buat atau ganti) kredensial Monev milik user yang login. */
+/** PUT, simpan (buat atau ganti) kredensial Monev milik user yang login. */
 export async function PUT(request: Request) {
   const userId = await currentUserId();
   if (!userId) {
@@ -95,7 +95,7 @@ export async function PUT(request: Request) {
   const { ciphertext, iv, authTag } = encrypt(passwordMonev);
 
   // upsert: satu user hanya punya satu kredensial (userId @unique).
-  // Setiap penyimpanan mengganti ciphertext, iv, dan authTag sekaligus —
+  // Setiap penyimpanan mengganti ciphertext, iv, dan authTag sekaligus,
   // IV lama tidak boleh dipakai ulang dengan kunci yang sama.
   const saved = await prisma.maganghubCredential.upsert({
     where: { userId },
@@ -129,7 +129,7 @@ export async function PUT(request: Request) {
   );
 }
 
-/** DELETE — hapus kredensial milik user yang login. */
+/** DELETE, hapus kredensial milik user yang login. */
 export async function DELETE() {
   const userId = await currentUserId();
   if (!userId) {

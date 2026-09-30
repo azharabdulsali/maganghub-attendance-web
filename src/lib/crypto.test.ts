@@ -32,7 +32,7 @@ describe("encrypt / decrypt", () => {
   });
 
   it("mendukung karakter non-ASCII dan teks panjang", () => {
-    const rahasia = "Kata sandi — ünïcödé 🔐 ".repeat(20);
+    const rahasia = "Kata sandi, ünïcödé 🔐 ".repeat(20);
     expect(crypto.decrypt(crypto.encrypt(rahasia))).toBe(rahasia);
   });
 

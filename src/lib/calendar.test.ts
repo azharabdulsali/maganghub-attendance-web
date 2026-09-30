@@ -1,4 +1,4 @@
-// src/lib/calendar.test.ts — uji perhitungan kalender (murni, tanpa DB).
+// src/lib/calendar.test.ts: uji perhitungan kalender (murni, tanpa DB).
 
 import { describe, it, expect } from "vitest";
 
@@ -173,7 +173,7 @@ describe("label", () => {
 
 // Regresi: dulu grafik 30 hari & "Status Hari Ini" memakai `toISOString()` pada
 // tengah malam WIB (mis. 2026-09-28T17:00:00Z) sehingga tanggal terbaca
-// 2026-09-28 — hari ini selalu hilang dan bar "hari ini" tidak pernah digambar.
+// 2026-09-28, hari ini selalu hilang dan bar "hari ini" tidak pernah digambar.
 describe("batas hari WIB (regresi dashboard)", () => {
   // Instant ini adalah 29 Sep 2026 pukul 08:00 WIB (= 01:00 UTC).
   const PAGI_WIB_29_SEP = new Date("2026-09-29T01:00:00.000Z");

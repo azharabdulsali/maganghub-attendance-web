@@ -45,7 +45,7 @@ export default function AutomationForm({
   const [tersalin, setTersalin] = useState(false);
 
   // Pratinjau "jadwal berikutnya" dihitung klien memakai helper murni yang
-  // sama dengan server — hanya untuk tampilan, bukan logika penentu.
+  // sama dengan server, hanya untuk tampilan, bukan logika penentu.
   const nextRun = useMemo(() => {
     const h = Number(hour);
     const m = Number(minute);
@@ -92,7 +92,7 @@ export default function AutomationForm({
         "Otomasi tersimpan",
         isEnabled
           ? "Absensi otomatis akan dikirim sesuai jadwal."
-          : "Sementara dimatikan — tidak ada pengiriman otomatis.",
+          : "Sementara dimatikan, tidak ada pengiriman otomatis.",
       );
       router.refresh();
     } catch {
@@ -237,7 +237,7 @@ export default function AutomationForm({
             <CardTitle>Webhook untuk cron</CardTitle>
             <CardDescription>
               Tempel URL ini ke layanan cron Anda (mis. cron-job.org), jadwalkan
-              sekali sehari. Jangan bagikan — siapa pun yang tahu URL ini bisa
+              sekali sehari. Jangan bagikan, siapa pun yang tahu URL ini bisa
               memicu pengiriman.
             </CardDescription>
           </CardHeader>
@@ -268,7 +268,7 @@ export default function AutomationForm({
                 Authorization: Bearer &lt;kunci&gt;
               </code>{" "}
               daripada menempelkannya di URL. Mengganti kunci akan mematikan URL
-              lama — pasang URL baru di cron Anda setelahnya.
+              lama, pasang URL baru di cron Anda setelahnya.
             </p>
           </CardContent>
         </Card>

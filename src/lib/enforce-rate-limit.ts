@@ -1,10 +1,10 @@
-// src/lib/enforce-rate-limit.ts — penyatu kebijakan murni + store.
+// src/lib/enforce-rate-limit.ts: penyatu kebijakan murni + store.
 //
 // Route cukup memanggil `enforceRateLimit(...)` dan memeriksa `.allowed`.
 // Semuanya di satu tempat supaya aturan tak terduplikasi di tiap endpoint.
 //
 // Prinsip keselamatan: bila store bermasalah (mis. Upstash tak dapat
-// dihubungi), kita TIDAK mengunci pengguna keluar — kita "fail open" untuk
+// dihubungi), kita TIDAK mengunci pengguna keluar, kita "fail open" untuk
 // ketersediaan, tetapi mencatatnya. Rate limit adalah lapisan pertahanan,
 // bukan gerbang tunggal; gerbang utama tetap sesi/kunci.
 

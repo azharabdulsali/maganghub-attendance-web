@@ -1,4 +1,4 @@
-// src/lib/security-headers.ts — header keamanan HTTP (SPEC.md §9 poin 4).
+// src/lib/security-headers.ts: header keamanan HTTP (SPEC.md §9 poin 4).
 //
 // Dipisah dari `next.config.ts` supaya bisa diuji tanpa membangun Next, dan
 // supaya ada SATU sumber kebenaran untuk daftar header. `next.config.ts`
@@ -9,7 +9,7 @@
 
 /** Header statis yang sama untuk semua respons. */
 export const SECURITY_HEADERS: Record<string, string> = {
-  // Jangan biarkan browser menebak tipe konten — mencegah serangan MIME sniff.
+  // Jangan biarkan browser menebak tipe konten, mencegah serangan MIME sniff.
   "X-Content-Type-Options": "nosniff",
 
   // Larang situs ini dibingkai (anti-clickjacking). SPEC §9 poin 4.

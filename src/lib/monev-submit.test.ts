@@ -1,4 +1,4 @@
-// src/lib/monev-submit.test.ts — uji KERANGKA submit (docs/MONEV-API.md §8).
+// src/lib/monev-submit.test.ts: uji KERANGKA submit (docs/MONEV-API.md §8).
 //
 // Batas penting: tes ini HANYA menguji fungsi MURNI (buildSubmitBody &
 // interpretSubmitResponse) plus satu tes `submitReport` dengan `fetch` yang
@@ -27,7 +27,7 @@ const payload: ReportPayload = {
   date: "2026-09-22",
 };
 
-describe("konstanta endpoint (rekaman §8.1 — terverifikasi)", () => {
+describe("konstanta endpoint (rekaman §8.1, terverifikasi)", () => {
   it("submit memakai endpoint & field dari rekaman", () => {
     expect(SUBMIT_ENDPOINT.method).toBe("POST");
     expect(SUBMIT_ENDPOINT.path).toBe("/api/v1/attendances/with-daily-log");
@@ -127,7 +127,7 @@ describe("interpretSubmitResponse", () => {
   });
 });
 
-describe("submitReport — dengan fetch DI-MOCK (tidak keluar jaringan)", () => {
+describe("submitReport, dengan fetch DI-MOCK (tidak keluar jaringan)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
@@ -200,7 +200,7 @@ describe("submitReport — dengan fetch DI-MOCK (tidak keluar jaringan)", () => 
   });
 });
 
-describe("interpretRefreshResponse (murni) — §4.4", () => {
+describe("interpretRefreshResponse (murni), §4.4", () => {
   it("401 → SESSION_DEAD (penanda sesi mati terverifikasi §4.1)", () => {
     const r = interpretRefreshResponse(401, "{}");
     expect(r.status).toBe("SESSION_DEAD");
@@ -286,7 +286,7 @@ describe("exchangeRefreshForAccess (fetch di-mock, tidak keluar jaringan)", () =
     expect(call.init.method).toBe("POST");
     const headers = call.init.headers as Record<string, string>;
     expect(headers.cookie).toBe("monev_refresh_token=REFRESH-JWT");
-    // Tidak boleh memakai Bearer — refresh lewat cookie.
+    // Tidak boleh memakai Bearer, refresh lewat cookie.
     expect(headers.authorization).toBeUndefined();
   });
 

@@ -7,15 +7,15 @@ import {
   Clock,
   KeyRound,
   Lock,
+  Send,
   ShieldCheck,
-  Sparkles,
   Timer,
-  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
-// Landing PUBLIK di "/". Halaman ini SELALU tampil untuk siapa pun — termasuk
-// yang sudah login — supaya "/" tetap bisa dipakai sebagai halaman penjelasan
+// Landing PUBLIK di "/". Halaman ini SELALU tampil untuk siapa pun, termasuk
+// yang sudah login, supaya "/" tetap bisa dipakai sebagai halaman penjelasan
 // aplikasi. Karena itu TIDAK ada redirect ke /dashboard di sini; jangan
 // menambahkannya kembali (dulu sempat ada dan membuat "/" tak bisa dibuka
 // setelah logout). Lihat SPEC.md §5.8.
@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 // ulang agar jujur: TIDAK ada AI, TIDAK ada integrasi GitHub, dan tidak ada
 // tautan ke halaman yang belum ada (mis. /docs). Lihat SPEC.md §3 & §13.
 
-// Statistik di hero — semua angka ini benar dan dapat ditelusuri ke SPEC.
+// Statistik di hero, semua angka ini benar dan dapat ditelusuri ke SPEC.
 const STATISTIK = [
   { nilai: "3 Bagian", label: "Template laporan siap pakai" },
   { nilai: ">100", label: "Karakter wajib per kolom" },
@@ -45,12 +45,12 @@ const FITUR = [
   {
     icon: BookText,
     judul: "Tiga template tetap",
-    isi: "Uraian Aktivitas, Pembelajaran, dan Kendala — sama seperti proyek lama. Dipakai ulang tiap hari, atau disalin ke editor kalau ingin diubah manual.",
+    isi: "Uraian Aktivitas, Pembelajaran, dan Kendala, sama seperti proyek lama. Dipakai ulang tiap hari, atau disalin ke editor kalau ingin diubah manual.",
   },
   {
     icon: ShieldCheck,
     judul: "Lolos syarat 100 karakter",
-    isi: "Portal menolak laporan terlalu singkat. Setiap kolom divalidasi lebih dari 100 karakter — di kode, bukan hanya di tampilan.",
+    isi: "Portal menolak laporan terlalu singkat. Setiap kolom divalidasi lebih dari 100 karakter, di kode, bukan hanya di tampilan.",
   },
   {
     icon: Timer,
@@ -63,7 +63,7 @@ const FITUR = [
     isi: "Kirim 1-klik saat Anda siap, atau serahkan ke jadwal lewat webhook cron. Kendali penuh di tangan Anda, bisa dimatikan kapan saja.",
   },
   {
-    icon: Zap,
+    icon: Send,
     judul: "Kirim lewat REST API",
     isi: "Tanpa browser dan tanpa server tambahan. Laporan terkirim ke portal dalam hitungan detik, jadi tak ada risiko lupa absen.",
   },
@@ -73,7 +73,7 @@ const LANGKAH = [
   {
     nomor: "01",
     judul: "Daftar & simpan kredensial",
-    isi: "Buat akun, lalu simpan email & password Monev. Sekali saja — setelah itu tersimpan aman dan terenkripsi.",
+    isi: "Buat akun, lalu simpan email & password Monev. Sekali saja, setelah itu tersimpan aman dan terenkripsi.",
   },
   {
     nomor: "02",
@@ -115,11 +115,11 @@ const PANDUAN = [
   },
 ];
 
-// Batasan yang diakui terbuka — kebalikan dari klaim berlebihan. Semua ini
+// Batasan yang diakui terbuka, kebalikan dari klaim berlebihan. Semua ini
 // sesuai SPEC: tidak ada AI, tidak ada integrasi GitHub, laporan tetap harus
 // pernah dibuat sendiri setidaknya sekali untuk mengisi template.
 const BATASAN = [
-  "Tidak menulis laporan atas nama Anda — isi template tetap dari Anda.",
+  "Tidak menulis laporan atas nama Anda, isi template tetap dari Anda.",
   "Tidak ada fitur AI atau integrasi GitHub, sesuai cakupan proyek.",
   "Bergantung pada portal Monev; bila portal berubah, kirim bisa gagal.",
 ];
@@ -131,7 +131,7 @@ export default function Home() {
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main">
-            <Sparkles className="size-4" />
+            <CalendarCheck className="size-4" />
           </span>
           <span className="flex flex-col">
             <span className="font-heading text-sm leading-tight">
@@ -143,6 +143,7 @@ export default function Home() {
           </span>
         </Link>
         <nav className="flex items-center gap-2">
+          <ThemeToggle />
           <Button
             variant="neutral"
             size="sm"
@@ -174,7 +175,7 @@ export default function Home() {
           </h1>
           <p className="mx-auto max-w-2xl text-sm text-foreground/80 sm:text-base">
             Simpan tiga template laporan sekali, lalu kirim presensi dan laporan
-            harian ke portal Monev lewat Direct REST API — manual 1-klik atau
+            harian ke portal Monev lewat Direct REST API, manual 1-klik atau
             terjadwal otomatis, tanpa menyalakan komputer dan tanpa biaya
             bulanan.
           </p>
@@ -215,7 +216,7 @@ export default function Home() {
               Masalah nyata yang diselesaikan
             </h2>
             <p className="text-sm text-foreground/70">
-              Bukan sekadar bot — asisten yang menjaga hak dan penilaian magang
+              Bukan sekadar bot, asisten yang menjaga hak dan penilaian magang
               Anda tetap aman.
             </p>
           </div>
@@ -264,7 +265,7 @@ export default function Home() {
           </ol>
         </section>
 
-        {/* Keamanan & batasan — dua kolom: janji di kiri, kejujuran di kanan. */}
+        {/* Keamanan & batasan, dua kolom: janji di kiri, kejujuran di kanan. */}
         <section className="mb-14 grid gap-4 rounded-base border-2 border-border bg-secondary-background p-6 shadow-shadow sm:mb-20 sm:grid-cols-2 sm:gap-6 sm:p-8">
           <div>
             <span className="mb-3 inline-flex size-10 items-center justify-center rounded-base border-2 border-border bg-main">
@@ -296,7 +297,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Panduan — pintasan ke halaman dashboard yang memang ada. */}
+        {/* Panduan, pintasan ke halaman dashboard yang memang ada. */}
         <section id="panduan" className="mb-14 sm:mb-20">
           <div className="mx-auto mb-8 max-w-xl space-y-2 text-center">
             <h2 className="text-2xl font-heading sm:text-3xl">
@@ -347,7 +348,7 @@ export default function Home() {
       <footer className="border-t-2 border-border bg-secondary-background px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-xs text-foreground/60 sm:flex-row">
           <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-foreground" />
+            <CalendarCheck className="size-4 text-foreground" />
             <span className="font-heading text-foreground/80">
               MagangHub Absensi
             </span>

@@ -1,13 +1,13 @@
-// src/app/api/automation/route.ts — pengaturan otomasi (SPEC.md §7).
+// src/app/api/automation/route.ts: pengaturan otomasi (SPEC.md §7).
 //
 // Satu pengguna punya satu AutomationConfig (userId @unique). `webhookKey`
-// dibuat sekali secara acak dan TIDAK diganti otomatis — kalau berubah, cron
+// dibuat sekali secara acak dan TIDAK diganti otomatis, kalau berubah, cron
 // yang sudah dipasang pengguna akan mati diam-diam. Pengguna bisa menerbitkan
 // key BARU dengan sengaja lewat PUT `action: "rotate-key"` (VERIFY-002).
 //
 // Keamanan:
 //   - GET mengembalikan `webhookKey` hanya ke PEMILIK sesi (bukan rahasia dari
-//     dirinya sendiri — ia harus bisa menyalinnya ke cron-job.org). Berbeda dari
+//     dirinya sendiri, ia harus bisa menyalinnya ke cron-job.org). Berbeda dari
 //     password Monev yang memang tak pernah boleh terlihat lagi.
 //   - PUT tidak pernah membuat key baru kecuali diminta eksplisit via
 //     `action: "rotate-key"`; selain itu `webhookKey` lama dipertahankan.
@@ -25,7 +25,7 @@ async function currentUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
-/** GET — pengaturan otomasi milik user yang login (atau null bila belum ada). */
+/** GET, pengaturan otomasi milik user yang login (atau null bila belum ada). */
 export async function GET() {
   const userId = await currentUserId();
   if (!userId) {
@@ -59,7 +59,7 @@ export async function GET() {
   });
 }
 
-/** PUT — simpan jam/menit & sakelar. Key baru hanya saat pertama (atau bila rotasi diminta). */
+/** PUT, simpan jam/menit & sakelar. Key baru hanya saat pertama (atau bila rotasi diminta). */
 export async function PUT(request: Request) {
   const userId = await currentUserId();
   if (!userId) {

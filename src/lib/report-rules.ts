@@ -1,4 +1,4 @@
-// src/lib/report-rules.ts — aturan penyusunan laporan yang dipakai beberapa
+// src/lib/report-rules.ts: aturan penyusunan laporan yang dipakai beberapa
 // tempat sekaligus (form klien, validasi server, pengiriman ke portal).
 //
 // Kenapa dipisah jadi modul sendiri: aturan ini HARUS sama di tiga tempat.
@@ -7,7 +7,7 @@
 // satu percobaan submit tanpa alasan.
 
 /**
- * Batas minimal portal Maganghub. Ini aturan PIHAK KETIGA, bukan selera kita —
+ * Batas minimal portal Maganghub. Ini aturan PIHAK KETIGA, bukan selera kita,
  * teks di bawah angka ini ditolak portal. Disimpan sebagai konstanta bernama
  * supaya kalau portal berubah, hanya ada satu tempat yang perlu diubah.
  */
@@ -21,17 +21,17 @@ export const MAX_REPORT_LENGTH = 5000;
  * (`len(value.strip()) < 100`) dan seperti portal: spasi berlebih di tepi tidak
  * dihitung.
  *
- * Spasi di TENGAH tetap dihitung — teks "a b" panjangnya 3, bukan 2.
+ * Spasi di TENGAH tetap dihitung, teks "a b" panjangnya 3, bukan 2.
  *
  * `String.prototype.trim()` di JS memangkas semua spasi Unicode di tepi,
  * termasuk NBSP (U+00A0) dan ideographic space (U+3000). Ini penting karena
  * pengguna sering menempel teks dari Word yang ujungnya berisi NBSP, bukan
- * spasi biasa — sudah diuji, bukan asumsi.
+ * spasi biasa, sudah diuji, bukan asumsi.
  *
  * Yang TIDAK dipangkas: zero-width space (U+200B). Karakter ini tak terlihat
  * tapi dihitung sebagai panjang, jadi teks bisa terlihat "cukup" di mata
  * pengguna namun sebenarnya mengandung karakter tak terlihat. Kita tidak
- * membuangnya otomatis (itu mengubah isi tulisan orang) — cukup dihitung apa
+ * membuangnya otomatis (itu mengubah isi tulisan orang), cukup dihitung apa
  * adanya, sama seperti portal.
  */
 export function countReportLength(text: string): number {
@@ -64,7 +64,7 @@ export function checkReportField(text: string): string | null {
  *
  * Akhir baris diseragamkan karena laporan ditulis di Windows (CRLF) tapi bisa
  * juga dibuat di perangkat lain (LF). Kalau tidak disamakan, dua teks yang
- * terlihat sama persis bagi pengguna akan dianggap berbeda oleh sistem — dan
+ * terlihat sama persis bagi pengguna akan dianggap berbeda oleh sistem, dan
  * jumlah karakternya bisa berbeda satu per baris.
  */
 export function normalizeReportText(text: string): string {

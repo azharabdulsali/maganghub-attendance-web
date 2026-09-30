@@ -5,20 +5,21 @@ import Link from "next/link";
 import {
   ArrowLeft,
   BookOpen,
+  CalendarCheck,
   Clock,
   KeyRound,
   Send,
   ShieldCheck,
-  Sparkles,
   Trash2,
   TriangleAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
-// Dokumentasi PUBLIK di "/docs" — struktur meniru referensi UI (sidebar daftar
+// Dokumentasi PUBLIK di "/docs", struktur meniru referensi UI (sidebar daftar
 // materi + panel konten + footer), tetapi seluruh isi disesuaikan dengan fitur
 // yang BENAR-BENAR ada di proyek ini (SPEC.md §1 & §3). Karena itu TIDAK ada
-// bagian "Model AI (BYOK)", "Repository GitHub", atau "Generate AI" — fitur
+// bagian "Model AI (BYOK)", "Repository GitHub", atau "Generate AI", fitur
 // tersebut tidak ada di aplikasi ini. Tautan mengarah ke route yang nyata.
 
 type TopikId =
@@ -45,7 +46,7 @@ const TOPIK: Topik[] = [
     nomor: "01",
     judul: "Quickstart & Alur",
     ringkas: "Langkah awal sampai absensi pertama terkirim.",
-    icon: Sparkles,
+    icon: BookOpen,
   },
   {
     id: "kredensial",
@@ -104,11 +105,11 @@ export default function DocsContent() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Bilah atas — konsisten dengan landing page. */}
+      {/* Bilah atas, konsisten dengan landing page. */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main">
-            <Sparkles className="size-4" />
+            <CalendarCheck className="size-4" />
           </span>
           <span className="flex flex-col">
             <span className="font-heading text-sm leading-tight">
@@ -120,6 +121,7 @@ export default function DocsContent() {
           </span>
         </Link>
         <nav className="flex items-center gap-2">
+          <ThemeToggle />
           <Button variant="neutral" size="sm" render={<Link href="/" />}>
             <ArrowLeft />
             Beranda
@@ -146,7 +148,7 @@ export default function DocsContent() {
         </div>
 
         <div className="flex flex-col items-start gap-6 md:flex-row md:gap-8">
-          {/* Sidebar daftar materi — 8 topik. */}
+          {/* Sidebar daftar materi, 8 topik. */}
           <aside className="w-full shrink-0 space-y-2 md:sticky md:top-20 md:w-64 lg:w-72">
             <div className="flex items-center justify-between px-2 py-1 text-[11px] font-heading uppercase tracking-wider text-foreground/50 sm:px-3">
               <span>Daftar Materi</span>
@@ -239,7 +241,7 @@ export default function DocsContent() {
       <footer className="border-t-2 border-border bg-secondary-background px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-xs text-foreground/60 sm:flex-row">
           <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-foreground" />
+            <CalendarCheck className="size-4 text-foreground" />
             <span>MagangHub Attendance © 2026</span>
           </div>
           <div className="flex items-center gap-4">
@@ -302,7 +304,7 @@ function Langkah({
       </span>
       <span>
         <strong className="font-heading text-foreground">{judul}</strong>
-        {" — "}
+        {", "}
         <span className="text-foreground/80">{children}</span>
       </span>
     </li>
@@ -342,7 +344,6 @@ function TopikQuickstart() {
     <>
       <div className="space-y-1.5 rounded-base border-2 border-border bg-background p-4 text-xs text-foreground/80">
         <div className="flex items-center gap-1.5 font-heading text-foreground">
-          <Sparkles className="size-4" />
           <span>Tujuan Utama Sistem</span>
         </div>
         <p className="leading-relaxed">
@@ -350,7 +351,7 @@ function TopikQuickstart() {
           tiga bagian (Uraian Aktivitas, Pembelajaran, Kendala) ke portal Monev
           MagangHub Kemnaker (<code>monev.maganghub.kemnaker.go.id</code>) lewat
           Direct REST API. Isi laporan Anda berasal dari template yang Anda
-          tulis sendiri — bukan dari AI dan bukan dari commit GitHub.
+          tulis sendiri, bukan dari AI dan bukan dari commit GitHub.
         </p>
       </div>
 
@@ -359,15 +360,13 @@ function TopikQuickstart() {
         <ol className="space-y-3 text-xs text-foreground/80">
           <Langkah nomor="1" judul="Daftar akun">
             Buat akun lewat{" "}
-            <TautanPanduan href="/register">halaman pendaftaran</TautanPanduan>
-            , lalu masuk ke dashboard.
+            <TautanPanduan href="/register">halaman pendaftaran</TautanPanduan>, lalu masuk ke dashboard.
           </Langkah>
           <Langkah nomor="2" judul="Simpan kredensial Monev">
             Buka{" "}
             <TautanPanduan href="/credentials">
               Akun Monev
-            </TautanPanduan>{" "}
-            , masukkan email &amp; password Kemnaker, lalu tekan{" "}
+            </TautanPanduan>{" "}, masukkan email &amp; password Kemnaker, lalu tekan{" "}
             <em>Uji Login Monev</em>.
           </Langkah>
           <Langkah nomor="3" judul="Isi tiga template">
@@ -393,7 +392,7 @@ function TopikQuickstart() {
 
       <Catatan judul="Penting">
         <p>
-          Laporan tetap harus pernah Anda tulis sendiri — aplikasi ini tidak
+          Laporan tetap harus pernah Anda tulis sendiri, aplikasi ini tidak
           mengarang isi laporan. Tiga template itu dipakai ulang setiap hari
           agar Anda tidak perlu mengetik dari nol.
         </p>
@@ -450,8 +449,7 @@ function TopikTemplate() {
           Laporan magang Monev terdiri dari tiga kolom wajib. Isi ketiganya di{" "}
           <TautanPanduan href="/report-templates">
             Template Laporan
-          </TautanPanduan>
-          , sekali saja, lalu pakai ulang setiap hari.
+          </TautanPanduan>, sekali saja, lalu pakai ulang setiap hari.
         </p>
       </div>
 
@@ -464,7 +462,7 @@ function TopikTemplate() {
               className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
             />
             <span>
-              <strong className="font-heading">Uraian Aktivitas</strong> —
+              <strong className="font-heading">Uraian Aktivitas</strong>,
               kegiatan magang hari itu.
             </span>
           </li>
@@ -474,7 +472,7 @@ function TopikTemplate() {
               className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
             />
             <span>
-              <strong className="font-heading">Pembelajaran</strong> — hal baru
+              <strong className="font-heading">Pembelajaran</strong>, hal baru
               yang Anda pelajari.
             </span>
           </li>
@@ -484,7 +482,7 @@ function TopikTemplate() {
               className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
             />
             <span>
-              <strong className="font-heading">Kendala</strong> — hambatan atau
+              <strong className="font-heading">Kendala</strong>, hambatan atau
               catatan selama bekerja.
             </span>
           </li>
@@ -546,7 +544,7 @@ function TopikSubmit() {
     <>
       <div className="space-y-2 text-xs text-foreground/80">
         <p>
-          Pengiriman dilakukan lewat Direct REST API ke portal Monev — tanpa
+          Pengiriman dilakukan lewat Direct REST API ke portal Monev, tanpa
           membuka browser dan tanpa server tambahan, sehingga laporan terkirim
           dalam hitungan detik.
         </p>
@@ -646,21 +644,21 @@ function TopikKeamanan() {
           <li className="flex gap-2">
             <ShieldCheck className="mt-0.5 size-4 shrink-0" />
             <span>
-              <strong className="font-heading">Enkripsi AES-256-GCM</strong> —
+              <strong className="font-heading">Enkripsi AES-256-GCM</strong>,
               kredensial dienkripsi sebelum disimpan, bukan plaintext.
             </span>
           </li>
           <li className="flex gap-2">
             <ShieldCheck className="mt-0.5 size-4 shrink-0" />
             <span>
-              <strong className="font-heading">Tidak di log</strong> — kata
+              <strong className="font-heading">Tidak di log</strong>, kata
               sandi tidak pernah muncul di log atau respons API.
             </span>
           </li>
           <li className="flex gap-2">
             <ShieldCheck className="mt-0.5 size-4 shrink-0" />
             <span>
-              <strong className="font-heading">Kendali penuh</strong> — Anda
+              <strong className="font-heading">Kendali penuh</strong>, Anda
               bisa mematikan pengiriman otomatis kapan saja.
             </span>
           </li>
@@ -694,7 +692,7 @@ function TopikBatasan() {
           <li className="flex gap-2">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
             <span>
-              Tidak menulis laporan atas nama Anda — isi template tetap dari
+              Tidak menulis laporan atas nama Anda, isi template tetap dari
               Anda.
             </span>
           </li>

@@ -1,12 +1,12 @@
 "use client";
 
-// src/app/(app)/admin/dispatch-panel.tsx — tombol "jalankan sekarang" untuk admin.
+// src/app/(app)/admin/dispatch-panel.tsx: tombol "jalankan sekarang" untuk admin.
 //
 // Admin bisa memicu pemrosesan massal tanpa membuka GitHub Actions. Berguna saat
 // menguji jelang produksi (tanpa ALLOW_LIVE_SUBMIT, hasilnya DRY_RUN) atau
 // mengejar ketertinggalan bila cron eksternal terlewat.
 //
-// Komponen ini TIDAK memutuskan siapa yang dikirim — server (runDispatch) yang
+// Komponen ini TIDAK memutuskan siapa yang dikirim, server (runDispatch) yang
 // memilih user berdasarkan jam jadwalnya. Klien hanya menekan tombol dan
 // menampilkan ringkasan. Tidak ada rahasia yang berpindah ke peramban.
 

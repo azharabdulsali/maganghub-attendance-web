@@ -61,7 +61,7 @@ export default function RegisterPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Daftar Akun</CardTitle>
           <CardDescription>
-            Maganghub Autoabsen — absensi otomatis dari template laporan Anda.
+            Maganghub Autoabsen, absensi otomatis dari template laporan Anda.
           </CardDescription>
         </CardHeader>
 

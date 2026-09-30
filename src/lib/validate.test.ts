@@ -1,7 +1,7 @@
-// src/lib/validate.test.ts — uji skema kredensial & template laporan.
+// src/lib/validate.test.ts: uji skema kredensial & template laporan.
 //
 // Ini bukan test "formalitas": aturan di sini menentukan data apa yang masuk
-// ke database. Terutama normalisasi email — kalau gagal, kredensial bisa
+// ke database. Terutama normalisasi email, kalau gagal, kredensial bisa
 // tersimpan dengan huruf besar/kecil berbeda dan tidak cocok saat login.
 
 import { describe, it, expect } from "vitest";
@@ -14,7 +14,7 @@ import {
   automationSchema,
 } from "./validate";
 
-describe("credentialsSchema — email Monev", () => {
+describe("credentialsSchema, email Monev", () => {
   it("menerima email yang wajar", () => {
     const r = credentialsSchema.safeParse({
       emailMonev: "budi@contoh.com",
@@ -66,9 +66,9 @@ describe("credentialsSchema — email Monev", () => {
   });
 });
 
-describe("credentialsSchema — password Monev", () => {
+describe("credentialsSchema, password Monev", () => {
   it("menerima password 1 karakter (tidak ada aturan minimal)", () => {
-    // Password Monev milik portal orang lain — kita tidak berhak memaksa
+    // Password Monev milik portal orang lain, kita tidak berhak memaksa
     // aturan panjang. Yang salah di sini akan ditolak saat login ke portal.
     const r = credentialsSchema.safeParse({
       emailMonev: "budi@contoh.com",
@@ -129,7 +129,7 @@ const TEMPLATE_OK = {
   obstacles: VALID100,
 };
 
-describe("reportTemplatesSchema — template laporan", () => {
+describe("reportTemplatesSchema, template laporan", () => {
   it("menerima tiga field yang semuanya >= 100 karakter", () => {
     expect(reportTemplatesSchema.safeParse(TEMPLATE_OK).success).toBe(true);
   });
@@ -205,7 +205,7 @@ describe("reportTemplatesSchema — template laporan", () => {
   });
 
   it("melaporkan error pada field yang benar saja", () => {
-    // Pesan error harus bisa dipetakan ke kotak input yang tepat — kalau
+    // Pesan error harus bisa dipetakan ke kotak input yang tepat, kalau
     // semuanya masuk ke "activity", pengguna bingung mencarinya.
     const r = reportTemplatesSchema.safeParse({
       activity: VALID100,
@@ -248,7 +248,7 @@ describe("reportTemplatesSchema — template laporan", () => {
     expect(r.success).toBe(true);
   });
 
-  it("tidak memangkas isi teks — hanya menilai panjangnya", () => {
+  it("tidak memangkas isi teks, hanya menilai panjangnya", () => {
     // Template disimpan apa adanya (kecuali diseragamkan terpisah lewat
     // normalizeReportText). Skema ini tidak boleh diam-diam mengubah tulisan.
     const r = reportTemplatesSchema.safeParse({
@@ -260,7 +260,7 @@ describe("reportTemplatesSchema — template laporan", () => {
   });
 });
 
-describe("monevTokenSchema — bentuk JWT", () => {
+describe("monevTokenSchema, bentuk JWT", () => {
   it("menerima JWT tiga bagian", () => {
     const r = monevTokenSchema.safeParse("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig");
     expect(r.success).toBe(true);
@@ -288,7 +288,7 @@ describe("monevTokenSchema — bentuk JWT", () => {
 });
 
 
-describe("changePasswordSchema — ubah kata sandi dalam sesi", () => {
+describe("changePasswordSchema, ubah kata sandi dalam sesi", () => {
   const valid = {
     currentPassword: "lama-secret-1",
     newPassword: "baru-secret-2",
@@ -356,9 +356,9 @@ describe("changePasswordSchema — ubah kata sandi dalam sesi", () => {
 
 // Skema ubah email adalah gerbang paling sensitif: email = identitas login DAN
 // penentu peran admin. Test ini mengunci aturan yang mencegah data rusak masuk
-// (format salah) dan memastikan kata sandi lama WAJIB ada — tanpa itu, siapa pun
+// (format salah) dan memastikan kata sandi lama WAJIB ada, tanpa itu, siapa pun
 // yang memegang perangkat tak terkunci bisa menyerahkan akun.
-describe("changeEmailSchema — ubah email akun", () => {
+describe("changeEmailSchema, ubah email akun", () => {
   const valid = {
     newEmail: "baru@contoh.com",
     currentPassword: "rahasia-lama",
@@ -406,7 +406,7 @@ describe("changeEmailSchema — ubah email akun", () => {
   });
 });
 
-describe("automationSchema — action rotasi (VERIFY-002)", () => {
+describe("automationSchema, action rotasi (VERIFY-002)", () => {
   const base = { isEnabled: true, hour: 7, minute: 30 };
 
   it("menerima simpan biasa tanpa action", () => {

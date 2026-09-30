@@ -11,7 +11,7 @@ import type { Tone } from "@/lib/admin";
  * ("Template tersimpan", "Template dihapus", "Gagal menghapus").
  *
  * Kenapa perlu: banyak form berisi tombol di bagian bawah, sementara pesan
- * suksesnya muncul di atas — pengguna yang sudah menggulir ke bawah tidak
+ * suksesnya muncul di atas, pengguna yang sudah menggulir ke bawah tidak
  * melihatnya. Toast selalu muncul di tempat yang sama, jadi hasil aksi tidak
  * pernah "hilang".
  *

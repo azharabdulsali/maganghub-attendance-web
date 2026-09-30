@@ -1,6 +1,6 @@
 "use client";
 
-// src/app/(app)/settings/password-form.tsx — form ubah kata sandi (C-13).
+// src/app/(app)/settings/password-form.tsx: form ubah kata sandi (C-13).
 //
 // Diubah dalam sesi (pengguna sudah login); tidak ada email/token reset. Tiga
 // kolom: kata sandi saat ini, kata sandi baru, dan konfirmasi. Pemeriksaan di
@@ -62,7 +62,7 @@ export default function PasswordForm() {
       // Server menaikkan `sessionVersion`, yang mencabut semua sesi LAIN.
       // Sesi yang sedang dipakai diperbarui ke versi baru supaya tidak ikut
       // ter-logout. Kalau pembaruan ini gagal, sesi berlaku tetap sah sampai
-      // permintaan berikutnya — bukan kegagalan diam yang berbahaya.
+      // permintaan berikutnya, bukan kegagalan diam yang berbahaya.
       if (typeof data?.sessionVersion === "number") {
         await update({ sessionVersion: data.sessionVersion });
       }
@@ -173,7 +173,7 @@ export default function PasswordForm() {
 
       <Message tone="neutral" role={undefined} aria-live={undefined}>
         Mengubah kata sandi <strong>mengeluarkan</strong> Anda dari semua
-        perangkat lain yang masih masuk. Perangkat ini tetap aktif — Anda tidak
+        perangkat lain yang masih masuk. Perangkat ini tetap aktif, Anda tidak
         perlu login ulang di sini.
       </Message>
 

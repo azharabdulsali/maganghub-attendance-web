@@ -1,10 +1,10 @@
 "use client";
 
-// src/app/(app)/settings/email-form.tsx — form ubah email akun (paling sensitif).
+// src/app/(app)/settings/email-form.tsx: form ubah email akun (paling sensitif).
 //
 // Email adalah identitas login, jadi form ini sengaja berbeda dari form lain:
 //   - Wajib mengisi kata sandi saat ini (pembuktian pemilik akun).
-//   - Ada peringatan eksplisit bahwa TIDAK ada verifikasi email — salah ketik =
+//   - Ada peringatan eksplisit bahwa TIDAK ada verifikasi email, salah ketik =
 //     terkunci permanen, karena tidak ada alur pemulihan akun.
 //   - Setelah sukses, sesi diperbarui via `useSession().update({ email, ... })`
 //     supaya sidebar & sesi tidak menampilkan email lama.
@@ -22,7 +22,7 @@ import { FieldError } from "@/components/ui/field-error";
 import { Message } from "@/components/ui/message";
 import { useToast } from "@/components/ui/toast";
 
-// Cek bentuk email sederhana di klien — sengaja longgar (server tetap otoritatif).
+// Cek bentuk email sederhana di klien, sengaja longgar (server tetap otoritatif).
 const POLA_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function EmailForm({ currentEmail }: { currentEmail: string }) {
@@ -77,7 +77,7 @@ export default function EmailForm({ currentEmail }: { currentEmail: string }) {
         return;
       }
 
-      // Sampai sini server SUDAH mengubah email dan mencabut sesi lain — titik
+      // Sampai sini server SUDAH mengubah email dan mencabut sesi lain, titik
       // ini adalah batas sukses yang otoritatif. Sinkronisasi sesi klien di
       // bawah bersifat "best effort" dan SENGAJA dipisah dari `catch` utama:
       // kalau `update()` gagal (mis. jaringan putus), email tetap sudah
@@ -98,7 +98,7 @@ export default function EmailForm({ currentEmail }: { currentEmail: string }) {
         );
       } catch {
         // Kegagalan di sini hanya berarti tampilan sesi (sidebar) mungkin masih
-        // memuat email lama sampai dimuat ulang — bukan kegagalan perubahan.
+        // memuat email lama sampai dimuat ulang, bukan kegagalan perubahan.
         toast.success("Email diubah", "Muat ulang halaman untuk menyegarkan sesi.");
       }
     } catch {
@@ -185,7 +185,7 @@ export default function EmailForm({ currentEmail }: { currentEmail: string }) {
 
       <Message tone="neutral" role={undefined} aria-live={undefined}>
         Aplikasi ini <strong>tidak mengirim email verifikasi</strong>. Jika Anda
-        salah mengetik, Anda bisa kehilangan akses ke akun ini secara permanen —
+        salah mengetik, Anda bisa kehilangan akses ke akun ini secara permanen,
         tidak ada pemulihan akun. Pastikan alamatnya benar sebelum menyimpan.
       </Message>
 

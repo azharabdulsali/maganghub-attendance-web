@@ -1,4 +1,4 @@
-// src/lib/submit-service.test.ts — uji keputusan murni orkestrasi submit.
+// src/lib/submit-service.test.ts: uji keputusan murni orkestrasi submit.
 //
 // Tidak menyentuh jaringan maupun database: semua fungsi di sini murni.
 

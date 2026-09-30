@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/button";
  *
  * Kenapa tidak `window.confirm` lagi: dialog bawaan browser itu memblokir tab,
  * tampil beda di tiap OS, dan tidak bisa diberi konteks (mis. menyebutkan
- * konsekuensinya). Base UI `AlertDialog` memberi yang penting secara bawaan —
+ * konsekuensinya). Base UI `AlertDialog` memberi yang penting secara bawaan,
  * focus trap, tombol Esc, `role="alertdialog"`, dan tombol batal yang otomatis
- * jadi fokus awal — sehingga kita tidak perlu menulis logika itu sendiri.
+ * jadi fokus awal, sehingga kita tidak perlu menulis logika itu sendiri.
  *
  * Dipakai dengan dua cara:
  *   - `<ConfirmDialog ... />` terkendali (buka/tutup dari state pemanggil), atau

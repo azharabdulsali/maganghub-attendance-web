@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Message } from "@/components/ui/message";
 
-// Dashboard — halaman utama setelah login, di URL /dashboard.
+// Dashboard, halaman utama setelah login, di URL /dashboard.
 // Pemeriksaan sesi juga dilakukan di layout (app)/dashboard, tapi kita ulangi
 // di sini supaya halaman ini tetap benar walau suatu saat dipindah. Lihat
 // SPEC.md §5.8.
@@ -47,11 +47,11 @@ export default async function DashboardPage() {
 
   // Kedua query ini hanya butuh `userId` dan tidak saling bergantung, jadi
   // dijalankan PARALEL. Kalau di-await berurutan, dua round-trip database
-  // bertumpuk (waterfall) — padahal tidak ada alasan untuk menunggu salah satu.
+  // bertumpuk (waterfall), padahal tidak ada alasan untuk menunggu salah satu.
   //
-  // Status kredensial nyata — supaya kartu di bawah jujur saat sesi Monev mati,
+  // Status kredensial nyata, supaya kartu di bawah jujur saat sesi Monev mati,
   // bukan selalu menyuruh "Atur kredensial" walau semuanya sehat.
-  // Statistik ringkas — dihitung di server, hanya membaca data milik pengguna.
+  // Statistik ringkas, dihitung di server, hanya membaca data milik pengguna.
   const [credential, { stats, trend }] = await Promise.all([
     prisma.maganghubCredential.findUnique({
       where: { userId },
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
   const punyaToken = Boolean(credential?.tokenCiphertext);
   const perluPerhatian = credential?.status === "INVALID";
 
-  // Tanggal hari ini di zona Asia/Jakarta (YYYY-MM-DD) — dipakai panel
+  // Tanggal hari ini di zona Asia/Jakarta (YYYY-MM-DD), dipakai panel
   // "Status Hari Ini". Memakai helper yang sama dengan penghitung tren supaya
   // batas harinya konsisten (bukan tanggal jam perangkat pengguna).
   const hariIni = todayJakartaISODate(now);
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Banner peringatan — hanya muncul bila ada yang perlu dibereskan.
+      {/* Banner peringatan, hanya muncul bila ada yang perlu dibereskan.
           Memakai Message tone="bad" (merah) supaya sejalan dengan bahasa nada
           proyek, bukan warna kuning baru. Aksi utama ada di dalam banner agar
           pengguna langsung tahu langkah berikutnya. */}
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
                     ? "Simpan email & password portal Maganghub untuk mengaktifkan absensi otomatis. Password disimpan terenkripsi."
                     : perluPerhatian
                       ? "Login ulang di portal, lalu tempel token baru agar absensi otomatis bisa jalan lagi."
-                      : "Kredensial sudah tersimpan, tetapi token sesi belum ditempel — pengiriman belum bisa jalan."}
+                      : "Kredensial sudah tersimpan, tetapi token sesi belum ditempel, pengiriman belum bisa jalan."}
                 </p>
               </div>
             </div>
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
 
       <StatsCards stats={stats} />
 
-      {/* Panel "Status Hari Ini" — ringkasan satu baris yang menjawab
+      {/* Panel "Status Hari Ini", ringkasan satu baris yang menjawab
           pertanyaan utama pengguna: hari ini sudah kirim belum, dan apa yang
           menghalangi kalau belum. Menggabungkan status kirim + status
           kredensial yang tadinya terpisah di dua kartu. */}
@@ -155,7 +155,7 @@ export default async function DashboardPage() {
               ? "Laporan hari ini sudah terkirim ke portal Monev."
               : adaMasalah
                 ? "Laporan hari ini belum terkirim, dan masih ada yang perlu diatur sebelum bisa mengirim."
-                : "Belum ada laporan terkirim hari ini. Kredensial siap — kamu bisa langsung mengirim di bawah."}
+                : "Belum ada laporan terkirim hari ini. Kredensial siap, kamu bisa langsung mengirim di bawah."}
           </p>
         </CardContent>
       </Card>

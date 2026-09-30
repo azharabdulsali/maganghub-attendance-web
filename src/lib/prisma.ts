@@ -1,4 +1,4 @@
-// src/lib/prisma.ts — satu instance PrismaClient untuk seluruh aplikasi.
+// src/lib/prisma.ts: satu instance PrismaClient untuk seluruh aplikasi.
 //
 // Prisma 7 memakai DRIVER ADAPTER, bukan `url` di schema. Untuk Neon
 // serverless (Vercel), adapter `@prisma/adapter-neon` adalah cara yang benar:

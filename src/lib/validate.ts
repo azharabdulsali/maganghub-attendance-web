@@ -1,4 +1,4 @@
-// src/lib/validate.ts — skema validasi bersama (Zod).
+// src/lib/validate.ts: skema validasi bersama (Zod).
 //
 // Ditaruh terpisah dari route supaya bisa diuji tanpa menjalankan server,
 // dan supaya aturan yang sama dipakai form maupun API (SPEC.md §9 poin 5).
@@ -8,7 +8,7 @@ import { checkReportField } from "./report-rules";
 
 /**
  * Kredensial portal Monev. Berbeda dari akun aplikasi ini, password Monev
- * TIDAK di-hash — harus bisa dipakai ulang untuk login ke portal itu, jadi
+ * TIDAK di-hash, harus bisa dipakai ulang untuk login ke portal itu, jadi
  * disimpan terenkripsi dua arah (AES-256-GCM), bukan satu arah.
  *
  * Batas panjang: cukup longgar untuk password nyata, cukup ketat untuk
@@ -32,13 +32,13 @@ export type CredentialsInput = z.infer<typeof credentialsSchema>;
 /**
  * Token sesi Monev (`monev_refresh_token`) yang ditempel pengguna dari DevTools.
  * Berbentuk JWT: tiga segmen base64url dipisah titik. Kita TIDAK memverifikasi
- * tanda tangan di sini (hanya server Monev yang bisa) — sekadar memastikan
+ * tanda tangan di sini (hanya server Monev yang bisa), sekadar memastikan
  * bentuknya masuk akal supaya salah tempel ketahuan lebih awal.
  */
 export const monevTokenSchema = z
   .string()
   .trim()
-  .min(20, "Token terlalu pendek — sepertinya bukan token yang benar")
+  .min(20, "Token terlalu pendek, sepertinya bukan token yang benar")
   .max(4096, "Token terlalu panjang")
   .refine(
     (t) => t.split(".").length === 3 && t.split(".").every((p) => p.length > 0),
@@ -80,7 +80,7 @@ export type ReportTemplatesInput = z.infer<typeof reportTemplatesSchema>;
 
 /**
  * Pengaturan otomasi (AutomationConfig, SPEC.md §7). Zona waktu TIDAK
- * diserahkan ke klien — selalu "Asia/Jakarta" (server yang mengisi) supaya
+ * diserahkan ke klien, selalu "Asia/Jakarta" (server yang mengisi) supaya
  * jadwal tidak bisa disalah-set ke zona lain tanpa sengaja.
  *
  * `action` opsional menentukan niat:
@@ -113,7 +113,7 @@ export type AutomationInput = z.infer<typeof automationSchema>;
  * diubah pengguna; email adalah identitas login dan peran ditentukan server,
  * jadi keduanya TIDAK diterima dari klien di sini.
  *
- * `name` boleh dikosongkan (kirim string kosong) untuk menghapus nama — UI akan
+ * `name` boleh dikosongkan (kirim string kosong) untuk menghapus nama, UI akan
  * menampilkan "Pengguna" sebagai gantinya. Batas 80 karakter sudah lebih dari
  * cukup untuk nama orang dan mencegah data sampah.
  */
@@ -127,14 +127,14 @@ export const profileSchema = z.object({
 export type ProfileInput = z.infer<typeof profileSchema>;
 
 /**
- * Ubah kata sandi akun aplikasi ini — dilakukan **dalam sesi** (pengguna sudah
+ * Ubah kata sandi akun aplikasi ini, dilakukan **dalam sesi** (pengguna sudah
  * login), tanpa email/token reset (C-13). Karena tidak ada verifikasi email,
  * keamanannya bersandar pada: (a) sesi yang sah, dan (b) pembuktian kata sandi
  * lama. Ketiganya divalidasi di server sebelum menyentuh DB.
  *
  * Aturan:
  *   - `newPassword` minimal 8 karakter, sama seperti pendaftaran & login.
- *   - `confirmPassword` harus sama dengan `newPassword` — mencegah salah ketik
+ *   - `confirmPassword` harus sama dengan `newPassword`, mencegah salah ketik
  *     yang akan mengunci pengguna dari akunnya sendiri (tidak ada email untuk
  *     memulihkan).
  *   - Kata sandi baru TIDAK boleh sama dengan yang lama (tidak ada gunanya
@@ -164,14 +164,14 @@ export const changePasswordSchema = z
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 /**
- * Ubah email akun aplikasi ini — perubahan **paling sensitif** di aplikasi ini,
+ * Ubah email akun aplikasi ini, perubahan **paling sensitif** di aplikasi ini,
  * karena email adalah (a) identitas login DAN (b) penentu peran admin
  * (`isAdminEmail` di lib/env.ts). Karena tidak ada verifikasi email maupun
  * pemulihan akun, satu salah ketik bisa mengunci pengguna dari akunnya sendiri
  * secara permanen. Maka:
  *
  *   - `newEmail` wajib format email yang sah. Normalisasi (trim + lowercase)
- *     dilakukan di route sebelum dibandingkan/disimpan — konsisten dengan jalur
+ *     dilakukan di route sebelum dibandingkan/disimpan, konsisten dengan jalur
  *     login & pendaftaran agar satu email tidak bisa punya dua ejaan.
  *   - `currentPassword` wajib: membuktikan pemilik sesi memang tahu kata
  *     sandinya. Tanpa ini, siapa pun yang menemukan perangkat tak terkunci bisa

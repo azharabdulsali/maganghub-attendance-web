@@ -1,4 +1,4 @@
-// src/app/api/cron/run-all/route.ts — dispatcher cron massal (Tahap 6).
+// src/app/api/cron/run-all/route.ts: dispatcher cron massal (Tahap 6).
 //
 // Masalah yang dipecahkan: sebelumnya TIAP user harus menyalin webhookKey-nya
 // lalu memasang cron sendiri di cron-job.org. Dengan 20 user itu 20 langkah
@@ -12,12 +12,12 @@
 //   1. Cocokkan CRON_SECRET (timing-safe). Salah/kosong → 401; tak diset → 503.
 //   2. Ambil semua AutomationConfig.isEnabled = true.
 //   3. Pilih yang jam jadwalnya (WIB) = jam sekarang (lihat cron-dispatch.ts).
-//   4. Jalankan performSubmit untuk tiap user — PARALEL berbatas (bukan
+//   4. Jalankan performSubmit untuk tiap user, PARALEL berbatas (bukan
 //      berurutan) supaya 20 user tidak menembus batas waktu fungsi. Satu user
 //      gagal TIDAK menggagalkan yang lain.
 //
 // Jadwal per-user TETAP dihormati: cron berjalan tiap jam, dan tiap user
-// diproses pada jam jadwalnya. Menit diabaikan (lihat isDueNow) — absensi
+// diproses pada jam jadwalnya. Menit diabaikan (lihat isDueNow), absensi
 // harian tidak butuh ketepatan menit, dan menuntutnya membuat jadwal 07:30
 // tak pernah kena pada cron per jam.
 //

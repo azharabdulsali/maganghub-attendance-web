@@ -1,4 +1,4 @@
-// src/lib/calendar.ts — perhitungan kalender kehadiran & laporan (MURNI).
+// src/lib/calendar.ts: perhitungan kalender kehadiran & laporan (MURNI).
 //
 // Halaman /calendar menyerahkan parameter bulan (dari URL) dan daftar log/report
 // mentah ke fungsi-fungsi di sini. Sama seperti modul murni lain (audit-log,
@@ -6,12 +6,12 @@
 // bergantung jam perangkat pengguna.
 //
 // Zona waktu: seluruh hari dihitung di Asia/Jakarta (WIB, UTC+7), konsisten
-// dengan stats-query.ts. Jangan pakai zona server — server bisa UTC.
+// dengan stats-query.ts. Jangan pakai zona server, server bisa UTC.
 
 import type { SubmitStatus } from "@/generated/prisma/enums";
 import { isNationalHoliday } from "./holidays";
 
-/** Offset WIB tetap (UTC+7) — Indonesia tidak memakai DST. */
+/** Offset WIB tetap (UTC+7), Indonesia tidak memakai DST. */
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
 
 /** Nama bulan dalam bahasa Indonesia, indeks 1–12. */
@@ -47,7 +47,7 @@ export function currentJakartaMonth(now: Date = new Date()): YearMonth {
 
 /**
  * Ubah `?month=YYYY-MM` menjadi YearMonth yang sah. Nilai tak dikenal / bulan
- * di luar 1–12 / tahun mustahil jatuh ke bulan berjalan — jadi URL salah ketik
+ * di luar 1–12 / tahun mustahil jatuh ke bulan berjalan, jadi URL salah ketik
  * tidak pernah membuat halaman error, hanya menampilkan bulan ini.
  */
 export function parseMonth(raw: string | undefined, now: Date = new Date()): YearMonth {
@@ -124,7 +124,7 @@ export type DayStatus = "SUBMITTED" | "FAILED" | "DRAFT" | "NONE";
  *   - `null`     = hari kerja biasa
  *
  * Dipisah dari `DayStatus` supaya penanda libur TIDAK mengubah statistik
- * (terkirim/draft/gagal) — kalender tetap menghitung status submit apa adanya.
+ * (terkirim/draft/gagal), kalender tetap menghitung status submit apa adanya.
  */
 export type HolidayKind = "NATIONAL" | "WEEKEND" | null;
 /** Baris minimal SubmitLog yang dibutuhkan kalender. */
@@ -147,7 +147,7 @@ export function jakartaISODate(date: Date): string | null {
 
 /**
  * Awal hari (tengah malam WIB) untuk instant `now`, dikembalikan sebagai UTC
- * Date. MURNI — `now` bisa disuntik di tes, tidak membaca jam perangkat.
+ * Date. MURNI, `now` bisa disuntik di tes, tidak membaca jam perangkat.
  *
  * Inilah satu-satunya sumber batas hari WIB: dashboard & kalender memakainya
  * agar keduanya tidak pernah berbeda rumus (dulu keduanya pernah beda dan
@@ -166,7 +166,7 @@ export function startOfJakartaDay(now: Date = new Date()): Date {
  * PENTING: tanggal dihitung dengan `jakartaISODate` (geser ke WIB lalu baca
  * tanggal), BUKAN `toISOString()` langsung. Untuk tengah malam WIB
  * (`2026-09-28T17:00:00Z`), `toISOString()` memberi `2026-09-28` dan membuat
- * hari ini selalu absen dari daftar — bug yang pernah membuat grafik 30 hari
+ * hari ini selalu absen dari daftar, bug yang pernah membuat grafik 30 hari
  * kehilangan batang "hari ini".
  */
 export function lastJakartaDays(n: number, now: Date = new Date()): string[] {
@@ -233,7 +233,7 @@ export function collectReportDates(
  *   4. Tidak ada apa-apa    → NONE
  *
  * Catatan jujur: kiriman DUPLICATE saja (tanpa SUCCESS) TIDAK dinaikkan ke
- * SUBMITTED — laporan hari itu belum pasti terkirim dari akun ini. Ia hanya
+ * SUBMITTED, laporan hari itu belum pasti terkirim dari akun ini. Ia hanya
  * dianggap DRAFT bila ada isinya, atau NONE bila tidak.
  */
 export function classifyDay(
@@ -266,7 +266,7 @@ export function weekdayIndex(year: number, month: number, day: number): number {
  *
  * Urutan penting: libur nasional diperiksa LEBIH DULU daripada akhir pekan.
  * Jadi Sabtu/Minggu yang kebetulan juga libur nasional dilaporkan sebagai
- * `NATIONAL` — penanda yang lebih informatif. Tanggal tak sah → `null`.
+ * `NATIONAL`, penanda yang lebih informatif. Tanggal tak sah → `null`.
  */
 export function holidayKindOf(iso: string): HolidayKind {
   if (isNationalHoliday(iso)) return "NATIONAL";

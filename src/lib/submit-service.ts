@@ -1,9 +1,9 @@
-// src/lib/submit-service.ts — orkestrasi kirim laporan (SPEC.md §10, §11B).
+// src/lib/submit-service.ts: orkestrasi kirim laporan (SPEC.md §10, §11B).
 //
 // Lapisan ini menyatukan tiga hal yang sebelumnya terpisah:
-//   1. `decide()` (report-policy) — boleh kirim hari ini?
-//   2. `submitReport()` (monev-submit) — kirim ke portal (menembak jaringan).
-//   3. `SubmitLog` — catat tiap percobaan (tidak boleh ada submit tanpa log).
+//   1. `decide()` (report-policy), boleh kirim hari ini?
+//   2. `submitReport()` (monev-submit), kirim ke portal (menembak jaringan).
+//   3. `SubmitLog`, catat tiap percobaan (tidak boleh ada submit tanpa log).
 //
 // Semua keputusan MURNI (boleh-kirim, bentuk payload, status log) dipisah ke
 // fungsi kecil di bawah supaya bisa diuji tanpa jaringan/database. Yang
@@ -14,7 +14,7 @@ import { decide, type PolicyDecision, type PlainDate } from "./report-policy";
 import type { ReportPayload } from "./monev-submit";
 
 /**
- * Tanggal hari ini di zona Asia/Jakarta sebagai `YYYY-MM-DD` — MURNI.
+ * Tanggal hari ini di zona Asia/Jakarta sebagai `YYYY-MM-DD`, MURNI.
  *
  * PENTING: jangan pakai `new Date().toISOString().slice(0,10)`. Itu memakai
  * UTC; di server UTC, jam 00:00–07:00 WIB masih tanggal kemarin → laporan
@@ -32,11 +32,11 @@ export function todayInJakarta(now: Date = new Date()): PlainDate {
 }
 
 /**
- * Ubah tanggal `YYYY-MM-DD` → `Date` pada tengah malam UTC — MURNI.
+ * Ubah tanggal `YYYY-MM-DD` → `Date` pada tengah malam UTC, MURNI.
  *
  * Dipakai untuk kolom `Report.date` yang bertipe `@db.Date` (tanpa jam).
  * `new Date("2024-05-01")` di JS memang sudah diartikan sebagai 00:00 UTC, jadi
- * hasilnya sama di server zona mana pun — tidak seperti `new Date("2024-05-01
+ * hasilnya sama di server zona mana pun, tidak seperti `new Date("2024-05-01
  * 00:00")` yang memakai zona setempat dan bisa bergeser sehari.
  *
  * Mengembalikan `null` untuk input yang tidak berbentuk `YYYY-MM-DD` (mis.
@@ -54,18 +54,18 @@ export function plainDateToUtcDate(date: string): Date | null {
 export function policyMessage(decision: PolicyDecision): string {
   switch (decision) {
     case "ALLOW":
-      return "Hari kerja aktif — pengiriman diizinkan.";
+      return "Hari kerja aktif, pengiriman diizinkan.";
     case "SKIPPED":
-      return "Hari ini libur/akhir pekan — laporan dilewati (bukan error).";
+      return "Hari ini libur/akhir pekan, laporan dilewati (bukan error).";
     case "PROGRAM_ENDED":
-      return "Program magang sudah berakhir — otomasi dihentikan.";
+      return "Program magang sudah berakhir, otomasi dihentikan.";
   }
 }
 
 /**
  * Peta `SubmitResult` (monev-submit) → nilai enum `SubmitStatus` (Prisma).
  * MURNI. ALREADY_SUBMITTED → DUPLICATE supaya audit log membedakan
- * "gagal mengirim" dari "sudah ada" — keduanya bukan hal yang sama.
+ * "gagal mengirim" dari "sudah ada", keduanya bukan hal yang sama.
  */
 export function submitStatusFor(
   result: { status: string },
@@ -78,7 +78,7 @@ export function submitStatusFor(
 /**
  * Bentuk payload laporan dari template + tanggal target. MURNI.
  * Template sudah tervalidasi minimal 100 karakter saat disimpan, jadi di sini
- * tidak ada penilaian ulang — hanya perakitan.
+ * tidak ada penilaian ulang, hanya perakitan.
  */
 export function payloadFromTemplate(
   template: { activity: string; learning: string; obstacles: string },
@@ -93,7 +93,7 @@ export function payloadFromTemplate(
 }
 
 /**
- * Keputusan lengkap sebelum menyentuh portal — MURNI.
+ * Keputusan lengkap sebelum menyentuh portal, MURNI.
  * Menggabungkan policy + kesiapan data (template & token) supaya route tidak
  * perlu menalar sendiri. `ready: false` → batal sebelum jaringan disentuh.
  */

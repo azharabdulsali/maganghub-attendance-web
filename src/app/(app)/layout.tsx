@@ -1,4 +1,4 @@
-// src/app/(app)/layout.tsx — kerangka halaman setelah login.
+// src/app/(app)/layout.tsx: kerangka halaman setelah login.
 //
 // Kenapa ada route group `(app)`:
 //   Semua halaman terlindungi tinggal di dalam grup ini, dan tiap halaman
@@ -9,7 +9,7 @@
 //   Sebelumnya layout ini tinggal di (app)/dashboard/layout.tsx sehingga hanya
 //   membungkus /dashboard/*. Ketika halaman lain dipindah ke root (/history,
 //   /credentials, /calendar, …), berkas ini dinaikkan ke (app)/ supaya SEMUA
-//   halaman terlindungi — bukan hanya yang di bawah /dashboard — tetap dapat
+// halaman terlindungi (bukan hanya yang di bawah /dashboard) tetap dapat
 //   sidebar dan penjagaan sesi yang sama.
 //
 // Pemeriksaan sesi sengaja dilakukan di sini (bukan di tiap halaman) supaya
@@ -17,8 +17,8 @@
 // langsung dilempar ke /login.
 //
 // PENTING (jangan diubah tanpa berpikir): "/" adalah landing PUBLIK (lihat
-// src/app/page.tsx — di LUAR grup ini). Jangan arahkan pengguna yang sudah
-// login ke "/" dari sini — itu memantulkan mereka ke landing lagi. Tujuan
+// src/app/page.tsx: di LUAR grup ini). Jangan arahkan pengguna yang sudah
+// login ke "/" dari sini, itu memantulkan mereka ke landing lagi. Tujuan
 // setelah login adalah "/dashboard".
 
 import { redirect } from "next/navigation";

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TrendPoint } from "./stats-query";
 
-// Grafik tren 30 hari — SVG batang (bar) sederhana yang digambar manual.
+// Grafik tren 30 hari, SVG batang (bar) sederhana yang digambar manual.
 //
 // SENGAJA tidak memakai library chart apa pun: AGENTS.md §2 melarang menambah
 // dependensi tanpa alasan kuat, dan kebutuhan di sini hanya "lihat naik-turun

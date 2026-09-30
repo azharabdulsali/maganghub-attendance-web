@@ -1,4 +1,4 @@
-// src/lib/crypto.ts — enkripsi kredensial Monev dengan AES-256-GCM.
+// src/lib/crypto.ts: enkripsi kredensial Monev dengan AES-256-GCM.
 //
 // Kenapa GCM (bukan CBC)? GCM memberi *authenticated encryption*: kalau data
 // diubah orang lain, dekripsi GAGAL, bukan menghasilkan teks sampah. Untuk
@@ -17,7 +17,7 @@ import {
 import { env } from "./env";
 
 const ALGORITHM = "aes-256-gcm";
-const IV_BYTES = 12; // 96 bit — panjang IV yang disarankan untuk GCM
+const IV_BYTES = 12; // 96 bit, panjang IV yang disarankan untuk GCM
 const AUTH_TAG_BYTES = 16;
 
 /** Kunci 32 byte dari ENCRYPTION_KEY (hex 64 karakter). */
@@ -33,7 +33,7 @@ export interface EncryptedPayload {
 
 /**
  * Enkripsi teks biasa (mis. password Monev).
- * IV selalu baru setiap panggilan — ini wajib untuk GCM: memakai ulang IV
+ * IV selalu baru setiap panggilan, ini wajib untuk GCM: memakai ulang IV
  * dengan kunci sama akan menghancurkan keamanannya.
  */
 export function encrypt(plaintext: string): EncryptedPayload {
@@ -53,7 +53,7 @@ export function encrypt(plaintext: string): EncryptedPayload {
 }
 
 /**
- * Dekripsi. Melempar error bila data/authTag diubah — jangan pernah
+ * Dekripsi. Melempar error bila data/authTag diubah, jangan pernah
  * menelan error ini dan mengembalikan teks kosong, karena itu menyamarkan
  * kerusakan data sebagai "kredensial kosong".
  */

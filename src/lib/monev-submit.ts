@@ -1,10 +1,10 @@
-// src/lib/monev-submit.ts — KERANGKA pengiriman laporan ke portal Monev.
+// src/lib/monev-submit.ts: KERANGKA pengiriman laporan ke portal Monev.
 //
-// ⚠️  STATUS: BELUM FINAL — menunggu bentuk endpoint submit (docs/MONEV-API.md §8).
+// ⚠️  STATUS: BELUM FINAL, menunggu bentuk endpoint submit (docs/MONEV-API.md §8).
 //
 // File ini dibangun SEBELUM §8 diketahui, sengaja, supaya struktur, validasi,
 // penafsiran respons, dan tesnya sudah siap. Yang belum pasti HANYA nama-nama
-// field body — semuanya dikumpulkan di satu blok `TODO §8` di bawah. Saat Anda
+// field body, semuanya dikumpulkan di satu blok `TODO §8` di bawah. Saat Anda
 // merekam "Simpan dan Kirim" sekali (via /dev-tools atau Copy as
 // cURL), cukup ganti nilai di blok itu; sisa file tidak perlu diubah.
 //
@@ -19,7 +19,7 @@ import {
 } from "./monev-client";
 
 // ---------------------------------------------------------------------------
-// Endpoint submit — ✅ TERVERIFIKASI dari rekaman cURL (docs/MONEV-API.md §8.1)
+// Endpoint submit, ✅ TERVERIFIKASI dari rekaman cURL (docs/MONEV-API.md §8.1)
 // ---------------------------------------------------------------------------
 //
 // Ditemukan 2026-09-28 dari "Copy as cURL" (submit + daily-logs + attendances).
@@ -28,7 +28,7 @@ import {
 // Catatan penting dari rekaman:
 //   - Submit butuh header `authorization: Bearer <access token>` (ttl 6 jam),
 //     BUKAN `monev_refresh_token` langsung. Access token harus ditukar dulu
-//     (kemungkinan lewat /auth/refresh — bentuk body 200-nya masih dicari).
+//     (kemungkinan lewat /auth/refresh, bentuk body 200-nya masih dicari).
 //   - "Kehadiran Hadir" dikirim sebagai field `status` = "PRESENT" (enum),
 //     bukan `attendance: "1"` seperti dugaan awal (SPEC §11B, §12.7.2).
 //
@@ -38,15 +38,15 @@ export const SUBMIT_ENDPOINT = {
   bodyKind: "json" as const,
 } as const;
 
-/** Nama field body submit — persis dari rekaman (§8.1). */
+/** Nama field body submit, persis dari rekaman (§8.1). */
 export const FIELD_NAMES = {
   activity: "activity_log",
   learning: "lesson_learned",
   obstacles: "obstacles",
-  /** Field kehadiran — WAJIB ada, kalau tidak laporan tercatat "Tidak Hadir"
+  /** Field kehadiran, WAJIB ada, kalau tidak laporan tercatat "Tidak Hadir"
    *  (SPEC.md §11B, MONEV-API §12.7.2). Nilai "Hadir" = "PRESENT". */
   attendance: "status",
-  /** Tanggal target (YYYY-MM-DD) — pengirim harus menyebut tanggal yang DIMINTA,
+  /** Tanggal target (YYYY-MM-DD), pengirim harus menyebut tanggal yang DIMINTA,
    *  bukan "hari ini" (SPEC.md §11B, MONEV-API §12.7.3). */
   date: "date",
 } as const;
@@ -54,22 +54,22 @@ export const FIELD_NAMES = {
 /** Nilai "Hadir" di field `status` (rekaman §8.1: enum PRESENT). */
 export const ATTENDANCE_PRESENT = "PRESENT";
 
-/** Endpoint baca status (RB-03 cek duplikasi & RB-06 verifikasi) — §8.2, §8.3. */
+/** Endpoint baca status (RB-03 cek duplikasi & RB-06 verifikasi), §8.2, §8.3. */
 export const READ_ENDPOINTS = {
   dailyLogs: "/api/v1/daily-logs",
   attendances: "/api/v1/attendances",
-  /** Profil/home — untuk uji sesi alternatif dengan Bearer (§4.5). */
+  /** Profil/home, untuk uji sesi alternatif dengan Bearer (§4.5). */
   home: "/api/v1/users/me/home",
 } as const;
 
 /** Endpoint tukar refresh → access. Bentuk respons 200-nya BELUM terekam (§4.4). */
 export const REFRESH_ENDPOINT = "/api/v1/auth/refresh";
 
-/** Kode HTTP sukses. ⚠️ Belum terverifikasi dari rekaman — amati saat uji. */
+/** Kode HTTP sukses. ⚠️ Belum terverifikasi dari rekaman, amati saat uji. */
 const HTTP_SUCCESS_CODES = new Set([200, 201]);
 
 /** Kode "laporan sudah ada". ✅ TERVERIFIKASI (2026-09-28): portal membalas
- *  `409 Conflict` saat tanggal tsb sudah ada — terlihat di Riwayat
+ *  `409 Conflict` saat tanggal tsb sudah ada, terlihat di Riwayat
  *  (`HTTP 409` + status `DUPLICATE`). Rekaman: docs/MONEV-API.md §8.7. */
 const HTTP_ALREADY_EXISTS = 409;
 // ---------------------------------------------------------------------------
@@ -97,14 +97,14 @@ const MONEV_USER_AGENT =
 //
 // Kenapa 8s, bukan 15s: satu eksekusi cron bisa menembak DUA permintaan
 // berurutan (fetchBuildId lalu submit), jadi durasi terburuk ≈ 2 × timeout.
-// Dengan 15s, eksekusi yang macet (portal Monev down) bisa menggantung ~30s —
+// Dengan 15s, eksekusi yang macet (portal Monev down) bisa menggantung ~30s,
 // dan melar lagi bila cron eksternal (cron-job.org) mengulang pada tenggat
 // yang sama (buruk untuk kuota CPU Hobby & antrean user lain). 8s cukup untuk
 // portal normal Indonesia dan menahan kasus buruk tetap di bawah ~16s.
 const DEFAULT_TIMEOUT_MS = 8_000;
 
 /**
- * Susun body permintaan dari isi laporan. MURNI — tidak menyentuh jaringan,
+ * Susun body permintaan dari isi laporan. MURNI, tidak menyentuh jaringan,
  * sehingga bisa diuji tanpa efek samping.
  *
  * Field kehadiran SELALU disertakan (SPEC.md §11B): kalau lupa, laporan bisa
@@ -139,7 +139,7 @@ export function buildSubmitBody(
  *
  * Portal Monev bisa membalas JSON (`{"message": "..."}`, kadang dibungkus
  * `{"data": {...}}`) atau teks polos. Fungsi ini mencoba bentuk-bentuk umum dan
- * mengembalikan `undefined` bila tak ada yang layak — pemanggil memakai teks
+ * mengembalikan `undefined` bila tak ada yang layak, pemanggil memakai teks
  * cadangannya sendiri. Selalu batasi panjang supaya log tak memuat body besar.
  */
 function extractMessage(bodyText: string): string | undefined {
@@ -169,7 +169,7 @@ function extractMessage(bodyText: string): string | undefined {
 }
 
 /**
- * Tafsirkan respons HTTP menjadi SubmitResult. MURNI — dipisah dari jaringan
+ * Tafsirkan respons HTTP menjadi SubmitResult. MURNI, dipisah dari jaringan
  * supaya bisa diuji dengan angka status saja.
  *
  * Penting (RB-06, SPEC.md §11B): HTTP 2xx BUKAN bukti final bahwa laporan
@@ -215,7 +215,7 @@ export function interpretSubmitResponse(
  * memeriksa `decide()` (report-policy) dan keberadaan token lebih dulu.
  *
  * ⚠️  Dari rekaman (§8.1), endpoint ini memerlukan header
- * `authorization: Bearer <access token>` — BUKAN `monev_refresh_token`
+ * `authorization: Bearer <access token>`, BUKAN `monev_refresh_token`
  * langsung. `accessToken` di sini adalah JWT akses (ttl 6 jam) yang harus
  * ditukar lebih dulu dari refresh token (lihat docs/MONEV-API.md §8.4).
  * Kewajiban penukaran ada di pemanggil, bukan di sini, supaya fungsi ini tetap
@@ -229,7 +229,7 @@ export async function submitReport(
   options?: { buildId?: string; timeoutMs?: number },
 ): Promise<SubmitResult> {
   if (!accessToken || accessToken.trim().length === 0) {
-    return { status: "ERROR", message: "Token akses kosong — hubungkan ulang." };
+    return { status: "ERROR", message: "Token akses kosong, hubungkan ulang." };
   }
 
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -280,13 +280,13 @@ export type TokenExchangeResult =
   | { status: "ERROR"; httpCode?: number; message: string };
 
 /**
- * Tafsirkan respons `POST /api/v1/auth/refresh` — MURNI, tanpa jaringan.
+ * Tafsirkan respons `POST /api/v1/auth/refresh`, MURNI, tanpa jaringan.
  *
  * ⚠️  Bentuk respons sukses (`200`) BELUM terekam (§4.4). Karena itu fungsi ini
  * sengaja **toleran dua kemungkinan**: access token bisa datang di body JSON
  * (`access_token` / `accessToken` / `token`) atau di header `set-cookie`
  * (cookie access terpisah). Bila tak satu pun ditemukan, hasilnya `ERROR`
- * dengan pesan jujur — bukan menebak.
+ * dengan pesan jujur, bukan menebak.
  *
  * `401` (penanda sesi mati yang sudah terverifikasi, §4.1) dipetakan ke
  * `SESSION_DEAD` supaya pemanggil tahu harus minta login ulang, bukan sekadar

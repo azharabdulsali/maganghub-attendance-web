@@ -1,4 +1,4 @@
-// src/lib/admin.test.ts — uji logika tampilan halaman admin (murni).
+// src/lib/admin.test.ts: uji logika tampilan halaman admin (murni).
 
 import { describe, it, expect } from "vitest";
 

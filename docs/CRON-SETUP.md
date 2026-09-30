@@ -1,4 +1,4 @@
-# Panduan Memasang Cron (Per User) — MagangHub Attendance
+# Panduan Memasang Cron (Per User), MagangHub Attendance
 
 Cara menyambungkan **cron eksternal** (penabuh jadwal) ke webhook aplikasi ini,
 supaya laporan absensi dikirim otomatis setiap hari.
@@ -7,7 +7,7 @@ supaya laporan absensi dikirim otomatis setiap hari.
 > Dokumen ini mulai dari "aplikasi sudah online".
 >
 > ⚠️ **Ini BUKAN cara yang direkomendasikan.** Cara utama & direkomendasikan
-> adalah **dispatcher massal** — satu pemicu admin (GitHub Actions) mengabsen
+> adalah **dispatcher massal**, satu pemicu admin (GitHub Actions) mengabsen
 > SEMUA user otomatis; user cukup menyalakan sakelar Otomasi, tanpa menyalin
 > webhook apa pun. Lihat **`docs/CRON-BULK.md`** lebih dulu.
 >
@@ -42,24 +42,24 @@ GET https://<domain-anda>/api/cron/submit?key=<webhookKey>
 
 > Inilah **endpoint per-user**. Dispatcher massal memakai endpoint **lain**
 > (`GET /api/cron/run-all`, dijaga header `Authorization: Bearer <CRON_SECRET>`
-> — lihat `docs/CRON-BULK.md`). Keduanya memakai logika keputusan yang sama
+>, lihat `docs/CRON-BULK.md`). Keduanya memakai logika keputusan yang sama
 > persis (`performSubmit`), jadi perilaku libur/kelengkapan identik.
 
 Alur saat dipanggil:
 
-1. **Cek kunci** — `Authorization: Bearer <webhookKey>` (atau `?key=` lama)
+1. **Cek kunci**, `Authorization: Bearer <webhookKey>` (atau `?key=` lama)
    dicocokkan dengan `webhookKey` milik Anda. Salah/kosong → `401` dengan pesan
    generik.
-2. **Cek sakelar** — kalau `isEnabled = false` → `200 { skipped: true }`
+2. **Cek sakelar**, kalau `isEnabled = false` → `200 { skipped: true }`
    (bukan error; cron bebas memanggil tanpa tahu status).
-3. **Cek policy** — hari libur atau program sudah berakhir → tidak dikirim.
-4. **Cek gerbang** — bila `ALLOW_LIVE_SUBMIT` belum `1` → mode latihan
+3. **Cek policy**, hari libur atau program sudah berakhir → tidak dikirim.
+4. **Cek gerbang**, bila `ALLOW_LIVE_SUBMIT` belum `1` → mode latihan
    (`dryRun: true`), jaringan tidak disentuh.
 5. Kalau semua lolos → laporan dikirim ke portal Monev, dan **setiap percobaan
    dicatat** ke audit log dengan `trigger: CRON`.
 
 **Penting:** cron hanya *memicu*. Ia tidak pernah "memutuskan" apa pun soal
-libur/kelengkapan — semua keputusan ada di sisi server aplikasi.
+libur/kelengkapan, semua keputusan ada di sisi server aplikasi.
 
 ---
 
@@ -86,7 +86,7 @@ baru ke layanan cron Anda.
 | **crontab** VPS/server sendiri | Sesuai server | Kalau punya server yang selalu nyala. |
 
 > **Tidak ada fallback:** bila layanan cron mati, absen terjadwal per-user ini
-> tidak jalan. (Jalur dispatcher massal punya nasib yang sama — pemicunya tetap
+> tidak jalan. (Jalur dispatcher massal punya nasib yang sama, pemicunya tetap
 > harus hidup.) Pilihan utama proyek ini sebenarnya adalah **dispatcher massal**
 > (`docs/CRON-BULK.md`); spesifikasi awal (SPEC §15) menyebut cron-job.org
 > sebagai pilihan utama untuk **model per-user** yang dijelaskan di sini.
@@ -98,9 +98,9 @@ baru ke layanan cron Anda.
 1. Daftar/masuk di <https://cron-job.org>.
 2. **Create cronjob**.
 3. **Title**: `Absensi Monev harian`.
-4. **URL**: tempel URL webhook dari langkah 2 — **termasuk** `?key=...`.
+4. **URL**: tempel URL webhook dari langkah 2, **termasuk** `?key=...`.
 5. **Schedule**: pilih setiap hari, jam sesuai pengaturan di aplikasi.
-   **Perhatikan zona waktu** — cron-job.org memakai UTC secara default. Jam
+   **Perhatikan zona waktu**, cron-job.org memakai UTC secara default. Jam
    `07:30 WIB` = `00:30 UTC`. Set zona waktu akun ke `Asia/Jakarta` bila
    tersedia, atau hitung manual (WIB = UTC+7).
 6. **Request method**: `GET`.
@@ -132,7 +132,7 @@ jobs:
 
 Simpan URL webhook Anda sebagai **Secret** repo bernama `MONEV_WEBHOOK_URL`
 (Settings → Secrets and variables → Actions). Jangan pernah menaruhnya sebagai
-teks biasa di workflow — siapa pun yang bisa melihat repo bisa membaca URL itu.
+teks biasa di workflow, siapa pun yang bisa melihat repo bisa membaca URL itu.
 
 > Catatan: job terjadiwal di GitHub Actions bisa tertunda beberapa menit saat
 > beban tinggi. Untuk absensi harian ini biasanya tidak masalah.
@@ -146,7 +146,7 @@ Di server yang selalu nyala:
 ```cron
 # m   h   dom mon dow   perintah
 # 07:30 WIB setiap hari (server di zona Asia/Jakarta)
-# Cara dianjurkan — kunci lewat header (tidak muncul di log URL):
+# Cara dianjurkan, kunci lewat header (tidak muncul di log URL):
 30 7 * * * curl -sS -o /dev/null -H "Authorization: Bearer <webhookKey>" "https://<domain-anda>/api/cron/submit"
 # Cara lama (masih didukung):
 # 30 7 * * * curl -sS -o /dev/null "https://<domain-anda>/api/cron/submit?key=<webhookKey>"
@@ -160,7 +160,7 @@ Bila server memakai UTC, jadwalnya jadi `30 0 * * *`.
 
 | HTTP | Arti | Tindakan |
 | :--- | :--- | :--- |
-| `200 { ok: true, status: "SUCCESS" }` | Terkirim ke portal. | — |
+| `200 { ok: true, status: "SUCCESS" }` | Terkirim ke portal. | - |
 | `200 { dryRun: true, status: "DRY_RUN" }` | Belum `ALLOW_LIVE_SUBMIT=1`. | Nyalakan gerbang bila sudah siap. |
 | `200 { skipped: true }` | Otomasi nonaktif, **atau** libur/program berakhir. | Cek `reason` di body. |
 | `200 { ok: false, status: "DUPLICATE" }` | Laporan tanggal itu sudah ada di portal. | Normal. |
@@ -169,17 +169,17 @@ Bila server memakai UTC, jadwalnya jadi `30 0 * * *`.
 | `400` | Rahasia kosong / tanggal tidak sah. | Perbaiki URL/header cron. |
 | `429` | Kena rate limit (30/5 menit per IP). | Kurangi frekuensi; bukan aktivitas normal. |
 
-> **Perhatikan:** kegagalan *submisi* tidak pernah memakai kode HTTP gagal —
+> **Perhatikan:** kegagalan *submisi* tidak pernah memakai kode HTTP gagal,
 > semuanya `200` dengan `ok: false`. Hanya masalah **kunci/format** (`400`,
 > `401`) dan **rate limit** (`429`) yang memakai kode non-200. Alasannya sama
 > seperti di atas: cron eksternal tidak bisa menafsirkan status aneh.
 >
 > **`429` hanya berlaku di `/api/cron/submit` (per-user).** Dispatcher massal
-> (`/api/cron/run-all`) **tidak** memakai rate limit — ia dijaga `CRON_SECRET`
+> (`/api/cron/run-all`) **tidak** memakai rate limit, ia dijaga `CRON_SECRET`
 > dan memang dipanggil tiap jam, jadi penghitung per-IP akan salah menolaknya.
 
 **Cron eksternal hanya memahami kode HTTP.** Karena itu "tidak ada yang dikirim
-hari ini" tetap `200`, bukan error — agar cron tidak panik dan tidak mengirim
+hari ini" tetap `200`, bukan error, agar cron tidak panik dan tidak mengirim
 peringatan palsu tiap akhir pekan. **Setiap percobaan tetap tercatat** ke
 Riwayat, jadi kebenaran sesungguhnya selalu ada di audit log, bukan di kode
 HTTP.
@@ -189,7 +189,7 @@ HTTP.
 ## 6. Uji coba (urutan aman)
 
 1. Biarkan `ALLOW_LIVE_SUBMIT` **kosong**. Panggil webhook dari browser atau
-   `curl`. Harusnya `200` dengan `dryRun: true` — membuktikan kunci & policy
+   `curl`. Harusnya `200` dengan `dryRun: true`, membuktikan kunci & policy
    jalan tanpa menyentuh portal.
 2. Set `ALLOW_LIVE_SUBMIT=1` **hanya** saat benar-benar siap.
 3. Tekan **TEST RUN** di cron-job.org sekali, lalu periksa
@@ -211,5 +211,5 @@ HTTP.
 
 > **Lelah menyiapkan satu cron per user?** Itulah alasan dispatcher massal ada.
 > Lihat `docs/CRON-BULK.md`: satu pemicu (GitHub Actions atau tombol admin)
-> mengabsen semua user yang sakelar Otomasinya menyala — tidak ada `webhookKey`
+> mengabsen semua user yang sakelar Otomasinya menyala, tidak ada `webhookKey`
 > yang perlu disalin.

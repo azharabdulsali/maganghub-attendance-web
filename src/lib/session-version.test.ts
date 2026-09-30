@@ -15,7 +15,7 @@ describe("sesiMasihSah", () => {
 
   it("token tanpa versi (sesi lama sebelum fitur ini) dianggap tidak sah", () => {
     // Sesi yang diterbitkan sebelum kolom ini ada tidak punya klaim versi.
-    // Menolaknya memaksa login ulang sekali — pilihan yang aman.
+    // Menolaknya memaksa login ulang sekali, pilihan yang aman.
     expect(sesiMasihSah(undefined, 0)).toBe(false);
     expect(sesiMasihSah(null, 0)).toBe(false);
   });

@@ -1,4 +1,4 @@
-// src/lib/holidays.test.ts — uji daftar libur nasional (data murni, offline).
+// src/lib/holidays.test.ts: uji daftar libur nasional (data murni, offline).
 //
 // Sengaja TIDAK menguji "tanggal X pasti libur menurut SKB" (itu data yang bisa
 // berubah); yang diuji adalah INVARIAN: format tanggal sah, tak ada duplikat,

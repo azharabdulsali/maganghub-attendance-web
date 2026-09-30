@@ -1,4 +1,4 @@
-// src/lib/automation.test.ts — uji aturan otomasi (murni).
+// src/lib/automation.test.ts: uji aturan otomasi (murni).
 
 import { describe, it, expect } from "vitest";
 

@@ -1,4 +1,4 @@
-// src/app/api/account/sessions/revoke/route.ts — cabut semua sesi perangkat lain.
+// src/app/api/account/sessions/revoke/route.ts: cabut semua sesi perangkat lain.
 //
 // Sesi aplikasi ini memakai JWT, jadi tidak ada daftar sesi yang bisa dihapus
 // satu per satu. Sebagai gantinya, `User.sessionVersion` dinaikkan: seluruh JWT

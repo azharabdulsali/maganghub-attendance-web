@@ -1,4 +1,4 @@
-// Tes performSubmit() — inti yang dipakai bersama route manual & cron.
+// Tes performSubmit(), inti yang dipakai bersama route manual & cron.
 //
 // Mengapa tes ini ada: sebelum refactor, logika ini tersalin di dua route dan
 // TIDAK tercakup tes orkestrasi (submit-service.test.ts hanya menguji unit
@@ -71,7 +71,7 @@ beforeEach(() => {
   submitLogCreateMock.mockResolvedValue({});
 });
 
-describe("performSubmit — kesiapan", () => {
+describe("performSubmit, kesiapan", () => {
   it("tanggal tidak sah → BAD_DATE, jaringan tidak disentuh", async () => {
     const out = await performSubmit(base({ date: "bukan-tanggal" }));
     expect(out.kind).toBe("BAD_DATE");
@@ -108,7 +108,7 @@ describe("performSubmit — kesiapan", () => {
   });
 });
 
-describe("performSubmit — gerbang ALLOW_LIVE_SUBMIT", () => {
+describe("performSubmit, gerbang ALLOW_LIVE_SUBMIT", () => {
   it("gerbang mati → DRY_RUN, jaringan tidak disentuh", async () => {
     delete process.env.ALLOW_LIVE_SUBMIT;
     const out = await performSubmit(base());
@@ -131,7 +131,7 @@ describe("performSubmit — gerbang ALLOW_LIVE_SUBMIT", () => {
   });
 });
 
-describe("performSubmit — token & pengiriman", () => {
+describe("performSubmit, token & pengiriman", () => {
   it("dekripsi token gagal → TOKEN_UNREADABLE + dicatat FAILED", async () => {
     decryptMock.mockImplementation(() => {
       throw new Error("bad key");
@@ -227,7 +227,7 @@ describe("performSubmit — token & pengiriman", () => {
   });
 });
 
-describe("performSubmit — access token hasil login otomatis", () => {
+describe("performSubmit, access token hasil login otomatis", () => {
   /** Kredensial lengkap dengan access token yang masih segar. */
   const CRED_ACCESS = {
     ...CRED,

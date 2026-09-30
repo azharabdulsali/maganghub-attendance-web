@@ -46,7 +46,7 @@ export default function CredentialsForm({
   const router = useRouter();
   const toast = useToast();
 
-  // Kalau sudah ada kredensial, form disembunyikan dulu — supaya tidak
+  // Kalau sudah ada kredensial, form disembunyikan dulu, supaya tidak
   // sengaja/tidak sengaja menimpa password yang sudah benar.
   const [mode, setMode] = useState<"lihat" | "isi">(
     hasExisting ? "lihat" : "isi",
@@ -59,7 +59,7 @@ export default function CredentialsForm({
   const [loading, setLoading] = useState(false);
   const [confirmHapusOpen, setConfirmHapusOpen] = useState(false);
 
-  // --- Login otomatis (Opsi A — docs/MONEV-API.md §7) ---
+  // --- Login otomatis (Opsi A, docs/MONEV-API.md §7) ---
   const [loginMsg, setLoginMsg] = useState<string | null>(null);
   const [loginState, setLoginState] = useState<
     "idle" | "ok" | "rejected" | "error"
@@ -200,7 +200,7 @@ export default function CredentialsForm({
           <CardHeader>
             <CardTitle>Kredensial tersimpan</CardTitle>
             <CardDescription>
-              Password tidak bisa ditampilkan kembali — hanya bisa diganti.
+              Password tidak bisa ditampilkan kembali, hanya bisa diganti.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -301,7 +301,7 @@ export default function CredentialsForm({
         </Card>
       )}
 
-      {/* Login otomatis — jalur utama (Opsi A, docs/MONEV-API.md §7). Server
+      {/* Login otomatis, jalur utama (Opsi A, docs/MONEV-API.md §7). Server
           yang login ke SSO memakai kredensial tersimpan; pengguna tidak perlu
           menyentuh DevTools. Hanya menyimpan sesi, tidak mengirim laporan. */}
       <Card>

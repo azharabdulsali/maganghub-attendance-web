@@ -1,4 +1,4 @@
-// src/app/api/cron/submit/route.ts — webhook pemicu otomasi (SPEC.md §7, §10, §11B).
+// src/app/api/cron/submit/route.ts: webhook pemicu otomasi (SPEC.md §7, §10, §11B).
 //
 // Dipanggil layanan cron eksternal (mis. cron-job.org) tiap hari. Rahasia
 // (`webhookKey`) boleh dikirim dengan DUA cara:
@@ -37,7 +37,7 @@ import { type SubmitOutcome, performSubmit } from "@/lib/perform-submit";
 import { cronKeyFromRequest } from "@/lib/bearer-token";
 
 /**
- * GET — dipicu cron. Rahasia (`webhookKey`) boleh dikirim lewat
+ * GET, dipicu cron. Rahasia (`webhookKey`) boleh dikirim lewat
  * `Authorization: Bearer <key>` (dianjurkan) ATAU `?key=<key>` (cara lama,
  * dipertahankan agar cron yang sudah terpasang tetap jalan).
  */
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     );
   }
 
-  // Rate limit per IP SEBELUM mencari kunci — meredam penebakan key acak.
+  // Rate limit per IP SEBELUM mencari kunci, meredam penebakan key acak.
   // Dicek lebih dulu agar tak ada percobaan DB untuk permintaan beruntun.
   const ip = clientIpFromHeaders((name) => request.headers.get(name));
   const gate = await enforceRateLimit("cron", rateLimitKey("cron", ip));

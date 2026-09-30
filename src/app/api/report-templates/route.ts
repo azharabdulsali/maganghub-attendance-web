@@ -1,4 +1,4 @@
-// src/app/api/report-templates/route.ts — simpan & baca 3 template laporan.
+// src/app/api/report-templates/route.ts: simpan & baca 3 template laporan.
 //
 // Berbeda dari kredensial, isi template BUKAN rahasia: boleh dikembalikan penuh
 // ke klien supaya pengguna bisa melihat dan mengeditnya. Yang dijaga di sini:
@@ -21,7 +21,7 @@ async function currentUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
-/** GET — isi template milik user yang sedang login. */
+/** GET, isi template milik user yang sedang login. */
 export async function GET() {
   const userId = await currentUserId();
   if (!userId) {
@@ -46,7 +46,7 @@ export async function GET() {
   });
 }
 
-/** PUT — simpan (buat atau ganti) ketiga template milik user yang login. */
+/** PUT, simpan (buat atau ganti) ketiga template milik user yang login. */
 export async function PUT(request: Request) {
   const userId = await currentUserId();
   if (!userId) {
@@ -93,7 +93,7 @@ export async function PUT(request: Request) {
   return NextResponse.json({ ok: true, ...saved }, { status: 200 });
 }
 
-/** DELETE — hapus template milik user yang login. */
+/** DELETE, hapus template milik user yang login. */
 export async function DELETE() {
   const userId = await currentUserId();
   if (!userId) {

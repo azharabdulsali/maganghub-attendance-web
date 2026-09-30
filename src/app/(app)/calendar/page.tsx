@@ -1,4 +1,4 @@
-// src/app/(app)/calendar/page.tsx — kalender kehadiran & laporan (Tahap 7).
+// src/app/(app)/calendar/page.tsx: kalender kehadiran & laporan (Tahap 7).
 //
 // Server component: memeriksa sesi, mengambil SubmitLog + Report milik pengguna
 // untuk SATU bulan (dari `?month=YYYY-MM`), lalu merender kisi kalender. Seluruh
@@ -7,7 +7,7 @@
 // Prinsip:
 //   - Hanya baca data milik sendiri (difilter userId). Admin melihat kalender
 //     SENDIRI, sama seperti pengguna biasa.
-//   - Jujur: sel tanpa data tampil "—". Tidak ada klaim "terkirim" dari data
+//   - Jujur: sel tanpa data tampil ",". Tidak ada klaim "terkirim" dari data
 //     yang tidak ada.
 
 import { redirect } from "next/navigation";
@@ -62,7 +62,7 @@ const STATUS_TEXT: Record<DayStatus, string> = {
   NONE: "Belum diisi",
 };
 
-/** Kelas Tailwind per status — SATU-satunya peta warna kalender. */
+/** Kelas Tailwind per status, SATU-satunya peta warna kalender. */
 const STATUS_CELL_CLASS: Record<DayStatus, string> = {
   SUBMITTED: "bg-main text-main-foreground border-border",
   FAILED: "bg-foreground text-background border-border",
@@ -126,7 +126,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const weeks = buildMonthGrid(month);
   const totalDays = daysInMonth(month);
 
-  // Ringkasan bulan ini — dihitung dari kisi, bukan query tambahan.
+  // Ringkasan bulan ini, dihitung dari kisi, bukan query tambahan.
   const counts: Record<DayStatus, number> = {
     SUBMITTED: 0,
     FAILED: 0,
@@ -263,7 +263,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                         {holiday
                           ? HOLIDAY_LABEL[holiday]
                           : status === "NONE"
-                            ? "—"
+                            ? ","
                             : STATUS_TEXT[status]}
                       </span>
                     </div>
@@ -294,7 +294,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         Tanggal dihitung memakai zona Asia/Jakarta. Hanya pengiriman{" "}
         <strong>sukses</strong> yang ditandai terkirim; percobaan duplikat saja
         tetap tampil sebagai draft/belum diisi. Sel bergaris putus-putus adalah{" "}
-        <strong>akhir pekan atau libur nasional</strong> — pada hari itu laporan
+        <strong>akhir pekan atau libur nasional</strong>, pada hari itu laporan
         tidak perlu dikirim.
       </p>
     </div>

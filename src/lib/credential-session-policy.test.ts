@@ -1,4 +1,4 @@
-// src/lib/credential-session-policy.test.ts — uji aturan MURNI sesi login.
+// src/lib/credential-session-policy.test.ts: uji aturan MURNI sesi login.
 //
 // Sengaja tidak menyentuh Prisma/env: bagian yang berinteraksi DB diuji lewat
 // integrasi/manual, bukan di unit test tanpa database.

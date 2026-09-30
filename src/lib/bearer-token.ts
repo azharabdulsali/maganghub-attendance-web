@@ -1,4 +1,4 @@
-// src/lib/bearer-token.ts — pembaca rahasia dari header Authorization (murni).
+// src/lib/bearer-token.ts: pembaca rahasia dari header Authorization (murni).
 //
 // Kenapa ada: beberapa endpoint dijaga oleh rahasia bearer (`/api/cron/run-all`
 // memakai `CRON_SECRET`, `/api/cron/submit` menerima `webhookKey`). Mengirim
@@ -30,8 +30,8 @@ export function bearerTokenFrom(authorization: string | null): string | null {
  * Ambil rahasia webhook cron dari sebuah permintaan.
  *
  * Prioritas (best practice + kompatibilitas mundur):
- *   1. `Authorization: Bearer <key>`  — cara yang dianjurkan.
- *   2. `?key=<key>` di query string   — cara lama, DIPERTAHANKAN agar cron yang
+ *   1. `Authorization: Bearer <key>`, cara yang dianjurkan.
+ *   2. `?key=<key>` di query string, cara lama, DIPERTAHANKAN agar cron yang
  *      sudah dipasang pengguna tetap jalan (deprecation bertahap, bukan
  *      pemutusan mendadak).
  *

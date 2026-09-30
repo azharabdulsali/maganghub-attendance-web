@@ -2,13 +2,13 @@
 //
 // Server component: kutipan singkat "Riwayat Laporan Terakhir" di bawah halaman
 // Template Laporan. Sumbernya SAMA dengan halaman /history, yaitu
-// tabel SubmitLog — setiap percobaan kirim (sukses, sudah-ada, gagal) tercatat
+// tabel SubmitLog, setiap percobaan kirim (sukses, sudah-ada, gagal) tercatat
 // di sana sesuai SPEC.md §7 & §10.
 //
 // Kenapa bukan "draft": proyek ini tidak menyimpan draft per tanggal. Model
 // `Report` ada di skema, tetapi belum pernah ditulis oleh alur mana pun (tidak
 // ada /api/reports/draft). Menampilkan baris "Draft" di sini hanya akan
-// mengarang data. Maka yang ditampilkan adalah percobaan submit nyata — sama
+// mengarang data. Maka yang ditampilkan adalah percobaan submit nyata, sama
 // seperti halaman riwayat lengkap.
 //
 // Batas tanggung jawab: komponen ini hanya MEMBACA 5 baris terakhir dan
@@ -35,10 +35,10 @@ const RECENT_LIMIT = 5;
 /**
  * Teks isi laporan dalam sel tabel. Dipangkas agar tabel tidak melebar liar;
  * teks utuh tetap tersedia lewat atribut `title` (tooltip). Nilai kosong
- * ditampilkan sebagai "—" supaya tidak ada sel yang tampak rusak/kosong.
+ * ditampilkan sebagai "," supaya tidak ada sel yang tampak rusak/kosong.
  */
 function ReportCell({ text, title }: { text: string; title?: string }) {
-  if (!text) return <span className="text-foreground/40">—</span>;
+  if (!text) return <span className="text-foreground/40">,</span>;
   return (
     <span className="line-clamp-3 block" title={title ?? text}>
       {text}
@@ -52,7 +52,7 @@ function MobileField({ label, value }: { label: string; value?: string }) {
     <div>
       <dt className="text-[0.7rem] font-heading text-foreground/50">{label}</dt>
       <dd className="text-xs leading-relaxed text-foreground/80">
-        {value || <span className="text-foreground/40">—</span>}
+        {value || <span className="text-foreground/40">,</span>}
       </dd>
     </div>
   );
@@ -91,7 +91,7 @@ export default async function RecentSubmitHistory({
         <div>
           <h2 className="font-heading text-lg">Riwayat Laporan Terakhir</h2>
           <p className="mt-0.5 text-xs text-foreground/60">
-            Catatan percobaan kirim terakhir ke portal Monev — sukses, sudah-ada,
+            Catatan percobaan kirim terakhir ke portal Monev, sukses, sudah-ada,
             maupun gagal. Tidak ada data yang diubah dari halaman ini.
           </p>
         </div>
@@ -137,10 +137,10 @@ export default async function RecentSubmitHistory({
                   <p className="text-xs leading-relaxed text-foreground/70">
                     {describeTrigger(log.trigger)}
                     {log.attempt > 1 && ` (ke-${log.attempt})`}
-                    {log.message ? ` — ${log.message}` : ""}
+                    {log.message ? `, ${log.message}` : ""}
                   </p>
 
-                  {/* Isi laporan: tiga bagian. "—" bila belum tersimpan. */}
+                  {/* Isi laporan: tiga bagian. "," bila belum tersimpan. */}
                   <dl className="space-y-1.5 border-t border-border/40 pt-2">
                     <MobileField
                       label="Uraian Aktivitas"
@@ -162,7 +162,7 @@ export default async function RecentSubmitHistory({
 
           {/* Desktop: tabel. Keterangan dipecah menjadi tiga kolom isi laporan
               (Uraian Aktivitas / Pembelajaran / Kendala) yang diambil dari
-              tabel Report — isi yang benar-benar dikirim ke portal. Pesan
+              tabel Report, isi yang benar-benar dikirim ke portal. Pesan
               submit singkat dipindah ke tooltip judul sel agar tabel tetap
               lapang. */}
           <div
@@ -203,7 +203,7 @@ export default async function RecentSubmitHistory({
                     </td>
                     {/* Kolom isi laporan. Bila relasi Report belum ada (log
                         lama sebelum fitur ini, atau tanggal tidak sah saat
-                        simpan), tampilkan "—" secara jujur, bukan mengarang. */}
+                        simpan), tampilkan "," secara jujur, bukan mengarang. */}
                     <td className="max-w-xs p-3 text-xs text-foreground/80">
                       {log.report ? (
                         <ReportCell
@@ -211,21 +211,21 @@ export default async function RecentSubmitHistory({
                           title={log.message ?? undefined}
                         />
                       ) : (
-                        <span className="text-foreground/40">—</span>
+                        <span className="text-foreground/40">,</span>
                       )}
                     </td>
                     <td className="max-w-xs p-3 text-xs text-foreground/80">
                       {log.report ? (
                         <ReportCell text={log.report.learning} />
                       ) : (
-                        <span className="text-foreground/40">—</span>
+                        <span className="text-foreground/40">,</span>
                       )}
                     </td>
                     <td className="max-w-xs p-3 text-xs text-foreground/80">
                       {log.report ? (
                         <ReportCell text={log.report.obstacles} />
                       ) : (
-                        <span className="text-foreground/40">—</span>
+                        <span className="text-foreground/40">,</span>
                       )}
                     </td>
                   </tr>

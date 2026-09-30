@@ -1,4 +1,4 @@
-// src/app/api/credentials/verify/route.ts — "Tes Koneksi" ke portal Monev.
+// src/app/api/credentials/verify/route.ts: "Tes Koneksi" ke portal Monev.
 //
 // Alur (docs/MONEV-API.md §6, Opsi C1 §7):
 //   1. Pengguna menempel `monev_refresh_token` dari DevTools.
@@ -19,7 +19,7 @@ import { encrypt, decrypt } from "@/lib/crypto";
 import { monevTokenSchema } from "@/lib/validate";
 import { verifySession } from "@/lib/monev-client";
 
-/** POST — simpan token (bila dikirim) lalu uji ke portal. */
+/** POST, simpan token (bila dikirim) lalu uji ke portal. */
 export async function POST(request: Request) {
   const session = await auth();
   const userId = session?.user?.id;
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
   const result = await verifySession(tokenToCheck);
 
   // Simpan token baru HANYA setelah diuji, dan hanya bila bukan ERROR jaringan
-  // (kalau jaringan gagal, token belum terbukti apa-apa — jangan klaim tersimpan).
+  // (kalau jaringan gagal, token belum terbukti apa-apa, jangan klaim tersimpan).
   if (isNewToken && result.status !== "ERROR") {
     const enc = encrypt(tokenToCheck);
     try {
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
   return NextResponse.json(toResponse(result), { status: 200 });
 }
 
-/** Email yang sudah tersimpan (bila ada) — untuk tidak menimpa dengan placeholder. */
+/** Email yang sudah tersimpan (bila ada), untuk tidak menimpa dengan placeholder. */
 async function existingEmail(userId: string): Promise<string | null> {
   const row = await prisma.maganghubCredential.findUnique({
     where: { userId },

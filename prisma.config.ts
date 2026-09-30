@@ -1,4 +1,4 @@
-// prisma.config.ts — konfigurasi Prisma CLI (Prisma 7).
+// prisma.config.ts: konfigurasi Prisma CLI (Prisma 7).
 //
 // CATATAN PENTING (baca sebelum mengubah):
 // Prisma 7 memindahkan URL koneksi KELUAR dari schema.prisma. Karena itu:

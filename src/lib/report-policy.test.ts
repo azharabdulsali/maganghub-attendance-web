@@ -1,8 +1,8 @@
-// src/lib/report-policy.test.ts — uji aturan bisnis SPEC.md §11B.
+// src/lib/report-policy.test.ts: uji aturan bisnis SPEC.md §11B.
 //
 // Aturan ini menentukan KAPAN server boleh menyentuh portal. Salah di sini
 // berarti mengirim laporan di hari libur, atau terus berjalan setelah program
-// berakhir (2027-02-10) — keduanya tidak bisa diterima. Semua murni, tidak ada
+// berakhir (2027-02-10), keduanya tidak bisa diterima. Semua murni, tidak ada
 // jaringan.
 
 import { describe, it, expect } from "vitest";
@@ -64,7 +64,7 @@ describe("isHoliday / isWorkingDay", () => {
   });
 });
 
-describe("decide — keputusan utama", () => {
+describe("decide, keputusan utama", () => {
   it("ALLOW pada hari kerja sebelum batas akhir", () => {
     expect(decide("2026-09-22")).toBe("ALLOW"); // Selasa
   });
@@ -79,7 +79,7 @@ describe("decide — keputusan utama", () => {
     expect(decide(LAST_ACTIVE_DATE)).toBe("ALLOW");
   });
   it("PROGRAM_ENDED diperiksa lebih dulu daripada libur akhir pekan", () => {
-    // 2027-02-13 adalah Sabtu SETELAH batas — harus PROGRAM_ENDED, bukan SKIPPED.
+    // 2027-02-13 adalah Sabtu SETELAH batas, harus PROGRAM_ENDED, bukan SKIPPED.
     expect(decide("2027-02-13")).toBe("PROGRAM_ENDED");
   });
   it("melempar pada tanggal tidak sah", () => {

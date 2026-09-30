@@ -1,4 +1,4 @@
-// src/lib/har-capture.test.ts — uji analisis rekaman HAR/curl.
+// src/lib/har-capture.test.ts: uji analisis rekaman HAR/curl.
 //
 // Modul ini tidak menyentuh jaringan; uji ini pun begitu. Yang diverifikasi
 // adalah janji keamanannya: nilai rahasia (token/cookie/password) tidak boleh
@@ -161,7 +161,7 @@ describe("analyzeHar", () => {
   });
 });
 
-describe("analyzeCapture — deteksi otomatis", () => {
+describe("analyzeCapture, deteksi otomatis", () => {
   it("mengarahkan JSON ke analyzeHar", () => {
     expect(analyzeCapture('{"log":{"entries":[]}}').candidates).toEqual([]);
   });

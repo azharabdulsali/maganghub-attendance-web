@@ -3,7 +3,7 @@ import { jakartaISODate, lastJakartaDays, startOfJakartaDay } from "@/lib/calend
 import type { Stat } from "./stats-cards";
 
 // Perhitungan statistik dashboard. Semua query di sini hanya MEMBACA dan
-// difilter per userId — tidak ada agregasi lintas pengguna. Lihat SPEC.md §5.6.
+// difilter per userId, tidak ada agregasi lintas pengguna. Lihat SPEC.md §5.6.
 
 export type TrendPoint = { date: string; success: number; failed: number };
 
@@ -54,7 +54,7 @@ export async function getDashboardStats(
 
   // Grafik: rangkai 30 hari penuh (berakhir HARI INI di WIB), isi 0 untuk hari
   // tanpa log, agar garis waktu tidak bolong saat beberapa hari tidak ada
-  // aktivitas. `lastJakartaDays` dari lib/calendar — sumber batas hari WIB yang
+  // aktivitas. `lastJakartaDays` dari lib/calendar, sumber batas hari WIB yang
   // sama dengan /calendar, jadi hari ini tidak pernah "hilang".
   const perDay = new Map<string, TrendPoint>();
   for (const day of lastJakartaDays(30, now)) {

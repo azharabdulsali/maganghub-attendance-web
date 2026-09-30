@@ -1,16 +1,16 @@
-// src/lib/credential-session.ts — simpan sesi Monev hasil login otomatis.
+// src/lib/credential-session.ts: simpan sesi Monev hasil login otomatis.
 //
 // Dipakai oleh POST /api/credentials/login setelah runLoginFlow berhasil.
 // Dipisah dari route supaya bisa diuji tanpa menjalankan server.
 //
 // Dua jenis token disimpan, keduanya terenkripsi AES-256-GCM dan di KOLOM
 // TERPISAH (jangan campur dengan password):
-//   - refresh token (`tokenCiphertext`) — sesi 30 hari, cookie monev_refresh_token.
+//   - refresh token (`tokenCiphertext`), sesi 30 hari, cookie monev_refresh_token.
 //     Hanya ada bila portal mengirimkannya saat callback.
-//   - access token (`accessCiphertext`) — Bearer 6 jam, dipakai untuk submit.
+//   - access token (`accessCiphertext`), Bearer 6 jam, dipakai untuk submit.
 //     Umur disimpan di `accessExpiresAt` supaya bisa tahu kapan kedaluwarsa.
 //
-// ATURAN: fungsi di sini hanya mengembalikan status ringkas (ada/tidak) —
+// ATURAN: fungsi di sini hanya mengembalikan status ringkas (ada/tidak),
 // TIDAK pernah token mentah.
 
 import { prisma } from "./prisma";
@@ -21,7 +21,7 @@ import { ACCESS_TTL_MS } from "./credential-session-policy";
 export type SaveLoginResult = {
   /** True bila refresh token (30 hari) juga tersimpan. */
   hasRefreshToken: boolean;
-  /** Selalu true bila fungsi ini sukses — access token pasti tersimpan. */
+  /** Selalu true bila fungsi ini sukses, access token pasti tersimpan. */
   hasAccessToken: boolean;
   /** Kapan access token diperkirakan kedaluwarsa. */
   accessExpiresAt: Date;
@@ -31,7 +31,7 @@ export type SaveLoginResult = {
  * Simpan hasil login otomatis ke kredensial milik `userId`.
  *
  * Wajib sudah ada baris kredensial (dibuat oleh PUT /api/credentials).
- * Bila belum ada, ini kesalahan program — lempar, jangan diam-diam membuat.
+ * Bila belum ada, ini kesalahan program, lempar, jangan diam-diam membuat.
  */
 export async function saveLoginSession(
   userId: string,
@@ -41,7 +41,7 @@ export async function saveLoginSession(
   const access = encrypt(tokens.accessToken);
 
   // Refresh token bersifat opsional: kalau tidak ada, kolom token lama
-  // DIBIARKAN apa adanya (jangan dihapus) — mungkin masih valid 30 hari.
+  // DIBIARKAN apa adanya (jangan dihapus), mungkin masih valid 30 hari.
   const refresh = tokens.refreshToken ? encrypt(tokens.refreshToken) : null;
 
   const saved = await prisma.maganghubCredential.update({
