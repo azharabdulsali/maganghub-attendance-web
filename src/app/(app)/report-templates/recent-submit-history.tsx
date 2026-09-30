@@ -165,7 +165,12 @@ export default async function RecentSubmitHistory({
               tabel Report — isi yang benar-benar dikirim ke portal. Pesan
               submit singkat dipindah ke tooltip judul sel agar tabel tetap
               lapang. */}
-          <div className="mt-4 hidden overflow-x-auto sm:block">
+          <div
+            className="mt-4 hidden overflow-x-auto sm:block"
+            role="region"
+            aria-label="Tabel riwayat laporan terakhir (dapat digulir)"
+            tabIndex={0}
+          >
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b-2 border-border text-left text-xs text-foreground/60">

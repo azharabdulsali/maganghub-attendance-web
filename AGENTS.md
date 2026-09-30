@@ -101,6 +101,10 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
 - Proyek ini memakai **`prisma db push`**, bukan migrasi (tidak ada folder
   `prisma/migrations`). Per 2026-09, **9 tabel sudah ada di Neon** dan cocok
   dengan 9 model di schema.
+  - **Tambahan kolom (bukan tabel):** `User.sessionVersion` (fitur invalidasi
+    sesi, SPEC.md §5.8b). Menambah kolom tetap butuh `npm run db:push` supaya
+    schema Neon ikut berubah — jalankan **sebelum** deploy kode yang memakainya,
+    kalau tidak semua query `User` akan gagal.
 - Klien hasil generate berformat **TypeScript** di `src/generated/prisma/`
   (`client.ts`, bukan `index.js`).
 

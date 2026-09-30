@@ -65,6 +65,12 @@ model User {
   role          Role      @default(USER)
   emailVerified DateTime?
   image         String?
+  // Penanda generasi sesi. Nilai ini disalin ke JWT saat login; pada setiap
+  // permintaan, callback `jwt` membandingkannya dengan nilai di DB. Bila
+  // berbeda, token dianggap batal. Menaikkan angka ini mengeluarkan SEMUA
+  // sesi yang beredar — dipakai saat ganti kata sandi (selain sesi yang
+  // sedang dipakai) dan tombol "keluar dari semua perangkat".
+  sessionVersion Int      @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

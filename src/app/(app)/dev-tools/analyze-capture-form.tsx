@@ -178,7 +178,11 @@ export default function AnalyzeCaptureForm() {
                   </div>
                 </dl>
                 {c.responseSnippet && (
-                  <pre className="mt-2 max-h-40 overflow-auto rounded-base border-2 border-border bg-secondary-background p-2 text-xs">
+                  <pre
+                    tabIndex={0}
+                    aria-label="Cuplikan respons (dapat digulir)"
+                    className="mt-2 max-h-40 overflow-auto rounded-base border-2 border-border bg-secondary-background p-2 text-xs"
+                  >
                     {c.responseSnippet}
                   </pre>
                 )}

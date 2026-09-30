@@ -143,7 +143,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           {users.length === 0 ? (
             <p className="text-sm text-foreground/70">Belum ada pengguna.</p>
           ) : (
-            <div className="-mx-3 overflow-x-auto">
+            <div
+              className="-mx-3 overflow-x-auto"
+              role="region"
+              aria-label="Tabel daftar pengguna (dapat digulir)"
+              tabIndex={0}
+            >
               <table className="w-full min-w-[52rem] border-collapse text-left">
                 <thead>
                   <tr className="border-b border-border/60">
@@ -243,7 +248,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               Tidak ada catatan audit untuk filter ini.
             </p>
           ) : (
-            <div className="-mx-3 overflow-x-auto">
+            <div
+              className="-mx-3 overflow-x-auto"
+              role="region"
+              aria-label="Tabel audit lintas pengguna (dapat digulir)"
+              tabIndex={0}
+            >
               <table className="w-full min-w-[48rem] border-collapse text-left">
                 <thead>
                   <tr className="border-b border-border/60">

@@ -8,12 +8,15 @@
 // (`changePasswordSchema`). Setelah sukses, kolom dikosongkan.
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { FieldError } from "@/components/ui/field-error";
 import { Message } from "@/components/ui/message";
+import { PasswordStrength } from "@/components/ui/password-strength";
 import { useToast } from "@/components/ui/toast";
+import { hitungKekuatan } from "@/lib/password-strength";
 
 const MIN_PASSWORD = 8;
 
@@ -25,10 +28,12 @@ export default function PasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const toast = useToast();
+  const { update } = useSession();
 
   const terlaluPendek = next.length > 0 && next.length < MIN_PASSWORD;
   const tidakCocok = confirm.length > 0 && next !== confirm;
   const samaDenganLama = next.length > 0 && next === current;
+  const kekuatan = hitungKekuatan(next);
   const lengkap =
     current.length > 0 && next.length >= MIN_PASSWORD && next === confirm;
   async function simpan() {
@@ -46,7 +51,7 @@ export default function PasswordForm() {
         }),
       });
       const data = (await res.json().catch(() => null)) as
-        | { error?: string }
+        | { error?: string; sessionVersion?: number }
         | null;
       if (!res.ok) {
         const pesan = data?.error ?? "Gagal mengubah kata sandi";
@@ -54,11 +59,21 @@ export default function PasswordForm() {
         toast.error("Gagal mengubah kata sandi", pesan);
         return;
       }
+      // Server menaikkan `sessionVersion`, yang mencabut semua sesi LAIN.
+      // Sesi yang sedang dipakai diperbarui ke versi baru supaya tidak ikut
+      // ter-logout. Kalau pembaruan ini gagal, sesi berlaku tetap sah sampai
+      // permintaan berikutnya — bukan kegagalan diam yang berbahaya.
+      if (typeof data?.sessionVersion === "number") {
+        await update({ sessionVersion: data.sessionVersion });
+      }
       setCurrent("");
       setNext("");
       setConfirm("");
       setSaved(true);
-      toast.success("Kata sandi diubah", "Gunakan kata sandi baru saat login berikutnya.");
+      toast.success(
+        "Kata sandi diubah",
+        "Perangkat lain telah dikeluarkan. Gunakan kata sandi baru saat login berikutnya.",
+      );
     } catch {
       const pesan = "Tidak bisa menghubungi server. Coba lagi.";
       setError(pesan);
@@ -111,6 +126,11 @@ export default function PasswordForm() {
             setSaved(false);
           }}
         />
+        <PasswordStrength
+          skor={kekuatan.skor}
+          level={kekuatan.level}
+          saran={kekuatan.saran}
+        />
         {terlaluPendek && (
           <FieldError id="new-password-error">
             Kata sandi baru minimal {MIN_PASSWORD} karakter.
@@ -145,7 +165,17 @@ export default function PasswordForm() {
       </div>
 
       {error && <Message tone="bad">{error}</Message>}
-      {saved && <Message tone="good">Kata sandi berhasil diubah.</Message>}
+      {saved && (
+        <Message tone="good">
+          Kata sandi berhasil diubah. Semua perangkat lain telah dikeluarkan.
+        </Message>
+      )}
+
+      <Message tone="neutral" role={undefined} aria-live={undefined}>
+        Mengubah kata sandi <strong>mengeluarkan</strong> Anda dari semua
+        perangkat lain yang masih masuk. Perangkat ini tetap aktif — Anda tidak
+        perlu login ulang di sini.
+      </Message>
 
       <div>
         <Button type="submit" disabled={saving || !lengkap || samaDenganLama}>

@@ -105,8 +105,10 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 ## 4. Profil
 
 - Halaman: `src/app/(app)/profile/page.tsx` (server) + `profile-form.tsx` (klien)
-  + `password-form.tsx` (klien, ubah kata sandi).
-- **Yang bisa diubah pengguna:** nama tampilan, dan kata sandi sendiri.
+  + `password-form.tsx` (klien, ubah kata sandi)
+  + `revoke-sessions-button.tsx` (klien, keluar dari perangkat lain).
+- **Yang bisa diubah pengguna:** nama tampilan, kata sandi sendiri, dan
+  mencabut sesi di perangkat lain.
 - **Read-only:** email (identitas login), peran, tanggal bergabung.
 - **Status kredensial Monev** ditampilkan sebagai *label* (`ACTIVE`,
   `UNVERIFIED`, `INVALID`) — **tidak pernah** isi token atau password.
@@ -118,6 +120,14 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
   reset** — pembuktiannya kata sandi lama (`bcrypt.compare`). Rate limit scope
   `passwordChange` (5/10 menit per pengguna). Hash baru memakai bcrypt cost 12,
   sama dengan register & login. Respons tidak pernah mengembalikan hash.
+  Respons mengembalikan `sessionVersion` baru; klien memakainya untuk
+  memperbarui sesinya sendiri lewat `useSession().update()`.
+- **Perangkat lain:** kartu "Perangkat lain" memanggil
+  `POST /api/account/sessions/revoke`
+  (`src/app/api/account/sessions/revoke/route.ts`). Rate limit scope
+  `sessionRevoke` (5/10 menit per pengguna). Konfirmasi dua langkah.
+- **Invalidasi sesi** (kedua pemicu di atas) memakai `User.sessionVersion` +
+  pemeriksaan di callback `jwt` — penjelasan lengkap di `SPEC.md` §5.8b.
 
 ---
 
@@ -126,7 +136,7 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 ```powershell
 npm run typecheck   # tipe
 npm run lint        # gaya
-npm test            # 391 tes (logika tak berubah)
+npm test            # 406 tes (logika tak berubah)
 npm run build       # daftar rute harus benar
 ```
 
@@ -190,6 +200,14 @@ ikon `TriangleAlert` (aturan 3), ukuran/`role="alert"` yang seragam, dan tetap
 menerima `id` untuk `aria-describedby`. Dengan begitu semua form memakai pola
 validasi yang sama tanpa perlu menyalin kelas CSS.
 
+**Indikator kekuatan kata sandi: pakai `<PasswordStrength>`** dengan
+`hitungKekuatan()` dari `src/lib/password-strength.ts`. Pasang di bawah kolom
+kata sandi **baru** (register, ubah kata sandi). Fungsinya murni (tanpa I/O)
+supaya bisa diuji, dan hanya memberi umpan balik — **bukan** aturan keras,
+karena pengguna tidak bisa memulihkan akun lewat email. Bilah memakai token
+warna (`bg-destructive` / `bg-main` / `bg-success`) dan teks label, jadi tidak
+bergantung pada warna saja.
+
 **Nada warna (token, bukan warna mentah):** `text-destructive` untuk gagal,
 `text-success` untuk "berhasil" dalam teks/ikon, `bg-success` untuk bagian
 grafik yang berhasil, `bg-main text-main-foreground` untuk blok sukses penuh
@@ -198,6 +216,29 @@ netral. Token `--success` didefinisikan di `src/app/globals.css` (terang untuk
 mode terang, lebih muda untuk mode gelap). **Jangan** memakai kelas Tailwind
 mentah seperti `text-red-600` / `bg-emerald-500` — kalau tema berubah,
 warna-warna itu tidak ikut berubah.
+
+**Kontainer yang bisa digulir harus bisa difokus keyboard.** `<div>` dengan
+`overflow-x-auto`/`overflow-auto` **tidak** bisa digulir tanpa tetikus — kolom
+tabel paling kanan jadi tak terjangkau (pelanggaran WCAG 2.1.1). Jadi setiap
+pembungkus gulir yang isinya bukan elemen fokusabel sendiri wajib diberi
+`tabIndex={0}`. Tabel lebar (`min-w-[52rem]`, `min-w-[48rem]`) pasti
+mengalaminya, jadi keduanya di halaman admin sudah diperbaiki. Beri juga
+`role="region"` + `aria-label` supaya area fokusnya diumumkan dengan jelas
+("Tabel … (dapat digulir)"), bukan sekadar "grup". Berlaku juga untuk `<pre>`
+`overflow-auto` di dev-tools.
+
+Pengecualian: kontainer gulir yang isinya **tombol** (mis. strip chip topik di
+halaman docs) tidak perlu `tabIndex` — tombol sudah fokusabel, dan Tab akan
+menggulir chip ke dalam pandangan otomatis. Menambah `tabIndex` di situ justru
+menambah perhentian Tab yang membingungkan.
+
+**Tautan "lompat ke konten utama".** Setiap halaman di grup `(app)` diawali
+sidebar 6 menu — di layar kecil tombol hamburger lebih dulu. Tanpa tautan ini
+pengguna keyboard/pembaca layar harus melewati seluruh navigasi di **setiap**
+perpindahan halaman. Tautan tunggal diletakkan di `src/app/(app)/layout.tsx`
+(`sr-only`, muncul saat `focus:`) dan menunjuk `#konten` — yang dipasang di
+`<main id="konten">`. Satu perbaikan berlaku untuk semua halaman terlindungi;
+halaman publik (`/`, `/login`, `/register`) tidak memakainya.
 
 ---
 

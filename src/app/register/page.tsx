@@ -6,8 +6,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordStrength } from "@/components/ui/password-strength";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
+import { hitungKekuatan } from "@/lib/password-strength";
 import {
   Card,
   CardContent,
@@ -24,6 +26,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const kekuatan = hitungKekuatan(password);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -103,6 +106,11 @@ export default function RegisterPage() {
                 placeholder="Minimal 8 karakter"
                 aria-invalid={error !== null}
                 aria-describedby={error ? "register-error" : undefined}
+              />
+              <PasswordStrength
+                skor={kekuatan.skor}
+                level={kekuatan.level}
+                saran={kekuatan.saran}
               />
             </div>
 

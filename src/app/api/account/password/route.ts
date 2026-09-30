@@ -92,12 +92,19 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST);
-  await prisma.user.update({
+  // Menaikkan `sessionVersion` mencabut SEMUA sesi lain yang beredar (token
+  // lama tak lagi cocok dengan DB → callback `jwt` mengembalikan null).
+  // Versi baru dikembalikan supaya klien bisa memperbarui sesinya sendiri
+  // lewat `useSession().update({ sessionVersion })`, sehingga pengguna yang
+  // sedang mengganti sandi TIDAK ikut ter-logout.
+  const updated = await prisma.user.update({
     where: { id: userId },
-    data: { passwordHash },
+    data: { passwordHash, sessionVersion: { increment: 1 } },
+    select: { sessionVersion: true },
   });
 
-  // Tidak ada token/hash yang dikembalikan. Sesi yang berjalan tetap sah (JWT),
-  // jadi pengguna tidak perlu login ulang.
-  return NextResponse.json({ ok: true }, { status: 200 });
+  return NextResponse.json(
+    { ok: true, sessionVersion: updated.sessionVersion },
+    { status: 200 },
+  );
 }

@@ -17,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { env, isAdminEmail } from "@/lib/env";
 import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
+import { sesiMasihSah, versiSesiDariKlien } from "@/lib/session-version";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -74,16 +75,58 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
+          // Disalin ke JWT agar callback `jwt` bisa mengecek generasi sesi
+          // tanpa query tambahan di jalur login (lihat callback `jwt`).
+          sessionVersion: user.sessionVersion,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Login pertama: salin identitas + generasi sesi dari DB.
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "USER";
+        // `sessionVersion` diambil di `authorize` (bukan di sini) agar tidak
+        // menambah satu query lagi di jalur login.
+        const v = (user as { sessionVersion?: unknown }).sessionVersion;
+        token.sessionVersion = typeof v === "number" ? v : 0;
+        return token;
       }
+
+      // Pembaruan sesi dari klien (`useSession().update(...)`). Dipakai tepat
+      // setelah ganti kata sandi / keluar-perangkat-lain: pemanggil menaikkan
+      // `sessionVersion` di DB lalu mengirim nilai BARU lewat `update()`,
+      // sehingga sesi yang sedang dipakai tidak ikut ter-logout.
+      //
+      // `session` datang dari KLIEN — jangan dipercaya begitu saja. Hanya
+      // terima angka bulat non-negatif; selain itu diabaikan (dan sesi nanti
+      // gagal dicocokkan dengan DB, yang tetap aman).
+      if (trigger === "update") {
+        const v = versiSesiDariKlien(session);
+        if (v !== null) {
+          token.sessionVersion = v;
+        }
+        return token;
+      }
+
+      // Permintaan biasa: pastikan token masih satu generasi dengan DB.
+      // Kalau tidak (mis. kata sandi diganti atau sesi dicabut dari perangkat
+      // lain), kembalikan null supaya Auth.js menghapus cookie sesi ini.
+      const id = token.id as string | undefined;
+      if (!id) return null;
+
+      const current = await prisma.user.findUnique({
+        where: { id },
+        select: { sessionVersion: true },
+      });
+      if (!current) return null;
+
+      if (!sesiMasihSah(token.sessionVersion, current.sessionVersion)) {
+        return null;
+      }
+
       return token;
     },
     async session({ session, token }) {

@@ -258,8 +258,47 @@ ini.
 memanggil `POST /api/account/password`. Pengguna harus memasukkan kata sandi
 lama (diverifikasi `bcrypt.compare`) sebelum hash baru disimpan — ini pengganti
 verifikasi email karena proyek ini tidak mengirim email. Kata sandi baru minimal
-8 karakter, harus sama dengan konfirmasi, dan harus berbeda dari yang lama. Sesi
-JWT yang berjalan tetap sah setelah perubahan.
+8 karakter, harus sama dengan konfirmasi, dan harus berbeda dari yang lama.
+Mengubah kata sandi **mencabut semua sesi di perangkat lain** (lihat §5.8b);
+perangkat yang dipakai mengganti tetap aktif, jadi pengguna tidak perlu login
+ulang di situ. Sebelumnya sesi lain dibiarkan hidup — lihat §11 "Keterbatasan"
+untuk riwayatnya.
+
+### 5.8b Invalidasi sesi (perangkat lain) — `sessionVersion`
+
+Sesi memakai **JWT**, jadi tidak ada daftar sesi yang bisa dihapus satu per
+satu. Invalidasi dilakukan dengan **generasi sesi**:
+
+- `User.sessionVersion Int @default(0)`.
+- Saat login (`authorize`), nilai ini disalin ke klaim JWT `sessionVersion`.
+- Callback `jwt` membandingkan klaim token dengan nilai di DB pada setiap
+  permintaan. Bila berbeda → `return null`, dan Auth.js menghapus cookie sesi
+  itu (perilaku terverifikasi di `@auth/core/lib/actions/session.js`:
+  `if (token !== null) {...} else { sessionStore.clean() }`).
+- Menaikkan `sessionVersion` (`{ increment: 1 }`) mencabut **semua** JWT yang
+  masih memegang versi lama.
+
+Dua pemicu:
+
+1. **Ganti kata sandi** (`POST /api/account/password`) — menaikkan versi, lalu
+   mengembalikan `sessionVersion` baru. Perangkat yang sedang dipakai
+   memperbarui sesinya lewat `useSession().update({ sessionVersion })`, sehingga
+   tidak ikut ter-logout.
+2. **Tombol "Keluar dari semua perangkat lain"** — kartu "Perangkat lain" di
+   `/profile` memanggil `POST /api/account/sessions/revoke` (rate limit 5/10
+   menit, scope `sessionRevoke`). Berkonfirmasi dua langkah karena tidak bisa
+   dibatalkan.
+
+**Keamanan nilai dari klien:** `useSession().update(data)` dikirim lewat
+`POST /api/auth/session` dan tiba di callback `jwt` sebagai `session` saat
+`trigger === "update"`. Karena berasal dari klien, nilainya **tidak dipercaya**:
+hanya angka bulat ≥ 0 diterima (`versiSesiDariKlien`, `src/lib/session-version.ts`).
+Klaim yang menurunkan versi tidak berpengaruh karena permintaan berikutnya tetap
+dicocokkan dengan DB.
+
+**Catatan implementasi:** sesi yang diterbitkan sebelum kolom ini ada tidak
+memiliki klaim `sessionVersion`, sehingga dianggap tidak sah dan memaksa login
+ulang sekali. Ini disengaja (pilihan aman) dan sifatnya sekali saja saat rilis.
 
 ### 5.9 Kalender Kehadiran & Laporan (`/calendar`)
 
@@ -594,6 +633,17 @@ Prinsipnya: **meniru caranya bekerja, bukan cara mengakalinya.**
 - Jangan mengirim request dengan identitas palsu.
 - Jangan menambah dependensi tanpa alasan jelas.
 - Jangan submit untuk hari yang sama dari dua sistem sekaligus.
+
+### Keterbatasan yang diketahui
+- **Invalidasi sesi kini memerlukan satu query DB per permintaan ber-sesi.**
+  Callback `jwt` memeriksa `sessionVersion` ke DB setiap permintaan (§5.8b).
+  Ini harga dari invalidasi lintas perangkat pada strategi JWT. Kelihatannya
+  murah (satu `findUnique` ber-indeks primary key), tetapi tetap layak dipantau
+  bila trafik naik.
+- ~~Sesi lama tidak otomatis berakhir setelah ganti kata sandi.~~ **Sudah
+  teratasi** (fitur `sessionVersion`, §5.8b). Sesi di perangkat lain dicabut saat
+  ganti kata sandi maupun lewat tombol di `/profile`. Catatan: sesi yang terbit
+  sebelum rilis ini memaksa login ulang satu kali.
 
 ---
 ## 11B. Aturan Bisnis (warisan dari proyek Python)

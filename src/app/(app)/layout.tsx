@@ -23,6 +23,7 @@
 
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/app-sidebar";
 
 export default async function AppLayout({
@@ -44,8 +45,28 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-dvh md:flex">
+      {/*
+        Tautan "lompat ke konten": TERSEMBUNYI sampai difokus lewat Tab.
+        Kenapa perlu: setiap halaman di grup ini diawali sidebar 6 menu (di
+        layar kecil bahkan tombol hamburger lebih dulu). Tanpa tautan ini,
+        pengguna keyboard/pembaca layar harus melewati seluruh navigasi di
+        SETIAP perpindahan halaman sebelum tiba di isi. Ini memperbaiki sekaligus
+        semua halaman terlindungi. Lihat docs/UI-LAYOUT.md §5b.
+      */}
+      <a
+        href="#konten"
+        className={cn(
+          "sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100]",
+          "focus:rounded-base focus:border-2 focus:border-border focus:bg-main",
+          "focus:px-3 focus:py-2 focus:font-heading focus:text-sm focus:text-main-foreground",
+        )}
+      >
+        Lompat ke konten utama
+      </a>
       <AppSidebar user={user} />
-      <main className="min-w-0 flex-1">{children}</main>
+      <main id="konten" className="min-w-0 flex-1">
+        {children}
+      </main>
     </div>
   );
 }

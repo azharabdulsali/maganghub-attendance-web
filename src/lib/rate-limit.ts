@@ -174,6 +174,12 @@ export const RATE_LIMITS = {
    * sungguhan — salah password berulang bisa memicu penguncian akun di SSO.
    */
   credentialsLogin: { limit: 6, windowMs: 10 * 60_000 },
+  /**
+   * Cabut semua sesi perangkat lain: 5 / 10 menit per pengguna. Sekali klik
+   * sudah cukup; percobaan berulang hanya membebani DB dan memaksa sesi lain
+   * login ulang berkali-kali tanpa manfaat.
+   */
+  sessionRevoke: { limit: 5, windowMs: 10 * 60_000 },
   /** Pendaftaran: 3 / jam per IP (SPEC.md §8). */
   register: { limit: 3, windowMs: 60 * 60_000 },
 } as const;

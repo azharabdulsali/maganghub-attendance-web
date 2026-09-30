@@ -164,7 +164,12 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
         </Card>
       ) : (
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
+          <div
+            className="overflow-x-auto"
+            role="region"
+            aria-label="Tabel riwayat absensi (dapat digulir)"
+            tabIndex={0}
+          >
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b-2 border-border text-left text-xs text-foreground/60">

@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProfileForm from "./profile-form";
 import PasswordForm from "./password-form";
+import RevokeSessionsButton from "./revoke-sessions-button";
 
 // Label status kredensial dalam bahasa manusia + warna sorot.
 const STATUS_LABEL: Record<string, { teks: string; penting: boolean }> = {
@@ -109,10 +110,24 @@ export default async function ProfilePage() {
         <CardContent>
           <p className="mb-4 text-sm text-foreground/70">
             Ubah kata sandi akun ini. Anda perlu memasukkan kata sandi saat ini
-            untuk mengonfirmasi. Sesi yang sedang berjalan tetap aktif setelah
-            perubahan.
+            untuk mengonfirmasi. Mengubah kata sandi mengeluarkan Anda dari
+            perangkat lain; perangkat ini tetap aktif.
           </p>
           <PasswordForm />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Perangkat lain</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <p className="text-sm text-foreground/70">
+            Keluarkan semua sesi di perangkat lain tanpa mengubah kata sandi.
+            Berguna bila Anda lupa keluar di komputer bersama atau perangkat
+            yang hilang. Perangkat ini tetap aktif.
+          </p>
+          <RevokeSessionsButton />
         </CardContent>
       </Card>
 
