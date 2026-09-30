@@ -32,6 +32,28 @@ function temaAktif(): Tema {
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
+/**
+ * Pasang kelas `.theme-transition` sebentar, ganti tema, lalu lepas lagi.
+ *
+ * Kelasnya sengaja tidak permanen di <html>: skrip anti-flicker memasang
+ * `.dark` sebelum paint pertama, dan transisi warna global saat itu akan
+ * "menganimasikan" pemuatan awal (justru memunculkan kedipan). Dengan
+ * dipasang-lepas di sini, animasi hanya terjadi ketika pengguna menekan tombol.
+ */
+function gantiTemaDenganTransisi(terapkan: () => void) {
+  const akar = document.documentElement;
+  const kurangiGerak = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  if (kurangiGerak) {
+    terapkan();
+    return;
+  }
+  akar.classList.add("theme-transition");
+  terapkan();
+  window.setTimeout(() => akar.classList.remove("theme-transition"), 240);
+}
+
 function ThemeToggle() {
   // State awal meniru apa yang sudah dipasang skrip anti-flicker, jadi render
   // pertama klien cocok dengan DOM dan tidak ada mismatch hidrasi.
@@ -42,7 +64,9 @@ function ThemeToggle() {
     function onStorage(e: StorageEvent) {
       if (e.key !== KUNCI || !e.newValue) return;
       const baru = e.newValue === "dark" ? "dark" : "light";
-      document.documentElement.classList.toggle("dark", baru === "dark");
+      gantiTemaDenganTransisi(() => {
+        document.documentElement.classList.toggle("dark", baru === "dark");
+      });
       setTema(baru);
     }
     window.addEventListener("storage", onStorage);
@@ -51,7 +75,9 @@ function ThemeToggle() {
 
   const ganti = useCallback(() => {
     const baru: Tema = temaAktif() === "dark" ? "light" : "dark";
-    document.documentElement.classList.toggle("dark", baru === "dark");
+    gantiTemaDenganTransisi(() => {
+      document.documentElement.classList.toggle("dark", baru === "dark");
+    });
     try {
       window.localStorage.setItem(KUNCI, baru);
     } catch {

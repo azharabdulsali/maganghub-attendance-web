@@ -13,6 +13,8 @@ import {
   parseOAuthCallbackParams,
   extractCallbackUrl,
   isSsoAuthPageUrl,
+  isAllowedSsoHost,
+  isAllowedSsoUrl,
   extractCallbackUrlFromHtml,
   describeSsoRedirectResponse,
   describeHtmlHint,
@@ -555,3 +557,91 @@ describe("helper diagnostik & body HTML (murni)", () => {
     expect(noLoc).toContain("set-cookie: (tidak ada)");
   });
 });
+
+describe("isAllowedSsoHost & isAllowedSsoUrl (murni, anti-SSRF)", () => {
+  it("mengizinkan akar kemnaker.go.id dan subdomainnya", () => {
+    expect(isAllowedSsoHost("kemnaker.go.id")).toBe(true);
+    expect(isAllowedSsoHost("account.kemnaker.go.id")).toBe(true);
+    expect(isAllowedSsoHost("monev.maganghub.kemnaker.go.id")).toBe(true);
+    expect(isAllowedSsoHost("monev-api.maganghub.kemnaker.go.id")).toBe(true);
+  });
+
+  it("menolak host di luar domain Kemnaker", () => {
+    expect(isAllowedSsoHost("evil.com")).toBe(false);
+    expect(isAllowedSsoHost("169.254.169.254")).toBe(false);
+    expect(isAllowedSsoHost("localhost")).toBe(false);
+    expect(isAllowedSsoHost("")).toBe(false);
+  });
+
+  it("tidak tertipu host mirip (suffix tanpa titik pemisah)", () => {
+    // "evil-kemnaker.go.id" dan "notkemnaker.go.id" BUKAN subdomain sah.
+    expect(isAllowedSsoHost("evil-kemnaker.go.id")).toBe(false);
+    expect(isAllowedSsoHost("notkemnaker.go.id")).toBe(false);
+    expect(isAllowedSsoHost("kemnaker.go.id.evil.com")).toBe(false);
+  });
+
+  it("peka huruf besar/kecil & spasi tepi", () => {
+    expect(isAllowedSsoHost("  ACCOUNT.KEMNAKER.GO.ID ")).toBe(true);
+  });
+
+  it("isAllowedSsoUrl aman terhadap URL cacat", () => {
+    expect(isAllowedSsoUrl("https://account.kemnaker.go.id/auth")).toBe(true);
+    expect(isAllowedSsoUrl("not a url")).toBe(false);
+    expect(isAllowedSsoUrl("https://evil.com/steal?code=X")).toBe(false);
+  });
+});
+
+describe("catchOAuthCode, anti-SSRF (host allowlist)", () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("menolak halaman awal yang bukan host Kemnaker (fetch TIDAK dipanggil)", async () => {
+    const r = await catchOAuthCode("https://evil.com/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("ERROR");
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("berhenti saat redirect menuju host non-Kemnaker (tidak menyentuh host itu)", async () => {
+    // Hop 1: server SSO membalas Location ke host internal → harus DIBLOKIR.
+    fetchSpy.mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: { location: "http://169.254.169.254/latest/meta-data/" },
+      }),
+    );
+    const r = await catchOAuthCode("https://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("ERROR");
+    // Hanya hop pertama yang disentuh; host terlarang tidak pernah di-fetch.
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("tetap menangkap code saat callback berada di subdomain Kemnaker yang sah", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: {
+          location:
+            "https://monev.maganghub.kemnaker.go.id/sso/callback?code=SAFE-1&state=S",
+        },
+      }),
+    );
+    const r = await catchOAuthCode("https://account.kemnaker.go.id/auth?x=1", {
+      confirmLivePortalRequest: true,
+    });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") expect(r.code).toBe("SAFE-1");
+  });
+});
+

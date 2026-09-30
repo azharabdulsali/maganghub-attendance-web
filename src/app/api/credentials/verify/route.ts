@@ -18,6 +18,8 @@ import { prisma } from "@/lib/prisma";
 import { encrypt, decrypt } from "@/lib/crypto";
 import { monevTokenSchema } from "@/lib/validate";
 import { verifySession } from "@/lib/monev-client";
+import { rateLimitKey } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 
 /** POST, simpan token (bila dikirim) lalu uji ke portal. */
 export async function POST(request: Request) {
@@ -25,6 +27,19 @@ export async function POST(request: Request) {
   const userId = session?.user?.id;
   if (!userId) {
     return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
+  }
+
+  // Rate limit per pengguna SEBELUM menyentuh portal: tiap panggilan mengirim
+  // token ke server Monev sungguhan, jadi percobaan beruntun perlu dibatasi.
+  const gate = await enforceRateLimit(
+    "credentialsVerify",
+    rateLimitKey("credentials-verify", userId),
+  );
+  if (!gate.decision.allowed) {
+    return NextResponse.json(
+      { error: "Terlalu banyak percobaan. Coba lagi nanti." },
+      { status: 429, headers: gate.headers },
+    );
   }
 
   let body: unknown;

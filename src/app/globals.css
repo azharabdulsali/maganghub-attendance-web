@@ -134,43 +134,79 @@
   --chart-active-dot: #000;
 }
 
+/* Palet gelap disusun ulang mengikuti hierarki elevasi permukaan, bukan sekadar
+   pembalikan warna terang. Tujuan: (1) mengurangi silau, (2) setiap lapisan
+   permukaan terbaca lebih terang daripada lapisan di bawahnya, (3) teks
+   off-white (bukan putih murni) agar mata tidak cepat lelah.
+
+   Tangga elevasi (tergelap → teringan):
+     latar kanvas   oklch(0.16)  ≈ #141414
+     permukaan-1    oklch(0.21)  ≈ #1c1c1c  → kartu, sidebar, footer, input
+     permukaan-2    oklch(0.25)  ≈ #242424  → popover, dropdown, modal
+     inset/hover    oklch(0.28)  ≈ #2b2b2b  → blok kode, item terpilih
+
+   Kontras teks paling rendah pada tangga ini masih 5.7:1 (di atas ambang
+   WCAG AA 4.5:1). */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.16 0 0);
+  /* Off-white, bukan putih murni: putih 100% di latar gelap memicu halation
+     (teks tampak "bergetar") dan mempercepat kelelahan mata. */
+  --foreground: oklch(0.93 0 0);
+  --card: oklch(0.21 0 0);
+  --card-foreground: oklch(0.93 0 0);
+  --popover: oklch(0.25 0 0);
+  --popover-foreground: oklch(0.93 0 0);
+  --primary: oklch(0.93 0 0);
+  --primary-foreground: oklch(0.21 0 0);
+  --secondary: oklch(0.28 0 0);
+  --secondary-foreground: oklch(0.93 0 0);
+  --muted: oklch(0.28 0 0);
+  --muted-foreground: oklch(0.72 0 0);
+  --accent: oklch(0.28 0 0);
+  --accent-foreground: oklch(0.93 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  /* Border 35% putih ≈ 3.2:1 terhadap permukaan-1: cukup untuk ambang 3:1
+     batas komponen WCAG 1.4.11, tapi tetap terasa tipis, bukan garis menyala.
+     Nilai lama 10% hanya 1.4:1 — nyaris tak terlihat. */
+  --border: oklch(1 0 0 / 35%);
+  --input: oklch(1 0 0 / 40%);
+  --ring: oklch(0.72 0 0);
   --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
+  --chart-2: oklch(0.708 0 0);
+  --chart-3: oklch(0.556 0 0);
+  --chart-4: oklch(0.439 0 0);
+  --chart-5: oklch(0.371 0 0);
+  --sidebar: oklch(0.21 0 0);
+  --sidebar-foreground: oklch(0.93 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-primary-foreground: oklch(0.93 0 0);
+  --sidebar-accent: oklch(0.28 0 0);
+  --sidebar-accent-foreground: oklch(0.93 0 0);
+  --sidebar-border: oklch(1 0 0 / 35%);
+  --sidebar-ring: oklch(0.72 0 0);
+  /* Token yang HANYA didefinisikan di :root dan sebelumnya tidak punya
+     pasangan di sini. Tanpa override, `bg-secondary-background` (dipakai
+     kartu, panel hero, footer, input, textarea, dan tombol varian
+     `neutral`) tetap `oklch(100% 0 0)` alias PUTIH PENUH di mode gelap —
+     itulah sebabnya seluruh halaman masih putih setelah tema diganti.
+     Nilainya disejajarkan dengan permukaan-1 (--card). */
+  --secondary-background: oklch(0.21 0 0);
+  /* Aksen biru: identitas aplikasi tetap sama, tapi di mode gelap saturasinya
+     diturunkan 100% → 88% (±12%) sesuai aturan "desaturate bright colors for
+     dark backgrounds". Warna mentah yang terlalu jenuh tampak menyala dan
+     melelahkan di latar gelap. Teks hitam di atasnya tetap 7:1. */
+  --main: hsl(217, 88%, 67%);
+  --main-foreground: oklch(0.16 0 0);
+  /* Titik penanda pada grafik: hitam pekat akan hilang di latar gelap. */
+  --chart-active-dot: oklch(0.93 0 0);
+  /* Tirai (scrim) untuk panel geser di layar kecil: sedikit lebih pekat di
+     mode gelap supaya kontras panel-vs-latar tetap jelas. */
+  --overlay: oklch(0% 0 0 / 0.7);
   /* Di mode terang, --shadow diturunkan dari --border (hitam). Di mode gelap
-     --border jadi putih 10% (nyaris tak terlihat), sehingga shadow keras akan
-     hilang sama sekali. Jadi di sini kami mengikat --shadow ke putih penuh
-     supaya border tebal + shadow tetap terbaca sebagai satu gestur. */
-  --shadow: 4px 4px 0px 0px oklch(1 0 0);
+     --border jadi putih 35% (terlalu tipis untuk shadow keras), jadi di sini
+     --shadow diikat ke putih 90% — tetap terbaca sebagai offset tebal khas
+     neobrutalisme, tapi tidak menyilaukan seperti putih 100%. */
+  --shadow: 4px 4px 0px 0px oklch(1 0 0 / 90%);
   /* Hijau sedikit lebih terang agar tetap terbaca di latar gelap. */
   --success: #34d399;
 }
@@ -210,6 +246,28 @@
     scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
   }
 }
+/* Transisi halus saat tema berganti (light ⇄ dark).
+   Kenapa pakai kelas `.theme-transition` dan bukan transisi global di `body`:
+   skrip anti-flicker memasang `.dark` SEBELUM paint pertama, jadi transisi
+   global akan "menganimasikan" pemuatan awal dan justru memunculkan kedipan
+   yang hendak dicegah. Kelas ini hanya dipasang sesaat oleh tombol tema saat
+   pengguna benar-benar menekannya, lalu dilepas lagi.
+
+   Hanya properti murah (warna/border/shadow) yang dianimasikan; `transform`
+   dan `filter` tidak, supaya tidak memicu reflow. */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    fill 220ms ease,
+    stroke 220ms ease,
+    box-shadow 220ms ease !important;
+}
+
 /* Hormati preferensi "kurangi gerakan" (WCAG 2.3.3). `tw-animate-css` diimpor
    di atas, jadi tanpa blok ini animasi tetap berjalan bagi pengguna yang secara
    eksplisit memintanya berhenti. Durasi dipangkas ke nilai nyaris nol, bukan

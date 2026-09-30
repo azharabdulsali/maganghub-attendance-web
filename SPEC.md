@@ -479,7 +479,9 @@ Bentuk sistem:
 - Submit berupa HTTP request langsung ke API Monev dari dalam serverless
   function. Tidak ada Chromium, tidak ada proses yang selalu nyala.
 - Pemicu jadwal dari **cron eksternal gratis** (cron-job.org atau GitHub
-  Actions) yang memanggil `GET /api/cron/submit?key=<webhookKey>`.
+  Actions) yang memanggil `GET /api/cron/submit` dengan header
+  `Authorization: Bearer <webhookKey>` (query `?key=` lama masih diterima
+  sampai 1 Jan 2026, lalu dihapus).
 
 **Biaya bulanan: Rp0.** Semua komponen memakai paket gratis.
 
@@ -803,7 +805,8 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 >   kecuali rotasi eksplisit lewat `action: "rotate-key"` (VERIFY-002).
 > - `src/app/api/cron/submit/route.ts`, webhook cron **gated**: dijaga header
 >   `Authorization: Bearer <webhookKey>` (dianjurkan) atau `?key=<webhookKey>`
->   (cara lama, kompatibilitas mundur; 401 generik bila salah), hormati
+>   (cara lama, kompatibilitas mundur, **dijadwalkan dihapus 1 Jan 2026**;
+>   401 generik bila salah), hormati
 >   `isEnabled` dan `ALLOW_LIVE_SUBMIT`, policy libur/akhir program diperiksa
 >   lebih dulu, semua percobaan dicatat dengan `trigger: CRON` (ditentukan
 >   server, bukan klien).

@@ -31,6 +31,35 @@
 
 export const KEMNAKER_SSO_ORIGIN = "https://account.kemnaker.go.id";
 
+/**
+ * Domain yang boleh disentuh saat mengikuti rantai redirect OAuth, MURNI.
+ *
+ * SSO dan portal Monev semuanya berada di bawah `kemnaker.go.id`. Dengan
+ * memeriksa host tiap hop terhadap akar ini, rantai redirect tidak bisa
+ * dibelokkan keluar ke host internal/arbitrer (anti-SSRF) sekalipun upstream
+ * SSO membalas `Location` yang mencurigakan. Subdomain apa pun diizinkan
+ * (`account.`, `monev-api.`, `monev.`, dst) selama akarnya cocok.
+ *
+ * @param hostname host dari URL (bukan URL penuh), mis. "account.kemnaker.go.id".
+ */
+export function isAllowedSsoHost(hostname: string): boolean {
+  const host = hostname.trim().toLowerCase();
+  if (host.length === 0) return false;
+  // Cocokkan akar tepat ("kemnaker.go.id") atau subdomain di bawahnya
+  // (".kemnaker.go.id"). `endsWith` dengan titik memimpin mencegah host jahat
+  // seperti "evil-kemnaker.go.id" ikut lolos.
+  return host === "kemnaker.go.id" || host.endsWith(".kemnaker.go.id");
+}
+
+/** Apakah URL menunjuk ke host yang diizinkan? MURNI, aman terhadap URL cacat. */
+export function isAllowedSsoUrl(url: string): boolean {
+  try {
+    return isAllowedSsoHost(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** User-Agent resmi pemilik akun, dipakai konsisten dengan monev-client. */
 const SSO_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
@@ -433,6 +462,15 @@ export async function catchOAuthCode(
   if (!ssoPageUrl) {
     return { status: "ERROR", message: "URL halaman SSO kosong." };
   }
+  // Anti-SSRF: halaman awal pun harus berada di domain Kemnaker. `ssoPageUrl`
+  // datang dari respons server (authorizeUrl/redirect_uri), tetapi tetap
+  // diverifikasi agar tak pernah menyentuh host lain.
+  if (!isAllowedSsoUrl(ssoPageUrl)) {
+    return {
+      status: "ERROR",
+      message: "URL halaman SSO bukan host Kemnaker yang diizinkan.",
+    };
+  }
 
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxHops = opts.maxHops ?? MAX_REDIRECT_HOPS;
@@ -576,6 +614,19 @@ export async function catchOAuthCode(
 
       // (3) Redirect tanpa `code` → lanjut ke hop berikutnya.
       if (!location) break; // 3xx tanpa Location: jalan buntu.
+      // Anti-SSRF: hanya ikuti hop yang tetap di domain Kemnaker. Upstream SSO
+      // boleh saja membalas `Location` ke host lain; kita berhenti di sini
+      // daripada mempercayainya dan berisiko menyentuh host internal/arbitrer.
+      if (!isAllowedSsoUrl(location)) {
+        trail.push(`!blokir-host-luar:${(() => {
+          try {
+            return new URL(location).hostname;
+          } catch {
+            return "(tak bisa diparse)";
+          }
+        })()}`);
+        break;
+      }
       currentUrl = new URL(location, currentUrl).toString();
     }
 

@@ -53,9 +53,22 @@ export default function AutomationForm({
     return describeNextRun(new Date(), h, m);
   }, [hour, minute]);
 
+  // URL lengkap cara lama (`?key=`): DIPERTAHANKAN sementara untuk cron yang
+  // sudah terpasang, tetapi ditandai deprecated di UI (dihapus 1 Jan 2026).
   const webhookUrl = webhookKey
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/cron/submit?key=${webhookKey}`
     : null;
+
+  // URL dasar cara DIANJURKAN: tanpa rahasia di query; kunci dikirim lewat
+  // header `Authorization: Bearer`.
+  const webhookBaseUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/api/cron/submit` : null;
+
+  // Contoh perintah siap tempel untuk crontab/server sendiri (header = aman).
+  const curlSnippet =
+    webhookBaseUrl && webhookKey
+      ? `curl -sS -o /dev/null -H "Authorization: Bearer ${webhookKey}" "${webhookBaseUrl}"`
+      : null;
 
   async function simpan(e: React.FormEvent) {
     e.preventDefault();
@@ -115,6 +128,19 @@ export default function AutomationForm({
       const pesan = "Tidak bisa menyalin otomatis. Salin tautan secara manual.";
       setError(pesan);
       toast.error("Gagal menyalin URL", pesan);
+    }
+  }
+
+  /** Salin teks apa pun (URL dasar / perintah curl) ke papan klip. */
+  async function salinTeks(teks: string | null, label: string) {
+    if (!teks) return;
+    try {
+      await navigator.clipboard.writeText(teks);
+      toast.success(`${label} tersalin`, "Tempel ke layanan cron Anda.");
+    } catch {
+      const pesan = "Tidak bisa menyalin otomatis. Salin secara manual.";
+      setError(pesan);
+      toast.error("Gagal menyalin", pesan);
     }
   }
 
@@ -236,39 +262,81 @@ export default function AutomationForm({
           <CardHeader>
             <CardTitle>Webhook untuk cron</CardTitle>
             <CardDescription>
-              Tempel URL ini ke layanan cron Anda (mis. cron-job.org), jadwalkan
-              sekali sehari. Jangan bagikan, siapa pun yang tahu URL ini bisa
-              memicu pengiriman.
+              Sambungkan layanan cron Anda (mis. cron-job.org) ke endpoint ini,
+              jadwalkan sekali sehari. <strong>Cara dianjurkan:</strong> kirim
+              kunci lewat header, bukan di URL. Jangan bagikan kunci, siapa pun
+              yang tahu bisa memicu pengiriman.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
-              {webhookUrl}
-            </code>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="neutral" onClick={salinUrl}>
-                {tersalin ? "Tersalin!" : "Salin URL"}
-              </Button>
-              <Button
-                variant="neutral"
-                type="button"
-                onClick={rotasiKunci}
-                disabled={loading}
-              >
-                {loading ? "Memproses..." : "Ganti kunci webhook"}
-              </Button>
+          <CardContent className="space-y-4">
+            {/* Cara DIANJURKAN: kunci lewat header, URL bersih tanpa rahasia. */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                Cara dianjurkan (kunci lewat header)
+              </p>
+              <p className="text-xs text-foreground/60">
+                Endpoint:
+              </p>
+              <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
+                {webhookBaseUrl}
+              </code>
+              <p className="text-xs text-foreground/60">Header:</p>
+              <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
+                Authorization: Bearer {webhookKey}
+              </code>
+              {curlSnippet && (
+                <>
+                  <p className="text-xs text-foreground/60">
+                    Contoh perintah (crontab/server sendiri):
+                  </p>
+                  <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
+                    {curlSnippet}
+                  </code>
+                  <Button
+                    variant="neutral"
+                    size="sm"
+                    type="button"
+                    onClick={() => salinTeks(curlSnippet, "Perintah")}
+                  >
+                    Salin perintah
+                  </Button>
+                </>
+              )}
             </div>
+
+            {/* Cara LAMA: dipertahankan sementara, ditandai deprecated. */}
+            <div className="space-y-2 rounded-base border-2 border-dashed border-border p-3">
+              <p className="text-sm font-medium">
+                Cara lama (akan dihapus)
+              </p>
+              <p className="text-xs text-foreground/60">
+                Menempel kunci di URL masih berfungsi sampai{" "}
+                <strong>1 Januari 2026</strong>, lalu dihapus. Hindari untuk
+                pemasangan baru.
+              </p>
+              <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
+                {webhookUrl}
+              </code>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="neutral" size="sm" onClick={salinUrl}>
+                  {tersalin ? "Tersalin!" : "Salin URL lama"}
+                </Button>
+                <Button
+                  variant="neutral"
+                  size="sm"
+                  type="button"
+                  onClick={rotasiKunci}
+                  disabled={loading}
+                >
+                  {loading ? "Memproses..." : "Ganti kunci webhook"}
+                </Button>
+              </div>
+            </div>
+
             <p className="text-xs text-foreground/60">
               Jadwal: {formatSchedule(Number(hour) || 0, Number(minute) || 0)} WIB
-              setiap hari.
-            </p>
-            <p className="text-xs text-foreground/60">
-              Lebih aman: kirim kunci lewat header{" "}
-              <code className="rounded bg-foreground/10 px-1">
-                Authorization: Bearer &lt;kunci&gt;
-              </code>{" "}
-              daripada menempelkannya di URL. Mengganti kunci akan mematikan URL
-              lama, pasang URL baru di cron Anda setelahnya.
+              setiap hari. Mengganti kunci akan mematikan URL/perintah lama,
+              pasang ulang di cron Anda setelah itu.
             </p>
           </CardContent>
         </Card>

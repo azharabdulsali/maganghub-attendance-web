@@ -15,6 +15,15 @@ supaya laporan absensi dikirim otomatis setiap hari.
 > `?key=<webhookKey>`). Tetap berlaku bila Anda memang butuh **ketepatan menit**
 > (bulk mengabaikan menit dan berjalan per jam) atau ingin tiap user punya
 > kendali penuh atas jadwalnya sendiri.
+>
+> ⏳ **DEPRECATION `?key=`:** mengirim rahasia di query string **akan dihapus
+> pada 1 Januari 2026**. Setelah tanggal itu, hanya
+> `Authorization: Bearer <webhookKey>` yang diterima. Selama masa transisi
+> keduanya masih berlaku supaya cron yang sudah terpasang tidak mati mendadak.
+> **Pasang cron baru langsung dengan header Bearer** (lihat §1), dan bila Anda
+> punya cron lama ber-`?key=`, migrasikan ke header sebelum tanggal tersebut.
+> Sumber kebenaran tanggal: `CRON_QUERY_KEY_REMOVAL_DATE` di
+> `src/lib/bearer-token.ts`.
 
 ---
 
@@ -29,7 +38,8 @@ GET https://<domain-anda>/api/cron/submit
 Authorization: Bearer <webhookKey>          ← cara dianjurkan
 ```
 
-Cara lama tetap didukung (kompatibilitas mundur):
+Cara lama tetap didukung **sementara** (kompatibilitas mundur, **dihapus 1 Jan
+2026** — lihat banner di atas):
 
 ```
 GET https://<domain-anda>/api/cron/submit?key=<webhookKey>
@@ -37,8 +47,9 @@ GET https://<domain-anda>/api/cron/submit?key=<webhookKey>
 
 > **Kenapa Bearer lebih baik:** rahasia di query string gampang tersimpan di
 > log akses proxy/edge dan bisa bocor lewat `Referer`. Kirim lewat header bila
-> layanan cron Anda mendukungnya. Kedua cara diterima, jadi cron yang sudah
-> terpasang tidak mati mendadak.
+> layanan cron Anda mendukungnya. **Pakai header untuk pemasangan baru.** Kedua
+> cara masih diterima sampai 1 Jan 2026 agar cron yang sudah terpasang tidak
+> mati mendadak.
 
 > Inilah **endpoint per-user**. Dispatcher massal memakai endpoint **lain**
 > (`GET /api/cron/run-all`, dijaga header `Authorization: Bearer <CRON_SECRET>`
@@ -98,7 +109,11 @@ baru ke layanan cron Anda.
 1. Daftar/masuk di <https://cron-job.org>.
 2. **Create cronjob**.
 3. **Title**: `Absensi Monev harian`.
-4. **URL**: tempel URL webhook dari langkah 2, **termasuk** `?key=...`.
+4. **URL**: tempel URL webhook dari langkah 2. **Cara dianjurkan:** basiskan URL
+   **tanpa** `?key=...` (mis. `https://<domain-anda>/api/cron/submit`) lalu isi
+   kunci di bagian **Headers** cron-job.org sebagai
+   `Authorization: Bearer <webhookKey>`. Cara lama (menempel `?key=...` langsung
+   di URL) masih boleh sampai 1 Jan 2026, tetapi hindari untuk pemasangan baru.
 5. **Schedule**: pilih setiap hari, jam sesuai pengaturan di aplikasi.
    **Perhatikan zona waktu**, cron-job.org memakai UTC secara default. Jam
    `07:30 WIB` = `00:30 UTC`. Set zona waktu akun ke `Asia/Jakarta` bila
@@ -148,7 +163,7 @@ Di server yang selalu nyala:
 # 07:30 WIB setiap hari (server di zona Asia/Jakarta)
 # Cara dianjurkan, kunci lewat header (tidak muncul di log URL):
 30 7 * * * curl -sS -o /dev/null -H "Authorization: Bearer <webhookKey>" "https://<domain-anda>/api/cron/submit"
-# Cara lama (masih didukung):
+# Cara lama (masih didukung sampai 1 Jan 2026, lalu DIHAPUS):
 # 30 7 * * * curl -sS -o /dev/null "https://<domain-anda>/api/cron/submit?key=<webhookKey>"
 ```
 

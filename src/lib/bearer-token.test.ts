@@ -3,6 +3,10 @@
 import { describe, it, expect } from "vitest";
 
 import { bearerTokenFrom, cronKeyFromRequest } from "./bearer-token";
+import {
+  CRON_QUERY_KEY_REMOVAL_DATE,
+  isCronQueryKeyDeprecated,
+} from "./bearer-token";
 
 describe("bearerTokenFrom", () => {
   it("membaca token dari skema Bearer standar", () => {
@@ -48,5 +52,22 @@ describe("cronKeyFromRequest", () => {
 
   it("mengembalikan string kosong untuk URL cacat", () => {
     expect(cronKeyFromRequest(null, "bukan-url")).toBe("");
+  });
+});
+
+describe("isCronQueryKeyDeprecated", () => {
+  it("tanggal penghapusan terformat ISO (YYYY-MM-DD)", () => {
+    expect(CRON_QUERY_KEY_REMOVAL_DATE).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("belum deprecated sebelum tanggal, deprecated setelahnya", () => {
+    const batas = new Date(`${CRON_QUERY_KEY_REMOVAL_DATE}T00:00:00Z`);
+    const sehariSebelum = new Date(batas.getTime() - 24 * 60 * 60_000);
+    const sehariSesudah = new Date(batas.getTime() + 24 * 60 * 60_000);
+
+    expect(isCronQueryKeyDeprecated(sehariSebelum)).toBe(false);
+    // Batas inklusif: tepat di tanggal penghapusan sudah deprecated.
+    expect(isCronQueryKeyDeprecated(batas)).toBe(true);
+    expect(isCronQueryKeyDeprecated(sehariSesudah)).toBe(true);
   });
 });

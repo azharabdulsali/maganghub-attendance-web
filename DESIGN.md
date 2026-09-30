@@ -84,10 +84,60 @@ Diputuskan dan dieksekusi (R-21, opsi b):
   `src/components/theme-toggle.tsx` hanya menyinkronkan setelahnya.
 - Tanpa paket baru. Tema mengandalkan blok `.dark` yang sudah ada di
   `globals.css`.
-- Penyesuaian mode gelap yang ikut diambil: `--shadow` diikat ke putih penuh
-  (bukan turunan `--border` yang jadi 10% dan membuat shadow keras hilang), dan
-  warna scrollbar kini memakai token (`--secondary-background` / `--border`)
-  alih-alih putih/hitam hard-code.
+- Penyesuaian mode gelap yang ikut diambil: `--shadow` diikat ke putih 90%
+  (bukan turunan `--border` yang jadi terlalu tipis dan membuat shadow keras
+  hilang, sekaligus tidak sekeras putih 100%), dan warna scrollbar kini memakai
+  token (`--secondary-background` / `--border`) alih-alih putih/hitam hard-code.
+- **Perbaikan (bug "mode gelap tetap putih semua"):** blok `.dark` dulu hanya
+  meng-override sebagian token `:root`. Token `--secondary-background` — dipakai
+  oleh `bg-secondary-background` di kartu, panel hero, footer, `input`,
+  `textarea`, dan tombol varian `neutral` — **tidak punya pasangan gelap**, jadi
+  tetap `oklch(100% 0 0)` (putih penuh) dan menutupi latar gelap di belakangnya.
+  Sekarang `.dark` menetapkan `--secondary-background` (disejajarkan dengan
+  `--card`) dan `--chart-active-dot` (titik penanda grafik hitam tidak terbaca di
+  latar gelap).
+
+### Penyempurnaan mode gelap (skill `dark-mode-design`)
+
+Palet gelap disusun ulang mengikuti prinsip *surface elevation* — bukan sekadar
+pembalikan warna terang — lewat skill `dark-mode-design`
+(`owl-listener/designer-skills`). Empat aturan skill yang diterapkan:
+
+- **Hierarki permukaan lewat kecerahan, bukan bayangan.** Dulu hanya ada dua
+  bidang (`--background` `0.145` → sisanya `0.205`/`0.269`), sehingga kartu,
+  sidebar, dan popover bertumpuk di ketinggian yang sama. Sekarang tangga
+  eksplisit: kanvas `0.16` ≈ `#0d0d0d` → permukaan-1 (`--card`,
+  `--secondary-background`, `--sidebar`) `0.21` ≈ `#181818` → permukaan-2
+  (`--popover`) `0.25` ≈ `#222` → inset/hover (`--secondary`, `--muted`,
+  `--accent`) `0.28` ≈ `#292929`.
+- **Teks off-white, bukan putih murni.** `--foreground` `0.985` → `0.93`
+  ≈ `#e8e8e8`. Putih 100% di latar gelap memicu *halation* (teks tampak
+  "bergetar") dan mempercepat kelelahan mata.
+- **Border terlihat.** `--border` `1 0 0 / 10%` hanya **1.4:1** terhadap
+  permukaan — nyaris tak terlihat. Dinaikkan ke `1 0 0 / 35%` ≈ **3.2:1**,
+  memenuhi ambang 3:1 batas komponen WCAG 1.4.11 tanpa terasa seperti garis
+  menyala. `--input` `1 0 0 / 40%`.
+- **Desaturasi aksen ±12%.** `--main` `hsl(217,100%,66%)` → `hsl(217,88%,67%)`
+  (`#619af5`). Warna jenuh penuh tampak menyala di latar gelap. Teks hitam di
+  atasnya tetap 7.0:1. Ini **bukan** perubahan identitas: hue 217 tetap sama,
+  hanya saturasi yang diturunkan di mode gelap (mode terang tidak disentuh).
+- **Transisi halus antar mode.** Kelas `html.theme-transition` (dipasang-lepas
+  oleh `theme-toggle.tsx` selama 240ms) menganimasikan `background-color`,
+  `border-color`, `color`, `fill`, `stroke`, dan `box-shadow` 220ms. Sengaja
+  dipasang-lepas, **bukan** transisi global, karena skrip anti-flicker memasang
+  `.dark` sebelum paint pertama — transisi global justru akan menganimasikan
+  pemuatan awal dan memunculkan kedipan. Transisi dilewati bila pengguna meminta
+  `prefers-reduced-motion`.
+- `--overlay` (tirai panel geser) dipekatkan ke `oklch(0% 0 0 / 0.7)` dan
+  `--shadow` dilunakkan ke `oklch(1 0 0 / 90%)` agar offset keras khas
+  neobrutalisme tetap terbaca tanpa menyilaukan.
+
+Kontras terverifikasi: seluruh pasangan teks/latar pada tangga ini ≥ 5.7:1
+(ambang WCAG AA 4.5:1). Tidak ada aset gambar di aplikasi, jadi aturan "redupkan
+gambar di mode gelap" dari skill tidak berlaku. Tidak ada warna Tailwind
+hard-code (`bg-white`, `text-gray-*`, dst.) dan tidak ada varian `dark:` yang
+tersisa — seluruh warna mengalir lewat token semantik, jadi pergantian tema
+bebas tambalan.
 
 ## Aksesibilitas (audit UI/UX)
 

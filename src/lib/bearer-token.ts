@@ -9,6 +9,22 @@
 // Fungsi di sini MURNI (hanya membaca string) sehingga bisa diuji tanpa server.
 
 /**
+ * Tanggal (ISO) saat dukungan `?key=` di query string **dijadwalkan dihapus**.
+ *
+ * Kebijakan: `Authorization: Bearer` adalah satu-satunya cara resmi. Query
+ * `?key=` dipertahankan sementara agar cron pengguna yang sudah terpasang tidak
+ * mati mendadak (deprecation bertahap), lalu dihapus pada tanggal ini.
+ * Bila menunda, ubah HANYA konstanta ini dan dokumen `docs/CRON-SETUP.md`
+ * supaya keduanya tetap sinkron.
+ */
+export const CRON_QUERY_KEY_REMOVAL_DATE = "2026-01-01";
+
+/** True bila `?key=` sudah melewati tanggal penghapusan. MURNI (jam disuntik). */
+export function isCronQueryKeyDeprecated(now: Date = new Date()): boolean {
+  return now.getTime() >= new Date(`${CRON_QUERY_KEY_REMOVAL_DATE}T00:00:00Z`).getTime();
+}
+
+/**
  * Ambil token dari header `Authorization: Bearer <token>`.
  *
  * Mengembalikan `null` bila header tidak ada, bukan skema Bearer, atau tokennya
@@ -30,10 +46,12 @@ export function bearerTokenFrom(authorization: string | null): string | null {
  * Ambil rahasia webhook cron dari sebuah permintaan.
  *
  * Prioritas (best practice + kompatibilitas mundur):
- *   1. `Authorization: Bearer <key>`, cara yang dianjurkan.
- *   2. `?key=<key>` di query string, cara lama, DIPERTAHANKAN agar cron yang
- *      sudah dipasang pengguna tetap jalan (deprecation bertahap, bukan
- *      pemutusan mendadak).
+ *   1. `Authorization: Bearer <key>`, cara yang dianjurkan. SATU-SATUNYA cara
+ *      resmi setelah `CRON_QUERY_KEY_REMOVAL_DATE`.
+ *   2. `?key=<key>` di query string, cara lama, DIPERTAHANKAN SEMENTARA agar
+ *      cron yang sudah dipasang pengguna tetap jalan (deprecation bertahap,
+ *      bukan pemutusan mendadak). Dijadwalkan DIHAPUS pada
+ *      `CRON_QUERY_KEY_REMOVAL_DATE` (lihat `docs/CRON-SETUP.md`).
  *
  * Mengembalikan string kosong bila tidak ada di keduanya.
  *

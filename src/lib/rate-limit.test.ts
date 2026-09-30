@@ -149,4 +149,14 @@ describe("RATE_LIMITS", () => {
       RATE_LIMITS.credentials.limit,
     );
   });
+
+  it("credentialsVerify ada, 12 / 10 menit, cegah banjir uji koneksi", () => {
+    expect(RATE_LIMITS.credentialsVerify.limit).toBe(12);
+    expect(RATE_LIMITS.credentialsVerify.windowMs).toBe(10 * 60_000);
+    // Lebih longgar dari credentialsLogin (tombol uji boleh diklik beberapa
+    // kali) tetapi tetap dibatasi karena tiap panggilan menyentuh portal.
+    expect(RATE_LIMITS.credentialsVerify.limit).toBeGreaterThan(
+      RATE_LIMITS.credentialsLogin.limit,
+    );
+  });
 });

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
+import { useToast } from "@/components/ui/toast";
 import {
   Card,
   CardContent,
@@ -16,9 +17,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { kodeErrorDari, pesanUntukKode } from "@/lib/login-messages";
 
 export default function LoginForm() {
   const router = useRouter();
+  const toast = useToast();
   const params = useSearchParams();
   const justRegistered = params.get("registered") === "1";
 
@@ -26,6 +29,24 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  /**
+   * Tampilkan kegagalan login di DUA tempat sekaligus:
+   *   - toast: selalu terlihat, tidak bisa terlewat (mis. saat keyboard terbuka
+   *     atau halaman sudah digulir), dan dibacakan pembaca layar lewat `role`.
+   *   - kotak inline di atas tombol: menempel pada form, tetap ada selama
+   *     pengguna memperbaiki isian.
+   *
+   * Sebelumnya hanya ada kotak inline — dan pada jalur redirect tidak pernah
+   * muncul karena `fetch` mengikuti 302 ke `/login?error=...` (HTML), sehingga
+   * `res.ok` true dan `target` jatuh ke `/dashboard`: tidak ada pesan, lalu
+   * `router.push` memantul balik ke login tanpa penjelasan.
+   */
+  function gagal(kode: string | null) {
+    const { judul, detail } = pesanUntukKode(kode);
+    setError(detail);
+    toast.error(judul, detail);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,19 +59,20 @@ export default function LoginForm() {
     try {
       const token = await getCsrfToken();
       if (!token) {
-        setError(
-          `Server tidak memberi CSRF token. Pastikan server dev berjalan ` +
-            `(npm run dev) dan buka ${location.origin}`,
+        setError("Server tidak memberi CSRF token. Muat ulang halaman ini.");
+        toast.error(
+          "Server tidak siap",
+          "CSRF token tidak diterima. Muat ulang halaman lalu coba lagi.",
         );
         return;
       }
       csrfToken = token;
     } catch (csrfError) {
       console.error("Gagal mengambil CSRF token:", csrfError);
-      setError(
-        `Gagal menghubungi /api/auth/csrf. Detail: ${
-          csrfError instanceof Error ? csrfError.message : String(csrfError)
-        }`,
+      setError("Tidak bisa menghubungi server login. Periksa koneksi Anda.");
+      toast.error(
+        "Tidak bisa menghubungi server",
+        "Permintaan CSRF gagal. Periksa koneksi lalu muat ulang halaman.",
       );
       return;
     } finally {
@@ -69,24 +91,46 @@ export default function LoginForm() {
           callbackUrl: "/dashboard",
           json: "true",
         }),
+        // JANGAN ikuti redirect otomatis. Pada kredensial salah, Auth.js
+        // membalas 302 ke `/login?error=CredentialsSignin`. Kalau `fetch`
+        // mengikutinya, yang terbaca adalah halaman HTML login (status 200)
+        // dan sinyal error hilang. Dengan "manual" kita bisa membaca header
+        // `Location` sendiri.
+        redirect: "manual",
       });
 
-      const data = (await res.json().catch(() => ({}))) as { url?: string };
-      const target = data.url ?? "/dashboard";
+      // Sumber penanda error, dari paling andal ke paling lemah. Header
+      // `Location` dari 302 adalah yang paling eksplisit; `res.url` sebagai
+      // cadangan.
+      const lokasi = res.headers.get("location") ?? "";
+      const kode =
+        [lokasi, res.url].map(kodeErrorDari).find((k) => k !== null) ?? null;
 
-      if (!res.ok || /[?&]error=/.test(target)) {
-        setError("Email atau password salah");
+      if (kode) {
+        gagal(kode);
         return;
       }
 
-      router.push(target);
+      // Tidak ada sinyal error eksplisit. Jangan percaya status saja (mode
+      // "manual" bisa menghasilkan status 0 / opaqueredirect yang tak terbaca
+      // di sebagian browser). Verifikasi LANGSUNG ke sumber kebenaran: apakah
+      // cookie sesi benar-benar terpasang? Ini deterministik dan tahan banting
+      // terhadap perbedaan perilaku redirect antar-browser.
+      const masuk = await punyaSesi();
+      if (!masuk) {
+        gagal("CredentialsSignin");
+        return;
+      }
+
+      toast.success("Berhasil masuk", "Mengalihkan ke dasbor…");
+      router.push("/dashboard");
       router.refresh();
     } catch (fetchError) {
       console.error("Gagal login:", fetchError);
-      setError(
-        `Gagal menghubungi server login. Detail: ${
-          fetchError instanceof Error ? fetchError.message : String(fetchError)
-        } (alamat: ${location.origin})`,
+      setError("Tidak bisa menghubungi server login. Periksa koneksi Anda.");
+      toast.error(
+        "Tidak bisa menghubungi server",
+        "Permintaan login gagal dikirim. Periksa koneksi lalu coba lagi.",
       );
     } finally {
       setLoading(false);
@@ -163,4 +207,30 @@ async function getCsrfToken(): Promise<string> {
   const res = await fetch("/api/auth/csrf");
   const data = (await res.json()) as { csrfToken: string };
   return data.csrfToken;
+}
+
+/**
+ * Cek apakah cookie sesi sudah benar-benar terpasang setelah POST login.
+ *
+ * Dipakai sebagai bukti sukses yang tidak bisa dibohongi: `/api/auth/session`
+ * membaca cookie HttpOnly dan mengembalikan `{}` (tanpa `user`) bila tidak ada
+ * sesi sah. Ini jauh lebih andal daripada menebak dari kode status redirect
+ * `fetch` yang perilakunya beda antar-browser. Bila pemeriksaan ini sendiri
+ * gagal (jaringan), kita anggap BELUM masuk supaya pengguna melihat pesan,
+ * bukan diarahkan diam-diam.
+ */
+async function punyaSesi(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/auth/session", {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return false;
+    const data = (await res.json().catch(() => null)) as
+      | { user?: unknown }
+      | null;
+    return Boolean(data && data.user);
+  } catch {
+    return false;
+  }
 }

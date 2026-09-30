@@ -175,6 +175,12 @@ export const RATE_LIMITS = {
    */
   credentialsLogin: { limit: 6, windowMs: 10 * 60_000 },
   /**
+   * Uji koneksi sesi Monev ("Tes ulang"): 12 / 10 menit per pengguna. Lebih
+   * longgar dari `credentialsLogin` (tombol uji boleh diklik beberapa kali),
+   * tetapi tetap dibatasi karena tiap panggilan menyentuh portal sungguhan.
+   */
+  credentialsVerify: { limit: 12, windowMs: 10 * 60_000 },
+  /**
    * Cabut semua sesi perangkat lain: 5 / 10 menit per pengguna. Sekali klik
    * sudah cukup; percobaan berulang hanya membebani DB dan memaksa sesi lain
    * login ulang berkali-kali tanpa manfaat.
