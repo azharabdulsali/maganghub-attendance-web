@@ -114,12 +114,25 @@ berjalan otomatis tiap jam (`5 * * * *` UTC = setiap jam pada menit ke-5 WIB).
 ## 7. Batas & kuota (jujur)
 
 - **Batas waktu fungsi:** route menyetel `maxDuration = 60` (maksimum Hobby).
-  Ada tenggat internal 50 detik dan konkurensi 10 — 20 user normal selesai jauh
+  Ada tenggat internal 50 detik dan konkurensi 10 — 40 user normal selesai jauh
   di bawah itu.
-- **Kuota Hobby:** 24 pemanggilan/hari + ≤40 user/panggilan = jauh di bawah
-  kuota invocation. Yang perlu diawasi adalah **CPU saat portal down**: bila
-  portal menggantung berhari-hari, 20 user × 16s bisa memakan sebagian besar
-  kuota CPU bulanan. Pantau di Vercel → Usage.
+- **Kenapa BUKAN Vercel Cron:** Hobby hanya mengizinkan cron **sekali per hari**;
+  ekspresi per-jam (`0 * * * *`) **gagal saat deploy** ("Hobby accounts are
+  limited to daily cron jobs"). Karena itu pemicunya GitHub Actions (tidak
+  terbatas frekuensi). Ini bukan pilihan gaya — di Hobby, cron per-jam memang
+  tidak bisa.
+- **Kuota Hobby yang relevan (Function/Fluid Compute):** Active CPU **4 jam**/bln,
+  Provisioned Memory **360 GB-hrs**/bln, Invocations **1 juta**/bln.
+  **Active CPU hanya ditagih saat kode benar-benar berjalan — penagihan BERHENTI
+  saat menunggu I/O** (permintaan ke portal Monev). Jadi portal yang menggantung
+  **tidak** menghabiskan kuota CPU; ia hanya memakai Provisioned Memory.
+- **Perkiraan pemakaian (kasus terburuk: 40 user, portal mati, 2×8s timeout):**
+  satu batch ≈ 50s wall. Active CPU ≈ 0,4s (kripto + JSON) dan Provisioned
+  Memory ≈ 5 GB-jam/bulan untuk 720 batch — **≈0,08 jam CPU** vs kuota 4 jam, dan
+  **≈5 GB-hrs** vs 360. Aman dengan margin lebar.
+- **Yang tetap diawasi:** bila jumlah user naik jauh (≥100 dalam satu jam) atau
+  terjadi pengulangan eksekusi (retry), cek **Vercel → Usage**. Naikkan
+  `DISPATCH_BATCH_SIZE`/`DISPATCH_CONCURRENCY` hanya bila perlu.
 - **Ketepatan waktu:** GitHub Actions bisa telat 5–15 menit saat sibuk. Tidak
   masalah untuk absensi harian. Kalau butuh tepat waktu, pakai cron-job.org
   (lihat `CRON-SETUP.md`) dengan satu job memanggil endpoint yang sama.

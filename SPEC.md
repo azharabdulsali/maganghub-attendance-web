@@ -468,6 +468,8 @@ Batasan: `Report` unik per `(userId, date)` — mencegah draf ganda.
 | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/api/register` | Daftar akun baru (email + password) | Publik | **3/jam per IP** |
 | `GET` | `/api/cron/submit?key=<webhookKey>` | Memicu submit otomatis (dipanggil cron eksternal) | Query `key` | 30/5 menit per IP |
+| `GET` | `/api/cron/run-all` | Dispatcher massal: proses semua user yang jadwalnya jatuh di jam ini | `Authorization: Bearer <CRON_SECRET>` | — (rahasia) |
+| `POST` | `/api/admin/dispatch` | Pemicu manual dispatcher massal dari Panel Admin | Cookie sesi + role **ADMIN** | — (hanya admin) |
 | `GET/PUT` | `/api/automation` | Baca/simpan jadwal otomasi + webhook key | Cookie sesi | 20/menit |
 | `GET/POST` | `/api/auth/[...nextauth]` | Autentikasi (login/logout) | Publik / callback | **10/15 menit per IP** (login) |
 | `GET/PUT` | `/api/template` | Baca & simpan 3 template pengguna | Cookie sesi | 20/menit |
@@ -835,6 +837,15 @@ mengabsen **semua** user yang jadwalnya jatuh pada jam itu.
 - **Inti pengiriman tetap satu sumber:** dispatcher memanggil `performSubmit`
   yang sama dengan route manual & webhook per-user — tidak ada logika
   pengiriman yang diduplikasi.
+- **Mengapa GitHub Actions, bukan Vercel Cron:** Hobby hanya mengizinkan cron
+  **sekali per hari** — ekspresi per-jam gagal saat deploy. GitHub Actions tidak
+  terbatas frekuensi, jadi inilah pemicu per-jam yang bisa dipakai di paket
+  gratis. (Catatan kuota: Active CPU hanya ditagih saat kode jalan, bukan saat
+  menunggu I/O — lihat `docs/CRON-BULK.md` §7.)
+- **Pemicu alternatif/manual:** admin yang login dapat menekan **Jalankan
+  sekarang** di Panel Admin → `POST /api/admin/dispatch` (sesi + role ADMIN,
+  memakai `runDispatch` yang sama). Tidak butuh `CRON_SECRET`, jadi bisa dipakai
+  untuk menguji sebelum GitHub Secrets diisi.
 - Panduan: `docs/CRON-BULK.md`. Model per-user lama tetap ada
   (`docs/CRON-SETUP.md`) bagi yang ingin ketepatan menit (cron-job.org).
 
