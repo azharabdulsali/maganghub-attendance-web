@@ -22,9 +22,18 @@
 // setelah login adalah "/dashboard".
 
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/app-sidebar";
+
+// Semua halaman di grup ini WAJIB `noindex` (audit T-4). Redirect di bawah
+// adalah penjaga keamanan; noindex adalah sinyal SEO yang tegas supaya isi
+// terlindungi tidak pernah muncul di hasil pencarian, bahkan bila crawler
+// kebetulan memegang sesi atau redirect di-cache.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AppLayout({
   children,

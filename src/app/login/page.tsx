@@ -1,5 +1,12 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import LoginForm from "./login-form";
+
+// Halaman utilitas: tidak memberi nilai pencarian, jadi `noindex` (audit T-4).
+export const metadata: Metadata = {
+  title: "Masuk",
+  robots: { index: false, follow: false },
+};
 
 // useSearchParams() di dalam LoginForm memerlukan Suspense boundary,
 // kalau tidak halaman ini gagal di-prerender oleh Next.js saat build.

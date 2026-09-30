@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 // Landing PUBLIK di "/". Halaman ini SELALU tampil untuk siapa pun, termasuk
 // yang sudah login, supaya "/" tetap bisa dipakai sebagai halaman penjelasan
@@ -124,9 +126,39 @@ const BATASAN = [
   "Bergantung pada portal Monev; bila portal berubah, kirim bisa gagal.",
 ];
 
+// Data terstruktur schema.org (audit O-5). SoftwareApplication memberi Google
+// sinyal bahwa ini aplikasi web; WebSite memungkinkan sitelinks search box dan
+// menegaskan URL kanonik. Keduanya memakai URL absolut dari src/lib/site.ts.
+const SCHEMA_APLIKASI = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: SITE_NAME,
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: SITE_URL,
+  description: SITE_DESCRIPTION,
+  inLanguage: "id",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "IDR",
+  },
+};
+
+const SCHEMA_SITUS = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+  description: SITE_DESCRIPTION,
+  inLanguage: "id",
+};
+
 export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col">
+      <JsonLd id="schema-software-application" data={SCHEMA_APLIKASI} />
+      <JsonLd id="schema-website" data={SCHEMA_SITUS} />
       {/* Bilah atas sederhana: brand + tautan masuk/daftar.
           `pt-safe pl-safe pr-safe`: hindari poni di iPhone landscape. */}
       <header className="pt-safe pl-safe pr-safe sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
