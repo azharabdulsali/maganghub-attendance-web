@@ -9,6 +9,7 @@ import {
   credentialsSchema,
   reportTemplatesSchema,
   monevTokenSchema,
+  changePasswordSchema,
 } from "./validate";
 
 describe("credentialsSchema — email Monev", () => {
@@ -281,6 +282,74 @@ describe("monevTokenSchema — bentuk JWT", () => {
 
   it("menolak token terlalu pendek", () => {
     expect(monevTokenSchema.safeParse("a.b.c").success).toBe(false);
+  });
+});
+
+
+describe("changePasswordSchema — ubah kata sandi dalam sesi", () => {
+  const valid = {
+    currentPassword: "lama-secret-1",
+    newPassword: "baru-secret-2",
+    confirmPassword: "baru-secret-2",
+  };
+
+  it("menerima kombinasi yang wajar", () => {
+    expect(changePasswordSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("menolak kata sandi baru < 8 karakter", () => {
+    const r = changePasswordSchema.safeParse({
+      ...valid,
+      newPassword: "pendek",
+      confirmPassword: "pendek",
+    });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues[0]?.path).toEqual(["newPassword"]);
+    }
+  });
+
+  it("menolak konfirmasi yang tidak cocok (di path confirmPassword)", () => {
+    const r = changePasswordSchema.safeParse({
+      ...valid,
+      confirmPassword: "beda-sekali",
+    });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.path[0] === "confirmPassword")).toBe(
+        true,
+      );
+    }
+  });
+
+  it("menolak kata sandi baru yang sama dengan yang lama", () => {
+    const r = changePasswordSchema.safeParse({
+      currentPassword: "sama-secret",
+      newPassword: "sama-secret",
+      confirmPassword: "sama-secret",
+    });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.path[0] === "newPassword")).toBe(true);
+    }
+  });
+
+  it("menolak kata sandi saat ini yang kosong", () => {
+    const r = changePasswordSchema.safeParse({ ...valid, currentPassword: "" });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues[0]?.path).toEqual(["currentPassword"]);
+    }
+  });
+
+  it("menolak kata sandi yang terlalu panjang", () => {
+    const panjang = "x".repeat(201);
+    const r = changePasswordSchema.safeParse({
+      currentPassword: "lama-secret-1",
+      newPassword: panjang,
+      confirmPassword: panjang,
+    });
+    expect(r.success).toBe(false);
   });
 });
 

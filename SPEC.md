@@ -254,6 +254,13 @@ bergabung, dan status kredensial Monev. Hanya `name` yang dapat diubah pengguna,
 lewat `PATCH /api/profile`. Email & peran **tidak** dapat diubah dari halaman
 ini.
 
+**Ubah kata sandi (dalam sesi, tanpa email):** kartu "Kata sandi" di `/profile`
+memanggil `POST /api/account/password`. Pengguna harus memasukkan kata sandi
+lama (diverifikasi `bcrypt.compare`) sebelum hash baru disimpan — ini pengganti
+verifikasi email karena proyek ini tidak mengirim email. Kata sandi baru minimal
+8 karakter, harus sama dengan konfirmasi, dan harus berbeda dari yang lama. Sesi
+JWT yang berjalan tetap sah setelah perubahan.
+
 ### 5.9 Kalender Kehadiran & Laporan (`/calendar`)
 
 Halaman **baca-saja** yang menampilkan status submit absensi & laporan per
@@ -476,6 +483,7 @@ Batasan: `Report` unik per `(userId, date)` — mencegah draf ganda.
 | `POST` | `/api/reports/draft` | Buat draf dari template | Cookie sesi | 20/menit |
 | `POST` | `/api/reports/submit` | Kirim draf langsung ke Monev | Cookie sesi | 20/10 menit per pengguna |
 | `PATCH` | `/api/profile` | Ubah nama tampilan pengguna sendiri | Cookie sesi | — (belum dibatasi) |
+| `POST` | `/api/account/password` | Ubah kata sandi sendiri (dalam sesi, tanpa email) | Cookie sesi | 5/10 menit per pengguna |
 
 **Implementasi rate limit (Tahap 5):** kebijakan murni di `src/lib/rate-limit.ts`
 (jendela tetap, teruji dengan waktu disuntik), penyimpanan di

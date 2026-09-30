@@ -104,14 +104,20 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 
 ## 4. Profil
 
-- Halaman: `src/app/(app)/profile/page.tsx` (server) + `profile-form.tsx` (klien).
-- **Yang bisa diubah pengguna:** hanya nama tampilan.
+- Halaman: `src/app/(app)/profile/page.tsx` (server) + `profile-form.tsx` (klien)
+  + `password-form.tsx` (klien, ubah kata sandi).
+- **Yang bisa diubah pengguna:** nama tampilan, dan kata sandi sendiri.
 - **Read-only:** email (identitas login), peran, tanggal bergabung.
 - **Status kredensial Monev** ditampilkan sebagai *label* (`ACTIVE`,
   `UNVERIFIED`, `INVALID`) — **tidak pernah** isi token atau password.
 - API: `PATCH /api/profile` (lihat `src/app/api/profile/route.ts`). `userId`
   diambil dari sesi, **bukan** dari body, supaya tidak bisa mengubah milik orang
   lain. Nama kosong disimpan sebagai `NULL`, bukan `""`.
+- **Ubah kata sandi (C-13):** `POST /api/account/password`
+  (`src/app/api/account/password/route.ts`). Dalam sesi, **tanpa email/token
+  reset** — pembuktiannya kata sandi lama (`bcrypt.compare`). Rate limit scope
+  `passwordChange` (5/10 menit per pengguna). Hash baru memakai bcrypt cost 12,
+  sama dengan register & login. Respons tidak pernah mengembalikan hash.
 
 ---
 

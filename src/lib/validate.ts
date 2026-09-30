@@ -117,3 +117,40 @@ export const profileSchema = z.object({
 
 export type ProfileInput = z.infer<typeof profileSchema>;
 
+/**
+ * Ubah kata sandi akun aplikasi ini — dilakukan **dalam sesi** (pengguna sudah
+ * login), tanpa email/token reset (C-13). Karena tidak ada verifikasi email,
+ * keamanannya bersandar pada: (a) sesi yang sah, dan (b) pembuktian kata sandi
+ * lama. Ketiganya divalidasi di server sebelum menyentuh DB.
+ *
+ * Aturan:
+ *   - `newPassword` minimal 8 karakter, sama seperti pendaftaran & login.
+ *   - `confirmPassword` harus sama dengan `newPassword` — mencegah salah ketik
+ *     yang akan mengunci pengguna dari akunnya sendiri (tidak ada email untuk
+ *     memulihkan).
+ *   - Kata sandi baru TIDAK boleh sama dengan yang lama (tidak ada gunanya
+ *     "mengganti" ke nilai yang sama).
+ */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(1, "Kata sandi saat ini wajib diisi")
+      .max(200, "Kata sandi terlalu panjang"),
+    newPassword: z
+      .string()
+      .min(8, "Kata sandi baru minimal 8 karakter")
+      .max(200, "Kata sandi terlalu panjang"),
+    confirmPassword: z.string().min(1, "Konfirmasi kata sandi wajib diisi"),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Konfirmasi kata sandi tidak cocok",
+    path: ["confirmPassword"],
+  })
+  .refine((d) => d.newPassword !== d.currentPassword, {
+    message: "Kata sandi baru harus berbeda dari yang lama",
+    path: ["newPassword"],
+  });
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+

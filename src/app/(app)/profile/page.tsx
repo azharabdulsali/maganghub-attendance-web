@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProfileForm from "./profile-form";
+import PasswordForm from "./password-form";
 
 // Label status kredensial dalam bahasa manusia + warna sorot.
 const STATUS_LABEL: Record<string, { teks: string; penting: boolean }> = {
@@ -98,6 +99,20 @@ export default async function ProfilePage() {
           </div>
 
           <ProfileForm initialName={user.name ?? ""} />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Kata sandi</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 text-sm text-foreground/70">
+            Ubah kata sandi akun ini. Anda perlu memasukkan kata sandi saat ini
+            untuk mengonfirmasi. Sesi yang sedang berjalan tetap aktif setelah
+            perubahan.
+          </p>
+          <PasswordForm />
         </CardContent>
       </Card>
 

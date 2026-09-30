@@ -141,4 +141,12 @@ describe("RATE_LIMITS", () => {
       expect(policy.windowMs).toBeGreaterThan(0);
     }
   });
+
+  it("passwordChange ada, 5 / 10 menit, lebih ketat dari credentials", () => {
+    expect(RATE_LIMITS.passwordChange.limit).toBe(5);
+    expect(RATE_LIMITS.passwordChange.windowMs).toBe(10 * 60_000);
+    expect(RATE_LIMITS.passwordChange.limit).toBeLessThan(
+      RATE_LIMITS.credentials.limit,
+    );
+  });
 });

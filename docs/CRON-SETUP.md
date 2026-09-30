@@ -1,4 +1,4 @@
-# Panduan Memasang Cron — MagangHub Attendance
+# Panduan Memasang Cron (Per User) — MagangHub Attendance
 
 Cara menyambungkan **cron eksternal** (penabuh jadwal) ke webhook aplikasi ini,
 supaya laporan absensi dikirim otomatis setiap hari.
@@ -6,10 +6,15 @@ supaya laporan absensi dikirim otomatis setiap hari.
 > **Prasyarat:** aplikasi sudah di-deploy dan bisa diakses lewat HTTPS publik.
 > Dokumen ini mulai dari "aplikasi sudah online".
 >
-> **Ingin tanpa setup per user?** Lihat `docs/CRON-BULK.md` — satu pemicu admin
-> (GitHub Actions) mengabsen SEMUA user otomatis; user cukup menyalakan sakelar
-> Otomasi. Cara di dokumen ini (satu cron per user) tetap berlaku bila Anda
-> butuh ketepatan menit.
+> ⚠️ **Ini BUKAN cara yang direkomendasikan.** Cara utama & direkomendasikan
+> adalah **dispatcher massal** — satu pemicu admin (GitHub Actions) mengabsen
+> SEMUA user otomatis; user cukup menyalakan sakelar Otomasi, tanpa menyalin
+> webhook apa pun. Lihat **`docs/CRON-BULK.md`** lebih dulu.
+>
+> Dokumen ini menyajikan **model per-user lama** (satu cron per user, dijaga
+> `?key=<webhookKey>`). Tetap berlaku bila Anda memang butuh **ketepatan menit**
+> (bulk mengabaikan menit dan berjalan per jam) atau ingin tiap user punya
+> kendali penuh atas jadwalnya sendiri.
 
 ---
 
@@ -22,6 +27,11 @@ satu URL:
 ```
 GET https://<domain-anda>/api/cron/submit?key=<webhookKey>
 ```
+
+> Inilah **endpoint per-user**. Dispatcher massal memakai endpoint **lain**
+> (`GET /api/cron/run-all`, dijaga header `Authorization: Bearer <CRON_SECRET>`
+> — lihat `docs/CRON-BULK.md`). Keduanya memakai logika keputusan yang sama
+> persis (`performSubmit`), jadi perilaku libur/kelengkapan identik.
 
 Alur saat dipanggil:
 
@@ -56,12 +66,15 @@ sendiri**. Menyimpan pengaturan ulang tidak mengubahnya.
 
 | Layanan | Gratis | Terbaik untuk |
 | :--- | :--- | :--- |
-| **cron-job.org** | Ya | Paling mudah; antarmuka web. **Disarankan.** |
+| **cron-job.org** | Ya | Paling mudah; antarmuka web. **Disarankan** untuk jalur per-user ini. |
 | **GitHub Actions** | Ya (repo publik; kuota menit terbatas) | Kalau Anda sudah pakai GitHub. |
 | **crontab** VPS/server sendiri | Sesuai server | Kalau punya server yang selalu nyala. |
 
-> SPEC §15 menetapkan **cron-job.org** sebagai pilihan utama. Tidak ada
-> fallback: bila layanan cron mati, absen terjadwal tidak jalan.
+> **Tidak ada fallback:** bila layanan cron mati, absen terjadwal per-user ini
+> tidak jalan. (Jalur dispatcher massal punya nasib yang sama — pemicunya tetap
+> harus hidup.) Pilihan utama proyek ini sebenarnya adalah **dispatcher massal**
+> (`docs/CRON-BULK.md`); spesifikasi awal (SPEC §15) menyebut cron-job.org
+> sebagai pilihan utama untuk **model per-user** yang dijelaskan di sini.
 
 ---
 
@@ -142,6 +155,10 @@ Bila server memakai UTC, jadwalnya jadi `30 0 * * *`.
 > semuanya `200` dengan `ok: false`. Hanya masalah **kunci/format** (`400`,
 > `401`) dan **rate limit** (`429`) yang memakai kode non-200. Alasannya sama
 > seperti di atas: cron eksternal tidak bisa menafsirkan status aneh.
+>
+> **`429` hanya berlaku di `/api/cron/submit` (per-user).** Dispatcher massal
+> (`/api/cron/run-all`) **tidak** memakai rate limit — ia dijaga `CRON_SECRET`
+> dan memang dipanggil tiap jam, jadi penghitung per-IP akan salah menolaknya.
 
 **Cron eksternal hanya memahami kode HTTP.** Karena itu "tidak ada yang dikirim
 hari ini" tetap `200`, bukan error — agar cron tidak panik dan tidak mengirim
@@ -173,3 +190,8 @@ HTTP.
 - **`429` padahal baru sekali** → IP bersama (mis. proxy) kena batas. Sesuaikan
   jadwal atau pasang Upstash (lihat `.env.example`) agar penghitung akurat
   lintas instance.
+
+> **Lelah menyiapkan satu cron per user?** Itulah alasan dispatcher massal ada.
+> Lihat `docs/CRON-BULK.md`: satu pemicu (GitHub Actions atau tombol admin)
+> mengabsen semua user yang sakelar Otomasinya menyala — tidak ada `webhookKey`
+> yang perlu disalin.

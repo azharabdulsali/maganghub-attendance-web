@@ -163,6 +163,12 @@ export const RATE_LIMITS = {
   /** Ubah kredensial: 10 / 10 menit per pengguna. */
   credentials: { limit: 10, windowMs: 10 * 60_000 },
   /**
+   * Ubah kata sandi akun sendiri: 5 / 10 menit per pengguna. Lebih ketat dari
+   * `credentials` karena tiap percobaan memverifikasi kata sandi lama (bcrypt) —
+   * batas rendah membuat tebak-kata-sandi-lama lewat UI tidak ekonomis.
+   */
+  passwordChange: { limit: 5, windowMs: 10 * 60_000 },
+  /**
    * Login otomatis ke portal Monev: 6 / 10 menit per pengguna. Lebih ketat
    * dari `credentials` karena tiap percobaan mengirim kredensial ke portal
    * sungguhan — salah password berulang bisa memicu penguncian akun di SSO.
