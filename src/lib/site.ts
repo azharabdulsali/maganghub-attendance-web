@@ -23,12 +23,12 @@ export const SITE_TITLE =
 /**
  * Email kontak publik untuk halaman /privacy dan /terms.
  *
- * TODO(wajib diisi sebelum publikasi): ganti placeholder di bawah dengan email
- * sungguhan milik pengelola. Halaman privasi & syarat WAJIB mencantumkan cara
- * menghubungi pengelola, jadi jangan dibiarkan kosong saat situs dipublikasikan.
+ * Diisi dengan alamat asli pengelola proyek. Halaman privasi & syarat WAJIB
+ * mencantumkan cara menghubungi pengelola, jadi konstanta ini tidak boleh
+ * dikosongkan saat situs dipublikasikan.
  * Sengaja satu konstanta: cukup ubah di sini, halaman otomatis ikut terbarui.
  */
-export const CONTACT_EMAIL = "[email@anda]";
+export const CONTACT_EMAIL = "syafiq.azhar02@gmail.com";
 
 /** True bila CONTACT_EMAIL masih placeholder (dipakai untuk menyembunyikan UI). */
 export const CONTACT_EMAIL_IS_PLACEHOLDER = CONTACT_EMAIL.startsWith("[");

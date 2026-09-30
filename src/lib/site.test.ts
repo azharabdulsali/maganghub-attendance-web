@@ -78,12 +78,18 @@ describe("FAQ", () => {
 
 describe("kontak publik", () => {
   it("CONTACT_EMAIL dan penanda placeholder konsisten", () => {
-    // Penanda ini mengendalikan apakah alamat palsu ditampilkan di /privacy dan
-    // /terms. Kalau penanda meleset, alamat "[email@anda]" bisa tampil seolah
-    // bisa dihubungi. Jadi keduanya harus selalu sinkron.
+    // Penanda ini mengendalikan apakah alamat asli ditampilkan di /privacy dan
+    // /terms. Kalau penanda meleset, alamat "masih placeholder" bisa tampil
+    // seolah bisa dihubungi. Jadi keduanya harus selalu sinkron.
     expect(site.CONTACT_EMAIL_IS_PLACEHOLDER).toBe(
       site.CONTACT_EMAIL.startsWith("["),
     );
-    expect(site.CONTACT_EMAIL.trim().length).toBeGreaterThan(0);
+  });
+
+  it("CONTACT_EMAIL terisi alamat email yang masuk akal", () => {
+    // Email sudah diisi asli, jadi penanda placeholder harus false; kalau tidak,
+    // halaman legal akan menyembunyikan alamat betulan di balik teks pengganti.
+    expect(site.CONTACT_EMAIL_IS_PLACEHOLDER).toBe(false);
+    expect(site.CONTACT_EMAIL).toMatch(/^[^\s@[\]]+@[^\s@[\]]+\.[^\s@[\]]+$/);
   });
 });
