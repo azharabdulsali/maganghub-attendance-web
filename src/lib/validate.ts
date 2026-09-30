@@ -82,6 +82,14 @@ export type ReportTemplatesInput = z.infer<typeof reportTemplatesSchema>;
  * Pengaturan otomasi (AutomationConfig, SPEC.md §7). Zona waktu TIDAK
  * diserahkan ke klien — selalu "Asia/Jakarta" (server yang mengisi) supaya
  * jadwal tidak bisa disalah-set ke zona lain tanpa sengaja.
+ *
+ * `action` opsional menentukan niat:
+ *   - tidak ada / "save"   → simpan biasa; `webhookKey` lama DIPERTAHANKAN.
+ *   - "rotate-key"         → terbitkan `webhookKey` BARU dengan sengaja.
+ *
+ * Rotasi dibuat eksplisit (bukan otomatis) karena mengganti kunci akan
+ * mematikan cron yang sudah dipasang pengguna secara diam-diam. Hanya tindakan
+ * sadar pengguna yang boleh melakukannya.
  */
 export const automationSchema = z.object({
   isEnabled: z.boolean(),
@@ -95,6 +103,7 @@ export const automationSchema = z.object({
     .int("Menit harus bilangan bulat")
     .min(0, "Menit minimal 0")
     .max(59, "Menit maksimal 59"),
+  action: z.enum(["save", "rotate-key"]).optional(),
 });
 
 export type AutomationInput = z.infer<typeof automationSchema>;

@@ -25,8 +25,20 @@ jam. Yang menabuh adalah layanan cron pihak ketiga, tiap hari, dengan memanggil
 satu URL:
 
 ```
+GET https://<domain-anda>/api/cron/submit
+Authorization: Bearer <webhookKey>          ← cara dianjurkan
+```
+
+Cara lama tetap didukung (kompatibilitas mundur):
+
+```
 GET https://<domain-anda>/api/cron/submit?key=<webhookKey>
 ```
+
+> **Kenapa Bearer lebih baik:** rahasia di query string gampang tersimpan di
+> log akses proxy/edge dan bisa bocor lewat `Referer`. Kirim lewat header bila
+> layanan cron Anda mendukungnya. Kedua cara diterima, jadi cron yang sudah
+> terpasang tidak mati mendadak.
 
 > Inilah **endpoint per-user**. Dispatcher massal memakai endpoint **lain**
 > (`GET /api/cron/run-all`, dijaga header `Authorization: Bearer <CRON_SECRET>`
@@ -35,8 +47,9 @@ GET https://<domain-anda>/api/cron/submit?key=<webhookKey>
 
 Alur saat dipanggil:
 
-1. **Cek kunci** — `key` dicocokkan dengan `webhookKey` milik Anda. Salah/kosong
-   → `401` dengan pesan generik.
+1. **Cek kunci** — `Authorization: Bearer <webhookKey>` (atau `?key=` lama)
+   dicocokkan dengan `webhookKey` milik Anda. Salah/kosong → `401` dengan pesan
+   generik.
 2. **Cek sakelar** — kalau `isEnabled = false` → `200 { skipped: true }`
    (bukan error; cron bebas memanggil tanpa tahu status).
 3. **Cek policy** — hari libur atau program sudah berakhir → tidak dikirim.
@@ -57,8 +70,10 @@ libur/kelengkapan — semua keputusan ada di sisi server aplikasi.
    disalin (tombol salin).
 3. Set jam & menit yang Anda mau (zona **Asia/Jakarta**), lalu aktifkan sakelar.
 
-`webhookKey` dibuat acak 32 byte saat pertama kali dan **tidak pernah berputar
-sendiri**. Menyimpan pengaturan ulang tidak mengubahnya.
+`webhookKey` dibuat acak 32 byte saat pertama kali. Menyimpan pengaturan ulang
+**tidak** mengubahnya. Bila kunci bocor, tekan **Ganti kunci webhook** di
+halaman Otomasi: kunci baru diterbitkan, URL lama langsung mati, lalu salin URL
+baru ke layanan cron Anda.
 
 ---
 
@@ -131,7 +146,10 @@ Di server yang selalu nyala:
 ```cron
 # m   h   dom mon dow   perintah
 # 07:30 WIB setiap hari (server di zona Asia/Jakarta)
-30 7 * * * curl -sS -o /dev/null "https://<domain-anda>/api/cron/submit?key=<webhookKey>"
+# Cara dianjurkan — kunci lewat header (tidak muncul di log URL):
+30 7 * * * curl -sS -o /dev/null -H "Authorization: Bearer <webhookKey>" "https://<domain-anda>/api/cron/submit"
+# Cara lama (masih didukung):
+# 30 7 * * * curl -sS -o /dev/null "https://<domain-anda>/api/cron/submit?key=<webhookKey>"
 ```
 
 Bila server memakai UTC, jadwalnya jadi `30 0 * * *`.
@@ -147,8 +165,8 @@ Bila server memakai UTC, jadwalnya jadi `30 0 * * *`.
 | `200 { skipped: true }` | Otomasi nonaktif, **atau** libur/program berakhir. | Cek `reason` di body. |
 | `200 { ok: false, status: "DUPLICATE" }` | Laporan tanggal itu sudah ada di portal. | Normal. |
 | `200 { ok: false, status: "FAILED" }` | Token tidak terbaca / sesi Monev mati. | Login ulang di portal, tempel token baru. |
-| `401` | Kunci salah/kosong. | Salin ulang `webhookKey` dari dashboard. |
-| `400` | `key` kosong / tanggal tidak sah. | Perbaiki URL cron. |
+| `401` | Kunci salah/kosong. | Salin ulang `webhookKey` dari dashboard (atau pakai header Bearer). |
+| `400` | Rahasia kosong / tanggal tidak sah. | Perbaiki URL/header cron. |
 | `429` | Kena rate limit (30/5 menit per IP). | Kurangi frekuensi; bukan aktivitas normal. |
 
 > **Perhatikan:** kegagalan *submisi* tidak pernah memakai kode HTTP gagal —

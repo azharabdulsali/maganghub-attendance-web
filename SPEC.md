@@ -544,7 +544,7 @@ Batasan: `Report` unik per `(userId, date)` — mencegah draf ganda.
 | Method | Endpoint | Deskripsi | Auth | Rate limit |
 | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/api/register` | Daftar akun baru (email + password) | Publik | **3/jam per IP** |
-| `GET` | `/api/cron/submit?key=<webhookKey>` | Memicu submit otomatis (dipanggil cron eksternal) | Query `key` | 30/5 menit per IP |
+| `GET` | `/api/cron/submit` | Memicu submit otomatis (dipanggil cron eksternal) | Header `Authorization: Bearer` (dianjurkan) **atau** query `key` | 30/5 menit per IP |
 | `GET` | `/api/cron/run-all` | Dispatcher massal: proses semua user yang jadwalnya jatuh di jam ini | `Authorization: Bearer <CRON_SECRET>` | — (rahasia) |
 | `POST` | `/api/admin/dispatch` | Pemicu manual dispatcher massal dari Panel Admin | Cookie sesi + role **ADMIN** | — (hanya admin) |
 | `GET/PUT` | `/api/automation` | Baca/simpan jadwal otomasi + webhook key | Cookie sesi | 20/menit |
@@ -800,11 +800,14 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 >   `isValidSchedule`, `minutesUntilNext`, `describeNextRun` — memakai
 >   `Intl` Asia/Jakarta, bukan zona server).
 > - `src/app/api/automation/route.ts` — GET/PUT `AutomationConfig`; `webhookKey`
->   dibuat acak 32 byte saat pertama dan **dipertahankan** pada setiap update.
-> - `src/app/api/cron/submit/route.ts` — webhook cron **gated**: dijaga
->   `?key=<webhookKey>` (401 generik bila salah), hormati `isEnabled` dan
->   `ALLOW_LIVE_SUBMIT`, policy libur/akhir program diperiksa lebih dulu, semua
->   percobaan dicatat dengan `trigger: CRON`.
+>   dibuat acak 32 byte saat pertama dan **dipertahankan** pada setiap update,
+>   kecuali rotasi eksplisit lewat `action: "rotate-key"` (VERIFY-002).
+> - `src/app/api/cron/submit/route.ts` — webhook cron **gated**: dijaga header
+>   `Authorization: Bearer <webhookKey>` (dianjurkan) atau `?key=<webhookKey>`
+>   (cara lama, kompatibilitas mundur; 401 generik bila salah), hormati
+>   `isEnabled` dan `ALLOW_LIVE_SUBMIT`, policy libur/akhir program diperiksa
+>   lebih dulu, semua percobaan dicatat dengan `trigger: CRON` (ditentukan
+>   server, bukan klien).
 > - `src/app/(app)/automation/page.tsx` + form — atur jam/menit, sakelar,
 >   dan salin URL webhook untuk cron-job.org.
 > - **Rate limit (SPEC §8/§10 poin 6) — SELESAI.** `src/lib/rate-limit.ts`

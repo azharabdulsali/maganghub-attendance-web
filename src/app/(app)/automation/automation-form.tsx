@@ -118,6 +118,58 @@ export default function AutomationForm({
     }
   }
 
+  async function rotasiKunci() {
+    // Konfirmasi eksplisit: mengganti kunci langsung mematikan cron yang sudah
+    // terpasang sampai URL baru dipasang. Ini tindakan sadar, bukan tidak sengaja.
+    const lanjut = window.confirm(
+      "Ganti kunci webhook?\n\nURL cron lama akan LANGSUNG berhenti bekerja. " +
+        "Anda harus menyalin URL baru ke layanan cron Anda setelah ini.",
+    );
+    if (!lanjut) return;
+
+    setError(null);
+    setSukses(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/automation", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isEnabled,
+          hour: Number(hour),
+          minute: Number(minute),
+          action: "rotate-key",
+        }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as {
+        webhookKey?: string;
+        error?: string;
+      };
+
+      if (!res.ok || !data.webhookKey) {
+        const pesan = data.error ?? "Gagal mengganti kunci webhook.";
+        setError(pesan);
+        toast.error("Gagal mengganti kunci", pesan);
+        return;
+      }
+
+      setWebhookKey(data.webhookKey);
+      setSukses("Kunci webhook diganti. Salin URL baru ke layanan cron Anda.");
+      toast.success(
+        "Kunci webhook diganti",
+        "Salin URL baru ke layanan cron Anda sekarang.",
+      );
+      router.refresh();
+    } catch {
+      const pesan = "Tidak dapat menghubungi server. Periksa koneksi Anda.";
+      setError(pesan);
+      toast.error("Gagal mengganti kunci", pesan);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -197,10 +249,26 @@ export default function AutomationForm({
               <Button variant="neutral" onClick={salinUrl}>
                 {tersalin ? "Tersalin!" : "Salin URL"}
               </Button>
+              <Button
+                variant="neutral"
+                type="button"
+                onClick={rotasiKunci}
+                disabled={loading}
+              >
+                {loading ? "Memproses..." : "Ganti kunci webhook"}
+              </Button>
             </div>
             <p className="text-xs text-foreground/60">
               Jadwal: {formatSchedule(Number(hour) || 0, Number(minute) || 0)} WIB
               setiap hari.
+            </p>
+            <p className="text-xs text-foreground/60">
+              Lebih aman: kirim kunci lewat header{" "}
+              <code className="rounded bg-foreground/10 px-1">
+                Authorization: Bearer &lt;kunci&gt;
+              </code>{" "}
+              daripada menempelkannya di URL. Mengganti kunci akan mematikan URL
+              lama — pasang URL baru di cron Anda setelahnya.
             </p>
           </CardContent>
         </Card>

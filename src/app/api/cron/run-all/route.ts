@@ -28,6 +28,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import { env } from "@/lib/env";
 import { runDispatch } from "@/lib/cron-dispatch-run";
+import { bearerTokenFrom } from "@/lib/bearer-token";
 
 // Wajib: fungsi ini mengirim laporan untuk BANYAK user dalam satu pemanggilan.
 // Tanpa ini Vercel memakai default (10s di Hobby) dan eksekusi akan dipotong.
@@ -50,10 +51,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const header = request.headers.get("authorization") ?? "";
-  const token = header.toLowerCase().startsWith("bearer ")
-    ? header.slice(7).trim()
-    : "";
+  const token = bearerTokenFrom(request.headers.get("authorization")) ?? "";
   if (token.length === 0 || !safeEqual(token, env.CRON_SECRET)) {
     return NextResponse.json({ error: "Tidak diizinkan." }, { status: 401 });
   }

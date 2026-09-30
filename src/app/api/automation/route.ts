@@ -1,15 +1,16 @@
 // src/app/api/automation/route.ts — pengaturan otomasi (SPEC.md §7).
 //
 // Satu pengguna punya satu AutomationConfig (userId @unique). `webhookKey`
-// dibuat sekali secara acak dan TIDAK pernah diganti otomatis — kalau berubah,
-// cron yang sudah dipasang pengguna akan mati diam-diam.
+// dibuat sekali secara acak dan TIDAK diganti otomatis — kalau berubah, cron
+// yang sudah dipasang pengguna akan mati diam-diam. Pengguna bisa menerbitkan
+// key BARU dengan sengaja lewat PUT `action: "rotate-key"` (VERIFY-002).
 //
 // Keamanan:
 //   - GET mengembalikan `webhookKey` hanya ke PEMILIK sesi (bukan rahasia dari
 //     dirinya sendiri — ia harus bisa menyalinnya ke cron-job.org). Berbeda dari
 //     password Monev yang memang tak pernah boleh terlihat lagi.
-//   - PUT tidak pernah membuat key baru bila config sudah ada; `webhookKey`
-//     lama dipertahankan.
+//   - PUT tidak pernah membuat key baru kecuali diminta eksplisit via
+//     `action: "rotate-key"`; selain itu `webhookKey` lama dipertahankan.
 //   - Zona waktu selalu diisi server ("Asia/Jakarta"), bukan dari klien.
 
 import { NextResponse } from "next/server";
@@ -58,7 +59,7 @@ export async function GET() {
   });
 }
 
-/** PUT — simpan jam/menit & sakelar aktif. Membuat key baru HANYA saat pertama. */
+/** PUT — simpan jam/menit & sakelar. Key baru hanya saat pertama (atau bila rotasi diminta). */
 export async function PUT(request: Request) {
   const userId = await currentUserId();
   if (!userId) {
@@ -80,10 +81,13 @@ export async function PUT(request: Request) {
     );
   }
 
-  const { isEnabled, hour, minute } = parsed.data;
+  const { isEnabled, hour, minute, action } = parsed.data;
 
-  // `update` sengaja TIDAK menyertakan webhookKey → key lama dipertahankan.
-  // Pada `create`, key dibuat acak sekali di sini.
+  // Rotasi hanya bila pengguna MEMINTANYA (action: "rotate-key"). Simpan biasa
+  // selalu mempertahankan kunci lama supaya cron yang sudah terpasang tidak
+  // mati tanpa disadari. Lihat catatan di src/lib/validate.ts.
+  const rotateKey = action === "rotate-key";
+
   const saved = await prisma.automationConfig.upsert({
     where: { userId },
     create: {
@@ -94,7 +98,10 @@ export async function PUT(request: Request) {
       timezone: AUTOMATION_TIMEZONE,
       webhookKey: generateWebhookKey(),
     },
-    update: { isEnabled, hour, minute },
+    // `update` TIDAK menyertakan webhookKey kecuali rotasi diminta eksplisit.
+    update: rotateKey
+      ? { isEnabled, hour, minute, webhookKey: generateWebhookKey() }
+      : { isEnabled, hour, minute },
     select: {
       isEnabled: true,
       webhookKey: true,

@@ -11,6 +11,7 @@ import {
   monevTokenSchema,
   changePasswordSchema,
   changeEmailSchema,
+  automationSchema,
 } from "./validate";
 
 describe("credentialsSchema — email Monev", () => {
@@ -405,5 +406,31 @@ describe("changeEmailSchema — ubah email akun", () => {
   });
 });
 
+describe("automationSchema — action rotasi (VERIFY-002)", () => {
+  const base = { isEnabled: true, hour: 7, minute: 30 };
+
+  it("menerima simpan biasa tanpa action", () => {
+    const r = automationSchema.safeParse(base);
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.action).toBeUndefined();
+  });
+
+  it("menerima action 'rotate-key'", () => {
+    const r = automationSchema.safeParse({ ...base, action: "rotate-key" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.action).toBe("rotate-key");
+  });
+
+  it("menolak action tak dikenal (tidak ada rotasi liar)", () => {
+    const r = automationSchema.safeParse({ ...base, action: "hapus-semua" });
+    expect(r.success).toBe(false);
+  });
+
+  it("tetap menolak jam/menit di luar rentang", () => {
+    expect(automationSchema.safeParse({ ...base, hour: 24 }).success).toBe(false);
+    expect(automationSchema.safeParse({ ...base, minute: 60 }).success).toBe(false);
+  });
 });
 
+
+});

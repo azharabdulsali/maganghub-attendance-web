@@ -41,20 +41,27 @@ export default async function DashboardPage() {
   const role = (session.user as { role?: string }).role ?? "USER";
   const isAdmin = role === "ADMIN";
 
-  // Status kredensial nyata — supaya kartu ini jujur saat sesi Monev mati,
-  // bukan selalu menyuruh "Atur kredensial" walau semuanya sehat.
-  const credential = await prisma.maganghubCredential.findUnique({
-    where: { userId },
-    select: { status: true, tokenCiphertext: true, emailMonev: true },
-  });
-  const punyaToken = Boolean(credential?.tokenCiphertext);
-  const perluPerhatian = credential?.status === "INVALID";
-
-  // Statistik ringkas — dihitung di server, hanya membaca data milik pengguna.
   // Satu `now` dipakai ulang untuk panel "Status Hari Ini" supaya batas harinya
   // tidak bisa berbeda dengan hari-hari di grafik (lihat stats-query.ts).
   const now = new Date();
-  const { stats, trend } = await getDashboardStats(userId, now);
+
+  // Kedua query ini hanya butuh `userId` dan tidak saling bergantung, jadi
+  // dijalankan PARALEL. Kalau di-await berurutan, dua round-trip database
+  // bertumpuk (waterfall) — padahal tidak ada alasan untuk menunggu salah satu.
+  //
+  // Status kredensial nyata — supaya kartu di bawah jujur saat sesi Monev mati,
+  // bukan selalu menyuruh "Atur kredensial" walau semuanya sehat.
+  // Statistik ringkas — dihitung di server, hanya membaca data milik pengguna.
+  const [credential, { stats, trend }] = await Promise.all([
+    prisma.maganghubCredential.findUnique({
+      where: { userId },
+      select: { status: true, tokenCiphertext: true, emailMonev: true },
+    }),
+    getDashboardStats(userId, now),
+  ]);
+
+  const punyaToken = Boolean(credential?.tokenCiphertext);
+  const perluPerhatian = credential?.status === "INVALID";
 
   // Tanggal hari ini di zona Asia/Jakarta (YYYY-MM-DD) — dipakai panel
   // "Status Hari Ini". Memakai helper yang sama dengan penghitung tren supaya

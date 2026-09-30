@@ -49,8 +49,13 @@ export async function POST(request: Request) {
     );
   }
 
-  // Body opsional: { date?: "YYYY-MM-DD", trigger?: "MANUAL"|"CRON" }.
-  let body: { date?: unknown; trigger?: unknown } = {};
+  // Body opsional: { date?: "YYYY-MM-DD" }.
+  //
+  // `trigger` SENGAJA tidak dibaca dari body: label audit (MANUAL vs CRON)
+  // ditentukan SERVER, bukan klien. Route ini adalah jalur manual, jadi
+  // pemicunya selalu "MANUAL" — klien tidak boleh bisa memalsukan jejak audit
+  // dengan mengirim `trigger: "CRON"`.
+  let body: { date?: unknown } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -58,7 +63,7 @@ export async function POST(request: Request) {
     body = {};
   }
 
-  const trigger: SubmitTrigger = body.trigger === "CRON" ? "CRON" : "MANUAL";
+  const trigger: SubmitTrigger = "MANUAL";
 
   // Tanggal target: dari body bila sah, kalau tidak → hari ini WIB.
   const date =

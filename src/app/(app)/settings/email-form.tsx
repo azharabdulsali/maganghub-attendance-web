@@ -76,19 +76,31 @@ export default function EmailForm({ currentEmail }: { currentEmail: string }) {
         toast.error("Gagal mengubah email", pesan);
         return;
       }
-      // Selaraskan sesi yang sedang dipakai: email baru + generasi sesi baru
-      // (server menaikkan `sessionVersion`, mencabut sesi lain).
-      await update({
-        email: data?.email,
-        sessionVersion: data?.sessionVersion,
-      });
+
+      // Sampai sini server SUDAH mengubah email dan mencabut sesi lain — titik
+      // ini adalah batas sukses yang otoritatif. Sinkronisasi sesi klien di
+      // bawah bersifat "best effort" dan SENGAJA dipisah dari `catch` utama:
+      // kalau `update()` gagal (mis. jaringan putus), email tetap sudah
+      // berubah, jadi keliru bila kita bilang "gagal mengubah email" lalu
+      // menyuruh pengguna mencoba lagi.
       setEmail("");
       setPassword("");
       setSaved(true);
-      toast.success(
-        "Email diubah",
-        "Perangkat lain telah dikeluarkan. Gunakan email baru saat login berikutnya.",
-      );
+
+      try {
+        await update({
+          email: data?.email,
+          sessionVersion: data?.sessionVersion,
+        });
+        toast.success(
+          "Email diubah",
+          "Perangkat lain telah dikeluarkan. Gunakan email baru saat login berikutnya.",
+        );
+      } catch {
+        // Kegagalan di sini hanya berarti tampilan sesi (sidebar) mungkin masih
+        // memuat email lama sampai dimuat ulang — bukan kegagalan perubahan.
+        toast.success("Email diubah", "Muat ulang halaman untuk menyegarkan sesi.");
+      }
     } catch {
       const pesan = "Tidak bisa menghubungi server. Coba lagi.";
       setError(pesan);

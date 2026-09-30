@@ -1,7 +1,14 @@
 // src/app/api/cron/submit/route.ts — webhook pemicu otomasi (SPEC.md §7, §10, §11B).
 //
-// Dipanggil layanan cron eksternal (mis. cron-job.org) tiap hari:
-//   GET /api/cron/submit?key=<webhookKey>
+// Dipanggil layanan cron eksternal (mis. cron-job.org) tiap hari. Rahasia
+// (`webhookKey`) boleh dikirim dengan DUA cara:
+//   GET /api/cron/submit            + header  Authorization: Bearer <webhookKey>   ← dianjurkan
+//   GET /api/cron/submit?key=<webhookKey>                                          ← cara lama, masih didukung
+//
+// Kenapa header lebih baik: rahasia di query string gampang tersimpan di log
+// akses proxy/edge dan bisa bocor lewat Referer. Query string tetap diterima
+// agar cron yang sudah dipasang pengguna tidak mati mendadak (deprecation
+// bertahap). Lihat src/lib/bearer-token.ts.
 //
 // Keamanan & etika:
 //   - Dijaga `webhookKey` per pengguna; TANPA kunci yang cocok → 401 dengan
@@ -27,13 +34,24 @@ import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 import { todayInJakarta } from "@/lib/submit-service";
 import { type SubmitOutcome, performSubmit } from "@/lib/perform-submit";
+import { cronKeyFromRequest } from "@/lib/bearer-token";
 
-/** GET — dipicu cron. Parameter `key` = webhookKey pengguna. */
+/**
+ * GET — dipicu cron. Rahasia (`webhookKey`) boleh dikirim lewat
+ * `Authorization: Bearer <key>` (dianjurkan) ATAU `?key=<key>` (cara lama,
+ * dipertahankan agar cron yang sudah terpasang tetap jalan).
+ */
 export async function GET(request: Request) {
-  const key = new URL(request.url).searchParams.get("key") ?? "";
+  const key = cronKeyFromRequest(
+    request.headers.get("authorization"),
+    request.url,
+  );
 
   if (key.trim().length === 0) {
-    return NextResponse.json({ error: "Parameter 'key' wajib." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Rahasia wajib (header 'Authorization: Bearer' atau parameter 'key')." },
+      { status: 400 },
+    );
   }
 
   // Rate limit per IP SEBELUM mencari kunci — meredam penebakan key acak.
