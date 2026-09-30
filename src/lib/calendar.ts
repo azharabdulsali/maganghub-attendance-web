@@ -9,6 +9,7 @@
 // dengan stats-query.ts. Jangan pakai zona server — server bisa UTC.
 
 import type { SubmitStatus } from "@/generated/prisma/enums";
+import { isNationalHoliday } from "./holidays";
 
 /** Offset WIB tetap (UTC+7) — Indonesia tidak memakai DST. */
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
@@ -116,6 +117,16 @@ export function buildMonthGrid({ year, month }: YearMonth): CalendarCell[][] {
 /** Status ringkas satu tanggal. Prioritas: TERKIRIM > GAGAL > DRAFT > KOSONG. */
 export type DayStatus = "SUBMITTED" | "FAILED" | "DRAFT" | "NONE";
 
+/**
+ * Jenis hari libur untuk penanda di sel kalender:
+ *   - `NATIONAL` = libur nasional/cuti bersama (daftar holidays.ts)
+ *   - `WEEKEND`  = Sabtu/Minggu
+ *   - `null`     = hari kerja biasa
+ *
+ * Dipisah dari `DayStatus` supaya penanda libur TIDAK mengubah statistik
+ * (terkirim/draft/gagal) — kalender tetap menghitung status submit apa adanya.
+ */
+export type HolidayKind = "NATIONAL" | "WEEKEND" | null;
 /** Baris minimal SubmitLog yang dibutuhkan kalender. */
 export interface CalendarLogRow {
   status: SubmitStatus;
@@ -248,4 +259,23 @@ export function daysInMonth({ year, month }: YearMonth): number {
  */
 export function weekdayIndex(year: number, month: number, day: number): number {
   return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
+/**
+ * Tentukan jenis libur untuk `iso` (YYYY-MM-DD). MURNI.
+ *
+ * Urutan penting: libur nasional diperiksa LEBIH DULU daripada akhir pekan.
+ * Jadi Sabtu/Minggu yang kebetulan juga libur nasional dilaporkan sebagai
+ * `NATIONAL` — penanda yang lebih informatif. Tanggal tak sah → `null`.
+ */
+export function holidayKindOf(iso: string): HolidayKind {
+  if (isNationalHoliday(iso)) return "NATIONAL";
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return null;
+  const wd = weekdayIndex(
+    Number.parseInt(match[1], 10),
+    Number.parseInt(match[2], 10),
+    Number.parseInt(match[3], 10),
+  );
+  return wd === 0 || wd === 6 ? "WEEKEND" : null;
 }

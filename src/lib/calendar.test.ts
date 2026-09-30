@@ -9,6 +9,7 @@ import {
   currentJakartaMonth,
   daysInMonth,
   groupLogsByDate,
+  holidayKindOf,
   jakartaISODate,
   lastJakartaDays,
   monthToParam,
@@ -204,5 +205,29 @@ describe("batas hari WIB (regresi dashboard)", () => {
     expect(jakartaISODate(new Date("2026-09-28T16:30:00.000Z"))).toBe("2026-09-28");
     // 2026-09-28T17:30:00Z = 29 Sep 00:30 WIB.
     expect(jakartaISODate(new Date("2026-09-28T17:30:00.000Z"))).toBe("2026-09-29");
+  });
+});
+
+describe("holidayKindOf", () => {
+  it("menandai libur nasional", () => {
+    // 2026-12-25 Hari Raya Natal (Jumat).
+    expect(holidayKindOf("2026-12-25")).toBe("NATIONAL");
+    expect(holidayKindOf("2026-12-24")).toBe("NATIONAL");
+  });
+
+  it("menandai akhir pekan biasa", () => {
+    // 2026-09-19 Sabtu, 2026-09-20 Minggu.
+    expect(holidayKindOf("2026-09-19")).toBe("WEEKEND");
+    expect(holidayKindOf("2026-09-20")).toBe("WEEKEND");
+  });
+
+  it("hari kerja biasa → null", () => {
+    // 2026-09-22 Selasa.
+    expect(holidayKindOf("2026-09-22")).toBeNull();
+  });
+
+  it("tanggal tak sah / di luar daftar → null, tidak melempar", () => {
+    expect(holidayKindOf("bukan-tanggal")).toBeNull();
+    expect(holidayKindOf("")).toBeNull();
   });
 });

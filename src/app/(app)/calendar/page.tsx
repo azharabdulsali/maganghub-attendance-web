@@ -25,6 +25,7 @@ import {
   collectReportDates,
   currentJakartaMonth,
   daysInMonth,
+  holidayKindOf,
   MONTH_LABELS,
   monthToParam,
   nextMonth,
@@ -32,6 +33,7 @@ import {
   prevMonth,
   WEEKDAY_LABELS,
   type DayStatus,
+  type HolidayKind,
   type YearMonth,
 } from "@/lib/calendar";
 
@@ -66,6 +68,12 @@ const STATUS_CELL_CLASS: Record<DayStatus, string> = {
   FAILED: "bg-foreground text-background border-border",
   DRAFT: "border-border bg-background",
   NONE: "border-border/40 bg-background",
+};
+
+/** Label ringkas penanda hari libur di sudut sel. */
+const HOLIDAY_LABEL: Record<Exclude<HolidayKind, null>, string> = {
+  NATIONAL: "Libur",
+  WEEKEND: "Akhir pekan",
 };
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
@@ -200,6 +208,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                     return <div key={`blank-${cellIndex}`} aria-hidden />;
                   }
                   const status = classifyDay(cell.iso, logsByDate, reportDates);
+                  const holiday = holidayKindOf(cell.iso);
                   const isToday =
                     isCurrentMonth &&
                     cell.day <= totalDays &&
@@ -211,8 +220,11 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                         "flex h-14 flex-col justify-between rounded-base border-2 p-1 sm:h-16 sm:p-1.5",
                         STATUS_CELL_CLASS[status],
                         status === "NONE" && "text-foreground/50",
+                        holiday && "border-dashed",
                       )}
-                      aria-label={`${cell.day}: ${STATUS_TEXT[status]}`}
+                      aria-label={`${cell.day}: ${STATUS_TEXT[status]}${
+                        holiday ? `, ${HOLIDAY_LABEL[holiday]}` : ""
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <span
@@ -225,12 +237,22 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                         >
                           {cell.day}
                         </span>
-                        {isToday && (
+                        {isToday ? (
                           <span
                             className="size-1.5 rounded-full bg-foreground"
                             aria-hidden
                           />
-                        )}
+                        ) : holiday ? (
+                          <span
+                            className={cn(
+                              "size-1.5 rounded-full",
+                              holiday === "NATIONAL"
+                                ? "bg-foreground"
+                                : "bg-foreground/40",
+                            )}
+                            aria-hidden
+                          />
+                        ) : null}
                       </div>
                       <span
                         className={cn(
@@ -238,7 +260,11 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                           status === "NONE" && "text-foreground/40",
                         )}
                       >
-                        {status === "NONE" ? "—" : STATUS_TEXT[status]}
+                        {holiday
+                          ? HOLIDAY_LABEL[holiday]
+                          : status === "NONE"
+                            ? "—"
+                            : STATUS_TEXT[status]}
                       </span>
                     </div>
                   );
@@ -253,6 +279,13 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             <LegendItem status="DRAFT" count={counts.DRAFT} />
             <LegendItem status="FAILED" count={counts.FAILED} />
             <LegendItem status="NONE" count={counts.NONE} />
+            <span className="inline-flex items-center gap-2">
+              <span
+                className="size-3 shrink-0 rounded-sm border-2 border-dashed border-foreground/60"
+                aria-hidden
+              />
+              <span className="text-foreground/70">Hari libur</span>
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -260,7 +293,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       <p className="mt-4 text-xs text-foreground/50">
         Tanggal dihitung memakai zona Asia/Jakarta. Hanya pengiriman{" "}
         <strong>sukses</strong> yang ditandai terkirim; percobaan duplikat saja
-        tetap tampil sebagai draft/belum diisi.
+        tetap tampil sebagai draft/belum diisi. Sel bergaris putus-putus adalah{" "}
+        <strong>akhir pekan atau libur nasional</strong> — pada hari itu laporan
+        tidak perlu dikirim.
       </p>
     </div>
   );

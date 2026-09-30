@@ -52,6 +52,16 @@ describe("isHoliday / isWorkingDay", () => {
     expect(isHoliday("2026-09-22")).toBe(false);
     expect(isWorkingDay("2026-09-22")).toBe(true);
   });
+  it("libur nasional di hari kerja dianggap libur", () => {
+    // 2026-12-24 Cuti Bersama Natal = Kamis; 2026-12-25 Natal = Jumat.
+    expect(isHoliday("2026-12-24")).toBe(true);
+    expect(isHoliday("2026-12-25")).toBe(true);
+    expect(isWorkingDay("2026-12-24")).toBe(false);
+  });
+  it("tanggal tanpa data libur tidak diklaim libur", () => {
+    // 2026-09-22 Selasa biasa, dan 2099 jauh di luar daftar.
+    expect(isHoliday("2099-09-22")).toBe(false);
+  });
 });
 
 describe("decide — keputusan utama", () => {

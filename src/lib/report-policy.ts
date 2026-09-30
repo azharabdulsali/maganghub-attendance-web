@@ -11,6 +11,7 @@
 //   "sekarang" ke zona Asia/Jakarta LEBIH DULU, baru panggil fungsi ini.
 //   Kalau tidak, batas 2027-02-10 bisa meleset satu hari di server UTC.
 
+import { isNationalHoliday } from "./holidays";
 import { MIN_REPORT_LENGTH } from "./report-rules";
 
 /**
@@ -23,12 +24,9 @@ export const LAST_ACTIVE_DATE = "2027-02-09";
 /** Jam local (Asia/Jakarta) dua slot terjadwal; slot kedua = cadangan (§11B). */
 export const JADWAL_CADANGAN = ["16:30", "20:00"] as const;
 
-/** Libur nasional — format `YYYY-MM-DD`. Diisi dari `config/holidays.json`. */
-const LIBUR_NASIONAL = new Set<string>([
-  // TODO(data): salin dari maganghub-autoabsen/config/holidays.json.
-  // Sengaja dikosongkan dulu supaya "libur" tidak mengklaim tanggal yang belum
-  // kita punya datanya. Tambahkan saat menyalin daftar resmi.
-]);
+// Libur nasional kini berasal dari `holidays.ts` (data murni terpisah) supaya
+// daftar tanggal mudah diaudit & diganti tiap tahun tanpa menyentuh logika.
+// Lihat peringatan verifikasi SKB di file itu.
 
 /** Tanggal polos dalam bentuk `YYYY-MM-DD`. */
 export type PlainDate = string;
@@ -69,7 +67,7 @@ export function isAfter(a: PlainDate, b: PlainDate): boolean {
 export function isHoliday(date: PlainDate): boolean {
   const wd = weekdayOf(date);
   if (wd === 0 || wd === 6) return true;
-  return LIBUR_NASIONAL.has(date);
+  return isNationalHoliday(date);
 }
 
 /** Apakah tanggal ini hari kerja (Senin–Jumat, bukan libur nasional)? */
