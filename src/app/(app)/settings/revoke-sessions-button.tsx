@@ -1,6 +1,6 @@
 "use client";
 
-// src/app/(app)/profile/revoke-sessions-button.tsx — tombol "keluar dari semua
+// src/app/(app)/settings/revoke-sessions-button.tsx — tombol "keluar dari semua
 // perangkat lain" (lanjutan C-13).
 //
 // Memanggil POST /api/account/sessions/revoke, yang menaikkan

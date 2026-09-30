@@ -108,6 +108,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (v !== null) {
           token.sessionVersion = v;
         }
+        // Email juga diperbarui di sini SETELAH /api/account/email sukses:
+        // `token.email` awalnya disalin saat login, jadi tanpa ini sidebar &
+        // sesi akan terus menampilkan email LAMA sampai pengguna login ulang.
+        //
+        // Nilai dari klien TIDAK dipercaya: hanya dipakai bila berupa string
+        // non-kosong. Yang menentukan kebenaran tetap DB (email sudah divalidasi
+        // + ditulis di route dengan verifikasi kata sandi); di sini sekadar
+        // menyelaraskan tampilan sesi yang sedang dipakai.
+        const e = (session as { email?: unknown } | null | undefined)?.email;
+        if (typeof e === "string" && e.trim().length > 0) {
+          token.email = e.trim().toLowerCase();
+        }
         return token;
       }
 
@@ -132,6 +144,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        // Email diambil dari token (bukan default Auth.js) supaya perubahan
+        // lewat `useSession().update({ email })` langsung tampil di klien —
+        // lihat callback `jwt`.
+        if (typeof token.email === "string") {
+          session.user.email = token.email;
+        }
         (session.user as { role?: string }).role =
           (token.role as string) ?? "USER";
       }

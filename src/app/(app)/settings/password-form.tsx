@@ -1,6 +1,6 @@
 "use client";
 
-// src/app/(app)/profile/password-form.tsx — form ubah kata sandi (C-13).
+// src/app/(app)/settings/password-form.tsx — form ubah kata sandi (C-13).
 //
 // Diubah dalam sesi (pengguna sudah login); tidak ada email/token reset. Tiga
 // kolom: kata sandi saat ini, kata sandi baru, dan konfirmasi. Pemeriksaan di

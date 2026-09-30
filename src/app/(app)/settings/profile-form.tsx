@@ -1,6 +1,6 @@
 "use client";
 
-// src/app/(app)/profile/profile-form.tsx — form ubah nama profil.
+// src/app/(app)/settings/profile-form.tsx — form ubah nama profil.
 //
 // Sederhana dengan sengaja: hanya `name` yang bisa diubah. Email & peran
 // ditampilkan sebagai informasi (read-only) karena keduanya bukan wewenang

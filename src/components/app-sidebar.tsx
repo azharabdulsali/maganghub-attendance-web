@@ -28,6 +28,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Menu,
+  Settings,
   ShieldAlert,
   Sparkles,
   UserRound,
@@ -71,6 +72,7 @@ const MENU_UMUM: MenuItem[] = [
   },
   { href: "/history", label: "Riwayat Absensi", icon: CalendarCheck },
   { href: "/automation", label: "Otomasi", icon: Clock },
+  { href: "/settings", label: "Pengaturan", icon: Settings },
 ];
 
 // Menu khusus ADMIN. Saat ini alat diagnostik; ruang untuk halaman admin lain

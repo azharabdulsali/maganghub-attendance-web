@@ -154,3 +154,35 @@ export const changePasswordSchema = z
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+/**
+ * Ubah email akun aplikasi ini — perubahan **paling sensitif** di aplikasi ini,
+ * karena email adalah (a) identitas login DAN (b) penentu peran admin
+ * (`isAdminEmail` di lib/env.ts). Karena tidak ada verifikasi email maupun
+ * pemulihan akun, satu salah ketik bisa mengunci pengguna dari akunnya sendiri
+ * secara permanen. Maka:
+ *
+ *   - `newEmail` wajib format email yang sah. Normalisasi (trim + lowercase)
+ *     dilakukan di route sebelum dibandingkan/disimpan — konsisten dengan jalur
+ *     login & pendaftaran agar satu email tidak bisa punya dua ejaan.
+ *   - `currentPassword` wajib: membuktikan pemilik sesi memang tahu kata
+ *     sandinya. Tanpa ini, siapa pun yang menemukan perangkat tak terkunci bisa
+ *     menyerahkan akun dengan mengubah emailnya.
+ *   - Peran admin TIDAK pernah diberikan lewat sini. Route menolak bila email
+ *     baru sama dengan `ADMIN_EMAIL` dari pengguna non-admin (lihat route),
+ *     sehingga jalur ini tidak bisa jadi eskalasi hak akses.
+ */
+export const changeEmailSchema = z.object({
+  newEmail: z
+    .string()
+    .trim()
+    .min(1, "Email baru wajib diisi")
+    .max(200, "Email terlalu panjang")
+    .email("Email tidak valid"),
+  currentPassword: z
+    .string()
+    .min(1, "Kata sandi saat ini wajib diisi")
+    .max(200, "Kata sandi terlalu panjang"),
+});
+
+export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
+

@@ -1,16 +1,18 @@
-// src/app/(app)/profile/page.tsx — halaman profil pengguna.
+// src/app/(app)/profile/page.tsx — halaman profil pengguna (INFORMASI saja).
 //
 // Server component: sesi + data yang boleh ditampilkan. Yang sengaja TIDAK
 // ditampilkan: password (walau ter-hash) dan isi token Monev. Status kredensial
 // hanya berupa label status, bukan rahasianya (AGENTS.md §2).
+//
+// Halaman ini sekarang READ-ONLY: semua tindakan yang mengubah akun (email,
+// nama, kata sandi, sesi) dipindah ke /settings supaya ada satu tempat yang
+// jelas untuk "mengubah" vs "melihat". Di sini hanya tautan ke sana.
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ProfileForm from "./profile-form";
-import PasswordForm from "./password-form";
-import RevokeSessionsButton from "./revoke-sessions-button";
 
 // Label status kredensial dalam bahasa manusia + warna sorot.
 const STATUS_LABEL: Record<string, { teks: string; penting: boolean }> = {
@@ -72,7 +74,7 @@ export default async function ProfilePage() {
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">
-              Email (tidak bisa diubah)
+              Email
             </span>
             <span className="text-sm">{user.email}</span>
           </div>
@@ -98,36 +100,22 @@ export default async function ProfilePage() {
             </span>
             <span className="text-sm">{formatTanggal(user.createdAt)}</span>
           </div>
-
-          <ProfileForm initialName={user.name ?? ""} />
         </CardContent>
       </Card>
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Kata sandi</CardTitle>
+          <CardTitle>Ubah akun</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="mb-4 text-sm text-foreground/70">
-            Ubah kata sandi akun ini. Anda perlu memasukkan kata sandi saat ini
-            untuk mengonfirmasi. Mengubah kata sandi mengeluarkan Anda dari
-            perangkat lain; perangkat ini tetap aktif.
-          </p>
-          <PasswordForm />
-        </CardContent>
-      </Card>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Perangkat lain</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
           <p className="text-sm text-foreground/70">
-            Keluarkan semua sesi di perangkat lain tanpa mengubah kata sandi.
-            Berguna bila Anda lupa keluar di komputer bersama atau perangkat
-            yang hilang. Perangkat ini tetap aktif.
+            Ubah email, nama tampilan, kata sandi, atau keluarkan perangkat lain
+            di halaman{" "}
+            <Link className="font-heading underline" href="/settings">
+              Pengaturan
+            </Link>
+            .
           </p>
-          <RevokeSessionsButton />
         </CardContent>
       </Card>
 
@@ -139,12 +127,9 @@ export default async function ProfilePage() {
           {!user.credential ? (
             <p className="text-foreground/70">
               Belum ada kredensial Monev tersimpan. Buka halaman{" "}
-              <a
-                className="font-heading underline"
-                href="/credentials"
-              >
+              <Link className="font-heading underline" href="/credentials">
                 Kredensial Monev
-              </a>{" "}
+              </Link>{" "}
               untuk menautkan akun portal Anda.
             </p>
           ) : (

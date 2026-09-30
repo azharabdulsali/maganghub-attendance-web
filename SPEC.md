@@ -192,7 +192,8 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
 | Otomasi | `/automation` |
 | Panel admin | `/admin` |
 | Alat diagnostik (admin) | `/dev-tools` |
-| Profil | `/profile` |
+| Profil (informasi akun) | `/profile` |
+| Pengaturan (ubah akun) | `/settings` |
 
 **Alur:** pengunjung membuka `/` (landing). Landing di sini **selalu**
 ditampilkan — termasuk untuk pengguna yang sudah login — karena `/` adalah
@@ -249,12 +250,40 @@ muncul bila `role === "ADMIN"`. Penyembunyian tautan ini **bukan** pengaman;
 penjagaan sesungguhnya tetap di server (layout + pemeriksaan peran di tiap
 halaman).
 
-**Profil:** `/profile` menampilkan email (read-only), peran, tanggal
-bergabung, dan status kredensial Monev. Hanya `name` yang dapat diubah pengguna,
-lewat `PATCH /api/profile`. Email & peran **tidak** dapat diubah dari halaman
-ini.
+**Profil vs Pengaturan:** ada pembagian yang disengaja antara *melihat* dan
+*mengubah*:
 
-**Ubah kata sandi (dalam sesi, tanpa email):** kartu "Kata sandi" di `/profile`
+- **`/profile`** — **INFORMASI saja** (baca saja): email, peran, tanggal
+  bergabung, dan status kredensial Monev. Tidak ada tombol yang mengubah apa pun
+  di sini; ada tautan ke `/settings`.
+- **`/settings`** — **TINDAKAN** yang mengubah akun: ubah email, nama tampilan,
+  kata sandi, dan keluarkan perangkat lain. Semua halaman terlindungi (di dalam
+  grup `(app)`) sudah otomatis butuh login.
+
+**Ubah email:** kartu "Email" di `/settings` memanggil `POST /api/account/email`.
+Ini perubahan **paling sensitif** di aplikasi karena email adalah identitas login
+**dan** penentu peran admin (`isAdminEmail`). Karena proyek ini tidak mengirim
+email verifikasi, perubahan berlaku langsung — **salah ketik = akun terkunci
+permanen** (tidak ada pemulihan akun); UI memperingatkan hal ini secara eksplisit.
+Pengamanannya:
+
+- `userId` diambil dari **sesi**, bukan body.
+- **Kata sandi saat ini wajib** dan diverifikasi (`bcrypt.compare`) — pengganti
+  verifikasi email.
+- **Guard eskalasi peran:** pengguna non-admin **tidak boleh** menetapkan email
+  yang sama dengan `ADMIN_EMAIL` (kalau tidak, ganti email = naik jadi admin).
+  Logika murni ada di `src/lib/email-change-policy.ts`.
+- Email dinormalisasi (`trim` + `lowercase`) agar satu email hanya punya satu
+  bentuk — konsisten dengan jalur login/daftar.
+- Email harus belum dipakai akun lain (dicek lebih awal; `P2002` ditangani untuk
+  balapan).
+- `sessionVersion` dinaikkan → **semua sesi lain dicabut**, dan sesi yang sedang
+  dipakai diselaraskan lewat `useSession().update({ email, sessionVersion })`.
+  Callback `jwt`/`session` di `src/lib/auth.ts` menyalin email baru ke klaim token
+  supaya sidebar tidak menampilkan email lama.
+- Peran **tidak pernah** diberikan lewat endpoint ini.
+
+**Ubah kata sandi (dalam sesi, tanpa email):** kartu "Kata sandi" di `/settings`
 memanggil `POST /api/account/password`. Pengguna harus memasukkan kata sandi
 lama (diverifikasi `bcrypt.compare`) sebelum hash baru disimpan — ini pengganti
 verifikasi email karena proyek ini tidak mengirim email. Kata sandi baru minimal
@@ -285,9 +314,10 @@ Dua pemicu:
    memperbarui sesinya lewat `useSession().update({ sessionVersion })`, sehingga
    tidak ikut ter-logout.
 2. **Tombol "Keluar dari semua perangkat lain"** — kartu "Perangkat lain" di
-   `/profile` memanggil `POST /api/account/sessions/revoke` (rate limit 5/10
+   `/settings` memanggil `POST /api/account/sessions/revoke` (rate limit 5/10
    menit, scope `sessionRevoke`). Berkonfirmasi dua langkah karena tidak bisa
-   dibatalkan.
+   dibatalkan. Ganti email juga menaikkan versi (lihat §5.8 di atas), jadi
+   memicu pencabutan yang sama.
 
 **Keamanan nilai dari klien:** `useSession().update(data)` dikirim lewat
 `POST /api/auth/session` dan tiba di callback `jwt` sebagai `session` saat
@@ -420,7 +450,8 @@ fokus, tombol Esc, dan atribut ARIA jangan dibuat sendiri kalau sudah ada.
 | `/report-templates` | Hapus template | simpan, hapus (sukses & gagal) |
 | `/credentials` | Hapus kredensial | simpan, hapus, login otomatis, tes token |
 | `/automation` | — | simpan, salin URL |
-| `/profile` | — | simpan nama |
+| `/profile` | — | — (halaman informasi, tak ada aksi) |
+| `/settings` | — | simpan nama, ubah kata sandi, ubah email, keluar dari perangkat lain |
 | `/dev-tools` | — | analisis selesai/gagal |
 | Sidebar (semua halaman) | Keluar | — (halaman pindah, toast akan buyar) |
 | `/login`, `/register` | — | — (lihat batasan di atas) |
@@ -523,6 +554,7 @@ Batasan: `Report` unik per `(userId, date)` — mencegah draf ganda.
 | `POST` | `/api/reports/submit` | Kirim draf langsung ke Monev | Cookie sesi | 20/10 menit per pengguna |
 | `PATCH` | `/api/profile` | Ubah nama tampilan pengguna sendiri | Cookie sesi | — (belum dibatasi) |
 | `POST` | `/api/account/password` | Ubah kata sandi sendiri (dalam sesi, tanpa email) | Cookie sesi | 5/10 menit per pengguna |
+| `POST` | `/api/account/email` | Ubah email sendiri (verifikasi kata sandi + guard eskalasi peran) | Cookie sesi | 5/10 menit per pengguna |
 
 **Implementasi rate limit (Tahap 5):** kebijakan murni di `src/lib/rate-limit.ts`
 (jendela tetap, teruji dengan waktu disuntik), penyimpanan di

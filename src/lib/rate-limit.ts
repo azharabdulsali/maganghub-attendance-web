@@ -180,6 +180,13 @@ export const RATE_LIMITS = {
    * login ulang berkali-kali tanpa manfaat.
    */
   sessionRevoke: { limit: 5, windowMs: 10 * 60_000 },
+  /**
+   * Ubah email akun sendiri: 5 / 10 menit per pengguna. Sama ketatnya dengan
+   * `passwordChange` karena keduanya memverifikasi kata sandi lama (bcrypt) dan
+   * karena email adalah identitas login — batas rendah mencegah endpoint ini
+   * dipakai menebak kata sandi atau memindai email yang sudah terdaftar.
+   */
+  emailChange: { limit: 5, windowMs: 10 * 60_000 },
   /** Pendaftaran: 3 / jam per IP (SPEC.md §8). */
   register: { limit: 3, windowMs: 60 * 60_000 },
 } as const;

@@ -19,7 +19,8 @@ src/app/
    │  ├─ page.tsx                # /dashboard
    │  └─ … komponen statistik di sini (stats-*, trend-chart, submit-report-button)
    ├─ calendar/                  # /calendar   (kalender kehadiran & laporan)
-   ├─ profile/                   # /profile
+   ├─ profile/                   # /profile     (informasi akun, baca saja)
+   ├─ settings/                  # /settings    (ubah email/nama/sandi/sesi)
    ├─ credentials/               # /credentials
    ├─ report-templates/          # /report-templates
    ├─ history/                   # /history
@@ -102,19 +103,31 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 
 ---
 
-## 4. Profil
+## 4. Profil & Pengaturan
 
-- Halaman: `src/app/(app)/profile/page.tsx` (server) + `profile-form.tsx` (klien)
-  + `password-form.tsx` (klien, ubah kata sandi)
-  + `revoke-sessions-button.tsx` (klien, keluar dari perangkat lain).
-- **Yang bisa diubah pengguna:** nama tampilan, kata sandi sendiri, dan
-  mencabut sesi di perangkat lain.
-- **Read-only:** email (identitas login), peran, tanggal bergabung.
+Dibagi dua supaya batas *melihat* vs *mengubah* jelas:
+
+| Halaman | Peran | Isi |
+| :--- | :--- | :--- |
+| `/profile` | **Informasi** (baca saja) | email, peran, tanggal bergabung, status kredensial Monev; tautan ke `/settings` |
+| `/settings` | **Tindakan** | ubah email, nama tampilan, kata sandi, keluarkan perangkat lain |
+
+- Berkas: `src/app/(app)/profile/page.tsx` (server, baca saja) dan
+  `src/app/(app)/settings/page.tsx` (server) + `email-form.tsx`,
+  `profile-form.tsx`, `password-form.tsx`, `revoke-sessions-button.tsx` (klien).
 - **Status kredensial Monev** ditampilkan sebagai *label* (`ACTIVE`,
   `UNVERIFIED`, `INVALID`) — **tidak pernah** isi token atau password.
 - API: `PATCH /api/profile` (lihat `src/app/api/profile/route.ts`). `userId`
   diambil dari sesi, **bukan** dari body, supaya tidak bisa mengubah milik orang
   lain. Nama kosong disimpan sebagai `NULL`, bukan `""`.
+- **Ubah email (paling sensitif):** `POST /api/account/email`
+  (`src/app/api/account/email/route.ts`). Email = identitas login **dan** penentu
+  peran admin, dan proyek ini **tidak** kirim email verifikasi → salah ketik =
+  akun terkunci permanen; UI memperingatkan ini. Wajib kata sandi saat ini, dan
+  non-admin **dilarang** memakai email `ADMIN_EMAIL` (guard eskalasi, logika murni
+  di `src/lib/email-change-policy.ts`). Rate limit scope `emailChange`
+  (5/10 menit). Sukses → `sessionVersion` naik, sesi sendiri diselaraskan lewat
+  `useSession().update({ email, sessionVersion })`.
 - **Ubah kata sandi (C-13):** `POST /api/account/password`
   (`src/app/api/account/password/route.ts`). Dalam sesi, **tanpa email/token
   reset** — pembuktiannya kata sandi lama (`bcrypt.compare`). Rate limit scope
@@ -126,7 +139,7 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
   `POST /api/account/sessions/revoke`
   (`src/app/api/account/sessions/revoke/route.ts`). Rate limit scope
   `sessionRevoke` (5/10 menit per pengguna). Konfirmasi dua langkah.
-- **Invalidasi sesi** (kedua pemicu di atas) memakai `User.sessionVersion` +
+- **Invalidasi sesi** (ketiga pemicu di atas) memakai `User.sessionVersion` +
   pemeriksaan di callback `jwt` — penjelasan lengkap di `SPEC.md` §5.8b.
 
 ---
@@ -136,12 +149,12 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 ```powershell
 npm run typecheck   # tipe
 npm run lint        # gaya
-npm test            # 406 tes (logika tak berubah)
+npm test            # 420 tes (logika tak berubah)
 npm run build       # daftar rute harus benar
 ```
 
 Saat `npm run build`, pastikan daftar rute memuat `/` (landing) dan
-`/dashboard`, `/calendar`, `/profile`, `/credentials`,
+`/dashboard`, `/calendar`, `/profile`, `/settings`, `/credentials`,
 `/report-templates`, `/history`, `/automation`, `/admin`,
 `/dev-tools` (app). Tidak boleh ada rute `/(app)/...` yang tampil.
 

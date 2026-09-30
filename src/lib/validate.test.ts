@@ -10,6 +10,7 @@ import {
   reportTemplatesSchema,
   monevTokenSchema,
   changePasswordSchema,
+  changeEmailSchema,
 } from "./validate";
 
 describe("credentialsSchema — email Monev", () => {
@@ -351,5 +352,58 @@ describe("changePasswordSchema — ubah kata sandi dalam sesi", () => {
     });
     expect(r.success).toBe(false);
   });
+
+// Skema ubah email adalah gerbang paling sensitif: email = identitas login DAN
+// penentu peran admin. Test ini mengunci aturan yang mencegah data rusak masuk
+// (format salah) dan memastikan kata sandi lama WAJIB ada — tanpa itu, siapa pun
+// yang memegang perangkat tak terkunci bisa menyerahkan akun.
+describe("changeEmailSchema — ubah email akun", () => {
+  const valid = {
+    newEmail: "baru@contoh.com",
+    currentPassword: "rahasia-lama",
+  };
+
+  it("menerima kombinasi yang wajar", () => {
+    expect(changeEmailSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("memangkas spasi di awal/akhir email", () => {
+    const r = changeEmailSchema.safeParse({
+      ...valid,
+      newEmail: "  baru@contoh.com  ",
+    });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.newEmail).toBe("baru@contoh.com");
+  });
+
+  it("menolak email tanpa format yang sah", () => {
+    const r = changeEmailSchema.safeParse({ ...valid, newEmail: "bukan-email" });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues[0]?.path).toEqual(["newEmail"]);
+  });
+
+  it("menolak email kosong", () => {
+    expect(changeEmailSchema.safeParse({ ...valid, newEmail: "" }).success).toBe(
+      false,
+    );
+  });
+
+  it("menolak email yang terlalu panjang", () => {
+    const r = changeEmailSchema.safeParse({
+      ...valid,
+      newEmail: `${"x".repeat(200)}@contoh.com`,
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("menolak kata sandi saat ini yang kosong", () => {
+    const r = changeEmailSchema.safeParse({ ...valid, currentPassword: "" });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues[0]?.path).toEqual(["currentPassword"]);
+    }
+  });
+});
+
 });
 
