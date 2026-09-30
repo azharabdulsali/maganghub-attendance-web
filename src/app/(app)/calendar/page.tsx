@@ -256,7 +256,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                       </div>
                       <span
                         className={cn(
-                          "truncate text-[9px] sm:text-[10px]",
+                          "truncate text-[10px] sm:text-[11px]",
                           status === "NONE" && "text-foreground/40",
                         )}
                       >

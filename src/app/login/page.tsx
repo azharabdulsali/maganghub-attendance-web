@@ -7,7 +7,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="mx-auto flex min-h-screen w-full max-w-md items-center justify-center px-6">
+        <main className="pt-safe pb-safe pl-safe pr-safe mx-auto flex min-h-dvh w-full max-w-md items-center justify-center px-6">
           <p className="text-sm text-foreground/60">Memuat…</p>
         </main>
       }

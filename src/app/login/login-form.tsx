@@ -122,7 +122,7 @@ export default function LoginForm() {
         return;
       }
 
-      toast.success("Berhasil masuk", "Mengalihkan ke dasbor…");
+      toast.success("Berhasil masuk", "Mengalihkan ke dashboard...");
       router.push("/dashboard");
       router.refresh();
     } catch (fetchError) {
@@ -138,7 +138,7 @@ export default function LoginForm() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-16">
+    <main className="pt-safe pb-safe pl-safe pr-safe mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 py-16">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Masuk</CardTitle>

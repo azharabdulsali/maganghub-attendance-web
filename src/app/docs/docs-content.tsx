@@ -104,9 +104,10 @@ export default function DocsContent() {
   const topikAktif = TOPIK.find((t) => t.id === aktif) ?? TOPIK[0];
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Bilah atas, konsisten dengan landing page. */}
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+    <div className="flex min-h-dvh flex-col">
+      {/* Bilah atas, konsisten dengan landing page. Safe-area agar tidak
+          tertutup poni di iPhone landscape. */}
+      <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main">
             <CalendarCheck className="size-4" />
@@ -238,7 +239,7 @@ export default function DocsContent() {
         </div>
       </main>
 
-      <footer className="border-t-2 border-border bg-secondary-background px-4 py-6 sm:px-6 lg:px-8">
+      <footer className="pb-safe border-t-2 border-border bg-secondary-background px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-xs text-foreground/60 sm:flex-row">
           <div className="flex items-center gap-2">
             <CalendarCheck className="size-4 text-foreground" />

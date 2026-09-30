@@ -199,8 +199,11 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
 
   return (
     <>
-      {/* Bilah atas khusus layar kecil: tombol hamburger. */}
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b-2 border-border bg-secondary-background px-4 py-3 md:hidden">
+      {/* Bilah atas khusus layar kecil: tombol hamburger.
+          `pt-safe` + `pl-safe`/`pr-safe`: di iPhone landscape, poni bisa
+          menutupi tepi atas/kiri-kanan; padding safe-area menjaga brand & tombol
+          tetap terjangkau. Di perangkat tanpa poni nilainya 0. */}
+      <header className="pt-safe pl-safe pr-safe sticky top-0 z-30 flex items-center justify-between gap-3 border-b-2 border-border bg-secondary-background px-4 py-3 md:hidden">
         <span className="font-heading">MagangHub Absensi</span>
         <Button
           variant="neutral"
@@ -229,7 +232,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
             className="absolute inset-0 bg-overlay/60"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute inset-y-0 right-0 w-72 max-w-[85%] animate-slide-in-right overflow-y-auto border-l-2 border-border bg-background shadow-xl">
+          <div className="pt-safe pb-safe pl-safe pr-safe absolute inset-y-0 right-0 w-72 max-w-[85%] animate-slide-in-right overflow-y-auto border-l-2 border-border bg-background shadow-xl">
             <div className="flex justify-end p-2">
               <Button
                 variant="neutral"

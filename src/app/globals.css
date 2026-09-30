@@ -283,3 +283,29 @@ html.theme-transition *::after {
     scroll-behavior: auto !important;
   }
 }
+
+/* Safe area (poni iPhone / home indicator). `env()` hanya bernilai non-nol bila
+   <meta viewport> memuat `viewport-fit=cover` — sudah diset di
+   `src/app/layout.tsx` (export `viewport`). Nilai cadangan `0px` untuk peramban
+   yang tidak mendukung `env()`.
+
+   Utilitas ini menambah padding pada sisi yang berisiko ketutup: atas (sticky
+   header), bawah (footer/toast), dan kiri-kanan (laci, layar landscape).
+   Dipakai selektif, bukan global, supaya desktop tidak dapat padding ekstra. */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+@utility pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+/* Kombinasi umum: elemen tepi yang perlu dua sisi sekaligus (landscape). */
+@utility px-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}

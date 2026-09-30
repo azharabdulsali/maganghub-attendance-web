@@ -35,7 +35,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <ToastPrimitive.Portal>
         <ToastPrimitive.Viewport
           data-slot="toast-viewport"
-          className="fixed bottom-4 right-4 z-[60] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-2"
+          className="pb-safe pr-safe fixed bottom-4 right-4 z-[60] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-2"
         >
           <ToastList />
         </ToastPrimitive.Viewport>
