@@ -814,6 +814,31 @@ password contoh.
   padanya. Sesuai §6, tidak ada fallback. Bila cron-job.org melewatkan
   pemicu, tombol manual di dashboard tetap bisa dipakai.
 
+### 15B. Cron massal (dispatcher) — mengurangi setup per user
+
+**Keputusan (Tahap 6):** selain model "satu cron per user" (USER menyalin
+`webhookKey` lalu memasang cron sendiri), tersedia **dispatcher massal**:
+satu pemicu admin memanggil `GET /api/cron/run-all` tiap jam, dan server
+mengabsen **semua** user yang jadwalnya jatuh pada jam itu.
+
+- **Dijaga `CRON_SECRET`** (header `Authorization: Bearer ...`, dibanding
+  *timing-safe*). Kosong → `503`; salah → `401`.
+- **Pemicu:** GitHub Actions (`.github/workflows/absensi-dispatch.yml`,
+  `5 * * * *`) memanggil endpoint. Rahasia (`APP_URL`, `CRON_SECRET`) di
+  GitHub Secrets — aman meski repo publik.
+- **Jadwal per-user tetap dihormati:** disaring lewat `cron-dispatch.ts`
+  (murni, teruji). **Menit diabaikan** — cron per jam, jadi jadwal `07:30`
+  diproses kapan saja dalam 07:00–07:59 WIB.
+- **Konkurensi berbatas** (10) + tenggat 50s + `maxDuration = 60` supaya 20
+  user tidak menembus batas waktu fungsi. Satu user gagal tidak menggagalkan
+  yang lain.
+- **Inti pengiriman tetap satu sumber:** dispatcher memanggil `performSubmit`
+  yang sama dengan route manual & webhook per-user — tidak ada logika
+  pengiriman yang diduplikasi.
+- Panduan: `docs/CRON-BULK.md`. Model per-user lama tetap ada
+  (`docs/CRON-SETUP.md`) bagi yang ingin ketepatan menit (cron-job.org).
+
+
 ### Risiko yang diterima secara sadar
 
 Pendaftaran langsung aktif tanpa verifikasi email adalah **keputusan sadar

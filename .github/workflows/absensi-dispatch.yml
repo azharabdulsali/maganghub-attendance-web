@@ -1,0 +1,40 @@
+name: Absensi Monev (dispatcher massal)
+
+# Satu workflow ini melayani SEMUA user. Yang diperlukan:
+#   - Secret repo: APP_URL   (mis. https://maganghub-xyz.vercel.app, tanpa slash)
+#   - Secret repo: CRON_SECRET (sama persis dengan env di Vercel)
+# User TIDAK perlu memasang apa pun — cukup menyalakan sakelar Otomasi di dashboard.
+on:
+  schedule:
+    # Tiap jam, tepat 5 menit lewat. Jam Jakarta = UTC+7, jadi ini memicu pada
+    # xx:05 WIB untuk setiap jam. Server sendiri yang menyaring user mana yang
+    # jadwalnya (!) jatuh pada jam tersebut.
+    - cron: "5 * * * *"
+  # Memungkinkan memicu manual dari tab Actions untuk menguji.
+  workflow_dispatch:
+
+# Cegah dua run tumpang tindih bila run sebelumnya lambat.
+concurrency:
+  group: absensi-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Panggil dispatcher
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL}/api/cron/run-all")
+          echo "HTTP $code"
+          cat response.json
+          if [ "$code" != "200" ]; then
+            echo "Dispatcher tidak membalas 200 — gagal."
+            exit 1
+          fi
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

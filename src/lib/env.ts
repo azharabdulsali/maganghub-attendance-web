@@ -19,6 +19,10 @@ const schema = z.object({
       "ENCRYPTION_KEY harus 64 karakter hex (32 byte)",
     ),
   ADMIN_EMAIL: z.string().email().optional().or(z.literal("")),
+  // Rahasia untuk dispatcher cron massal (GitHub Actions → /api/cron/run-all).
+  // OPSIONAL: bila kosong, endpoint dispatcher menolak semua permintaan (503),
+  // jadi aplikasi tetap jalan normal — hanya otomasi massal yang tak aktif.
+  CRON_SECRET: z.string().min(16, "CRON_SECRET minimal 16 karakter").optional().or(z.literal("")),
 });
 
 const parsed = schema.safeParse(process.env);

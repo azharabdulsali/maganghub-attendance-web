@@ -5,6 +5,11 @@ supaya laporan absensi dikirim otomatis setiap hari.
 
 > **Prasyarat:** aplikasi sudah di-deploy dan bisa diakses lewat HTTPS publik.
 > Dokumen ini mulai dari "aplikasi sudah online".
+>
+> **Ingin tanpa setup per user?** Lihat `docs/CRON-BULK.md` — satu pemicu admin
+> (GitHub Actions) mengabsen SEMUA user otomatis; user cukup menyalakan sakelar
+> Otomasi. Cara di dokumen ini (satu cron per user) tetap berlaku bila Anda
+> butuh ketepatan menit.
 
 ---
 

@@ -23,6 +23,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
 import { getAdminUsers } from "./admin-query";
+import { DispatchPanel } from "./dispatch-panel";
 import {
   credentialStatusTone,
   describeCredentialStatus,
@@ -115,10 +116,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </span>
         <h1 className="mt-3 font-heading text-3xl">Panel Admin</h1>
         <p className="mt-1 max-w-2xl text-sm text-foreground/70">
-          Ringkasan seluruh pengguna dan audit lintas pengguna. Halaman ini hanya
-          membaca — tidak ada tombol yang mengubah data orang lain.
+          Ringkasan seluruh pengguna, audit lintas pengguna, dan pengiriman
+          massal. Tabel & audit bersifat hanya-baca; satu-satunya aksi yang
+          mengubah data adalah tombol pengiriman massal di bawah (mengirim
+          laporan atas nama user yang jadwalnya jatuh pada jam ini).
         </p>
       </header>
+
+      <DispatchPanel />
 
       <section aria-label="Ringkasan" className="mb-10">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">

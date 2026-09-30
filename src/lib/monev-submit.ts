@@ -93,7 +93,15 @@ const MONEV_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
 
-const DEFAULT_TIMEOUT_MS = 15_000;
+// Batas tunggu satu permintaan jaringan ke portal (build-id / submit).
+//
+// Kenapa 8s, bukan 15s: satu eksekusi cron bisa menembak DUA permintaan
+// berurutan (fetchBuildId lalu submit), jadi durasi terburuk ≈ 2 × timeout.
+// Dengan 15s, eksekusi yang macet (portal Monev down) bisa menggantung ~30s —
+// dan melar lagi bila cron eksternal (cron-job.org) mengulang pada tenggat
+// yang sama (buruk untuk kuota CPU Hobby & antrean user lain). 8s cukup untuk
+// portal normal Indonesia dan menahan kasus buruk tetap di bawah ~16s.
+const DEFAULT_TIMEOUT_MS = 8_000;
 
 /**
  * Susun body permintaan dari isi laporan. MURNI — tidak menyentuh jaringan,

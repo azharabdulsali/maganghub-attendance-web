@@ -65,6 +65,8 @@ function base(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default tes = gerbang hidup ("1"), supaya blok "token & pengiriman" bisa
+  // menguji dekripsi/tukar-token. Blok gerbang menyetelnya sendiri (delete/"0").
   process.env.ALLOW_LIVE_SUBMIT = "1";
   submitLogCreateMock.mockResolvedValue({});
 });
