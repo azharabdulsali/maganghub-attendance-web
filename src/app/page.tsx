@@ -460,6 +460,12 @@ export default function Home() {
               Dokumentasi
             </Link>
             <Link
+              href="/panduan"
+              className="transition-colors hover:text-foreground"
+            >
+              Artikel
+            </Link>
+            <Link
               href="/privacy"
               className="transition-colors hover:text-foreground"
             >
