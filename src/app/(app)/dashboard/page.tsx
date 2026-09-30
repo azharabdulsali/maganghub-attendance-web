@@ -231,7 +231,7 @@ function ReadinessItem({
       <Icon
         className={cn(
           "size-4 shrink-0",
-          ok ? "text-emerald-600" : "text-foreground/40",
+          ok ? "text-success" : "text-foreground/40",
         )}
         aria-hidden
       />

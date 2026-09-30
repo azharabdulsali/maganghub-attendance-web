@@ -126,7 +126,7 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 ```powershell
 npm run typecheck   # tipe
 npm run lint        # gaya
-npm test            # 356 tes (logika tak berubah)
+npm test            # 391 tes (logika tak berubah)
 npm run build       # daftar rute harus benar
 ```
 
@@ -159,6 +159,45 @@ Jangan mengedit file `.tsx`/`.md` memakai `Set-Content` PowerShell **tanpa**
 `-Encoding utf8`. Tanpa itu, karakter seperti `—` (em dash) bisa rusak menjadi
 satu byte liar dan membuat `next build` gagal dengan pesan
 `invalid utf-8 sequence`. Lebih aman memakai editor yang menyimpan UTF-8.
+
+---
+
+## 5b. Konvensi aksesibilitas form
+
+Agar perilaku ini tidak hilang saat form baru ditambah, ikuti tiga aturan:
+
+1. **Setiap input harus punya `id` + `<Label htmlFor>`.** Sudah dipakai di
+   seluruh form — jangan menghilangkannya.
+2. **Pesan error yang tampil *setelah* aksi harus dihubungkan ke input:**
+   beri `id` pada elemen pesan (`<p id="...-error">` atau
+   `<Message id="...">`), lalu di input pasang
+   `aria-describedby={error ? "...-error" : undefined}` **dan**
+   `aria-invalid={...}`. Tanpa ini, pembaca layar mengumumkan pesan tanpa
+   tahu kolom mana yang salah.
+3. **Jangan mengandalkan warna saja.** Pesan error memakai
+   `text-destructive` **plus** teks (dan ikon bila ada ruang). Ini juga
+   membantu pengguna dengan buta warna.
+
+**Kolom kata sandi: pakai `<PasswordInput>`** (`src/components/ui/password-input.tsx`),
+bukan `<Input type="password">`. Komponen ini menambahkan tombol
+tampilkan/sembunyikan dan tetap meneruskan semua prop ke `<Input>` (jadi
+`aria-invalid`/`aria-describedby` dari aturan 2 tetap berlaku). Dipakai di
+login, register, ubah kata sandi, dan kredensial Monev.
+
+**Pesan validasi per kolom: pakai `<FieldError>`** (`src/components/ui/field-error.tsx`),
+bukan `<p className="text-destructive">` manual. Komponen ini menambahkan
+ikon `TriangleAlert` (aturan 3), ukuran/`role="alert"` yang seragam, dan tetap
+menerima `id` untuk `aria-describedby`. Dengan begitu semua form memakai pola
+validasi yang sama tanpa perlu menyalin kelas CSS.
+
+**Nada warna (token, bukan warna mentah):** `text-destructive` untuk gagal,
+`text-success` untuk "berhasil" dalam teks/ikon, `bg-success` untuk bagian
+grafik yang berhasil, `bg-main text-main-foreground` untuk blok sukses penuh
+(mis. `<Message tone="good">`), dan `text-foreground/60`–`/70` untuk informasi
+netral. Token `--success` didefinisikan di `src/app/globals.css` (terang untuk
+mode terang, lebih muda untuk mode gelap). **Jangan** memakai kelas Tailwind
+mentah seperti `text-red-600` / `bg-emerald-500` — kalau tema berubah,
+warna-warna itu tidak ikut berubah.
 
 ---
 

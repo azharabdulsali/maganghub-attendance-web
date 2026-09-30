@@ -16,7 +16,7 @@ export type Stat = {
 };
 
 const TONE_CLASS: Record<Tone, string> = {
-  good: "text-emerald-600",
+  good: "text-success",
   bad: "text-destructive",
   neutral: "text-foreground",
 };

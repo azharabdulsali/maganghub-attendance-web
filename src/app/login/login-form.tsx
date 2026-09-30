@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
 import {
@@ -115,22 +116,29 @@ export default function LoginForm() {
                 type="email"
                 required
                 value={email}
+                aria-invalid={error !== null}
+                aria-describedby={error ? "login-error" : undefined}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
                 value={password}
+                aria-invalid={error !== null}
+                aria-describedby={error ? "login-error" : undefined}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
-            {error && <Message tone="bad">{error}</Message>}
+            {error && (
+              <Message tone="bad" id="login-error">
+                {error}
+              </Message>
+            )}
 
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Memproses..." : "Masuk"}

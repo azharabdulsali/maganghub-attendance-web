@@ -161,7 +161,7 @@ export default function ReportTemplatesForm({
         <p className="flex items-center gap-2 text-sm">
           {exists ? (
             <>
-              <CircleCheck className="size-4 shrink-0 text-emerald-600" aria-hidden />
+              <CircleCheck className="size-4 shrink-0 text-foreground" aria-hidden />
               <span>
                 Template tersimpan
                 {savedAt
@@ -171,7 +171,7 @@ export default function ReportTemplatesForm({
             </>
           ) : (
             <>
-              <TriangleAlert className="size-4 shrink-0 text-amber-600" aria-hidden />
+              <TriangleAlert className="size-4 shrink-0 text-foreground/70" aria-hidden />
               <span>Belum ada template tersimpan</span>
             </>
           )}
@@ -181,14 +181,15 @@ export default function ReportTemplatesForm({
       {FIELDS.map((f) => {
         const s = status[f.name];
         const kurang = MIN_REPORT_LENGTH - s.panjang;
-        // Hijau begitu memenuhi syarat; merah kalau sudah mulai diketik tapi
-        // belum cukup; netral kalau masih kosong.
+        // Merah kalau sudah mulai diketik tapi belum cukup; teks normal
+        // (tanpa warna khusus) kalau sudah memenuhi syarat — status "lolos"
+        // dibedakan lewat ikon, bukan warna, supaya aman untuk buta warna.
         const warna =
           s.panjang === 0
             ? "text-foreground/60"
             : s.error
-              ? "text-red-600"
-              : "text-green-700";
+              ? "text-destructive"
+              : "text-foreground";
 
         return (
           <div key={f.name} className="flex flex-col gap-2">

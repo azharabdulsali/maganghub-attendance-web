@@ -9,8 +9,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { FieldError } from "@/components/ui/field-error";
 import { Message } from "@/components/ui/message";
 import { useToast } from "@/components/ui/toast";
 
@@ -30,7 +31,6 @@ export default function PasswordForm() {
   const samaDenganLama = next.length > 0 && next === current;
   const lengkap =
     current.length > 0 && next.length >= MIN_PASSWORD && next === confirm;
-
   async function simpan() {
     setSaving(true);
     setError(null);
@@ -78,12 +78,12 @@ export default function PasswordForm() {
     >
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="current-password">Kata sandi saat ini</Label>
-        <Input
+        <PasswordInput
           id="current-password"
-          type="password"
           autoComplete="current-password"
           value={current}
           placeholder="••••••••"
+          aria-invalid={error !== null && current.length === 0}
           onChange={(e) => {
             setCurrent(e.target.value);
             setSaved(false);
@@ -93,46 +93,54 @@ export default function PasswordForm() {
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="new-password">Kata sandi baru</Label>
-        <Input
+        <PasswordInput
           id="new-password"
-          type="password"
           autoComplete="new-password"
           value={next}
           placeholder="Minimal 8 karakter"
+          aria-invalid={terlaluPendek || samaDenganLama}
+          aria-describedby={
+            terlaluPendek
+              ? "new-password-error"
+              : samaDenganLama
+                ? "new-password-same"
+                : undefined
+          }
           onChange={(e) => {
             setNext(e.target.value);
             setSaved(false);
           }}
         />
         {terlaluPendek && (
-          <p className="text-xs text-destructive">
+          <FieldError id="new-password-error">
             Kata sandi baru minimal {MIN_PASSWORD} karakter.
-          </p>
+          </FieldError>
         )}
         {samaDenganLama && (
-          <p className="text-xs text-destructive">
+          <FieldError id="new-password-same">
             Kata sandi baru harus berbeda dari yang lama.
-          </p>
+          </FieldError>
         )}
       </div>
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="confirm-password">Konfirmasi kata sandi baru</Label>
-        <Input
+        <PasswordInput
           id="confirm-password"
-          type="password"
           autoComplete="new-password"
           value={confirm}
           placeholder="Ulangi kata sandi baru"
+          aria-invalid={tidakCocok}
+          aria-describedby={tidakCocok ? "confirm-password-error" : undefined}
           onChange={(e) => {
             setConfirm(e.target.value);
             setSaved(false);
           }}
         />
         {tidakCocok && (
-          <p className="text-xs text-destructive">
+          <FieldError id="confirm-password-error">
             Konfirmasi tidak cocok dengan kata sandi baru.
-          </p>
+          </FieldError>
         )}
       </div>
 

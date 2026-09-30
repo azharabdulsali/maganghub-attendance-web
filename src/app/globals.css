@@ -47,6 +47,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
   --color-main: var(--main);
+  --color-success: var(--success);
   --color-secondary-background: var(--secondary-background);
   --color-main-foreground: var(--main-foreground);
   --color-overlay: var(--overlay);
@@ -125,6 +126,9 @@
   --secondary-background: oklch(100% 0 0);
   --main: hsl(217, 100%, 66%);
   --main-foreground: oklch(0% 0 0);
+  /* Hijau "berhasil" — dipakai di grafik tren & status. Dipisah sebagai token
+     (bukan kelas warna mentah) supaya tema bisa menggantinya nanti. */
+  --success: #059669;
   --overlay: oklch(0% 0 0 / 0.8);
   --shadow: 4px 4px 0px 0px var(--border);
   --chart-active-dot: #000;
@@ -162,6 +166,8 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  /* Hijau sedikit lebih terang agar tetap terbaca di latar gelap. */
+  --success: #34d399;
 }
 
 @layer base {

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
+import { FieldError } from "@/components/ui/field-error";
 import { useToast } from "@/components/ui/toast";
 
 const MAX_NAME = 80;
@@ -71,21 +72,25 @@ export default function ProfileForm({ initialName }: { initialName: string }) {
           value={name}
           maxLength={MAX_NAME}
           placeholder="Nama Anda"
+          aria-invalid={terlaluPanjang}
+          aria-describedby={
+            terlaluPanjang ? "profile-name-error" : "profile-name-hint"
+          }
           onChange={(e) => {
             setName(e.target.value);
             setSaved(false);
           }}
         />
-        <p className="text-xs text-foreground/60">
+        <p id="profile-name-hint" className="text-xs text-foreground/60">
           Dipakai untuk menyapa Anda di aplikasi. Boleh dikosongkan.
         </p>
+        {terlaluPanjang && (
+          <FieldError id="profile-name-error">
+            Nama maksimal {MAX_NAME} karakter.
+          </FieldError>
+        )}
       </div>
 
-      {terlaluPanjang && (
-        <p className="text-sm text-destructive">
-          Nama maksimal {MAX_NAME} karakter.
-        </p>
-      )}
       {error && <Message tone="bad">{error}</Message>}
       {saved && <Message tone="good">Profil tersimpan.</Message>}
 

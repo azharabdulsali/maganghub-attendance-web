@@ -23,7 +23,7 @@ export default function TrendChart({ trend }: { trend: TrendPoint[] }) {
         {/* Legenda warna. */}
         <div className="mb-4 flex flex-wrap items-center gap-4 text-xs text-foreground/70">
           <span className="inline-flex items-center gap-2">
-            <span className="inline-block size-3 rounded-sm border-2 border-border bg-emerald-500" />
+            <span className="inline-block size-3 rounded-sm border-2 border-border bg-success" />
             Berhasil: {totalSukses}
           </span>
           <span className="inline-flex items-center gap-2">
@@ -65,7 +65,7 @@ export default function TrendChart({ trend }: { trend: TrendPoint[] }) {
                     )}
                     {p.success > 0 && (
                       <div
-                        className="w-full bg-emerald-500"
+                        className="w-full bg-success"
                         style={{ height: `${suksesPct}%` }}
                       />
                     )}

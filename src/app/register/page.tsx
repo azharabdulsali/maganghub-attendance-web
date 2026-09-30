@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
 import {
@@ -72,6 +73,8 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Nama lengkap"
+                aria-invalid={error !== null}
+                aria-describedby={error ? "register-error" : undefined}
               />
             </div>
 
@@ -84,23 +87,30 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@contoh.com"
+                aria-invalid={error !== null}
+                aria-describedby={error ? "register-error" : undefined}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimal 8 karakter"
+                aria-invalid={error !== null}
+                aria-describedby={error ? "register-error" : undefined}
               />
             </div>
 
-            {error && <Message tone="bad">{error}</Message>}
+            {error && (
+              <Message tone="bad" id="register-error">
+                {error}
+              </Message>
+            )}
 
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Memproses..." : "Daftar"}
