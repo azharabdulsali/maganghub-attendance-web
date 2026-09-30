@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { JsonLd } from "@/components/json-ld";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, FAQ_ITEMS } from "@/lib/site";
 
 // Landing PUBLIK di "/". Halaman ini SELALU tampil untuk siapa pun, termasuk
 // yang sudah login, supaya "/" tetap bisa dipakai sebagai halaman penjelasan
@@ -154,11 +154,28 @@ const SCHEMA_SITUS = {
   inLanguage: "id",
 };
 
+// FAQPage. Dibangun dari FAQ_ITEMS yang SAMA dengan section /#faq, sehingga
+// pertanyaan di schema selalu identik dengan yang terlihat di halaman. Tanpa
+// itu Google menganggapnya cloaking dan rich result ditolak.
+const SCHEMA_FAQ = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.a,
+    },
+  })),
+};
+
 export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col">
       <JsonLd id="schema-software-application" data={SCHEMA_APLIKASI} />
       <JsonLd id="schema-website" data={SCHEMA_SITUS} />
+      <JsonLd id="schema-faq" data={SCHEMA_FAQ} />
       {/* Bilah atas sederhana: brand + tautan masuk/daftar.
           `pt-safe pl-safe pr-safe`: hindari poni di iPhone landscape. */}
       <header className="pt-safe pl-safe pr-safe sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
@@ -357,6 +374,35 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Pertanyaan yang sering diajukan (audit C-1: konten & FAQPage).
+            `id="faq"` supaya bisa ditautkan dari footer dan hasil pencarian.
+            Memakai <details>/<summary> native: setiap pertanyaan dan jawaban
+            benar-benar ada di HTML (tanpa JS), syarat wajib agar schema
+            FAQPage di bawah sah menurut pedoman Google. */}
+        <section id="faq" className="mb-14 sm:mb-20">
+          <div className="mb-8 space-y-2 text-center">
+            <h2 className="text-2xl font-heading sm:text-3xl">
+              Pertanyaan yang sering diajukan
+            </h2>
+            <p className="text-sm text-foreground/70">
+              Jawaban lugas tentang keamanan, cara kerja, dan batasan aplikasi.
+            </p>
+          </div>
+          <div className="mx-auto max-w-3xl space-y-3">
+            {FAQ_ITEMS.map((item) => (
+              <details
+                key={item.q}
+                className="group rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow"
+              >
+                <summary className="cursor-pointer list-none font-heading text-sm">
+                  {item.q}
+                </summary>
+                <p className="mt-2 text-xs text-foreground/80">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
         {/* Ajakan akhir. */}
         <section className="rounded-base border-2 border-border bg-main p-6 text-center shadow-shadow sm:p-10">
           <h2 className="mb-2 text-2xl font-heading sm:text-3xl">
@@ -404,11 +450,26 @@ export default function Home() {
             >
               Panduan
             </a>
+            <a href="#faq" className="transition-colors hover:text-foreground">
+              FAQ
+            </a>
             <Link
               href="/docs"
               className="transition-colors hover:text-foreground"
             >
               Dokumentasi
+            </Link>
+            <Link
+              href="/privacy"
+              className="transition-colors hover:text-foreground"
+            >
+              Privasi
+            </Link>
+            <Link
+              href="/terms"
+              className="transition-colors hover:text-foreground"
+            >
+              Syarat
             </Link>
             <Link
               href="/login"
