@@ -103,6 +103,37 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 
 ---
 
+## 3b. Jam dinding "dynamic island" (`JamIsland`)
+
+`src/components/jam-island.tsx` menampilkan jam WIB gaya *dynamic island*:
+pil melengkung penuh, melayang **sticky di tengah atas area konten**
+(`<main>`), terlihat oleh **semua peran** (user & admin). Dipasang sekali di
+`src/app/(app)/layout.tsx`, sebelum spanduk wajib-ganti-sandi.
+
+Isi: `Sen, 29 Sep · 14:32:07 WIB` (detik berjalan). Format murni ada di
+`src/lib/jam-dinding.ts` dan dikunci tes (`jam-dinding.test.ts`).
+
+Keputusan yang penting untuk tidak dilanggar saat menyunting:
+
+- **Zona dikunci ke `Asia/Jakarta` (WIB)**, bukan zona perangkat/server. Server
+  Vercel berjalan UTC; tanpa kunci ini, pengguna melihat jam yang menyesatkan.
+- **Locale `id-ID` memakai titik** sebagai pemisah jam (`14.32.07`). Kita
+  merangkai sendiri `HH:MM:SS` dari `Intl.DateTimeFormat.formatToParts` supaya
+  tidak bergantung locale. `hourCycle: "h23"` agar tengah malam `00:00:00`
+  (bukan `24:00:00`).
+- **Dirender hanya setelah mount** (state awal `null` → ruang cadangan). Waktu
+  server ≠ klien, jadi jam di HTML awal pasti memicu *hydration mismatch*.
+- **Aksesibilitas:** bagian visual berdetak tiap detik ditandai `aria-hidden`;
+  sebagai gantinya ada teks `sr-only` tanpa detik (berubah per menit) supaya
+  pembaca layar tidak mengumumkan tanpa henti. Titik "hidup" memakai
+  `motion-reduce:hidden`.
+- **`setState` hanya dari callback interval**, bukan sinkron di body `useEffect`
+  (aturan `react-hooks/set-state-in-effect`). Tick pertama dijalankan lewat
+  `setTimeout(…, 0)` agar jam tidak kosong selama satu detik penuh.
+- Tidak ada paket baru: cukup `Intl` + `setInterval` (AGENTS.md §2).
+
+---
+
 ## 4. Profil & Pengaturan
 
 Dibagi dua supaya batas *melihat* vs *mengubah* jelas:

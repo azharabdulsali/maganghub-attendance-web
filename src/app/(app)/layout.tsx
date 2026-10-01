@@ -26,6 +26,7 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/app-sidebar";
+import { JamIsland } from "@/components/jam-island";
 import { MustChangePasswordBanner } from "./must-change-password-banner";
 
 // Semua halaman di grup ini WAJIB `noindex` (audit T-4). Redirect di bawah
@@ -78,6 +79,8 @@ export default async function AppLayout({
       </a>
       <AppSidebar user={user} />
       <main id="konten" className="min-w-0 flex-1">
+        {/* Jam dinding "dynamic island": sticky di tengah atas, semua peran. */}
+        <JamIsland />
         {mustChangePassword && <MustChangePasswordBanner />}
         {children}
       </main>
