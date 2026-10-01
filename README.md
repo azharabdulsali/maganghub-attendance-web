@@ -1,36 +1,173 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MagangHub — Otomasi Absensi Monev
 
-## Getting Started
+Web untuk mengotomatiskan pengisian laporan absensi (Monev) agar tidak perlu
+dilakukan manual tiap hari. Aplikasi masuk ke portal Monev dengan kredensial
+milik pengguna, lalu mengirim laporan absensi sesuai jadwal yang diatur.
 
-First, run the development server:
+Dokumen ini fokus pada **cara menjalankan** dan **cara deploy**. Untuk keputusan
+desain dan aturan teknis, lihat:
+
+| Dokumen | Isi |
+| --- | --- |
+| [`SPEC.md`](./SPEC.md) | Spesifikasi lengkap: model data, alur, keamanan, aturan bisnis |
+| [`DESIGN.md`](./DESIGN.md) | Panduan visual & komponen UI |
+| [`AGENTS.md`](./AGENTS.md) | Panduan untuk agen/AI yang bekerja di repo ini |
+| [`docs/UI-LAYOUT.md`](./docs/UI-LAYOUT.md) | Aturan tata letak halaman |
+| [`docs/CRON-SETUP.md`](./docs/CRON-SETUP.md) | Menyiapkan cron per pengguna |
+| [`docs/CRON-BULK.md`](./docs/CRON-BULK.md) | Dispatcher massal (satu cron untuk semua) |
+| [`docs/MONEV-API.md`](./docs/MONEV-API.md) | Catatan integrasi API Monev |
+
+## Tumpukan teknologi
+
+- **Next.js 16** (App Router) + **React 19**, TypeScript
+- **Prisma 7** + **PostgreSQL (Neon)** — via driver adapter `@prisma/adapter-neon`
+- **Auth.js (NextAuth v5)** — login kredensial, sesi di database
+- **Tailwind CSS 4** + **Base UI** + `shadcn`
+- **Vitest** untuk pengujian
+
+## Menjalankan di lokal
+
+### 1. Prasyarat
+
+- Node.js 20+
+- Database PostgreSQL. Cara termudah: buat proyek gratis di
+  [Neon](https://neon.tech). Anda akan memakai dua koneksi dari Neon:
+  **pooled** (untuk runtime aplikasi) dan **direct** (untuk Prisma CLI).
+
+### 2. Pasang dependensi
+
+```bash
+npm install
+```
+
+`postinstall` otomatis menjalankan `prisma generate`.
+
+### 3. Siapkan environment
+
+```bash
+cp .env.example .env.local
+```
+
+Lalu isi `.env.local`. Yang **wajib** (aplikasi gagal start bila kosong):
+
+| Variabel | Keterangan |
+| --- | --- |
+| `DATABASE_URL` | Koneksi **pooled** Neon (host mengandung `-pooler`) |
+| `DIRECT_URL` | Koneksi **direct** Neon |
+| `NEXTAUTH_SECRET` | Minimal 32 karakter. Buat: `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | URL aplikasi. Lokal: `http://localhost:3000` |
+| `ENCRYPTION_KEY` | Tepat 64 karakter hex (32 byte). Buat: `openssl rand -hex 32` |
+
+Yang **opsional**:
+
+| Variabel | Efek bila kosong |
+| --- | --- |
+| `ADMIN_EMAIL` | Tidak ada admin otomatis; user pertama jadi `USER` biasa |
+| `ALLOW_LIVE_SUBMIT` | Mode **latihan** — tidak ada laporan yang benar-benar dikirim (aman) |
+| `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Rate limit per-proses (kurang akurat lintas instance) |
+| `CRON_SECRET` | Dispatcher massal `/api/cron/run-all` nonaktif (balas 503) |
+
+> **`ENCRYPTION_KEY` jangan pernah diganti** setelah ada kredensial tersimpan —
+> data lama akan tidak bisa didekripsi. Simpan baik-baik.
+
+### 4. Siapkan database
+
+Proyek ini **tidak memakai folder migrasi**; skema diterapkan dengan `db push`:
+
+```bash
+npm run db:push
+```
+
+> Skema adalah sumber kebenaran di `prisma/schema.prisma`. Karena belum ada
+> migrasi berversi, `db push` menyelaraskan database ke skema **tanpa riwayat**.
+> Periksa perubahan skema dengan hati-hati sebelum push ke database produksi.
+
+### 5. Jalankan
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka <http://localhost:3000>. Daftar dengan email `ADMIN_EMAIL` untuk mendapat
+peran admin.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Perintah yang tersedia
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Perintah | Kegunaan |
+| --- | --- |
+| `npm run dev` | Server pengembangan (port 3000) |
+| `npm run dev:3111` | Server pengembangan di port 3111 |
+| `npm run build` | Build produksi |
+| `npm start` | Jalankan hasil build |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm test` | Jalankan seluruh tes (Vitest) sekali |
+| `npm run test:watch` | Vitest mode watch |
+| `npm run db:push` | Selaraskan skema Prisma ke database |
+| `npm run db:studio` | Prisma Studio (lihat/ubah data) |
 
-## Learn More
+Sebelum mengirim perubahan, pastikan **keempatnya** lulus:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run typecheck && npm run lint && npm test && npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy ke Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Import repo** di [vercel.com/new](https://vercel.com/new). Vercel mengenali
+   Next.js secara otomatis — **tidak perlu** mengubah build command. `postinstall`
+   sudah menjalankan `prisma generate`.
 
-## Deploy on Vercel
+2. **Isi Environment Variables** (Settings → Environment Variables) untuk
+   Production — daftar wajib & opsional sama seperti tabel di atas, dengan
+   penyesuaian:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   - `NEXTAUTH_URL` = URL produksi, mis. `https://<proyek>.vercel.app`
+     (harus `https://`, bukan `http://`, dan tanpa garis miring di akhir).
+   - `DATABASE_URL` = koneksi **pooled** Neon; `DIRECT_URL` = **direct**.
+   - `NEXTAUTH_SECRET`, `ENCRYPTION_KEY` = nilai produksi yang **baru** (jangan
+     pakai yang lokal). Simpan `ENCRYPTION_KEY` di tempat aman.
+   - Sertakan `NEXTAUTH_URL` juga untuk Preview bila Anda ingin preview berfungsi.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. **Siapkan database produksi** (dari komputer lokal, dengan
+   `DATABASE_URL`/`DIRECT_URL` produksi di `.env.local`):
+
+   ```bash
+   npm run db:push
+   ```
+
+   Ini dijalankan manual, bukan bagian dari build Vercel.
+
+4. **Deploy.** Bila build gagal dengan pesan
+   `Konfigurasi environment bermasalah`, artinya ada variabel wajib yang belum
+   diisi — periksa pesannya, ia menyebut variabel mana yang kurang.
+
+5. **Opsional — otomasi massal.** Bila memakai dispatcher
+   (`/api/cron/run-all`), set `CRON_SECRET` di Vercel, lalu set **secrets repo**
+   di GitHub (Settings → Secrets → Actions): `APP_URL` (URL Vercel tanpa slash)
+   dan `CRON_SECRET` (harus **sama persis** dengan yang di Vercel). Workflow
+   `.github/workflows/absensi-dispatch.yml` memanggil dispatcher tiap jam.
+
+6. **Biarkan `ALLOW_LIVE_SUBMIT` kosong** sampai Anda benar-benar siap mengirim
+   laporan sungguhan. Selama kosong, semua pengiriman berjalan mode latihan.
+
+## Catatan sebelum dipakai sungguhan
+
+### Rate limit lintas instance
+
+Tanpa `UPSTASH_REDIS_REST_URL`/`_TOKEN`, pembatas rate limit disimpan di memori
+proses. Di Vercel, satu aplikasi bisa berjalan di beberapa instance sekaligus,
+sehingga batasnya **tidak akurat**. Isi kredensial Upstash Redis untuk pembatas
+terpusat.
+
+### Pengalihan rute bersifat sementara
+
+`next.config.ts` masih memakai `permanent: false` (307) untuk rute lama. Setelah
+struktur rute final dan situs publik, ubah ke `permanent: true` (308) dengan
+sadar — redirect permanen di-cache keras oleh browser.
+
+### Saran: migrasi Prisma
+
+Saat ini skema disinkronkan dengan `db push` (tanpa riwayat). Untuk produksi
+yang lebih aman, pertimbangkan beralih ke `prisma migrate` agar setiap perubahan
+skema terversi dan bisa ditelusuri.

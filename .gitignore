@@ -69,3 +69,5 @@ desktop.ini
 # File sementara saat pengembangan
 dev-log.txt
 dev-err.txt
+vt-full.txt
+vt-*.txt

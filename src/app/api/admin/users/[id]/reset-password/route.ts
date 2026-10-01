@@ -15,8 +15,9 @@
 //   - Aksi dicatat ke audit (log sementara, lihat admin-action-log.ts).
 //
 // Catatan: memaksa pengguna mengganti kata sandi saat login berikutnya
-// (`mustChangePassword`) adalah TAHAP 2 dan menuntut kolom baru + migrasi; di
-// sini belum ada. Sesi lama tetap tercabut karena `sessionVersion` naik.
+// dilakukan lewat `mustChangePassword: true` (lihat blok update di bawah) —
+// spanduk di (app)/layout.tsx dan halaman /settings yang menuntunnya. Sesi lama
+// tetap tercabut karena `sessionVersion` naik.
 
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
