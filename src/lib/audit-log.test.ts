@@ -37,9 +37,9 @@ describe("badgeVariant", () => {
 });
 
 describe("describeTrigger", () => {
-  it("membedakan manual dan cron", () => {
+  it("membedakan manual dan otomatis", () => {
     expect(describeTrigger("MANUAL")).toBe("Manual");
-    expect(describeTrigger("CRON")).toBe("Otomatis (cron)");
+    expect(describeTrigger("CRON")).toBe("Otomatis");
   });
 });
 

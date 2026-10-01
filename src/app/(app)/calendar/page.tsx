@@ -66,8 +66,8 @@ const STATUS_TEXT: Record<DayStatus, string> = {
 
 /** Kelas Tailwind per status, SATU-satunya peta warna kalender. */
 const STATUS_CELL_CLASS: Record<DayStatus, string> = {
-  SUBMITTED: "bg-main text-main-foreground border-border",
-  FAILED: "bg-foreground text-background border-border",
+  SUBMITTED: "bg-success text-main-foreground border-border",
+  FAILED: "bg-destructive text-white border-border",
   DRAFT: "border-border bg-background",
   NONE: "border-border/40 bg-background",
 };

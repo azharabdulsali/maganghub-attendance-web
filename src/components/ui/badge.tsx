@@ -16,8 +16,11 @@ import type { BadgeVariant } from "@/lib/audit-log"
  * proyek hanya punya SATU daftar nama warna.
  */
 const TONE_CLASS: Record<Tone, string> = {
-  good: "bg-main text-main-foreground",
-  bad: "bg-foreground text-background",
+  good: "bg-success text-main-foreground",
+  // "bad" harus MERAH/menonjol (lihat Tone di lib/admin.ts & Message/Toast).
+  // Sebelumnya "bg-foreground text-background" = hitam di tema terang, sehingga
+  // status "Gagal" tampak seperti teks biasa, bukan peringatan.
+  bad: "bg-destructive text-white",
   neutral: "bg-secondary-background text-foreground",
 }
 

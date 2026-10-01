@@ -17,7 +17,7 @@ import type { Tone } from "@/lib/admin"
  * muncul setelah aksi (form submit) tanpa perlu diatur per pemanggil.
  */
 const TONE_CLASS: Record<Tone, string> = {
-  good: "bg-main text-main-foreground",
+  good: "bg-success text-main-foreground",
   bad: "border-destructive text-foreground",
   neutral: "bg-background text-foreground",
 }

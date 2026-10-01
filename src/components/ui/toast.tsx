@@ -23,7 +23,7 @@ import type { Tone } from "@/lib/admin";
  */
 
 const TONE_CLASS: Record<Tone, string> = {
-  good: "bg-main text-main-foreground",
+  good: "bg-success text-main-foreground",
   bad: "bg-background text-foreground border-destructive",
   neutral: "bg-background text-foreground",
 };
