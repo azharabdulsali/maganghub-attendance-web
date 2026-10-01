@@ -1,6 +1,5 @@
 ﻿import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import Providers from "./providers";
 import { cn } from "@/lib/utils";
@@ -19,12 +18,16 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 // preferensi sistem. Skrip ini SUMBER KEBENARAN nilai awal; komponen
 // ThemeToggle hanya menyinkronkan setelahnya (lihat src/components/theme-toggle.tsx).
 //
-// Dimuat lewat <Script strategy="beforeInteractive"> (next/script), BUKAN
-// <script> telanjang: React 19 menolak elemen <script> mentah di pohon komponen
-// ("Encountered a script tag while rendering React component" — skrip seperti
-// itu tidak pernah dieksekusi saat render klien). `beforeInteractive` membuat
-// Next menyuntikkan skrip ini ke HTML awal, jadi tetap berjalan sebelum paint
-// dan menghilangkan kedipan. `id` wajib agar Next dapat mendeduplikasi skrip.
+// Dimuat sebagai <script> INLINE lewat dangerouslySetInnerHTML di dalam <head>,
+// BUKAN <Script> dari next/script. Dua alasan:
+//   1. React 19 menolak elemen <script> sebagai child komponen di render klien
+//      ("Encountered a script tag while rendering React component").
+//   2. Skrip ini harus BLOCKING dan jalan sebelum paint pertama. next/script
+//      `beforeInteractive` tidak selalu menghasilkan inline blocking script
+//      pada Next 16/Turbopack, sehingga tema bisa berkedip.
+// dangerouslySetInnerHTML di sini AMAN: isinya string konstan yang kita tulis
+// sendiri (bukan input pengguna), jadi tak ada risiko injeksi. Ini pola resmi
+// Next.js untuk skrip blocking pra-paint.
 const skripTema = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d){document.documentElement.classList.add("dark")}}catch(e){}})();`;
 
 export const metadata: Metadata = {
@@ -90,9 +93,8 @@ export default function RootLayout({
   return (
     <html lang="id" className={cn("font-sans", inter.variable)} suppressHydrationWarning>
       <head>
-        <Script id="tema-anti-flicker" strategy="beforeInteractive">
-          {skripTema}
-        </Script>
+        {/* Skrip anti-flicker inline pra-paint (lihat catatan `skripTema` di atas). */}
+        <script id="tema-anti-flicker" dangerouslySetInnerHTML={{ __html: skripTema }} />
       </head>
       <body className="bg-secondary-background text-foreground antialiased">
         <Providers>{children}</Providers>
