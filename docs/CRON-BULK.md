@@ -67,7 +67,7 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 
 | Nama | Nilai |
 | :--- | :--- |
-| `APP_URL` | URL deploy, mis. `https://maganghub-xyz.vercel.app` (**tanpa** slash di akhir) |
+| `APP_URL` | URL deploy, mis. `https://maganghub-autoabsen.my.id` (**tanpa** slash di akhir) |
 | `CRON_SECRET` | sama persis dengan langkah 2 |
 
 Workflow `.github/workflows/absensi-dispatch.yml` sudah ada di repo ini dan

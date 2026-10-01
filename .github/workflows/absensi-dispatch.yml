@@ -1,7 +1,7 @@
 name: Absensi Monev (dispatcher massal)
 
 # Satu workflow ini melayani SEMUA user. Yang diperlukan:
-#   - Secret repo: APP_URL   (mis. https://maganghub-xyz.vercel.app, tanpa slash)
+#   - Secret repo: APP_URL   (mis. https://maganghub-autoabsen.my.id, tanpa slash)
 #   - Secret repo: CRON_SECRET (sama persis dengan env di Vercel)
 # User TIDAK perlu memasang apa pun, cukup menyalakan sakelar Otomasi di dashboard.
 on:

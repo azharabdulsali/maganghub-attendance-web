@@ -13,7 +13,7 @@ import { env } from "./env";
 /** Nama merek yang dipakai konsisten di title, OG, dan schema (lihat audit C-3). */
 export const SITE_NAME = "MagangHub";
 
-/** Origin absolut tanpa garis miring di akhir, mis. "https://maganghub.vercel.app". */
+/** Origin absolut tanpa garis miring di akhir, mis. "https://maganghub-autoabsen.my.id". */
 export const SITE_URL = env.NEXTAUTH_URL.replace(/\/$/, "");
 
 /** Judul default (50-60 karakter, kata kunci di depan). */

@@ -873,7 +873,7 @@ Semua sudah diputuskan pemilik. Berikut ringkasannya.
 | 1 | Database | **Neon sejak awal** (bukan SQLite lokal), lihat §14 |
 | 2 | Provider AI | **DICABUT oleh pemilik.** Awalnya AI dihapus sepenuhnya (lihat baris 7); pemilik kemudian memutuskan memakai **LLM gratis** (Google Gemini) dengan **1 API key milik admin untuk semua pengguna**. Implementasi: `src/lib/report-draft-llm.ts` (server-only, key di header, bukan query string) dengan **fallback otomatis** ke penyusun lokal `src/lib/report-draft.ts`. Kontrak `ReportDrafter` + `getDrafter()`/`draftWithFallback()` menjaga agar penggantian provider tidak menyentuh UI/rute. Bila `GEMINI_API_KEY` kosong, fitur **tetap jalan** memakai lokal. **Pilihan model ditentukan hasil pengujian nyata ke API** (bukan asumsi): nama versi spesifik (`gemini-2.0-flash`, `gemini-2.5-flash`) semuanya 404 karena dihapus Google; `gemini-flash-latest` hanya berkuota **20 permintaan/hari**, terlalu kecil untuk key bersama; yang dipakai **`gemini-flash-lite-latest`** (alias stabil + kuota lebih lega). Endpoint **hanya `/v1beta`** — asumsi lama bahwa key `AQ.` butuh `/v1` salah dan menyebabkan 404 berkepanjangan. Kegagalan LLM **dicatat ke log server** (`console.warn`) supaya salah konfigurasi tidak tersembunyi di balik fallback. **Jawaban LLM divalidasi dua lapis:** `checkReportField` (panjang & placeholder) DAN `isIndonesianText` (bahasa). Lapis kedua wajib karena teks Inggris yang panjang **lolos** `checkReportField` — tanpa itu, laporan berbahasa Inggris bisa masuk ke form (dibuktikan dengan tes, bukan dugaan). Pemeriksa bahasa memakai **bukti positif** (kata fungsi Indonesia hadir) alih-alih daftar hitam kata asing, supaya istilah teknis yang wajar di laporan IT (`deploy`, `bug`, `React`) tidak membuat draf yang sah ikut ditolak. Diagnosis cepat: `npx tsx scripts/uji-gemini.ts`. |
 | 3 | Pemicu jadwal | **cron-job.org** |
-| 4 | Domain | **Belum ada**, rencana langsung pakai domain Vercel (`*.vercel.app`), domain khusus menyusul bila perlu |
+| 4 | Domain | **`maganghub-autoabsen.my.id`** (aktif). Awalnya pakai domain Vercel (`*.vercel.app`); kini domain khusus, jadi URL produksi berbentuk `https://maganghub-autoabsen.my.id` |
 | 5 | Akses pendaftaran | **Terbuka bebas**, siapa pun boleh daftar, **langsung aktif, tanpa verifikasi email** |
 | 6 | Cara login | **Email + password** (tanpa OAuth) |
 | 7 | Sumber commit GitHub | **DIBATALKAN**, tidak ada integrasi GitHub. Uraian aktivitas diisi dari 3 template siap pakai |
@@ -928,10 +928,11 @@ password contoh.
     mencoba password berulang kali.
 - **Terbuka bebas + menyimpan password pihak ketiga** berarti §9 menjadi
   **mutlak, bukan anjuran**. Rate limit wajib ada sebelum rilis.
-- **Domain Vercel bawaan** berarti URL produksi berbentuk
-  `https://<nama-proyek>.vercel.app`. Ini **sudah HTTPS**, jadi syarat
-  cookie aman terpenuhi. Kalau nanti pindah ke domain sendiri, cukup ubah
-  `NEXTAUTH_URL` dan env terkait.
+- **Domain khusus** (`maganghub-autoabsen.my.id`) menggantikan domain Vercel
+  bawaan. URL produksi berbentuk `https://maganghub-autoabsen.my.id`. Ini
+  **sudah HTTPS**, jadi syarat cookie aman terpenuhi. Karena sekarang
+  memakai domain sendiri, `NEXTAUTH_URL` dan env terkait (mis. secret
+  `APP_URL` di GitHub Actions) harus diset ke domain ini.
 - **cron-job.org** adalah layanan pihak ketiga: pemicu jadwal bergantung
   padanya. Sesuai §6, tidak ada fallback. Bila cron-job.org melewatkan
   pemicu, tombol manual di dashboard tetap bisa dipakai.
@@ -1099,7 +1100,7 @@ npx prisma studio       # opsional
    - `DATABASE_URL` (pooled)
    - `DIRECT_URL` (direct)
    - `NEXTAUTH_SECRET` (string acak panjang, jangan yang contoh)
-   - `NEXTAUTH_URL` (`https://<proyek>.vercel.app`)
+   - `NEXTAUTH_URL` (`https://maganghub-autoabsen.my.id`)
    - `ENCRYPTION_KEY` (32 byte acak dalam hex, lihat §9)
    - `ADMIN_EMAIL` (bila memilih opsi 1 di §13, email admin pertama)
 3. **Jangan pernah** menaruh nilai-nilai ini di kode atau commit.

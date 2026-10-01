@@ -122,7 +122,7 @@ npm run typecheck && npm run lint && npm test && npm run build
    Production — daftar wajib & opsional sama seperti tabel di atas, dengan
    penyesuaian:
 
-   - `NEXTAUTH_URL` = URL produksi, mis. `https://<proyek>.vercel.app`
+   - `NEXTAUTH_URL` = URL produksi, mis. `https://maganghub-autoabsen.my.id`
      (harus `https://`, bukan `http://`, dan tanpa garis miring di akhir).
    - `DATABASE_URL` = koneksi **pooled** Neon; `DIRECT_URL` = **direct**.
    - `NEXTAUTH_SECRET`, `ENCRYPTION_KEY` = nilai produksi yang **baru** (jangan
