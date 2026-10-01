@@ -12,8 +12,11 @@
 //     di layar tidak mungkin berbeda dari yang divalidasi server.
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CircleCheck, TriangleAlert, WandSparkles } from "lucide-react";
+import { FORM_ANCHOR_ID } from "./open-dated-button";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -26,6 +29,11 @@ import {
   countReportLength,
   checkReportField,
 } from "@/lib/report-rules";
+import {
+  isHoliday,
+  isAfter,
+  LAST_ACTIVE_DATE,
+} from "@/lib/report-policy";
 
 const FIELDS = [
   {
@@ -47,13 +55,36 @@ const FIELDS = [
 
 type FieldName = (typeof FIELDS)[number]["name"];
 
+/** Isi template untuk satu tanggal (atau default bila `date` null). */
+export interface DatedEntry {
+  date: string;
+  activity: string;
+  learning: string;
+  obstacles: string;
+}
+
 interface Props {
   hasExisting: boolean;
   initialActivity: string;
   initialLearning: string;
   initialObstacles: string;
   updatedAt: string | null;
+  /** Tanggal hari ini WIB (dihitung server) untuk penanda status tanggal. */
+  today: string;
+  /** Template khusus tanggal yang sudah tersimpan. */
+  initialDated?: DatedEntry[];
+  /**
+   * Tanggal yang dibuka lewat tombol "Buka" di daftar template per tanggal
+   * (`?date=YYYY-MM-DD`). Bila diisi, form langsung menampilkan tanggal itu.
+   */
+  initialDate?: string | null;
 }
+
+const KOSONG: Record<FieldName, string> = {
+  activity: "",
+  learning: "",
+  obstacles: "",
+};
 
 export default function ReportTemplatesForm({
   hasExisting,
@@ -61,12 +92,55 @@ export default function ReportTemplatesForm({
   initialLearning,
   initialObstacles,
   updatedAt,
+  today,
+  initialDated = [],
+  initialDate = null,
 }: Props) {
-  const [values, setValues] = useState<Record<FieldName, string>>({
+  // Template default disimpan terpisah supaya bisa kembali saat picker dikosongkan.
+  const [defaultValues, setDefaultValues] = useState<Record<FieldName, string>>({
     activity: initialActivity,
     learning: initialLearning,
     obstacles: initialObstacles,
   });
+  // Daftar override, kunci = tanggal (YYYY-MM-DD).
+  const [dated, setDated] = useState<Record<string, Record<FieldName, string>>>(
+    () => {
+      const out: Record<string, Record<FieldName, string>> = {};
+      for (const d of initialDated) {
+        out[d.date] = {
+          activity: d.activity,
+          learning: d.learning,
+          obstacles: d.obstacles,
+        };
+      }
+      return out;
+    },
+  );
+  // null = mengedit template default; string = mengedit override tanggal itu.
+  // Bila dibuka dari tombol "Buka" (`?date=`), langsung mulai di tanggal itu.
+  const [tanggal, setTanggal] = useState<string | null>(() => {
+    if (!initialDate) return null;
+    // Terima tanggal yang sudah tersimpan, atau tanggal polos yang sah supaya
+    // "Buka" pada tanggal tanpa template tetap bekerja (membuat baru).
+    if (dated[initialDate] || /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
+      return initialDate;
+    }
+    return null;
+  });
+  // `values` selalu mencerminkan yang SEDANG diedit. Saat `tanggal` kosong,
+  // ini template default (berlaku semua tanggal); saat berisi, ini override
+  // untuk tanggal itu. Isi lama disimpan agar tidak hilang saat berpindah.
+  // Nilai awal mengikuti tanggal terpilih: template tanggal itu bila ada,
+  // selain itu template default (supaya "Buka" tidak menampilkan form kosong).
+  const [values, setValues] = useState<Record<FieldName, string>>(() =>
+    tanggal && dated[tanggal]
+      ? dated[tanggal]
+      : {
+          activity: initialActivity,
+          learning: initialLearning,
+          obstacles: initialObstacles,
+        },
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -75,6 +149,8 @@ export default function ReportTemplatesForm({
   const [confirmHapusOpen, setConfirmHapusOpen] = useState(false);
   const [confirmSusunOpen, setConfirmSusunOpen] = useState(false);
   const toast = useToast();
+  const router = useRouter();
+
 
   // Bahan untuk penyusun draf. Dipisah dari `values` karena ini BUKAN isi
   // template final, hanya kata kunci sementara yang tidak ikut tersimpan.
@@ -105,6 +181,36 @@ export default function ReportTemplatesForm({
     setValues((prev) => ({ ...prev, [name]: teks }));
     setServerError(null);
   }
+
+  /**
+   * Pindah konteks edit. Isi yang sedang diketik disimpan dulu ke tempatnya
+   * (default atau tanggal lama) supaya tidak hilang saat berpindah.
+   */
+  function pindah(tujuan: string | null) {
+    const t = tujuan && tujuan.trim() !== "" ? tujuan : null;
+    // Simpan draf konteks saat ini.
+    if (tanggal === null) {
+      setDefaultValues(values);
+    } else {
+      setDated((prev) => ({ ...prev, [tanggal]: values }));
+    }
+    // Muat isi konteks tujuan.
+    setValues(t === null ? defaultValues : dated[t] ?? KOSONG);
+    setTanggal(t);
+    setServerError(null);
+  }
+
+  /** Bila tanggal yang dipilih belum punya override, tombol Simpan = buat baru. */
+  const konteksAda = tanggal === null ? exists : dated[tanggal] !== undefined;
+
+  /** Apakah tanggal ini jatuh pada hari libur / di luar program (perlu ditandai). */
+  const statusTanggal = useMemo(() => {
+    if (tanggal === null) return null;
+    if (isAfter(tanggal, LAST_ACTIVE_DATE)) return "Di luar masa program";
+    if (isHoliday(tanggal)) return "Libur, otomasi tidak mengirim";
+    if (isAfter(today, tanggal)) return "Sudah lewat";
+    return "Siap dipakai";
+  }, [tanggal, today]);
 
   /**
    * Minta server menyusun draf dari kata kunci, lalu isikan hasilnya ke ketiga
@@ -176,12 +282,18 @@ export default function ReportTemplatesForm({
     setSaving(true);
     setServerError(null);
 
+    // Dua endpoint berbeda, satu tombol: default → /api/report-templates,
+    // tanggal → /api/report-templates/dated (upsert per tanggal).
+    const keTanggal = tanggal !== null;
     try {
-      const res = await fetch("/api/report-templates", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
+      const res = await fetch(
+        keTanggal ? "/api/report-templates/dated" : "/api/report-templates",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(keTanggal ? { date: tanggal, ...values } : values),
+        },
+      );
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -189,9 +301,26 @@ export default function ReportTemplatesForm({
         return;
       }
 
-      setExists(true);
-      setSavedAt(data.updatedAt ?? new Date().toISOString());
-      toast.success("Template tersimpan", "Absensi otomatis memakai isi terbaru.");
+      if (keTanggal) {
+        setDated((prev) => ({ ...prev, [tanggal]: values }));
+        toast.success(
+          "Template tanggal tersimpan",
+          "Dipakai hanya untuk tanggal ini, template default tidak berubah.",
+        );
+        // Tabel "Template Khusus Tanggal Tertentu" di bawah adalah server
+        // component dengan query Prisma-nya sendiri. Ia hanya mengambil data
+        // ulang saat halaman di-render, jadi tanpa refresh baris baru tidak
+        // muncul sampai pengguna me-refresh manual.
+        router.refresh();
+      } else {
+        setDefaultValues(values);
+        setExists(true);
+        setSavedAt(data.updatedAt ?? new Date().toISOString());
+        toast.success(
+          "Template tersimpan",
+          "Absensi otomatis memakai isi terbaru.",
+        );
+      }
     } catch {
       setServerError("Tidak bisa menghubungi server. Periksa koneksi Anda.");
     } finally {
@@ -205,8 +334,14 @@ export default function ReportTemplatesForm({
     setDeleting(true);
     setServerError(null);
 
+    const keTanggal = tanggal !== null;
     try {
-      const res = await fetch("/api/report-templates", { method: "DELETE" });
+      const res = await fetch(
+        keTanggal
+          ? `/api/report-templates/dated?date=${encodeURIComponent(tanggal)}`
+          : "/api/report-templates",
+        { method: "DELETE" },
+      );
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -216,10 +351,26 @@ export default function ReportTemplatesForm({
         return;
       }
 
-      setValues({ activity: "", learning: "", obstacles: "" });
-      setExists(false);
-      setSavedAt(null);
-      toast.success("Template dihapus", "Isi template sudah dikosongkan.");
+      if (keTanggal) {
+        // Buang override-nya, lalu kembali ke konteks default.
+        setDated((prev) => {
+          const next = { ...prev };
+          delete next[tanggal];
+          return next;
+        });
+        setValues(defaultValues);
+        setTanggal(null);
+        toast.success(
+          "Template tanggal dihapus",
+          "Tanggal itu kembali memakai template default.",
+        );
+      } else {
+        setValues(KOSONG);
+        setDefaultValues(KOSONG);
+        setExists(false);
+        setSavedAt(null);
+        toast.success("Template dihapus", "Isi template sudah dikosongkan.");
+      }
     } catch {
       const pesan = "Tidak bisa menghubungi server. Periksa koneksi Anda.";
       setServerError(pesan);
@@ -230,28 +381,114 @@ export default function ReportTemplatesForm({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Ringkasan status penyimpanan */}
-      <div className="border-2 border-border bg-secondary-background px-4 py-3 shadow-shadow">
-        <p className="flex items-center gap-2 text-sm">
-          {exists ? (
+    <div
+      id={FORM_ANCHOR_ID}
+      className="flex scroll-mt-24 flex-col gap-6"
+    >
+      {/* Pemilih tanggal: satu form, konteks berganti. Kosong = template default
+          yang berlaku untuk semua tanggal; ada tanggal = penimpa untuk tanggal
+          itu saja. Ini menghindari dua form terpisah yang membingungkan. */}
+      <div className="rounded-base border-2 border-border bg-secondary-background p-4">
+        {/* Label + picker + tombol "Kembali ke default" diletakkan dalam satu
+            baris sejajar (`items-end`) supaya tombol menempel pada tinggi
+            picker, bukan pada dasar kolom yang ikut memuat teks bantuan.
+            Sebelumnya teks bantuan ada di dalam kolom ini, sehingga `items-end`
+            mendorong tombol turun ke bawah teks bantuan dan posisinya
+            berpindah-pindah mengikuti panjang teks. Teks bantuan kini dipindah
+            ke baris penuh di bawah agar posisi tombol tidak lagi bergeser. */}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="tanggal-target" className="text-xs">
+              Tanggal khusus <span className="text-foreground/50">(opsional)</span>
+            </Label>
+            <DatePicker
+              id="tanggal-target"
+              value={tanggal}
+              disabled={saving || deleting}
+              onChange={(v) => pindah(v)}
+              placeholder="Semua tanggal (default)"
+              className="w-60"
+            />
+          </div>
+          {tanggal !== null ? (
+            // `size` disamakan dengan pemicu DatePicker (default, h-10) supaya
+            // tingginya sejajar dan posisinya tidak melompat saat muncul.
+            <Button
+              type="button"
+              variant="neutral"
+              disabled={saving || deleting}
+              onClick={() => pindah(null)}
+            >
+              Kembali ke default
+            </Button>
+          ) : null}
+        </div>
+
+        <p className="mt-1.5 text-[0.7rem] text-foreground/50">
+          Tanggal libur (Sabtu, Minggu, dan hari libur nasional) tidak bisa
+          dipilih karena otomasi tidak mengirim laporan pada hari itu.
+        </p>
+
+        <p className="mt-2 text-xs text-foreground/70">
+          {tanggal === null ? (
             <>
-              <CircleCheck className="size-4 shrink-0 text-foreground" aria-hidden />
-              <span>
-                Template tersimpan
-                {savedAt
-                  ? `, terakhir diubah ${new Date(savedAt).toLocaleString("id-ID")}`
-                  : null}
-              </span>
+              Sedang mengedit <b>template default</b>. Isi ini dipakai untuk semua
+              tanggal yang tidak punya template khusus.
             </>
           ) : (
             <>
-              <TriangleAlert className="size-4 shrink-0 text-foreground/70" aria-hidden />
-              <span>Belum ada template tersimpan</span>
+              Sedang mengedit <b>template untuk {tanggal}</b>. Isi ini{" "}
+              <b>hanya</b> dipakai untuk tanggal itu; tanggal lain tetap memakai
+              template default.
             </>
           )}
         </p>
+
+        {/* Status tanggal yang dipilih. Sebelumnya semua keadaan (libur, di
+            luar program, sudah lewat, siap) memakai chip abu-abu yang sama
+            sehingga peringatan tenggelam. Kini nada dibedakan: "Siap dipakai"
+            hijau (`tone="good"`), sisanya merah (`tone="bad"`) karena menandai
+            tanggal yang tidak bisa/tidak ideal dikirim. */}
+        {statusTanggal ? (
+          statusTanggal === "Siap dipakai" ? (
+            <Message tone="good" className="mt-2 flex items-center gap-2">
+              <CircleCheck className="size-3.5 shrink-0" aria-hidden />
+              <span>{statusTanggal}</span>
+            </Message>
+          ) : (
+            <Message tone="bad" className="mt-2 flex items-center gap-2">
+              <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
+              <span>{statusTanggal}</span>
+            </Message>
+          )
+        ) : null}
       </div>
+
+      {/* Ringkasan status penyimpanan. Dua nada (bukan sekadar warna teks):
+          "tersimpan" = hijau (`tone="good"`), "belum ada" = merah (`tone="bad"`).
+          Memakai komponen `Message` yang sama dengan banner dashboard supaya
+          bahasa nada proyek konsisten dan pembaca layar ikut diumumkan
+          (`role="alert"` saat nada buruk). */}
+      {konteksAda ? (
+        <Message tone="good" className="flex items-center gap-2">
+          <CircleCheck className="size-4 shrink-0" aria-hidden />
+          <span>
+            {tanggal === null ? "Template tersimpan" : `Template ${tanggal} tersimpan`}
+            {tanggal === null && savedAt
+              ? `, terakhir diubah ${new Date(savedAt).toLocaleString("id-ID")}`
+              : null}
+          </span>
+        </Message>
+      ) : (
+        <Message tone="bad" className="flex items-center gap-2">
+          <TriangleAlert className="size-4 shrink-0" aria-hidden />
+          <span>
+            {tanggal === null
+              ? "Belum ada template default tersimpan. Isi ketiga kolom di bawah lalu tekan Simpan agar absensi bisa berjalan."
+              : `Belum ada template untuk ${tanggal}. Isi ketiga kolom di bawah lalu tekan Simpan.`}
+          </span>
+        </Message>
+      )}
 
       {/* Panel bantuan penyusunan. Sengaja DIPISAH dari ketiga kolom isi supaya
           jelas bedanya: ini bahan (kata kunci), bukan laporan final. */}
@@ -300,7 +537,7 @@ export default function ReportTemplatesForm({
             size="sm"
             className="shrink-0"
           >
-            {drafting ? "Menyusun..." : "Susun draf"}
+            {drafting ? "Generate..." : "Generate"}
           </Button>
         </div>
 
@@ -392,12 +629,12 @@ export default function ReportTemplatesForm({
         >
           {saving
             ? "Menyimpan..."
-            : exists
+            : konteksAda
               ? "Perbarui template"
               : "Simpan template"}
         </Button>
 
-        {exists ? (
+        {konteksAda ? (
           <Button
             onClick={() => setConfirmHapusOpen(true)}
             disabled={saving || deleting}
@@ -419,8 +656,12 @@ export default function ReportTemplatesForm({
       <ConfirmDialog
         open={confirmHapusOpen}
         onOpenChange={setConfirmHapusOpen}
-        title="Hapus ketiga template?"
-        description="Tindakan ini tidak bisa dibatalkan. Tanpa template, absensi otomatis tidak bisa dijalankan."
+        title={tanggal === null ? "Hapus template default?" : `Hapus template ${tanggal}?`}
+        description={
+          tanggal === null
+            ? "Tindakan ini tidak bisa dibatalkan. Tanpa template default, absensi otomatis tidak bisa dijalankan untuk tanggal yang tidak punya template khusus."
+            : "Tanggal ini akan kembali memakai template default. Template default tidak terhapus."
+        }
         confirmLabel="Hapus template"
         onConfirm={() => void hapus()}
       />

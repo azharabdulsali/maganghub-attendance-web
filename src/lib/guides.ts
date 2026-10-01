@@ -180,7 +180,7 @@ export const GUIDES: readonly Guide[] = [
                 "Tekan Kirim di dashboard",
               ],
               [
-                "Terjadwal (cron)",
+                "Terjadwal (otomatis)",
                 "Saat laporan rutin tiap sore",
                 "Nyalakan sakelar Otomasi",
               ],
@@ -191,8 +191,8 @@ export const GUIDES: readonly Guide[] = [
             teks:
               "Mode manual adalah bawaan. Mode terjadwal bersifat opsional " +
               "dan bisa dimatikan kapan saja. Keduanya mengirim ke portal " +
-              "lewat REST API di server, jadi tidak ada browser yang perlu " +
-              "dibuka dan tidak ada ekstensi yang perlu dipasang.",
+              "langsung dari server aplikasi, jadi tidak ada browser yang " +
+              "perlu dibuka dan tidak ada ekstensi yang perlu dipasang.",
           },
           {
             jenis: "catatan",

@@ -1,8 +1,8 @@
 // src/app/(app)/automation/page.tsx: pengaturan otomasi harian (Tahap 5).
 //
 // Server component: sesi → ambil AutomationConfig. Form (client) menyunting
-// jam/menit & sakelar. Webhook key ditampilkan agar bisa ditempel ke layanan
-// cron (cron-job.org). Zona waktu selalu Asia/Jakarta.
+// jam/menit & sakelar. Kunci "tautan otomatis" ditampilkan agar bisa ditempel
+// ke layanan penjadwal (mis. cron-job.org). Zona waktu selalu Asia/Jakarta.
 
 import { redirect } from "next/navigation";
 
@@ -33,9 +33,9 @@ export default async function AutomationPage() {
       <div className="mb-8">
         <h1 className="font-heading text-3xl">Otomasi Absensi</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Minta layanan cron menembak webhook ini tiap hari pada jam yang Anda
-          pilih (zona Asia/Jakarta). Aplikasi tetap memeriksa hari libur dan
-          akhir program sebelum mengirim.
+          Minta layanan penjadwal otomatis memanggil tautan di bawah ini setiap
+          hari pada jam yang Anda pilih (zona Asia/Jakarta). Aplikasi tetap
+          memeriksa hari libur dan akhir program sebelum mengirim.
         </p>
       </div>
 

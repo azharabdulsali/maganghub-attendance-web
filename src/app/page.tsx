@@ -36,7 +36,7 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, FAQ_ITEMS } from "@/lib/site";
 const STATISTIK = [
   { nilai: "3 Bagian", label: "Template laporan siap pakai" },
   { nilai: ">100", label: "Karakter wajib per kolom" },
-  { nilai: "<2 dtk", label: "Kirim lewat REST API" },
+  { nilai: "<2 dtk", label: "Kirim langsung dari server" },
   { nilai: "AES-256", label: "Enkripsi kredensial Monev" },
 ];
 
@@ -44,7 +44,7 @@ const FITUR = [
   {
     icon: KeyRound,
     judul: "Hubungkan akun Monev",
-    isi: "Kredensial MagangHub disimpan terenkripsi AES-256-GCM. Tidak pernah plaintext, tidak pernah ikut terkirim di log atau respons API.",
+    isi: "Kredensial MagangHub disimpan terenkripsi AES-256-GCM. Tidak pernah plaintext, tidak pernah ikut terkirim di catatan sistem atau balasan server.",
   },
   {
     icon: BookText,
@@ -64,11 +64,11 @@ const FITUR = [
   {
     icon: Clock,
     judul: "Manual atau terjadwal",
-    isi: "Kirim 1-klik saat Anda siap, atau serahkan ke jadwal lewat webhook cron. Kendali penuh di tangan Anda, bisa dimatikan kapan saja.",
+    isi: "Kirim 1-klik saat Anda siap, atau serahkan ke jadwal otomatis. Kendali penuh di tangan Anda, bisa dimatikan kapan saja.",
   },
   {
     icon: Send,
-    judul: "Kirim lewat REST API",
+    judul: "Kirim langsung dari server",
     isi: "Tanpa browser dan tanpa server tambahan. Laporan terkirim ke portal dalam hitungan detik, jadi tak ada risiko lupa absen.",
   },
 ];
@@ -232,7 +232,7 @@ export default function Home() {
           </h1>
           <p className="mx-auto max-w-2xl text-sm text-foreground/80 sm:text-base">
             Simpan tiga template laporan sekali, lalu kirim presensi dan laporan
-            harian ke portal Monev lewat Direct REST API, manual 1-klik atau
+            harian ke portal Monev langsung dari server, manual 1-klik atau
             terjadwal otomatis, tanpa menyalakan komputer dan tanpa biaya
             bulanan.
           </p>
@@ -331,8 +331,8 @@ export default function Home() {
             <h2 className="mb-2 font-heading">Data Anda terjaga</h2>
             <p className="text-sm text-foreground/80">
               Kredensial Monev Anda dienkripsi AES-256-GCM sebelum disimpan, dan
-              tidak ada satu pun log atau respons API yang memuat kata sandi.
-              Anda bisa mematikan pengiriman otomatis kapan saja.
+              tidak ada satu pun catatan sistem atau balasan server yang memuat
+              kata sandi. Anda bisa mematikan pengiriman otomatis kapan saja.
             </p>
           </div>
           <div className="rounded-base border-2 border-border bg-background p-5">

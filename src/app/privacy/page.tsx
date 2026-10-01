@@ -69,7 +69,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Pengaturan jadwal:</strong> pilihan manual atau otomatis,
-            beserta kunci webhook pribadi Anda.
+            beserta kunci tautan otomatis pribadi Anda.
           </li>
         </ul>
       </Section>

@@ -43,9 +43,9 @@ export function badgeVariant(status: SubmitStatus): BadgeVariant {
   }
 }
 
-/** Label pemicu: "Manual" atau "Otomatis (cron)". */
+/** Label pemicu: "Manual" atau "Otomatis". */
 export function describeTrigger(trigger: TriggerType): string {
-  return trigger === "CRON" ? "Otomatis (cron)" : "Manual";
+  return trigger === "CRON" ? "Otomatis" : "Manual";
 }
 
 /**

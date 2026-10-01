@@ -65,7 +65,7 @@ const TOPIK: Topik[] = [
   {
     id: "jadwal",
     nomor: "04",
-    judul: "Jadwal & Cron",
+    judul: "Jadwal Otomatis",
     ringkas: "Kirim manual 1-klik atau otomatis tiap sore.",
     icon: Clock,
   },
@@ -522,9 +522,9 @@ function TopikJadwal() {
             Kirim kapan pun Anda siap langsung dari dashboard. Cocok bila isi
             laporan berubah tiap hari.
           </Langkah>
-          <Langkah nomor="2" judul="Terjadwal (cron)">
-            Aktifkan webhook cron agar laporan terkirim otomatis, misalnya tiap
-            sore. Sekali diatur, Anda tinggal memantau hasilnya.
+          <Langkah nomor="2" judul="Terjadwal (otomatis)">
+            Aktifkan tautan otomatis agar laporan terkirim sendiri, misalnya
+            tiap sore. Sekali diatur, Anda tinggal memantau hasilnya.
           </Langkah>
         </ol>
       </div>

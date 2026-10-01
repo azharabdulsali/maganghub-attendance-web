@@ -50,8 +50,8 @@ export default function AutomationForm({
   const [loading, setLoading] = useState(false);
   const [tersalin, setTersalin] = useState(false);
   // Dua dialog konfirmasi: satu untuk menyimpan pengaturan, satu untuk
-  // mengganti kunci webhook (aksi destruktif). Dipisah agar pesannya bisa
-  // spesifik — konfirmasi yang generik membuat orang menekan "Ya" tanpa baca.
+  // mengganti "kunci tautan otomatis" (aksi destruktif). Dipisah agar pesannya
+  // bisa spesifik — konfirmasi yang generik membuat orang menekan "Ya" tanpa baca.
   const [konfirmasiSimpan, setKonfirmasiSimpan] = useState(false);
   const [konfirmasiRotasi, setKonfirmasiRotasi] = useState(false);
 
@@ -64,7 +64,7 @@ export default function AutomationForm({
     return describeNextRun(new Date(), h, m);
   }, [hour, minute]);
 
-  // URL lengkap cara lama (`?key=`): DIPERTAHANKAN sementara untuk cron yang
+  // URL lengkap cara lama (`?key=`): DIPERTAHANKAN sementara untuk penjadwal yang
   // sudah terpasang, tetapi ditandai deprecated di UI (dihapus 1 Jan 2026).
   const webhookUrl = webhookKey
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/cron/submit?key=${webhookKey}`
@@ -75,7 +75,7 @@ export default function AutomationForm({
   const webhookBaseUrl =
     typeof window !== "undefined" ? `${window.location.origin}/api/cron/submit` : null;
 
-  // Contoh perintah siap tempel untuk crontab/server sendiri (header = aman).
+  // Contoh perintah siap tempel untuk penjadwal di server sendiri (header = aman).
   const curlSnippet =
     webhookBaseUrl && webhookKey
       ? `curl -sS -o /dev/null -H "Authorization: Bearer ${webhookKey}" "${webhookBaseUrl}"`
@@ -133,7 +133,7 @@ export default function AutomationForm({
     try {
       await navigator.clipboard.writeText(webhookUrl);
       setTersalin(true);
-      toast.success("URL webhook tersalin", "Tempel ke layanan cron Anda.");
+      toast.success("Tautan tersalin", "Tempel ke layanan penjadwal Anda.");
       setTimeout(() => setTersalin(false), 2000);
     } catch {
       const pesan = "Tidak bisa menyalin otomatis. Salin tautan secara manual.";
@@ -147,7 +147,7 @@ export default function AutomationForm({
     if (!teks) return;
     try {
       await navigator.clipboard.writeText(teks);
-      toast.success(`${label} tersalin`, "Tempel ke layanan cron Anda.");
+      toast.success(`${label} tersalin`, "Tempel ke layanan penjadwal Anda.");
     } catch {
       const pesan = "Tidak bisa menyalin otomatis. Salin secara manual.";
       setError(pesan);
@@ -162,8 +162,8 @@ export default function AutomationForm({
    * `eksekusiRotasiKunci`.
    */
   function rotasiKunci() {
-    // Mengganti kunci langsung mematikan cron yang sudah terpasang sampai URL
-    // baru dipasang. Ini tindakan destruktif, jadi wajib konfirmasi sadar.
+    // Mengganti kunci langsung mematikan penjadwal yang sudah terpasang sampai
+    // tautan baru dipasang. Ini tindakan destruktif, jadi wajib konfirmasi sadar.
     setKonfirmasiRotasi(true);
   }
 
@@ -189,17 +189,17 @@ export default function AutomationForm({
       };
 
       if (!res.ok || !data.webhookKey) {
-        const pesan = data.error ?? "Gagal mengganti kunci webhook.";
+        const pesan = data.error ?? "Gagal mengganti kunci tautan otomatis.";
         setError(pesan);
         toast.error("Gagal mengganti kunci", pesan);
         return;
       }
 
       setWebhookKey(data.webhookKey);
-      setSukses("Kunci webhook diganti. Salin URL baru ke layanan cron Anda.");
+      setSukses("Kunci tautan otomatis diganti. Salin tautan baru ke layanan penjadwal Anda.");
       toast.success(
-        "Kunci webhook diganti",
-        "Salin URL baru ke layanan cron Anda sekarang.",
+        "Kunci tautan otomatis diganti",
+        "Salin tautan baru ke layanan penjadwal Anda sekarang.",
       );
       router.refresh();
     } catch {
@@ -217,7 +217,8 @@ export default function AutomationForm({
         <CardHeader>
           <CardTitle>Jadwal harian</CardTitle>
           <CardDescription>
-            Layanan cron akan menembak webhook pada jam ini setiap hari.
+            Layanan penjadwal akan memanggil tautan otomatis pada jam ini setiap
+            hari.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -235,8 +236,8 @@ export default function AutomationForm({
             </div>
             <p id="isEnabled-hint" className="text-xs text-foreground/60">
               {isEnabled
-                ? "Otomasi aktif: cron akan mengirim absensi sesuai jadwal di bawah."
-                : "Otomasi nonaktif: tidak ada pengiriman otomatis, walau cron tetap menembak webhook."}
+                ? "Otomasi aktif: penjadwal akan mengirim absensi sesuai jadwal di bawah."
+                : "Otomasi nonaktif: tidak ada pengiriman otomatis, walau penjadwal tetap memanggil tautan."}
             </p>
 
             <div className="flex flex-wrap items-end gap-3">
@@ -289,34 +290,35 @@ export default function AutomationForm({
       {webhookUrl && (
         <Card>
           <CardHeader>
-            <CardTitle>Webhook untuk cron</CardTitle>
+            <CardTitle>Tautan otomatis</CardTitle>
             <CardDescription>
-              Sambungkan layanan cron Anda (mis. cron-job.org) ke endpoint ini,
+              Sambungkan layanan penjadwal Anda (mis. cron-job.org) ke tautan ini,
               jadwalkan sekali sehari. <strong>Cara dianjurkan:</strong> kirim
-              kunci lewat header, bukan di URL. Jangan bagikan kunci, siapa pun
-              yang tahu bisa memicu pengiriman.
+              kunci lewat bagian pengaturan khusus, bukan ditempel di tautan.
+              Jangan bagikan kunci ini, siapa pun yang tahu bisa memicu
+              pengiriman.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Cara DIANJURKAN: kunci lewat header, URL bersih tanpa rahasia. */}
             <div className="space-y-2">
               <p className="text-sm font-medium">
-                Cara dianjurkan (kunci lewat header)
+                Cara dianjurkan (kunci lewat pengaturan khusus)
               </p>
               <p className="text-xs text-foreground/60">
-                Endpoint:
+                Alamat tautan:
               </p>
               <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
                 {webhookBaseUrl}
               </code>
-              <p className="text-xs text-foreground/60">Header:</p>
+              <p className="text-xs text-foreground/60">Isi pengaturan kunci:</p>
               <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
                 Authorization: Bearer {webhookKey}
               </code>
               {curlSnippet && (
                 <>
                   <p className="text-xs text-foreground/60">
-                    Contoh perintah (crontab/server sendiri):
+                    Contoh untuk penjadwal di server sendiri:
                   </p>
                   <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
                     {curlSnippet}
@@ -339,7 +341,7 @@ export default function AutomationForm({
                 Cara lama (akan dihapus)
               </p>
               <p className="text-xs text-foreground/60">
-                Menempel kunci di URL masih berfungsi sampai{" "}
+                Menempel kunci di tautan masih berfungsi sampai{" "}
                 <strong>1 Januari 2026</strong>, lalu dihapus. Hindari untuk
                 pemasangan baru.
               </p>
@@ -348,7 +350,7 @@ export default function AutomationForm({
               </code>
               <div className="flex flex-wrap gap-3">
                 <Button variant="neutral" size="sm" onClick={salinUrl}>
-                  {tersalin ? "Tersalin!" : "Salin URL lama"}
+                  {tersalin ? "Tersalin!" : "Salin tautan lama"}
                 </Button>
                 <Button
                   variant="neutral"
@@ -357,15 +359,15 @@ export default function AutomationForm({
                   onClick={rotasiKunci}
                   disabled={loading}
                 >
-                  {loading ? "Memproses..." : "Ganti kunci webhook"}
+                  {loading ? "Memproses..." : "Ganti kunci"}
                 </Button>
               </div>
             </div>
 
             <p className="text-xs text-foreground/60">
               Jadwal: {formatSchedule(Number(hour) || 0, Number(minute) || 0)} WIB
-              setiap hari. Mengganti kunci akan mematikan URL/perintah lama,
-              pasang ulang di cron Anda setelah itu.
+              setiap hari. Mengganti kunci akan mematikan tautan/perintah lama,
+              pasang ulang di penjadwal Anda setelah itu.
             </p>
           </CardContent>
         </Card>
@@ -386,8 +388,8 @@ export default function AutomationForm({
           <>
             {isEnabled ? (
               <>
-                Otomasi akan <strong>aktif</strong> dan cron mengirim absensi
-                tiap hari pukul{" "}
+                Otomasi akan <strong>aktif</strong> dan penjadwal mengirim
+                absensi tiap hari pukul{" "}
                 <strong>
                   {formatSchedule(Number(hour) || 0, Number(minute) || 0)} WIB
                 </strong>
@@ -396,7 +398,7 @@ export default function AutomationForm({
             ) : (
               <>
                 Otomasi akan <strong>nonaktif</strong>. Tidak ada absensi yang
-                dikirim otomatis, walau cron tetap menembak webhook.
+                dikirim otomatis, walau penjadwal tetap memanggil tautan.
               </>
             )}
           </>
@@ -407,17 +409,18 @@ export default function AutomationForm({
         onConfirm={() => formRef.current?.requestSubmit()}
       />
 
-      {/* Konfirmasi ganti kunci webhook. Ini aksi DESTRUKTIF: cron yang sudah
-          terpasang langsung berhenti sampai URL baru dipasang. */}
+      {/* Konfirmasi ganti kunci tautan otomatis. Ini aksi DESTRUKTIF: penjadwal
+          yang sudah terpasang langsung berhenti sampai tautan baru dipasang. */}
       <ConfirmDialog
         open={konfirmasiRotasi}
         onOpenChange={setKonfirmasiRotasi}
-        title="Ganti kunci webhook?"
+        title="Ganti kunci?"
         description={
           <>
-            URL/header cron lama akan <strong>LANGSUNG berhenti bekerja</strong>.
-            Anda harus menyalin kunci baru ke layanan cron Anda setelah ini,
-            kalau tidak absensi otomatis tidak akan terkirim.
+            Tautan/pengaturan penjadwal lama akan{" "}
+            <strong>LANGSUNG berhenti bekerja</strong>. Anda harus menyalin
+            kunci baru ke layanan penjadwal Anda setelah ini, kalau tidak
+            absensi otomatis tidak akan terkirim.
           </>
         }
         confirmLabel="Ya, ganti kunci"

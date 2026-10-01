@@ -7,8 +7,9 @@
 // Prinsip:
 //   - Hanya baca data milik sendiri (difilter userId). Admin melihat kalender
 //     SENDIRI, sama seperti pengguna biasa.
-//   - Jujur: sel tanpa data tampil ",". Tidak ada klaim "terkirim" dari data
-//     yang tidak ada.
+//   - Jujur: sel tanpa data tampil redup dan KOSONG (tanpa teks status).
+//     Tidak ada klaim "terkirim" dari data yang tidak ada; statusnya tetap
+//     disebut di `aria-label` untuk pembaca layar.
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -16,6 +17,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { toPlainDate } from "@/lib/submit-service";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,8 +93,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
   const range = jakartaMonthRange(month);
 
-  // Ambil paralel: log submit pada bulan ini, dan report/draft pada bulan ini.
-  const [logs, reports] = await Promise.all([
+  // Ambil paralel: log submit pada bulan ini, report/draft pada bulan ini, dan
+  // template khusus tanggal pada bulan ini (untuk penanda hijau di kalender).
+  const [logs, reports, datedTemplates] = await Promise.all([
     prisma.submitLog.findMany({
       where: {
         userId: session.user.id,
@@ -107,7 +110,18 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       },
       select: { date: true, status: true },
     }),
+    prisma.datedReportTemplate.findMany({
+      where: {
+        userId: session.user.id,
+        date: { gte: range.gte, lt: range.lt },
+      },
+      select: { date: true },
+    }),
   ]);
+
+  // Tanggal (YYYY-MM-DD) yang punya template khusus. Dipakai untuk penanda
+  // hijau, supaya pengguna tahu bahwa laporan hari itu isinya beda dari default.
+  const datedReportDates = new Set(datedTemplates.map((t) => toPlainDate(t.date)));
 
   // Kelompokkan log per tanggal (WIB); status paling penting menang.
   const logsByDate = new Map<string, "SUCCESS" | "FAILED" | "DUPLICATE">();
@@ -209,6 +223,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                   }
                   const status = classifyDay(cell.iso, logsByDate, reportDates);
                   const holiday = holidayKindOf(cell.iso);
+                  const hasDatedTemplate = datedReportDates.has(cell.iso);
                   const isToday =
                     isCurrentMonth &&
                     cell.day <= totalDays &&
@@ -224,7 +239,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                       )}
                       aria-label={`${cell.day}: ${STATUS_TEXT[status]}${
                         holiday ? `, ${HOLIDAY_LABEL[holiday]}` : ""
-                      }`}
+                      }${hasDatedTemplate ? ", laporan sudah ada" : ""}`}
                     >
                       <div className="flex items-center justify-between">
                         <span
@@ -256,15 +271,32 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                       </div>
                       <span
                         className={cn(
-                          "truncate text-[10px] sm:text-[11px]",
+                          "flex items-center gap-1 truncate text-[10px] sm:text-[11px]",
                           status === "NONE" && "text-foreground/40",
                         )}
                       >
-                        {holiday
-                          ? HOLIDAY_LABEL[holiday]
-                          : status === "NONE"
-                            ? ","
-                            : STATUS_TEXT[status]}
+                        {/* Penanda hijau: tanggal ini sudah punya laporan
+                            sendiri (template khusus), isinya beda dari default. */}
+                        {hasDatedTemplate ? (
+                          <span
+                            className="size-1.5 shrink-0 rounded-full bg-green-600"
+                            aria-hidden
+                          />
+                        ) : null}
+                        {/* Teks status. Sel tanpa data (NONE) sengaja
+                            DIBIARKAN KOSONG, bukan diisi koma. Sebelumnya
+                            koma literal dipakai sebagai penanda "jujur, tidak
+                            ada data", tetapi di layar ia terbaca seperti tanda
+                            baca nyasar / teks rusak. Kejujuran tetap dijaga
+                            lewat warna sel redup + `aria-label` yang menyebut
+                            "Belum diisi" untuk pembaca layar. */}
+                        {hasDatedTemplate ? (
+                          <span className="truncate">Laporan Sudah Ada</span>
+                        ) : holiday ? (
+                          <span className="truncate">{HOLIDAY_LABEL[holiday]}</span>
+                        ) : status !== "NONE" ? (
+                          <span className="truncate">{STATUS_TEXT[status]}</span>
+                        ) : null}
                       </span>
                     </div>
                   );
@@ -285,6 +317,13 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                 aria-hidden
               />
               <span className="text-foreground/70">Hari libur</span>
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span
+                className="size-1.5 shrink-0 rounded-full bg-green-600"
+                aria-hidden
+              />
+              <span className="text-foreground/70">Laporan Sudah Ada</span>
             </span>
           </div>
         </CardContent>

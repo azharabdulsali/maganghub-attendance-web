@@ -353,6 +353,61 @@ Prioritas test:
   `report-policy.ts` tetap melewati Sabtu/Minggu/libur nasional/akhir program.
   Tanggal disimpan `@db.Date` dan dibandingkan sebagai string `YYYY-MM-DD`
   (leksikografis = kronologis) supaya tidak tergeser zona waktu.
+- UI template = **satu form** (`report-templates-form.tsx`), bukan dua panel.
+  Date picker kosong = mengedit template default (berlaku semua tanggal); pilih
+  tanggal = mengedit penimpa untuk tanggal itu. Isi konteks disimpan di state
+  saat berpindah (`pindah()`) agar ketikan tidak hilang. Satu tombol Simpan
+  mengarah ke endpoint berbeda sesuai konteks (`/api/report-templates` vs
+  `/api/report-templates/dated`).
+- Daftar tanggal bertemplate khusus **tidak** lagi dijejalkan sebagai chip di
+  dalam form. Ia punya tabel sendiri (`dated-templates-table.tsx`) di bawah form:
+  **hanya** tanggal yang punya penimpa yang muncul, kolom = Tanggal + 3 isi
+  template + aksi **Buka** & **Hapus**.
+  - **"Buka" bukan lagi `<Link>` biasa** melainkan pulau klien `OpenDatedButton`:
+    `<Link>` ke rute yang sama dengan `?date=` baru melakukan navigasi klien
+    tanpa memasang ulang form, sehingga form tetap menampilkan tanggal lama —
+    gejalanya "Buka tidak melakukan apa-apa". Tombol ini `router.push` ke
+    `?date=YYYY-MM-DD`, lalu menggulir form (`id=report-templates-form`) ke
+    pandangan. Di `page.tsx` form diberi `key={params.date ?? "default"}` supaya
+    tanggal baru benar-benar **memasang ulang** form dengan state segar — cara
+    idiomatik menyetel ulang state komponen (menghindari `setState` di dalam
+    efek, yang dilarang lint `react-hooks/set-state-in-effect`). Tanggal tanpa
+    penimpa terisi isi default (Simpan membuat penimpa baru).
+  - **"Hapus"** membuang penimpa tanggal itu (DELETE `/api/report-templates/dated?date=...`)
+    lewat `DeleteDatedButton` (klien + `<ConfirmDialog>`, bukan `window.confirm`),
+    lalu `router.refresh()`; laporan yang pernah terkirim TIDAK ikut terhapus.
+  - **Tabel ini server component dengan query Prisma sendiri**, jadi ia hanya
+    mengambil data ulang saat halaman di-render. Setelah Simpan/Perbarui template
+    tanggal, form memanggil `router.refresh()` agar baris baru langsung muncul
+    tanpa refresh manual. `router.refresh()` TIDAK mengubah `key` (query sama),
+    jadi state form yang sedang diketik tetap utuh.
+  Kutipan lama "Riwayat Laporan Terakhir" dari `SubmitLog` dihapus dari halaman ini
+  (riwayat percobaan kirim tetap lengkap di `/history`).
+- **Date picker tanggal khusus = `DatePicker` sendiri** (`src/components/ui/date-picker.tsx`),
+  bukan `<input type="date">` bawaan peramban: input bawaan tidak mengizinkan
+  menonaktifkan tanggal tertentu, sedangkan tanggal LIBUR (Sabtu/Minggu + libur
+  nasional) **dan tanggal LAMPAU** (sebelum hari ini) tidak boleh dipilih. Popup
+  memakai perhitungan yang SAMA dengan `/calendar` (`MONTH_LABELS`,
+  `WEEKDAY_LABELS`) dan aturan yang SAMA dengan jalur kirim (`isHoliday`), jadi
+  tanggal yang dinonaktifkan tidak mungkin berbeda dari yang benar-benar
+  dilewati otomasi. Tidak ada dependensi baru (bukan react-day-picker /radix);
+  klik-luar + Escape menutup popup.
+- **Kisi picker TIDAK mengosongkan sel padding** (berbeda dari `/calendar`):
+  hari dari bulan sebelah tetap ditampilkan redup agar kisi utuh (tak berlubang).
+  Sumbernya `buildMonthGridWithAdjacent` (`src/lib/calendar.ts`), bukan
+  `buildMonthGrid` yang tetap kosong untuk halaman `/calendar` (jangan satukan
+  keduanya; halaman kalender punya perilaku & tesnya sendiri). Fungsi kisi tetap
+  murni: ia hanya mengisi sel, sedangkan **aturan tanggal mana yang boleh
+  dipilih** ada di komponen picker. Tanggal libur di bulan sebelah pun tetap
+  nonaktif, jadi tidak ada jalan memilih hari libur.
+- **Back date dilarang keras**: hanya hari ini & tanggal mendatang yang bisa
+  dipilih. Tanggal sebelum hari ini diredupkan & `disabled` (tak bisa diklik),
+  `pilih()` juga menolak tanggal lampau sebagai pagar kedua, dan panah "bulan
+  sebelumnya" dimatikan begitu sudah di bulan berjalan. Ini cermin aturan server
+  (laporan hanya sah untuk hari ini).
+- `DatedReportTemplate` juga dipakai untuk **penanda hijau** di `/calendar`:
+  tanggal dengan penimpa diberi dot hijau + label "Laporan Sudah Ada". Ini murni
+  penanda baca; tidak mengubah `decide()` maupun jalur kirim.
 
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
 (gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan

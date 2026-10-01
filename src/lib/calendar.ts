@@ -114,6 +114,68 @@ export function buildMonthGrid({ year, month }: YearMonth): CalendarCell[][] {
   return weeks;
 }
 
+/** Satu sel kisi yang ikut menampilkan hari dari bulan sebelah. */
+export type AdjacentCell = {
+  day: number;
+  iso: string;
+  /** `true` bila tanggal ini milik bulan lain (ditampilkan redup). */
+  outside: boolean;
+};
+
+/** Geser YearMonth sejumlah bulan (boleh negatif), tanpa zona waktu. */
+function shiftMonth({ year, month }: YearMonth, delta: number): YearMonth {
+  const total = year * 12 + (month - 1) + delta;
+  return { year: Math.floor(total / 12), month: (total % 12) + 1 };
+}
+
+/**
+ * Susun kisi bulan seperti `buildMonthGrid`, TETAPI sel padding tidak lagi
+ * kosong — diisi tanggal nyata dari bulan sebelum/sesudahnya (`outside: true`).
+ *
+ * Kenapa dibuat: pemilih tanggal pada /report-templates menampilkan kisi yang
+ * utuh (tanpa sel kosong) supaya hari di bulan sebelah tetap terlihat dan layout
+ * tidak berlubang. Catatan: meski selnya berisi tanggal nyata, komponen
+ * pemilih yang menentukan tanggal mana yang BOLEH dipilih — saat ini hanya hari
+ * ini dan tanggal mendatang (`date-picker.tsx`). Jadi tanggal lampau tetap
+ * tampil redup di sini, tetapi tidak bisa diklik. Halaman /calendar tetap
+ * memakai `buildMonthGrid` yang kosong, perilakunya tidak berubah.
+ *
+ * Selalu kelipatan 7 kolom; tiap sel berisi tanggal nyata (tidak ada `null`).
+ */
+export function buildMonthGridWithAdjacent({ year, month }: YearMonth): AdjacentCell[][] {
+  const total = daysInMonth({ year, month });
+  const lead = weekdayIndex(year, month, 1);
+
+  const prev = shiftMonth({ year, month }, -1);
+  const next = shiftMonth({ year, month }, 1);
+  const prevTotal = daysInMonth(prev);
+  const nextTotal = daysInMonth(next);
+  const prevPrefix = monthToParam(prev);
+  const prefix = monthToParam({ year, month });
+  const nextPrefix = monthToParam(next);
+
+  const cells: AdjacentCell[] = [];
+  // Ekor bulan sebelumnya, mis. 27–30 September di baris pertama Oktober.
+  for (let i = lead; i > 0; i -= 1) {
+    const day = prevTotal - i + 1;
+    cells.push({ day, iso: `${prevPrefix}-${String(day).padStart(2, "0")}`, outside: true });
+  }
+  for (let day = 1; day <= total; day += 1) {
+    cells.push({ day, iso: `${prefix}-${String(day).padStart(2, "0")}`, outside: false });
+  }
+  // Kepala bulan berikutnya supaya baris terakhir genap 7 kolom.
+  for (let day = 1; cells.length % 7 !== 0; day += 1) {
+    cells.push({ day, iso: `${nextPrefix}-${String(day).padStart(2, "0")}`, outside: true });
+    if (day > nextTotal) break; // jaring pengaman, tidak seharusnya tercapai
+  }
+
+  const weeks: AdjacentCell[][] = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
+  return weeks;
+}
+
 /** Status ringkas satu tanggal. Prioritas: TERKIRIM > GAGAL > DRAFT > KOSONG. */
 export type DayStatus = "SUBMITTED" | "FAILED" | "DRAFT" | "NONE";
 

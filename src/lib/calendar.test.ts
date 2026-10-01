@@ -4,6 +4,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   buildMonthGrid,
+  buildMonthGridWithAdjacent,
   classifyDay,
   collectReportDates,
   currentJakartaMonth,
@@ -88,6 +89,64 @@ describe("buildMonthGrid", () => {
     const weeks = buildMonthGrid({ year: 2026, month: 9 });
     const last = weeks.flat().filter(Boolean).at(-1);
     expect(last).toEqual({ day: 30, iso: "2026-09-30" });
+  });
+});
+
+describe("buildMonthGridWithAdjacent", () => {
+  it("mengisi sel padding dengan tanggal bulan sebelah (tak ada sel kosong)", () => {
+    // 1 Oktober 2026 = Kamis (index 4) → 4 sel padding di baris pertama.
+    const weeks = buildMonthGridWithAdjacent({ year: 2026, month: 10 });
+    const flat = weeks.flat();
+    expect(flat.every((c) => c !== null)).toBe(true);
+    for (const week of weeks) expect(week).toHaveLength(7);
+    // Empat sel pertama = ekor September: 27, 28, 29, 30.
+    expect(flat.slice(0, 4).map((c) => c.iso)).toEqual([
+      "2026-09-27",
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+    ]);
+    expect(flat.slice(0, 4).every((c) => c.outside)).toBe(true);
+  });
+
+  it("hari bulan sebelah tetap ada di kisi (mis. kemarin) walau tak bisa dipilih", () => {
+    // Skenario: hari ini 1 Oktober, kemarin 30 September (bulan sebelumnya).
+    // Kisi tetap memuatnya (layout utuh); pemilih yang menonaktifkannya.
+    const weeks = buildMonthGridWithAdjacent({ year: 2026, month: 10 });
+    const isos = weeks.flat().map((c) => c.iso);
+    expect(isos).toContain("2026-09-30");
+  });
+
+  it("hari bulan ini ditandai outside=false, hari bulan lain true", () => {
+    const flat = buildMonthGridWithAdjacent({ year: 2026, month: 10 }).flat();
+    const inMonth = flat.filter((c) => !c.outside);
+    expect(inMonth).toHaveLength(daysInMonth({ year: 2026, month: 10 }));
+    expect(inMonth.every((c) => c.iso.startsWith("2026-10-"))).toBe(true);
+    // Oktober 2026 habis pas di kolom Sabtu, jadi hanya ada ekor September
+    // (tanpa kepala November). Itu benar, bukan bug.
+    const outside = flat.filter((c) => c.outside).map((c) => c.iso);
+    expect(outside.some((iso) => iso.startsWith("2026-09-"))).toBe(true);
+    expect(outside.some((iso) => iso.startsWith("2026-11-"))).toBe(false);
+  });
+
+  it("mengisi kepala bulan berikutnya saat baris terakhir belum penuh", () => {
+    // September 2026: 1 Sep = Selasa (lead=2), 30 hari → 32 sel, sisa 3 →
+    // kepala Oktober 1, 2, 3 muncul di baris terakhir.
+    const flat = buildMonthGridWithAdjacent({ year: 2026, month: 9 }).flat();
+    const trailing = flat.slice(-3).map((c) => c.iso);
+    expect(trailing).toEqual(["2026-10-01", "2026-10-02", "2026-10-03"]);
+    expect(flat.slice(-3).every((c) => c.outside)).toBe(true);
+    // Dan ekor Agustus di baris pertama: 30, 31 Agustus.
+    expect(flat.slice(0, 2).map((c) => c.iso)).toEqual(["2026-08-30", "2026-08-31"]);
+  });
+
+  it("menyeberang pergantian tahun dengan benar (Januari)", () => {
+    // Januari 2027: 1 Januari = Jumat (index 5) → ekor Desember 2026.
+    const flat = buildMonthGridWithAdjacent({ year: 2027, month: 1 }).flat();
+    const outside = flat.filter((c) => c.outside).map((c) => c.iso);
+    // Ekor Desember 2026 harus ada, dan tidak ada tanggal "0000-" (bug modulo).
+    expect(outside.some((iso) => iso.startsWith("2026-12-"))).toBe(true);
+    expect(flat.every((c) => /^\d{4}-\d{2}-\d{2}$/.test(c.iso))).toBe(true);
   });
 });
 

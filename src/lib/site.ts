@@ -80,14 +80,14 @@ export const FAQ_ITEMS: readonly { q: string; a: string }[] = [
   },
   {
     q: "Apakah saya perlu memasang ekstensi browser atau aplikasi tambahan?",
-    a: "Tidak. Pengiriman berjalan lewat REST API di server, jadi tidak ada " +
-      "ekstensi browser, bot desktop, atau server tambahan yang perlu dipasang " +
-      "di komputer Anda.",
+    a: "Tidak. Pengiriman berjalan langsung dari server aplikasi, jadi tidak " +
+      "ada ekstensi browser, bot desktop, atau server tambahan yang perlu " +
+      "dipasang di komputer Anda.",
   },
   {
     q: "Bisakah laporan dikirim otomatis tanpa saya buka aplikasinya?",
     a: "Bisa. Setelah template disiapkan, Anda dapat menyalakan jadwal otomatis " +
-      "lewat cron sehingga laporan terkirim tiap sore, atau mengirim manual " +
+      "sehingga laporan terkirim tiap sore, atau mengirim manual " +
       "satu klik saat Anda siap. Jadwal bisa dimatikan kapan saja.",
   },
   {
