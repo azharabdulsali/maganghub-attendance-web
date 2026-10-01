@@ -201,6 +201,13 @@ export const RATE_LIMITS = {
    * tetap bisa menangani banyak pengguna dalam satu sesi kerja.
    */
   adminUserAction: { limit: 20, windowMs: 10 * 60_000 },
+  /**
+   * Menyusun draf laporan dari kata kunci: 30 / 5 menit per pengguna. Longgar
+   * karena ini aksi murah & sering diulang pengguna saat menyusun laporan
+   * (menekan ulang setelah mengganti kata kunci itu wajar), tetapi tetap
+   * dibatasi supaya tidak bisa dipakai membebani server.
+   */
+  reportDraft: { limit: 30, windowMs: 5 * 60_000 },
   /** Pendaftaran: 3 / jam per IP (SPEC.md §8). */
   register: { limit: 3, windowMs: 60 * 60_000 },
 } as const;

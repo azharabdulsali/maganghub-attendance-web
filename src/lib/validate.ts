@@ -79,6 +79,35 @@ export const reportTemplatesSchema = z.object({
 export type ReportTemplatesInput = z.infer<typeof reportTemplatesSchema>;
 
 /**
+ * Input untuk menyusun DRAF laporan (tombol "Susun dengan Bantuan").
+ *
+ * Berbeda dari `reportTemplatesSchema` yang memvalidasi teks jadi: di sini yang
+ * masuk adalah BAHAN (kata kunci & konteks), bukan laporan final. Karena itu
+ * batas 100 karakter TIDAK berlaku di sini, kalau berlaku, pengguna tidak akan
+ * pernah bisa memakai kata kunci pendek seperti "rapat mingguan".
+ *
+ * Panjang dibatasi supaya kata kunci tidak dipakai sebagai jalur menyuntik teks
+ * panjang; hitungan draf final tetap diverifikasi ulang di `report-draft.ts`.
+ */
+export const reportDraftSchema = z.object({
+  keywords: z
+    .string()
+    .trim()
+    .max(300, "Kata kunci terlalu panjang (maksimal 300 karakter)."),
+  unit: z
+    .string()
+    .trim()
+    .max(120, "Nama unit terlalu panjang (maksimal 120 karakter).")
+    .optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal harus berformat YYYY-MM-DD.")
+    .optional(),
+});
+
+export type ReportDraftInput = z.infer<typeof reportDraftSchema>;
+
+/**
  * Pengaturan otomasi (AutomationConfig, SPEC.md §7). Zona waktu TIDAK
  * diserahkan ke klien, selalu "Asia/Jakarta" (server yang mengisi) supaya
  * jadwal tidak bisa disalah-set ke zona lain tanpa sengaja.

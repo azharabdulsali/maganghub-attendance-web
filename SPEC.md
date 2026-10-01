@@ -638,6 +638,8 @@ Karena pemilik memilih jalur Direct REST API, bagian ini dipecah dua.
 | :--- | :--- |
 | Integrasi GitHub (ambil commit) | Pemilik tidak ingin mencantumkan repo di web app ini |
 | Penyusun laporan AI / OpenRouter / OpenAI | Tanpa commit, AI tidak punya bahan. Dihapus sepenuhnya |
+| **Penyusun draf LOKAL** (`report-draft.ts`, 0 token) | **DIPERTAHANKAN sebagai fallback wajib.** Merakit 3 kolom dari kata kunci + pustaka frasa. Selalu tersedia, tanpa provider luar. Dipakai bila `GEMINI_API_KEY` kosong ATAU LLM gagal (kuota habis / timeout / jaringan putus / jawaban tidak lolos validasi). |
+| **Penyusun draf LLM** (`report-draft-llm.ts`, Gemini) | **DITAMBAHKAN atas keputusan pemilik.** Gratis, key milik admin dipakai bersama semua pengguna. ⚠️ Kata kunci aktivitas pengguna dikirim ke Google saat aktif; jangan pasang billing agar kuota habis = ditolak, bukan menagih otomatis. |
 | Tabel `GithubRepo`, `AiConfig`, endpoint `/api/github/*` | Ikut terhapus bersama dua di atas |
 | Login GitHub OAuth | Cukup email + password |
 
@@ -849,7 +851,7 @@ Semua sudah diputuskan pemilik. Berikut ringkasannya.
 | # | Keputusan | Pilihan |
 | :--- | :--- | :--- |
 | 1 | Database | **Neon sejak awal** (bukan SQLite lokal), lihat §14 |
-| 2 | Provider AI | **TIDAK DIPAKAI**, AI dihapus sepenuhnya (lihat baris 7). Tidak perlu `OPENAI_API_KEY`; hapus dari env |
+| 2 | Provider AI | **DICABUT oleh pemilik.** Awalnya AI dihapus sepenuhnya (lihat baris 7); pemilik kemudian memutuskan memakai **LLM gratis** (Google Gemini) dengan **1 API key milik admin untuk semua pengguna**. Implementasi: `src/lib/report-draft-llm.ts` (server-only, key di header, bukan query string) dengan **fallback otomatis** ke penyusun lokal `src/lib/report-draft.ts`. Kontrak `ReportDrafter` + `getDrafter()`/`draftWithFallback()` menjaga agar penggantian provider tidak menyentuh UI/rute. Bila `GEMINI_API_KEY` kosong, fitur **tetap jalan** memakai lokal. **Pilihan model ditentukan hasil pengujian nyata ke API** (bukan asumsi): nama versi spesifik (`gemini-2.0-flash`, `gemini-2.5-flash`) semuanya 404 karena dihapus Google; `gemini-flash-latest` hanya berkuota **20 permintaan/hari**, terlalu kecil untuk key bersama; yang dipakai **`gemini-flash-lite-latest`** (alias stabil + kuota lebih lega). Endpoint **hanya `/v1beta`** — asumsi lama bahwa key `AQ.` butuh `/v1` salah dan menyebabkan 404 berkepanjangan. Kegagalan LLM **dicatat ke log server** (`console.warn`) supaya salah konfigurasi tidak tersembunyi di balik fallback. Diagnosis cepat: `npx tsx scripts/uji-gemini.ts`. |
 | 3 | Pemicu jadwal | **cron-job.org** |
 | 4 | Domain | **Belum ada**, rencana langsung pakai domain Vercel (`*.vercel.app`), domain khusus menyusul bila perlu |
 | 5 | Akses pendaftaran | **Terbuka bebas**, siapa pun boleh daftar, **langsung aktif, tanpa verifikasi email** |

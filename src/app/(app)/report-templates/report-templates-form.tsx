@@ -12,8 +12,9 @@
 //     di layar tidak mungkin berbeda dari yang divalidasi server.
 
 import { useMemo, useState } from "react";
-import { CircleCheck, TriangleAlert } from "lucide-react";
+import { CircleCheck, TriangleAlert, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
@@ -72,7 +73,16 @@ export default function ReportTemplatesForm({
   const [savedAt, setSavedAt] = useState<string | null>(updatedAt);
   const [exists, setExists] = useState(hasExisting);
   const [confirmHapusOpen, setConfirmHapusOpen] = useState(false);
+  const [confirmSusunOpen, setConfirmSusunOpen] = useState(false);
   const toast = useToast();
+
+  // Bahan untuk penyusun draf. Dipisah dari `values` karena ini BUKAN isi
+  // template final, hanya kata kunci sementara yang tidak ikut tersimpan.
+  const [keywords, setKeywords] = useState("");
+  const [unit, setUnit] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftSource, setDraftSource] = useState<string | null>(null);
+  const [draftError, setDraftError] = useState<string | null>(null);
 
   // Hitung status tiap kolom sekali per perubahan isi.
   const status = useMemo(() => {
@@ -94,6 +104,71 @@ export default function ReportTemplatesForm({
   function ubah(name: FieldName, teks: string) {
     setValues((prev) => ({ ...prev, [name]: teks }));
     setServerError(null);
+  }
+
+  /**
+   * Minta server menyusun draf dari kata kunci, lalu isikan hasilnya ke ketiga
+   * kolom. Hasil TIDAK langsung disimpan, pengguna masih bisa mengedit dulu.
+   *
+   * Kalau ada kolom yang sudah diisi, kita minta konfirmasi dulu supaya
+   * pekerjaan pengguna tidak tertimpa begitu saja.
+   */
+  async function susun() {
+    if (drafting) return;
+    setDrafting(true);
+    setDraftError(null);
+
+    try {
+      const res = await fetch("/api/report-templates/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          keywords,
+          unit: unit.trim() === "" ? undefined : unit,
+        }),
+      });
+
+      const data = (await res.json()) as {
+        activity?: string;
+        learning?: string;
+        obstacles?: string;
+        source?: string;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        setDraftError(data.error ?? "Gagal menyusun draf.");
+        return;
+      }
+
+      setValues({
+        activity: data.activity ?? "",
+        learning: data.learning ?? "",
+        obstacles: data.obstacles ?? "",
+      });
+      setDraftSource(data.source ?? null);
+      setServerError(null);
+      toast.success(
+        "Draf disusun",
+        "Periksa dan sesuaikan isinya sebelum menyimpan.",
+      );
+    } catch {
+      // Jaringan gagal: beri tahu apa adanya, jangan diam-diam mengosongkan.
+      setDraftError("Tidak bisa menghubungi server. Periksa koneksi Anda.");
+    } finally {
+      setDrafting(false);
+    }
+  }
+
+  /** Apakah ketiga kolom saat ini sudah berisi sesuatu? */
+  const adaIsi = FIELDS.some((f) => values[f.name].trim() !== "");
+
+  function mintaSusun() {
+    if (adaIsi) {
+      setConfirmSusunOpen(true);
+      return;
+    }
+    void susun();
   }
 
   async function simpan() {
@@ -176,6 +251,75 @@ export default function ReportTemplatesForm({
             </>
           )}
         </p>
+      </div>
+
+      {/* Panel bantuan penyusunan. Sengaja DIPISAH dari ketiga kolom isi supaya
+          jelas bedanya: ini bahan (kata kunci), bukan laporan final. */}
+      <div className="rounded-base border-2 border-border bg-secondary-background p-4">
+        <div className="flex items-center gap-2">
+          <WandSparkles className="size-4 shrink-0" aria-hidden />
+          <h2 className="font-heading text-base">Susun dengan Bantuan</h2>
+        </div>
+        <p className="mt-1 text-xs text-foreground/70">
+          Tulis singkat apa yang Anda kerjakan hari itu, lalu biarkan sistem
+          mengisi ketiga kolom. Penyusunnya berjalan di server ini (tanpa
+          layanan AI luar, tanpa biaya), dan hasilnya bisa Anda ubah dulu.
+        </p>
+
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex flex-1 flex-col gap-1.5">
+            <Label htmlFor="draft-keywords" className="text-xs">
+              Kata kunci aktivitas
+            </Label>
+            <Input
+              id="draft-keywords"
+              value={keywords}
+              onChange={(e) => setKeywords(e.target.value)}
+              maxLength={300}
+              disabled={drafting || saving || deleting}
+              placeholder="mis. rapat mingguan, jajan dimsum di koperasi"
+            />
+          </div>
+          <div className="flex flex-1 flex-col gap-1.5">
+            <Label htmlFor="draft-unit" className="text-xs">
+              Unit / divisi <span className="text-foreground/50">(opsional)</span>
+            </Label>
+            <Input
+              id="draft-unit"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              maxLength={120}
+              disabled={drafting || saving || deleting}
+              placeholder="mis. Divisi Teknologi Informasi"
+            />
+          </div>
+          <Button
+            onClick={mintaSusun}
+            disabled={drafting || saving || deleting}
+            variant="neutral"
+            size="sm"
+            className="shrink-0"
+          >
+            {drafting ? "Menyusun..." : "Susun draf"}
+          </Button>
+        </div>
+
+        <p className="mt-2 text-xs text-foreground/60">
+          Kosongkan kata kunci bila hari itu tidak ada kendala khusus, kolom
+          kendala akan diisi pernyataan jujur bahwa pekerjaan berjalan lancar.
+        </p>
+
+        {draftSource ? (
+          <p className="mt-2 text-xs text-foreground/60">
+            Draf terakhir disusun oleh: <span className="font-heading">{draftSource}</span>
+          </p>
+        ) : null}
+
+        {draftError ? (
+          <div className="mt-2">
+            <Message tone="bad">{draftError}</Message>
+          </div>
+        ) : null}
       </div>
 
       {FIELDS.map((f) => {
@@ -279,6 +423,17 @@ export default function ReportTemplatesForm({
         description="Tindakan ini tidak bisa dibatalkan. Tanpa template, absensi otomatis tidak bisa dijalankan."
         confirmLabel="Hapus template"
         onConfirm={() => void hapus()}
+      />
+
+      {/* Draf akan MENIMPA isi ketiga kolom. Bila sudah ada isi, konfirmasi dulu
+          supaya tulisan pengguna tidak hilang tanpa peringatan. */}
+      <ConfirmDialog
+        open={confirmSusunOpen}
+        onOpenChange={setConfirmSusunOpen}
+        title="Timpa isi ketiga kolom?"
+        description="Kolom yang sudah berisi teks akan diganti oleh draf baru. Pastikan Anda sudah menyalin bagian yang ingin dipertahankan."
+        confirmLabel="Ya, susun ulang"
+        onConfirm={() => void susun()}
       />
     </div>
   );

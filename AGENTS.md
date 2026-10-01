@@ -15,14 +15,34 @@ ke portal Monev MagangHub Kemnaker.
 
 Tiga kemampuan inti:
 1. Menyimpan kredensial Monev pengguna secara terenkripsi (AES-256-GCM).
-2. Menyusun laporan harian dari **3 template tetap** (Uraian Aktivitas,
-   Pembelajaran yang Diperoleh, Kendala), **tanpa AI, tanpa integrasi GitHub**.
+2. Menyusun laporan harian dari **3 kolom** (Uraian Aktivitas, Pembelajaran
+   yang Diperoleh, Kendala). Kolom bisa diisi manual, atau disusun lewat tombol
+   "Susun draf" yang memakai **LLM Gemini** (opsional, key admin) dengan
+   **fallback otomatis** ke penyusun lokal. Tanpa integrasi GitHub.
 3. Mengirim laporan lewat **Direct REST API**, tanpa browser, tanpa worker,
    tanpa biaya bulanan.
 
 **Status saat ini: Tahap 1 selesai** (fondasi autentikasi: register, login,
-dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat,
-khususnya bahwa **AI dan integrasi GitHub sudah dibatalkan**.
+dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
+
+> **Pembaruan keputusan AI:** keputusan lama "AI dibatalkan" sudah **dicabut
+> pemilik**. Kini ada penyusun draf opsional berbasis Gemini gratis
+> (`GEMINI_API_KEY`, key admin dipakai bersama semua pengguna). Empat aturan yang
+> tidak boleh dilanggar saat menyentuh bagian ini:
+> (a) **jangan pernah menghapus fallback lokal** — bila LLM gagal, pengguna
+> tetap harus mendapat draf, bukan pesan error;
+> (b) jawaban LLM **selalu** divalidasi dengan `checkReportField` sebelum
+> dipakai, karena LLM tidak boleh bisa merusak validasi form;
+> (c) **jangan memakai nama model versi spesifik** (`gemini-2.0-flash` dsb.) —
+> semuanya 404 karena dihapus Google. Pakai alias `-latest`;
+> (d) endpoint **hanya `/v1beta`**. `/v1` selalu 404 di sini, percobaan
+> sebelumnya mengasumsikan sebaliknya dan membuat fitur mati selama-lamanya.
+> Integrasi GitHub tetap dibatalkan.
+
+> **Cara men-debug "kok masih pakai lokal?":** jalankan
+> `npx tsx scripts/uji-gemini.ts`. Skrip itu memanggil API sungguhan dan
+> mencetak status HTTP persis. Jangan menebak dari UI — UI sengaja menyembunyikan
+> error dari pengguna, sehingga kesalahan konfigurasi tidak terlihat di sana.
 
 ---
 

@@ -23,6 +23,17 @@ const schema = z.object({
   // OPSIONAL: bila kosong, endpoint dispatcher menolak semua permintaan (503),
   // jadi aplikasi tetap jalan normal, hanya otomasi massal yang tak aktif.
   CRON_SECRET: z.string().min(16, "CRON_SECRET minimal 16 karakter").optional().or(z.literal("")),
+  // Penyusun draf laporan berbasis LLM (Opsional).
+  //
+  // Kosong = fitur tetap jalan memakai penyusun lokal 0-token. Karena itu
+  // keduanya OPSIONAL: build/deploy tidak boleh gagal hanya karena key belum
+  // dipasang (SPEC.md §9 "gagal cepat" hanya untuk yang WAJIB).
+  //
+  // Diperbarui dari keputusan SPEC §13: "AI dihapus sepenuhnya" dicabut oleh
+  // pemilik. Provider luar kini dipakai, tapi HANYA lewat server dan selalu
+  // punya fallback lokal bila gagal.
+  GEMINI_API_KEY: z.string().optional().or(z.literal("")),
+  GEMINI_MODEL: z.string().optional().or(z.literal("")),
 });
 
 const parsed = schema.safeParse(process.env);
