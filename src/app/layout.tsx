@@ -3,12 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import { cn } from "@/lib/utils";
-import {
-  SITE_DESCRIPTION,
-  SITE_NAME,
-  SITE_TITLE,
-  SITE_URL,
-} from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -18,26 +13,23 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 // preferensi sistem. Skrip ini SUMBER KEBENARAN nilai awal; komponen
 // ThemeToggle hanya menyinkronkan setelahnya (lihat src/components/theme-toggle.tsx).
 //
-// Dimuat sebagai <script> INLINE lewat dangerouslySetInnerHTML di dalam <head>,
-// BUKAN <Script> dari next/script. Dua alasan:
-//   1. React 19 memeriksa elemen <script> yang dirender sebagai child komponen
-//      dan melempar error "Encountered a script tag while rendering React
-//      component" saat hydration. Root layout IKUT di-hydrate di klien, jadi
-//      menulis <head> manual TIDAK mengeluarkan skrip ini dari pohon React —
-//      error ini memang muncul di console dan itu DISENGAJA diterima: skripnya
-//      tetap dieksekusi dari HTML server (lihat alasan 2).
-//   2. Skrip ini harus BLOCKING dan jalan sebelum paint pertama. Ini DIUJI
-//      secara empiris pada Next 16.3.6/Turbopack: `<Script strategy=
-//      "beforeInteractive">` TIDAK menghasilkan inline blocking script di
-//      HTML server — ia hanya jadi payload `self.__next_f.push` yang dieksekusi
-//      React setelah hidrasi, sehingga tema gelap BERKEDIP putih lebih dulu.
-//      <script> mentah-lah yang benar-benar tertanam di <head> HTML awal.
-// Error console dari alasan 1 adalah harga yang dibayar untuk no-flicker;
-// jangan "perbaiki" ini dengan next/script tanpa menguji ulang HTML hasil build.
-// dangerouslySetInnerHTML di sini AMAN: isinya string konstan yang kita tulis
-// sendiri (bukan input pengguna), jadi tak ada risiko injeksi. Ini pola resmi
-// Next.js untuk skrip blocking pra-paint.
-const skripTema = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d){document.documentElement.classList.add("dark")}}catch(e){}})();`;
+// Isinya kini ada di public/tema.js dan dimuat lewat <script src="/tema.js">
+// SINKRON di <head> (lihat RootLayout di bawah). Kenapa bukan <Script> dari
+// next/script dan bukan <script> inline:
+//   1. Harus BLOCKING, jalan sebelum paint pertama. DIUJI empiris pada Next
+//      16.3.6/Turbopack: `<Script strategy="beforeInteractive">` TIDAK
+//      menghasilkan inline blocking script di HTML server — ia hanya jadi
+//      payload `self.__next_f.push` yang dieksekusi React setelah hidrasi,
+//      sehingga tema gelap BERKEDIP putih lebih dulu.
+//   2. <script> INLINE (dangerouslySetInnerHTML) memang tertanam di <head> HTML
+//      awal dan blocking, TAPI React 19 melempar error "Encountered a script tag
+//      while rendering React component" saat hydration karena root layout ikut
+//      di-hydrate di klien.
+//   3. Jalan tengah: file statis + <script src> sinkron. Tetap blocking &
+//      pra-paint, tapi tag-nya kosong (tanpa konten inline) sehingga React tidak
+//      memunculkan error. Perilakunya identik dengan inline, tanpa polusi konsol.
+// Jangan "kembalikan" ke inline/next/script tanpa menguji ulang HTML hasil build
+// (cari `tema.js` di <head>, bukan payload `self.__next_f.push`).
 
 export const metadata: Metadata = {
   // metadataBase WAJIB: tanpa ini semua URL relatif di canonical, Open Graph,
@@ -100,10 +92,26 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id" className={cn("font-sans", inter.variable)} suppressHydrationWarning>
+    <html
+      lang="id"
+      className={cn("font-sans", inter.variable)}
+      suppressHydrationWarning
+    >
       <head>
-        {/* Skrip anti-flicker inline pra-paint (lihat catatan `skripTema` di atas). */}
-        <script id="tema-anti-flicker" dangerouslySetInnerHTML={{ __html: skripTema }} />
+        {/* Skrip anti-flicker pra-paint (lihat catatan `skripTema` di atas).
+            Dimuat sebagai file statis `/tema.js` dengan <script src> SINKRON
+            (tanpa async/defer) supaya tetap memblokir parse & paint pertama —
+            inilah yang mencegah kedipan putih pada tema gelap. Dipakai src
+            (bukan isi inline) agar React 19 tidak memunculkan peringatan
+            "Encountered a script tag while rendering React component"; React
+            hanya protes untuk <script> berisi konten inline, bukan tag kosong
+            ber-src. Isi file itu sendiri ada di public/tema.js. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts -- skrip ini
+            MEMANG harus sinkron: ia harus jalan sebelum paint pertama untuk
+            mencegah kedipan putih (lihat catatan `skripTema` di atas). Ukurannya
+            ~200 byte dan dilayani lokal dari /public, jadi tidak ada risiko
+            "render-blocking third-party script" yang jadi alasan aturan ini. */}
+        <script src="/tema.js" />
       </head>
       <body className="bg-secondary-background text-foreground antialiased">
         <Providers>{children}</Providers>

@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -44,7 +45,9 @@ export default function AutomationForm({
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
   const [hour, setHour] = useState(String(initialHour));
   const [minute, setMinute] = useState(String(initialMinute));
-  const [webhookKey, setWebhookKey] = useState<string | null>(initialWebhookKey);
+  const [webhookKey, setWebhookKey] = useState<string | null>(
+    initialWebhookKey,
+  );
   const [error, setError] = useState<string | null>(null);
   const [sukses, setSukses] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -73,7 +76,9 @@ export default function AutomationForm({
   // URL dasar cara DIANJURKAN: tanpa rahasia di query; kunci dikirim lewat
   // header `Authorization: Bearer`.
   const webhookBaseUrl =
-    typeof window !== "undefined" ? `${window.location.origin}/api/cron/submit` : null;
+    typeof window !== "undefined"
+      ? `${window.location.origin}/api/cron/submit`
+      : null;
 
   // Contoh perintah siap tempel untuk penjadwal di server sendiri (header = aman).
   const curlSnippet =
@@ -196,7 +201,9 @@ export default function AutomationForm({
       }
 
       setWebhookKey(data.webhookKey);
-      setSukses("Kunci tautan otomatis diganti. Salin tautan baru ke layanan penjadwal Anda.");
+      setSukses(
+        "Kunci tautan otomatis diganti. Salin tautan baru ke layanan penjadwal Anda.",
+      );
       toast.success(
         "Kunci tautan otomatis diganti",
         "Salin tautan baru ke layanan penjadwal Anda sekarang.",
@@ -278,7 +285,11 @@ export default function AutomationForm({
               onClick={() => setKonfirmasiSimpan(true)}
               disabled={loading}
             >
-              {loading ? "Menyimpan..." : hasExisting ? "Simpan perubahan" : "Aktifkan"}
+              {loading
+                ? "Menyimpan..."
+                : hasExisting
+                  ? "Simpan perubahan"
+                  : "Aktifkan"}
             </Button>
 
             {error && <Message tone="bad">{error}</Message>}
@@ -288,30 +299,53 @@ export default function AutomationForm({
       </Card>
 
       {webhookUrl && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tautan otomatis</CardTitle>
-            <CardDescription>
-              Sambungkan layanan penjadwal Anda (mis. cron-job.org) ke tautan ini,
-              jadwalkan sekali sehari. <strong>Cara dianjurkan:</strong> kirim
-              kunci lewat bagian pengaturan khusus, bukan ditempel di tautan.
-              Jangan bagikan kunci ini, siapa pun yang tahu bisa memicu
-              pengiriman.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        /* Kartu ini default TERTUTUP di balik "Pengaturan lanjutan (opsional)".
+           Alasannya: bila admin sudah menyalakan pengiriman massal (GitHub
+           Actions memanggil /api/cron/run-all rutin), user TIDAK perlu memasang
+           tautan apa pun sendiri. Menampilkannya terbuka membuat user awam
+           merasa wajib mengurus sesuatu yang sebenarnya opsional.
+           Pola <details>/<summary> native dipakai supaya bisa dibuka-tutup
+           tanpa JS dan tetap bisa diakses keyboard (sama seperti FAQ di "/"). */
+        <details className="group rounded-base border-2 border-border bg-background font-base text-foreground shadow-shadow">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-base p-6 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            <div className="grid gap-1.5">
+              <span className="font-heading leading-none">
+                Pengaturan lanjutan (opsional)
+              </span>
+              <span className="text-sm font-base">
+                Hanya perlu bila Anda memasang penjadwal sendiri. Bila admin
+                sudah mengaktifkan pengiriman massal, bagian ini tidak usah
+                diurus.
+              </span>
+            </div>
+            <Plus
+              aria-hidden="true"
+              className="size-5 shrink-0 transition-transform duration-200 group-open:rotate-45"
+            />
+          </summary>
+          <div className="space-y-4 px-6 pb-6">
+            <div className="grid gap-1.5">
+              <span className="font-heading leading-none">Tautan otomatis</span>
+              <span className="text-sm font-base">
+                Sambungkan layanan penjadwal Anda (mis. cron-job.org) ke tautan
+                ini, jadwalkan sekali sehari. <strong>Cara dianjurkan:</strong>{" "}
+                kirim kunci lewat bagian pengaturan khusus, bukan ditempel di
+                tautan. Jangan bagikan kunci ini, siapa pun yang tahu bisa
+                memicu pengiriman.
+              </span>
+            </div>
             {/* Cara DIANJURKAN: kunci lewat header, URL bersih tanpa rahasia. */}
             <div className="space-y-2">
               <p className="text-sm font-medium">
                 Cara dianjurkan (kunci lewat pengaturan khusus)
               </p>
-              <p className="text-xs text-foreground/60">
-                Alamat tautan:
-              </p>
+              <p className="text-xs text-foreground/60">Alamat tautan:</p>
               <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
                 {webhookBaseUrl}
               </code>
-              <p className="text-xs text-foreground/60">Isi pengaturan kunci:</p>
+              <p className="text-xs text-foreground/60">
+                Isi pengaturan kunci:
+              </p>
               <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
                 Authorization: Bearer {webhookKey}
               </code>
@@ -337,9 +371,7 @@ export default function AutomationForm({
 
             {/* Cara LAMA: dipertahankan sementara, ditandai deprecated. */}
             <div className="space-y-2 rounded-base border-2 border-dashed border-border p-3">
-              <p className="text-sm font-medium">
-                Cara lama (akan dihapus)
-              </p>
+              <p className="text-sm font-medium">Cara lama (akan dihapus)</p>
               <p className="text-xs text-foreground/60">
                 Menempel kunci di tautan masih berfungsi sampai{" "}
                 <strong>1 Januari 2026</strong>, lalu dihapus. Hindari untuk
@@ -365,12 +397,12 @@ export default function AutomationForm({
             </div>
 
             <p className="text-xs text-foreground/60">
-              Jadwal: {formatSchedule(Number(hour) || 0, Number(minute) || 0)} WIB
-              setiap hari. Mengganti kunci akan mematikan tautan/perintah lama,
-              pasang ulang di penjadwal Anda setelah itu.
+              Jadwal: {formatSchedule(Number(hour) || 0, Number(minute) || 0)}{" "}
+              WIB setiap hari. Mengganti kunci akan mematikan tautan/perintah
+              lama, pasang ulang di penjadwal Anda setelah itu.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </details>
       )}
 
       {/* Konfirmasi sebelum menyimpan pengaturan otomasi.
@@ -430,4 +462,3 @@ export default function AutomationForm({
     </div>
   );
 }
-
