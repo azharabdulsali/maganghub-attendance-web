@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import {
   Card,
@@ -34,6 +36,10 @@ export default function AutomationForm({
 }: Props) {
   const router = useRouter();
   const toast = useToast();
+  // Ref ke <form> asli: tombol Simpan tidak lagi `type="submit"` (ia membuka
+  // dialog dulu). Setelah dikonfirmasi kita panggil `requestSubmit()` supaya
+  // jalur submit tetap jalur bawaan form — sama seperti sign-out-button.tsx.
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
   const [hour, setHour] = useState(String(initialHour));
@@ -43,6 +49,11 @@ export default function AutomationForm({
   const [sukses, setSukses] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [tersalin, setTersalin] = useState(false);
+  // Dua dialog konfirmasi: satu untuk menyimpan pengaturan, satu untuk
+  // mengganti kunci webhook (aksi destruktif). Dipisah agar pesannya bisa
+  // spesifik — konfirmasi yang generik membuat orang menekan "Ya" tanpa baca.
+  const [konfirmasiSimpan, setKonfirmasiSimpan] = useState(false);
+  const [konfirmasiRotasi, setKonfirmasiRotasi] = useState(false);
 
   // Pratinjau "jadwal berikutnya" dihitung klien memakai helper murni yang
   // sama dengan server, hanya untuk tampilan, bukan logika penentu.
@@ -144,15 +155,19 @@ export default function AutomationForm({
     }
   }
 
-  async function rotasiKunci() {
-    // Konfirmasi eksplisit: mengganti kunci langsung mematikan cron yang sudah
-    // terpasang sampai URL baru dipasang. Ini tindakan sadar, bukan tidak sengaja.
-    const lanjut = window.confirm(
-      "Ganti kunci webhook?\n\nURL cron lama akan LANGSUNG berhenti bekerja. " +
-        "Anda harus menyalin URL baru ke layanan cron Anda setelah ini.",
-    );
-    if (!lanjut) return;
+  /**
+   * Buka konfirmasi rotasi kunci. Dulu di sini ada `window.confirm`, yang
+   * dilarang SPEC.md §466 (memblokir tab, tak bisa memuat konteks). Sekarang
+   * informasinya dibawa <ConfirmDialog> di bawah, dan kerja sebenarnya ada di
+   * `eksekusiRotasiKunci`.
+   */
+  function rotasiKunci() {
+    // Mengganti kunci langsung mematikan cron yang sudah terpasang sampai URL
+    // baru dipasang. Ini tindakan destruktif, jadi wajib konfirmasi sadar.
+    setKonfirmasiRotasi(true);
+  }
 
+  async function eksekusiRotasiKunci() {
     setError(null);
     setSukses(null);
     setLoading(true);
@@ -206,16 +221,23 @@ export default function AutomationForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={simpan} className="space-y-4">
-            <label className="flex items-center gap-3 text-sm">
-              <input
-                type="checkbox"
+          <form ref={formRef} onSubmit={simpan} className="space-y-4">
+            <div className="flex items-center gap-3 text-sm">
+              <Switch
+                id="isEnabled"
                 checked={isEnabled}
-                onChange={(e) => setIsEnabled(e.target.checked)}
-                className="h-4 w-4"
+                onCheckedChange={setIsEnabled}
+                aria-describedby="isEnabled-hint"
               />
-              Aktifkan otomasi
-            </label>
+              <Label htmlFor="isEnabled" className="cursor-pointer">
+                Aktifkan otomasi
+              </Label>
+            </div>
+            <p id="isEnabled-hint" className="text-xs text-foreground/60">
+              {isEnabled
+                ? "Otomasi aktif: cron akan mengirim absensi sesuai jadwal di bawah."
+                : "Otomasi nonaktif: tidak ada pengiriman otomatis, walau cron tetap menembak webhook."}
+            </p>
 
             <div className="flex flex-wrap items-end gap-3">
               <div className="space-y-2">
@@ -247,7 +269,14 @@ export default function AutomationForm({
               </p>
             </div>
 
-            <Button type="submit" disabled={loading}>
+            {/* Tombol ini TIDAK type="submit": ia membuka dialog dulu. Setelah
+                dikonfirmasi, dialog memanggil formRef.requestSubmit() sehingga
+                jalur submit tetap jalur bawaan form (bukan fetch manual). */}
+            <Button
+              type="button"
+              onClick={() => setKonfirmasiSimpan(true)}
+              disabled={loading}
+            >
               {loading ? "Menyimpan..." : hasExisting ? "Simpan perubahan" : "Aktifkan"}
             </Button>
 
@@ -341,6 +370,60 @@ export default function AutomationForm({
           </CardContent>
         </Card>
       )}
+
+      {/* Konfirmasi sebelum menyimpan pengaturan otomasi.
+          CATATAN: SPEC.md §466 menyarankan konfirmasi hanya untuk aksi yang
+          tidak bisa dibatalkan, sedangkan simpan di sini idempoten. Ini
+          permintaan pemilik proyek secara sadar. Karena itu teksnya dibuat
+          menjelaskan DAMPAK yang sedang disimpan (aktif/tidak, jam berapa),
+          bukan sekadar "Anda yakin?" — supaya dialog ini menambah informasi,
+          bukan cuma satu klik ekstra. */}
+      <ConfirmDialog
+        open={konfirmasiSimpan}
+        onOpenChange={setKonfirmasiSimpan}
+        title={hasExisting ? "Simpan perubahan otomasi?" : "Aktifkan otomasi?"}
+        description={
+          <>
+            {isEnabled ? (
+              <>
+                Otomasi akan <strong>aktif</strong> dan cron mengirim absensi
+                tiap hari pukul{" "}
+                <strong>
+                  {formatSchedule(Number(hour) || 0, Number(minute) || 0)} WIB
+                </strong>
+                .
+              </>
+            ) : (
+              <>
+                Otomasi akan <strong>nonaktif</strong>. Tidak ada absensi yang
+                dikirim otomatis, walau cron tetap menembak webhook.
+              </>
+            )}
+          </>
+        }
+        confirmLabel="Ya, simpan"
+        cancelLabel="Batal"
+        confirmVariant="neutral"
+        onConfirm={() => formRef.current?.requestSubmit()}
+      />
+
+      {/* Konfirmasi ganti kunci webhook. Ini aksi DESTRUKTIF: cron yang sudah
+          terpasang langsung berhenti sampai URL baru dipasang. */}
+      <ConfirmDialog
+        open={konfirmasiRotasi}
+        onOpenChange={setKonfirmasiRotasi}
+        title="Ganti kunci webhook?"
+        description={
+          <>
+            URL/header cron lama akan <strong>LANGSUNG berhenti bekerja</strong>.
+            Anda harus menyalin kunci baru ke layanan cron Anda setelah ini,
+            kalau tidak absensi otomatis tidak akan terkirim.
+          </>
+        }
+        confirmLabel="Ya, ganti kunci"
+        cancelLabel="Batal"
+        onConfirm={() => void eksekusiRotasiKunci()}
+      />
     </div>
   );
 }

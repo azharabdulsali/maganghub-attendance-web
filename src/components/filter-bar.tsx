@@ -12,11 +12,19 @@ import { Label } from "@/components/ui/label";
 // menghapus filter status yang sedang aktif (dan sebaliknya). Satu form
 // memastikan semua filter ikut terkirim bersama, sesuai yang dilihat pengguna.
 //
-// Kenapa <form method="get"> dan bukan router.push? Inilah yang membuat filter
-// tetap berfungsi TANPA JavaScript: browser mengirimkan query string sendiri.
-// JavaScript hanya "percepatan" — begitu nilai berubah, form langsung dikirim.
-// Tombol "Terapkan" selalu ada sebagai jalur jelas untuk keyboard/screen reader
-// dan jaring pengaman bila JS gagal dimuat.
+// Kenapa <form method="get"> dan bukan router.push? Karena form GET adalah
+// jalur submit paling sederhana: browser menyusun query string sendiri, tanpa
+// kita merakit URL manual.
+//
+// ⚠️ SENGAJA TANPA tombol "Terapkan" (`onChange` langsung mengirim form).
+// Alasannya: dengan auto-submit, tombol itu tak pernah perlu diklik, jadi ia
+// cuma jadi kontrol mati yang membingungkan. MENGHAPUSNYA PUNYA KONSEKUENSI:
+// filter kini BERGANTUNG pada JavaScript. Bila JS gagal dimuat, mengubah
+// dropdown tidak mengirim apa pun. Trade-off ini diterima karena seluruh
+// halaman admin/dashboard/riwayat sudah bergantung pada JS di banyak tempat
+// (dialog, toast, dsb.), dan satu tombol tambahan yang selalu terlewat justru
+// lebih membingungkan daripada kehilangan jalur no-JS. Bila suatu saat jalur
+// no-JS dibutuhkan lagi, kembalikan tombol submit di sini.
 export type FilterOption = { value: string; label: string };
 export type FilterFieldDef = {
   name: string;
@@ -25,13 +33,7 @@ export type FilterFieldDef = {
   options: FilterOption[];
 };
 
-export default function FilterBar({
-  fields,
-  submitLabel = "Terapkan",
-}: {
-  fields: FilterFieldDef[];
-  submitLabel?: string;
-}) {
+export default function FilterBar({ fields }: { fields: FilterFieldDef[] }) {
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
@@ -55,8 +57,7 @@ export default function FilterBar({
               name={field.name}
               defaultValue={field.value}
               className="min-w-[8.5rem]"
-              // Ganti nilai = langsung kirim seluruh form. Tanpa baris ini
-              // filter tetap jalan, hanya perlu menekan "Terapkan".
+              // Ganti nilai = langsung kirim seluruh form.
               onChange={() => formRef.current?.requestSubmit()}
             >
               {field.options.map((o) => (
@@ -68,13 +69,6 @@ export default function FilterBar({
           </div>
         );
       })}
-
-      <button
-        type="submit"
-        className="h-10 shrink-0 rounded-base border-2 border-border bg-secondary-background px-3 text-xs font-heading text-foreground transition-colors hover:bg-background"
-      >
-        {submitLabel}
-      </button>
     </form>
   );
 }

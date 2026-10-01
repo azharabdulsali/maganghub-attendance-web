@@ -9,15 +9,11 @@
 // lalu menghitungnya di Node, penting begitu jumlah pengguna bertambah.
 
 import { prisma } from "@/lib/prisma";
-import type { AdminUserRow } from "@/lib/admin";
-
-/** Satu pilihan pengguna pada filter audit, sudah siap dipakai di dropdown. */
-export interface AuditUserOption {
-  /** Id user, dipakai sebagai nilai `?user=`. */
-  id: string;
-  /** Email untuk ditampilkan; unik, jadi tak perlu id di label. */
-  email: string;
-}
+import {
+  labelForAuditUserOption,
+  type AdminUserRow,
+  type AuditUserOption,
+} from "@/lib/admin";
 
 /**
  * Ambil daftar pengguna yang BERMAKNA untuk filter audit: hanya yang punya
@@ -45,13 +41,21 @@ export async function getAuditUserOptions(): Promise<AuditUserOption[]> {
     // Sengaja TANPA `deletedAt: null`: user terhapus yang masih punya log harus
     // tetap bisa dipilih, kalau tidak barisnya mustahil disaring.
     where: { id: { in: ids } },
-    select: { id: true, email: true },
+    select: { id: true, email: true, name: true },
   });
 
-  // Urut A→Z berdasarkan email agar posisi tiap pengguna stabil antar muat.
+  // Urut A→Z berdasarkan LABEL YANG TAMPIL (nama, atau email bila nama kosong),
+  // bukan email: dropdown kini menyajikan nama, jadi urutannya harus mengikuti
+  // apa yang dibaca admin. Memakai `labelForAuditUserOption` yang sama dengan
+  // yang dipakai halaman menjamin label dan pengurutan tidak pernah berbeda.
   return users
-    .map((u) => ({ id: u.id, email: u.email }))
-    .sort((a, b) => a.email.localeCompare(b.email));
+    .map((u) => ({ id: u.id, name: u.name, email: u.email }))
+    .sort((a, b) =>
+      labelForAuditUserOption(a).localeCompare(
+        labelForAuditUserOption(b),
+        "id",
+      ),
+    );
 }
 
 /**

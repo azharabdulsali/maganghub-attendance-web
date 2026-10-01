@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { Label } from "@/components/ui/label";
+import { FieldError } from "@/components/ui/field-error";
 import { Message } from "@/components/ui/message";
 import { hitungKekuatan } from "@/lib/password-strength";
 import {
@@ -24,13 +25,30 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [konfirmasi, setKonfirmasi] = useState("");
+  // `konfirmasiTersentuh` mencegah error "tidak cocok" muncul sejak halaman
+  // dibuka (kolom konfirmasi masih kosong, padahal pengguna belum mengisi apa
+  // pun). Baru setelah pengguna mengetik di kolom itu, ketidakcocokan
+  // ditampilkan — dan tetap ditampilkan sambil ia mengetik sampai cocok.
+  const [konfirmasiTersentuh, setKonfirmasiTersentuh] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const kekuatan = hitungKekuatan(password);
 
+  const tidakCocok = konfirmasiTersentuh && konfirmasi !== password;
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    // Gerbang konfirmasi: murni mencegah salah ketik, BUKAN kontrol keamanan
+    // (nilai `password` tetap divalidasi & di-hash di server). Karena itu
+    // `konfirmasi` tidak pernah dikirim ke /api/register.
+    if (konfirmasi !== password) {
+      setKonfirmasiTersentuh(true);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -112,6 +130,43 @@ export default function RegisterPage() {
                 level={kekuatan.level}
                 saran={kekuatan.saran}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="konfirmasi-password">Konfirmasi password</Label>
+              <PasswordInput
+                id="konfirmasi-password"
+                required
+                // Sengaja TANPA `minLength`: panjang adalah aturan kolom
+                // password (ditegakkan server), sedangkan kolom ini hanya
+                // memeriksa kecocokan. Kalau `minLength` ada di sini, browser
+                // akan memblokir submit dengan pesan "minimal 8 karakter" saat
+                // masalah sebenarnya adalah ketidakcocokan — menyesatkan.
+                //
+                // `new-password` (bukan `off`): pengelola kata sandi akan
+                // menawarkan membuat kata sandi BARU dan mengisi KEDUA kolom,
+                // bukan mengisi kolom ini dengan kata sandi lama.
+                autoComplete="new-password"
+                value={konfirmasi}
+                onChange={(e) => {
+                  setKonfirmasi(e.target.value);
+                  setKonfirmasiTersentuh(true);
+                }}
+                placeholder="Ulangi password"
+                aria-invalid={tidakCocok || error !== null}
+                aria-describedby={
+                  tidakCocok
+                    ? "konfirmasi-error"
+                    : error
+                      ? "register-error"
+                      : undefined
+                }
+              />
+              {tidakCocok && (
+                <FieldError id="konfirmasi-error">
+                  Konfirmasi tidak cocok dengan password.
+                </FieldError>
+              )}
             </div>
 
             {error && (

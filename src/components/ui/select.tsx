@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils";
 // perilakunya gratis, dan tidak ada byte JS yang perlu dimuat.
 //
 // Satu-satunya JS yang kita tambahkan ada di pemanggil: `onChange` untuk
-// auto-submit. Bila JS mati, ada tombol "Terapkan" di dalam <noscript> sebagai
-// jalur cadangan, jadi filter tetap bisa dipakai.
+// auto-submit (lihat components/filter-bar.tsx). Karena itu filter BERGANTUNG
+// pada JavaScript: bila JS mati, mengubah pilihan tidak mengirim apa pun. Tidak
+// ada jalur cadangan <noscript>; lihat catatan trade-off di filter-bar.tsx.
 function Select({ className, ...props }: React.ComponentProps<"select">) {
   return (
     <select

@@ -131,3 +131,32 @@ export function initialsFor(row: Pick<AdminUserRow, "email" | "name">): string {
   }
   return source.slice(0, 2).toUpperCase();
 }
+
+/** Satu pilihan pengguna pada filter audit, sudah siap dipakai di dropdown. */
+export interface AuditUserOption {
+  /** Id user, dipakai sebagai nilai `?user=`. */
+  id: string;
+  /**
+   * Nama untuk ditampilkan. Boleh null: kolom `User.name` memang opsional, dan
+   * pemanggil harus punya cerita untuk pengguna tanpa nama (jatuh ke email).
+   */
+  name: string | null;
+  /** Email, dipakai sebagai fallback label bila nama kosong. */
+  email: string;
+}
+
+/**
+ * Label yang ditampilkan untuk sebuah opsi filter audit. MURNI.
+ *
+ * Kenapa terpisah: `name` boleh null/kosong, jadi aturan "pakai nama, kalau
+ * tidak ada pakai email" harus ada di SATU tempat agar dropdown, pengurutan,
+ * dan jaring pengaman (id di URL yang tak ada di daftar) tidak saling berbeda.
+ */
+export function labelForAuditUserOption(option: {
+  name: string | null;
+  email: string;
+}): string {
+  const nama = (option.name ?? "").trim();
+  const email = option.email.trim();
+  return nama || email;
+}

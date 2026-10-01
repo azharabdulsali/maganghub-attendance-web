@@ -147,8 +147,8 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
 
       {/* Filter rentang waktu & status. Rentang ditulis lebih dulu karena
           memengaruhi jumlah data yang dihitung, baru status mempersempit di
-          dalamnya. Satu form GET berisi kedua <select>, jadi tetap berfungsi
-          tanpa JavaScript dan tidak menghapus filter lain saat diubah. */}
+          dalamnya. Satu form GET berisi kedua <select>; memilih salah satu
+          langsung menerapkan dan tidak menghapus filter lain saat diubah. */}
       <div className="mb-4">
         <FilterBar
           fields={[

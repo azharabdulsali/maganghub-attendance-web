@@ -141,8 +141,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       )}
 
       {/* Filter rentang waktu untuk kartu statistik & grafik di bawah. <select>
-          native di dalam <form method="get">, jadi tetap berfungsi tanpa JS dan
-          bisa di-bookmark. */}
+          native di dalam <form method="get">; memilih rentang langsung
+          menerapkan, dan URL-nya bisa di-bookmark. */}
       <div className="mb-4">
         <FilterBar
           fields={[

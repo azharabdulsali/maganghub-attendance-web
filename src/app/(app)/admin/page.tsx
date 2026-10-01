@@ -34,6 +34,7 @@ import {
   describeCredentialStatus,
   initialsFor,
   isAdminRole,
+  labelForAuditUserOption,
   summarizeUsers,
 } from "@/lib/admin";
 import {
@@ -163,7 +164,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       trigger: true,
       attempt: true,
       createdAt: true,
-      user: { select: { email: true } },
+      user: { select: { email: true, name: true } },
     },
   });
 
@@ -306,10 +307,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <CardTitle>Audit lintas pengguna</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Filter rentang waktu & status. Rentang ditulis lebih dulu karena
-              memengaruhi jumlah data yang dihitung, baru status mempersempit di
-              dalamnya. Satu form GET berisi kedua <select>, jadi tetap
-              berfungsi tanpa JavaScript dan tidak menghapus filter lain. */}
+          {/* Filter rentang waktu, status, dan nama. Rentang ditulis lebih dulu
+              karena memengaruhi jumlah data yang dihitung, baru status
+              mempersempit di dalamnya. Satu form GET berisi ketiga <select>;
+              memilih salah satu langsung menerapkan dan tidak menghapus filter
+              lain. */}
           <div className="mb-4">
             <FilterBar
               fields={[
@@ -333,21 +335,23 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 },
                 {
                   name: "user",
-                  label: "Pengguna",
+                  label: "Nama",
                   value: userFilter,
                   options: [
-                    { value: ALL_USERS, label: "Semua pengguna" },
+                    { value: ALL_USERS, label: "Semua nama" },
                     ...userOptions.map((u) => ({
                       value: u.id,
-                      label: u.email,
+                      // Nama, jatuh ke email bila pengguna belum mengisi nama.
+                      // Aturan ini satu tempat di labelForAuditUserOption.
+                      label: labelForAuditUserOption(u),
                     })),
                     // Jaring pengaman: bila id di URL tidak ada di daftar (mis.
                     // tautan lama, atau user yang lognya sudah tak ada), tetap
                     // tampilkan entri agar dropdown TIDAK diam-diam berpindah ke
-                    // "Semua pengguna" sementara tabel sebenarnya tersaring.
+                    // "Semua nama" sementara tabel sebenarnya tersaring.
                     ...(userFilter !== ALL_USERS &&
                       !userOptions.some((u) => u.id === userFilter)
-                      ? [{ value: userFilter, label: "Pengguna terpilih" }]
+                      ? [{ value: userFilter, label: "Nama terpilih" }]
                       : []),
                   ],
                 },
@@ -359,7 +363,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <p className="text-sm text-foreground/70">
               {userFilter === ALL_USERS
                 ? "Tidak ada catatan audit untuk filter ini."
-                : "Pengguna ini tidak punya catatan audit pada filter ini."}
+                : "Nama ini tidak punya catatan audit pada filter ini."}
             </p>
           ) : (
             <div
@@ -368,11 +372,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               aria-label="Tabel audit lintas pengguna (dapat digulir)"
               tabIndex={0}
             >
-              <table className="w-full min-w-[48rem] border-collapse text-left">
+              <table className="w-full min-w-[54rem] border-collapse text-left">
                 <thead>
                   <tr className="border-b border-border/60">
                     <th className="p-3 font-heading">Waktu</th>
-                    <th className="p-3 font-heading">Pengguna</th>
+                    <th className="p-3 font-heading">Nama</th>
+                    <th className="p-3 font-heading">Email</th>
                     <th className="p-3 font-heading">Status</th>
                     <th className="p-3 font-heading">Pemicu</th>
                     <th className="p-3 font-heading">HTTP</th>
@@ -391,6 +396,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           {when ?? "waktu tidak diketahui"}
                         </td>
                         <td className="max-w-[14rem] truncate p-3 text-xs text-foreground/80">
+                          {log.user.name?.trim() || "Tanpa nama"}
+                        </td>
+                        <td className="max-w-[14rem] truncate p-3 text-xs text-foreground/60">
                           {log.user.email}
                         </td>
                         <td className="p-3">

@@ -8,6 +8,7 @@ import {
   formatJoinDate,
   initialsFor,
   isAdminRole,
+  labelForAuditUserOption,
   summarizeUsers,
   type AdminUserRow,
 } from "./admin";
@@ -116,5 +117,34 @@ describe("initialsFor", () => {
 
   it("mengembalikan '?' saat email & nama kosong", () => {
     expect(initialsFor({ email: "   ", name: null })).toBe("?");
+  });
+});
+
+describe("labelForAuditUserOption", () => {
+  it("memakai nama bila ada", () => {
+    expect(
+      labelForAuditUserOption({ name: "Siti Aminah", email: "a@b.com" }),
+    ).toBe("Siti Aminah");
+  });
+
+  it("jatuh ke email bila nama null atau hanya spasi", () => {
+    expect(labelForAuditUserOption({ name: null, email: "a@b.com" })).toBe(
+      "a@b.com",
+    );
+    expect(labelForAuditUserOption({ name: "   ", email: "a@b.com" })).toBe(
+      "a@b.com",
+    );
+  });
+
+  it("memangkas spasi di email yang jadi fallback", () => {
+    expect(
+      labelForAuditUserOption({ name: null, email: "  a@b.com  " }),
+    ).toBe("a@b.com");
+  });
+
+  it("memangkas spasi di nama sebelum dipakai", () => {
+    expect(
+      labelForAuditUserOption({ name: "  Budi  ", email: "b@c.com" }),
+    ).toBe("Budi");
   });
 });

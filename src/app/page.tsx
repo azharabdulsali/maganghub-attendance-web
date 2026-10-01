@@ -223,7 +223,12 @@ export default function Home() {
           </p>
           <h1 className="text-3xl leading-tight font-heading sm:text-4xl md:text-5xl">
             Otomatisasi presensi &amp; laporan{" "}
-            <span className="text-main-foreground">MagangHub Kemnaker</span>
+            {/* `text-foreground`, BUKAN `text-main-foreground`: yang terakhir
+                disetel untuk teks di atas aksen biru (`bg-main`), dan di mode
+                gelap nilainya nyaris hitam (#1c1c1c). Di sini latarnya kanvas
+                gelap, jadi teks itu praktis tak terlihat. `--foreground` sudah
+                benar di kedua tema (hitam di terang, off-white di gelap). */}
+            <span className="text-foreground">MagangHub Kemnaker</span>
           </h1>
           <p className="mx-auto max-w-2xl text-sm text-foreground/80 sm:text-base">
             Simpan tiga template laporan sekali, lalu kirim presensi dan laporan

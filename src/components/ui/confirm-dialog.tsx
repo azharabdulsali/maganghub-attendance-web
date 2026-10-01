@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
  * tetap bisa di-render di mana saja tanpa provider.
  */
 
-interface ConfirmDialogProps {
+interface ConfirmDialogBaseProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -32,8 +32,39 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   /** Gaya tombol konfirmasi. Pakai "neutral" untuk aksi yang tidak merusak. */
   confirmVariant?: "default" | "neutral" | "reverse" | "noShadow";
-  onConfirm: () => void;
 }
+
+/**
+ * Dua bentuk yang saling eksklusif:
+ *   - dialog konfirmasi biasa: punya `onConfirm` dan merender dua tombol;
+ *   - dialog hasil/informasi (`hideConfirm`): hanya satu tombol tutup, jadi
+ *     `onConfirm` tidak ada — penutupan ditangani lewat `onOpenChange`.
+ *
+ * Dibuat union, bukan `onConfirm?` opsional, supaya pemanggil tidak bisa lupa
+ * memberi `onConfirm` pada dialog yang benar-benar butuh konfirmasi.
+ */
+type ConfirmDialogProps = ConfirmDialogBaseProps &
+  (
+    | {
+        /**
+         * Sembunyikan tombol konfirmasi, sisakan SATU tombol (pakai
+         * `cancelLabel`). Untuk dialog yang isinya hasil/informasi, bukan
+         * pertanyaan ya-tidak: dua tombol yang keduanya menutup hanya
+         * membingungkan ("batal" dari apa?). Saat ini dipakai dialog kata
+         * sandi sementara di user-actions.tsx.
+         *
+         * Tombol yang tersisa tetap tombol `Close`, jadi `onOpenChange` tetap
+         * dihormati: pemanggil bisa menolak penutupan (mis. wajib centang
+         * dulu) dan dialog tidak akan tertutup.
+         */
+        hideConfirm: true;
+        onConfirm?: undefined;
+      }
+    | {
+        hideConfirm?: false;
+        onConfirm: () => void;
+      }
+  );
 
 function ConfirmDialog({
   open,
@@ -43,6 +74,7 @@ function ConfirmDialog({
   confirmLabel = "Ya, lanjutkan",
   cancelLabel = "Batal",
   confirmVariant = "default",
+  hideConfirm = false,
   onConfirm,
 }: ConfirmDialogProps) {
   return (
@@ -80,16 +112,18 @@ function ConfirmDialog({
                 </Button>
               }
             />
-            <Button
-              type="button"
-              variant={confirmVariant}
-              onClick={() => {
-                onConfirm();
-                onOpenChange(false);
-              }}
-            >
-              {confirmLabel}
-            </Button>
+            {hideConfirm ? null : (
+              <Button
+                type="button"
+                variant={confirmVariant}
+                onClick={() => {
+                  onConfirm?.();
+                  onOpenChange(false);
+                }}
+              >
+                {confirmLabel}
+              </Button>
+            )}
           </div>
         </AlertDialogPrimitive.Popup>
       </AlertDialogPrimitive.Portal>

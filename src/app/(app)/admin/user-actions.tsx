@@ -177,10 +177,9 @@ export function UserRowActions({
           }}
           title="Kata sandi sementara"
           cancelLabel="Tutup"
-          confirmLabel="Tutup"
-          confirmVariant="neutral"
+          hideConfirm
           description={
-            <span className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
               <span>
                 Kirim kata sandi ini ke <strong>{userEmail}</strong>. Kata sandi
                 tidak ditampilkan lagi setelah dialog ditutup.
@@ -205,16 +204,15 @@ export function UserRowActions({
                 Saya sudah menyalin &amp; mengirim kata sandi ini
               </label>
               {!sudahSalin ? (
-                <Message tone="bad">
+                // `as="div"`: ini berada di dalam description ConfirmDialog yang
+                // dirender sebagai <p>. Message default juga <p>, dan <p> di
+                // dalam <p> melanggar HTML (memicu hydration error). <div> aman.
+                <Message tone="bad" as="div">
                   Centang kotak di atas dulu sebelum menutup.
                 </Message>
               ) : null}
-            </span>
+            </div>
           }
-          onConfirm={() => {
-            setSandiBaru(null);
-            setSudahSalin(false);
-          }}
         />
       ) : null}
     </>

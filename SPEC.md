@@ -372,14 +372,17 @@ Halaman ini memuat tiga bagian:
    terakhir. Diurutkan admin lebih dulu, lalu yang terbaru bergabung.
 3. **Audit lintas pengguna**, `SubmitLog` semua pengguna, memakai **filter status
    & paginasi yang sama** seperti `/history` (20 baris/halaman,
-   `?status=&page=` di URL). Logika murni dipakai ulang dari
-   `src/lib/audit-log.ts` supaya tampilan kedua halaman konsisten.
+   `?status=&page=` di URL). Kolom audit: waktu, nama, email, status, pemicu,
+   HTTP, keterangan. Di atas tabel ada filter rentang waktu, status, dan **nama
+   pengguna** (`?user=<id>`, label memakai nama, jatuh ke email bila kosong).
+   Logika murni dipakai ulang dari `src/lib/audit-log.ts` supaya tampilan kedua
+   halaman konsisten.
 
 Penjagaan peran ada di **server** halaman: sesi tanpa `role === "ADMIN"` langsung
 dialihkan ke `/dashboard`. Helper murni ada di `src/lib/admin.ts` (label status
-kredensial, `summarizeUsers`, `formatJoinDate`, `initialsFor`) dan diuji tanpa DB
-di `src/lib/admin.test.ts`. Query DB dipisah di `admin-query.ts` (pola sama
-seperti `stats-query.ts`).
+kredensial, `summarizeUsers`, `formatJoinDate`, `initialsFor`,
+`labelForAuditUserOption`) dan diuji tanpa DB di `src/lib/admin.test.ts`. Query DB
+dipisah di `admin-query.ts` (pola sama seperti `stats-query.ts`).
 
 > **⚠️ Sama seperti riwayat:** jangan kirim `take: 0` ke Prisma, halaman audit
 > yang tersaring kosong tetap memakai `take` minimal 1.

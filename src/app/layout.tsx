@@ -20,11 +20,20 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 //
 // Dimuat sebagai <script> INLINE lewat dangerouslySetInnerHTML di dalam <head>,
 // BUKAN <Script> dari next/script. Dua alasan:
-//   1. React 19 menolak elemen <script> sebagai child komponen di render klien
-//      ("Encountered a script tag while rendering React component").
-//   2. Skrip ini harus BLOCKING dan jalan sebelum paint pertama. next/script
-//      `beforeInteractive` tidak selalu menghasilkan inline blocking script
-//      pada Next 16/Turbopack, sehingga tema bisa berkedip.
+//   1. React 19 memeriksa elemen <script> yang dirender sebagai child komponen
+//      dan melempar error "Encountered a script tag while rendering React
+//      component" saat hydration. Root layout IKUT di-hydrate di klien, jadi
+//      menulis <head> manual TIDAK mengeluarkan skrip ini dari pohon React —
+//      error ini memang muncul di console dan itu DISENGAJA diterima: skripnya
+//      tetap dieksekusi dari HTML server (lihat alasan 2).
+//   2. Skrip ini harus BLOCKING dan jalan sebelum paint pertama. Ini DIUJI
+//      secara empiris pada Next 16.3.6/Turbopack: `<Script strategy=
+//      "beforeInteractive">` TIDAK menghasilkan inline blocking script di
+//      HTML server — ia hanya jadi payload `self.__next_f.push` yang dieksekusi
+//      React setelah hidrasi, sehingga tema gelap BERKEDIP putih lebih dulu.
+//      <script> mentah-lah yang benar-benar tertanam di <head> HTML awal.
+// Error console dari alasan 1 adalah harga yang dibayar untuk no-flicker;
+// jangan "perbaiki" ini dengan next/script tanpa menguji ulang HTML hasil build.
 // dangerouslySetInnerHTML di sini AMAN: isinya string konstan yang kita tulis
 // sendiri (bukan input pengguna), jadi tak ada risiko injeksi. Ini pola resmi
 // Next.js untuk skrip blocking pra-paint.
