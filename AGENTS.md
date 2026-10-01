@@ -27,15 +27,21 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
 
 > **Pembaruan keputusan AI:** keputusan lama "AI dibatalkan" sudah **dicabut
 > pemilik**. Kini ada penyusun draf opsional berbasis Gemini gratis
-> (`GEMINI_API_KEY`, key admin dipakai bersama semua pengguna). Empat aturan yang
+> (`GEMINI_API_KEY`, key admin dipakai bersama semua pengguna). Lima aturan yang
 > tidak boleh dilanggar saat menyentuh bagian ini:
 > (a) **jangan pernah menghapus fallback lokal** — bila LLM gagal, pengguna
 > tetap harus mendapat draf, bukan pesan error;
 > (b) jawaban LLM **selalu** divalidasi dengan `checkReportField` sebelum
 > dipakai, karena LLM tidak boleh bisa merusak validasi form;
-> (c) **jangan memakai nama model versi spesifik** (`gemini-2.0-flash` dsb.) —
+> (c) jawaban LLM **juga selalu** diperiksa `isIndonesianText`. Ini penting dan
+> mudah terlupakan: model kadang tetap menjawab bahasa Inggris walau prompt
+> sudah meminta Indonesia, dan teks Inggris yang panjang **lolos**
+> `checkReportField` karena fungsi itu hanya menghitung panjang. Tanpa langkah
+> ini, laporan berbahasa Inggris bisa benar-benar masuk ke form (sudah
+> dibuktikan, bukan dugaan);
+> (d) **jangan memakai nama model versi spesifik** (`gemini-2.0-flash` dsb.) —
 > semuanya 404 karena dihapus Google. Pakai alias `-latest`;
-> (d) endpoint **hanya `/v1beta`**. `/v1` selalu 404 di sini, percobaan
+> (e) endpoint **hanya `/v1beta`**. `/v1` selalu 404 di sini, percobaan
 > sebelumnya mengasumsikan sebaliknya dan membuat fitur mati selama-lamanya.
 > Integrasi GitHub tetap dibatalkan.
 

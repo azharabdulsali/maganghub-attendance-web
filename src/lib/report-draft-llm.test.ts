@@ -243,6 +243,56 @@ describe("geminiDrafter", () => {
     // terhadap penghapusan nama versi spesifik oleh Google.
     expect(String(url)).toContain("gemini-flash-lite-latest");
   });
+
+  it("MENOLAK draf berbahasa Inggris walau panjangnya cukup", async () => {
+    // Kasus yang dilaporkan pemilik. Teks Inggris 160+ karakter LOLOS
+    // checkReportField, jadi tanpa pemeriksaan bahasa ia akan masuk ke form.
+    const inggris =
+      "Today I worked on fixing the login bug and then studied React hooks in depth. " +
+      "The process went smoothly and I documented everything I learned for future reference.";
+    vi.stubGlobal("fetch", stubFetch({
+      candidates: [{
+        content: {
+          parts: [{
+            text: JSON.stringify({ activity: inggris, learning: inggris, obstacles: inggris }),
+          }],
+        },
+      }],
+    }));
+    const mod = await muatModul(KEY);
+    expect(await mod.geminiDrafter.draft({ keywords: "uji" })).toBeNull();
+  });
+
+  it("menolak bila HANYA satu kolom yang berbahasa Inggris", async () => {
+    const isi = JSON.parse(balasanSehat().candidates[0].content.parts[0].text);
+    const inggris =
+      "The activity was completed successfully and I have reviewed all of the related items " +
+      "before submitting them to the person in charge of this particular project today.";
+    vi.stubGlobal("fetch", stubFetch({
+      candidates: [{
+        content: {
+          parts: [{ text: JSON.stringify({ ...isi, obstacles: inggris }) }],
+        },
+      }],
+    }));
+    const mod = await muatModul(KEY);
+    expect(await mod.geminiDrafter.draft({ keywords: "uji" })).toBeNull();
+  });
+
+  it("menerima draf Indonesia yang memuat istilah teknis Inggris", async () => {
+    // Harus tetap lolos, kalau tidak fitur jadi tidak berguna untuk anak IT.
+    const isi = JSON.parse(balasanSehat().candidates[0].content.parts[0].text);
+    const campuran =
+      "Hari ini saya melakukan deploy ke server staging dan memperbaiki bug pada halaman login " +
+      "dengan memakai React hooks, lalu mencatat setiap perubahan agar dapat ditelusuri oleh tim.";
+    vi.stubGlobal("fetch", stubFetch({
+      candidates: [{
+        content: { parts: [{ text: JSON.stringify({ ...isi, activity: campuran }) }] },
+      }],
+    }));
+    const mod = await muatModul(KEY);
+    expect(await mod.geminiDrafter.draft({ keywords: "uji" })).not.toBeNull();
+  });
 });
 
 describe("llmConfigured", () => {

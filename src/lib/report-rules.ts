@@ -70,3 +70,116 @@ export function checkReportField(text: string): string | null {
 export function normalizeReportText(text: string): string {
   return text.replace(/\r\n?/g, "\n").trim();
 }
+
+/**
+ * Kata yang sangat sering muncul di laporan magang berbahasa Indonesia.
+ *
+ * Dipakai sebagai BUKTI POSITIF, bukan daftar hitam. Ini pilihan sadar: daftar
+ * kata asing akan selalu ketinggalan zaman, sedangkan kata fungsi Indonesia
+ * (dan, yang, saya, pada, dengan, ...) stabil dan hampir mustahil tidak muncul
+ * pada kalimat Indonesia yang wajar.
+ */
+const KATA_INDONESIA = [
+  "dan",
+  "yang",
+  "di",
+  "ke",
+  "dari",
+  "pada",
+  "dengan",
+  "untuk",
+  "saya",
+  "kami",
+  "kegiatan",
+  "hari",
+  "ini",
+  "kerja",
+  "laporan",
+  "belajar",
+  "kendala",
+  "tidak",
+  "ada",
+  "dalam",
+  "adalah",
+  "serta",
+  "juga",
+  "dapat",
+  "telah",
+  "sudah",
+  "melakukan",
+  "mengerjakan",
+  "selama",
+  "hasil",
+  "agar",
+  "karena",
+  "oleh",
+  "tersebut",
+];
+
+/** Kata fungsi yang sangat khas Inggris. Kemunculannya mencurigakan. */
+const KATA_INGGRIS_KHAS = [
+  "the",
+  "and",
+  "with",
+  "this",
+  "that",
+  "from",
+  "have",
+  "has",
+  "was",
+  "were",
+  "will",
+  "would",
+  "should",
+  "there",
+  "their",
+  "which",
+  "while",
+  "about",
+  "into",
+  "been",
+];
+
+/**
+ * Benarkah teks ini ditulis dalam bahasa Indonesia?
+ *
+ * Latar belakang: prompt sudah meminta bahasa Indonesia, tapi model tetap bisa
+ * menjawab dalam bahasa Inggris -- dan teks Inggris yang panjang TETAP lolos
+ * `checkReportField` (yang hanya memeriksa panjang). Tanpa pemeriksaan ini,
+ * laporan berbahasa Inggris bisa masuk ke form dan terkirim ke portal.
+ *
+ * Sengaja TIDAK memakai daftar hitam kata asing: kata teknis Inggris wajar
+ * muncul di laporan magang IT ("login", "deploy", "bug"). Yang diperiksa adalah
+ * kata FUNGSI, yang tidak mungkin dominan pada kalimat Indonesia.
+ *
+ * Mengembalikan `false` juga saat teks terlalu pendek untuk dinilai, supaya
+ * pemanggil bisa memperlakukannya sebagai "tidak yakin" dan menolak dengan aman.
+ */
+export function isIndonesianText(text: string): boolean {
+  const kata = text
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .filter((k) => k.length > 0);
+
+  // Terlalu sedikit kata untuk dinilai -> jangan mengaku yakin.
+  if (kata.length < 5) return false;
+
+  const hitung = (daftar: string[]) => {
+    const set = new Set(daftar);
+    return kata.reduce((n, k) => n + (set.has(k) ? 1 : 0), 0);
+  };
+
+  const jumlahIndonesia = hitung(KATA_INDONESIA);
+  const jumlahInggris = hitung(KATA_INGGRIS_KHAS);
+
+  // Bukti positif yang kuat: cukup banyak kata fungsi Indonesia.
+  // Ambang 2 kata supaya laporan pendek yang wajar tidak ikut ditolak.
+  if (jumlahIndonesia >= 2 && jumlahIndonesia > jumlahInggris) return true;
+
+  // Fallback: teks panjang tanpa satu pun kata fungsi Indonesia, tapi banyak
+  // kata fungsi Inggris, hampir pasti bukan bahasa Indonesia.
+  if (jumlahInggris >= 3 && jumlahIndonesia === 0) return false;
+
+  // Di antaranya: tidak yakin. Terima selama ada bukti Indonesia.
+  return jumlahIndonesia > 0;
+}

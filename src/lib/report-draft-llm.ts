@@ -17,7 +17,7 @@
 //      dipakai bersama semua pengguna; badai retry akan menghabiskan kuota
 //      orang lain.
 
-import { checkReportField, normalizeReportText } from "./report-rules";
+import { checkReportField, isIndonesianText, normalizeReportText } from "./report-rules";
 import { env } from "./env";
 import type { DraftInput, DraftResult } from "./report-draft";
 
@@ -94,7 +94,13 @@ function prompt(input: DraftInput): string {
     "",
     "Aturan:",
     "- Setiap kolom minimal 150 karakter, berupa kalimat mengalir, bukan poin-poin.",
-    "- Gunakan bahasa Indonesia formal dan sederhana seperti laporan kerja.",
+    "- WAJIB bahasa Indonesia. Jangan menjawab dalam bahasa Inggris, walau kata",
+    "  kuncinya berbahasa Inggris. Istilah teknis (login, deploy, bug, React)",
+    "  boleh tetap asing, tapi kalimatnya harus Indonesia.",
+    "- Isi HANYA tiga kolom di atas. Jangan menambah kolom, penjelasan,",
+    "  pembuka, penutup, atau menyapa pengguna.",
+    "- Tulis HANYA tentang kata kunci aktivitas yang diberikan. Jangan menambah",
+    "  kegiatan, proyek, atau topik lain yang tidak disebutkan.",
     "- Dilarang mengarang nama orang, nama perusahaan, angka, atau hasil yang tidak disebutkan.",
     "- Kolom obstacles: bila tidak ada kendala yang disebutkan, tulis dengan jujur",
     '  bahwa pekerjaan berjalan lancar. JANGAN mengarang kendala.',
@@ -177,7 +183,13 @@ function validasiJawaban(teks: string): DraftResult | null {
     hasil.obstacles !== "" &&
     checkReportField(hasil.activity) === null &&
     checkReportField(hasil.learning) === null &&
-    checkReportField(hasil.obstacles) === null;
+    checkReportField(hasil.obstacles) === null &&
+    // Model kadang tetap menjawab bahasa Inggris walau prompt sudah meminta
+    // bahasa Indonesia -- dan teks Inggris yang panjang LOLOS checkReportField.
+    // Tanpa pemeriksaan ini, laporan berbahasa Inggris bisa sampai ke form.
+    isIndonesianText(hasil.activity) &&
+    isIndonesianText(hasil.learning) &&
+    isIndonesianText(hasil.obstacles);
 
   return layak ? hasil : null;
 }

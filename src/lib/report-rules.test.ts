@@ -11,6 +11,7 @@ import {
   countReportLength,
   checkReportField,
   normalizeReportText,
+  isIndonesianText,
 } from "./report-rules";
 
 /** Teks valid: tepat 100 karakter setelah dipangkas. */
@@ -152,8 +153,68 @@ describe("konstanta", () => {
   it("MIN 100 sesuai validasi portal Maganghub", () => {
     expect(MIN_REPORT_LENGTH).toBe(100);
   });
-
   it("MAX 5000 sesuai maxlength textarea portal", () => {
     expect(MAX_REPORT_LENGTH).toBe(5000);
+  });
+});
+
+/**
+ * Tes pemeriksa bahasa.
+ *
+ * Dua sisi sama pentingnya:
+ *   - harus MENOLAK teks Inggris (kalau tidak, laporan Inggris sampai ke form,
+ *     padahal checkReportField meloloskannya karena hanya memeriksa panjang);
+ *   - harus MENERIMA teks Indonesia yang sah, termasuk yang banyak istilah
+ *     teknis Inggrisnya (kalau tidak, fitur ini jadi tidak berguna dan selalu
+ *     jatuh ke lokal tanpa alasan).
+ */
+describe("isIndonesianText", () => {
+  it("menerima laporan magang Indonesia yang wajar", () => {
+    expect(
+      isIndonesianText(
+        "Hari ini saya mengerjakan perbaikan fitur login dan mencatat setiap perubahan yang dilakukan agar mudah ditelusuri kembali oleh tim.",
+      ),
+    ).toBe(true);
+  });
+
+  it("menerima bahasa Indonesia yang banyak istilah teknis Inggrisnya", () => {
+    // Laporan magang IT wajar memuat istilah asing. Itu BUKAN alasan menolak.
+    expect(
+      isIndonesianText(
+        "Saya melakukan deploy aplikasi ke server staging dan memperbaiki bug pada halaman login dengan menggunakan React hooks serta library tambahan.",
+      ),
+    ).toBe(true);
+  });
+
+  it("menolak jawaban berbahasa Inggris", () => {
+    // Kasus yang dilaporkan pemilik. Teks ini LOLOS checkReportField karena
+    // panjangnya cukup, jadi harus ditahan di sini.
+    expect(
+      isIndonesianText(
+        "Today I worked on fixing the login bug and then studied React hooks in depth. The process went smoothly and I documented everything I learned.",
+      ),
+    ).toBe(false);
+  });
+
+  it("menolak penjelasan bahasa Inggris yang menyapa pengguna", () => {
+    expect(
+      isIndonesianText(
+        "Here is the report you asked for. I have written the activity based on your keywords. Please let me know if you would like any changes made to it.",
+      ),
+    ).toBe(false);
+  });
+
+  it("menolak teks yang terlalu pendek untuk dinilai (aman, bukan menebak)", () => {
+    expect(isIndonesianText("")).toBe(false);
+    expect(isIndonesianText("oke")).toBe(false);
+    expect(isIndonesianText("baik")).toBe(false);
+  });
+
+  it("menerima kalimat Indonesia tanpa istilah teknis sama sekali", () => {
+    expect(
+      isIndonesianText(
+        "Pada kegiatan hari ini saya membantu menyusun berkas administrasi dan memeriksa kelengkapan datanya bersama pembimbing lapangan.",
+      ),
+    ).toBe(true);
   });
 });
