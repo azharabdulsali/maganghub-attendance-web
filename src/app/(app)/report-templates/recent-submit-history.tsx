@@ -171,7 +171,7 @@ export default async function RecentSubmitHistory({
             aria-label="Tabel riwayat laporan terakhir (dapat digulir)"
             tabIndex={0}
           >
-            <table className="w-full border-collapse text-sm">
+            <table className="w-full min-w-[52rem] border-collapse text-sm">
               <thead>
                 <tr className="border-b-2 border-border text-left text-xs text-foreground/60">
                   <th className="p-3 font-heading">Waktu</th>

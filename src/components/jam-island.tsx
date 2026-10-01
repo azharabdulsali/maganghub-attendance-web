@@ -43,7 +43,14 @@ function JamIsland() {
   const bagian = sekarang ? formatJamWib(sekarang) : null;
 
   return (
-    <div className="pt-safe sticky top-0 z-20 flex justify-center pointer-events-none">
+    <div
+      // Satu-satunya elemen sticky di area konten (bilah header mobile kini
+      // ikut tergulir, lihat src/components/app-sidebar.tsx). Menempel paling
+      // atas di semua breakpoint. `pt-safe` + `top-0`: di perangkat berponi jam
+      // tetap turun sejauh tinggi poni dan tidak tertutup. Lihat
+      // docs/UI-LAYOUT.md §3b.
+      className="pt-safe sticky top-0 z-20 flex justify-center pointer-events-none"
+    >
       <div
         // Bentuk pil ala dynamic island: penuh melengkung, tepi tegas, sedikit
         // bayangan + blur latar supaya tetap terbaca saat konten lewat di balik.

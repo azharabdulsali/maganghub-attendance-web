@@ -24,9 +24,11 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
-import { getAdminUsers } from "./admin-query";
+import { getAdminUsers, getAuditUserOptions } from "./admin-query";
 import { DispatchPanel } from "./dispatch-panel";
 import { UserRowActions } from "./user-actions";
+import FilterBar from "@/components/filter-bar";
+import Pagination from "@/components/pagination";
 import {
   credentialStatusTone,
   describeCredentialStatus,
@@ -35,33 +37,65 @@ import {
   summarizeUsers,
 } from "@/lib/admin";
 import {
+  ALL_USERS,
   badgeVariant,
   describeSubmitStatus,
   describeTrigger,
   formatJakartaTimestamp,
   paginate,
   parsePage,
+  parseRangeFilter,
   parseStatusFilter,
+  parseUserFilter,
+  rangeStartDate,
+  RANGE_FILTER_LABELS,
+  RANGE_FILTERS,
   STATUS_FILTER_LABELS,
   STATUS_FILTERS,
+  type RangeFilter,
   type StatusFilter,
 } from "@/lib/audit-log";
 import type { SubmitStatus } from "@/generated/prisma/enums";
 
 const AUDIT_PAGE_SIZE = 20;
+const USER_PAGE_SIZE = 20;
 
-/** Bangun URL halaman admin dengan filter & nomor halaman audit tertentu. */
-function adminAuditUrl(status: StatusFilter, page: number): string {
+/**
+ * Bangun URL halaman admin. SEMUA parameter ikut dibawa eksplisit (status,
+ * rentang, filter pengguna, dan KEDUA nomor halaman) supaya:
+ *  - pindah halaman audit tidak diam-diam mengosongkan filter, dan
+ *  - pindah halaman daftar pengguna tidak mereset halaman audit (tabel ini
+ *    punya penomoran sendiri lewat `userPage`, terpisah dari `page`).
+ * Halaman 1 = default, jadi tidak ditulis ke URL agar tautan tetap bersih.
+ */
+function adminUrl(opts: {
+  status?: StatusFilter;
+  range?: RangeFilter;
+  userId?: string;
+  page?: number;
+  userPage?: number;
+}): string {
   const params = new URLSearchParams();
-  if (status !== "ALL") params.set("status", status);
-  if (page > 1) params.set("page", String(page));
+  if (opts.status && opts.status !== "ALL") params.set("status", opts.status);
+  if (opts.range && opts.range !== "30d") params.set("range", opts.range);
+  if (opts.userId && opts.userId !== ALL_USERS)
+    params.set("user", opts.userId);
+  if (opts.page && opts.page > 1) params.set("page", String(opts.page));
+  if (opts.userPage && opts.userPage > 1)
+    params.set("userPage", String(opts.userPage));
   const qs = params.toString();
   return qs ? `/admin?${qs}` : "/admin";
 }
 
 type AdminPageProps = {
   // Di Next.js 16, `searchParams` adalah Promise yang harus di-await.
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    range?: string;
+    user?: string;
+    page?: string;
+    userPage?: string;
+  }>;
 };
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const session = await auth();
@@ -80,20 +114,39 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const params = await searchParams;
   const statusFilter = parseStatusFilter(params.status);
+  const rangeFilter = parseRangeFilter(params.range);
+  const userFilter = parseUserFilter(params.user);
   const requestedPage = parsePage(params.page);
+  // Penomoran daftar pengguna sendiri. `parsePage` memakai ulang logika yang
+  // sama: nilai tak sah jatuh ke 1, bukan error.
+  const requestedUserPage = parsePage(params.userPage);
+
+  // Batas bawah rentang di zona WIB (atau null untuk "Semua").
+  const since = rangeStartDate(rangeFilter);
 
   const auditWhere = {
+    ...(since ? { createdAt: { gte: since } } : {}),
     ...(statusFilter === "ALL"
       ? {}
       : { status: statusFilter as SubmitStatus }),
+    ...(userFilter === ALL_USERS ? {} : { userId: userFilter }),
   };
 
-  const [users, totalAudit] = await Promise.all([
+  const [users, totalAudit, userOptions] = await Promise.all([
     getAdminUsers(),
     prisma.submitLog.count({ where: auditWhere }),
+    // Opsi filter pengguna dibangun dari log yang ada, bukan dari daftar
+    // pengguna: pilihan yang pasti kosong tidak ada gunanya, dan user
+    // ter-soft-delete tetap ikut supaya lognya bisa disaring.
+    getAuditUserOptions(),
   ]);
 
+  // Ringkasan & tabel pengguna berasal dari daftar yang SAMA (semua pengguna):
+  // ringkasan menghitung seluruhnya, tabel menampilkan satu halaman saja.
   const summary = summarizeUsers(users);
+  const userPageInfo = paginate(users.length, requestedUserPage, USER_PAGE_SIZE);
+  const userRows = users.slice(userPageInfo.start, userPageInfo.end);
+
   const pageInfo = paginate(totalAudit, requestedPage, AUDIT_PAGE_SIZE);
 
   const auditLogs = await prisma.submitLog.findMany({
@@ -146,7 +199,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <CardTitle>Daftar pengguna ({users.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {users.length === 0 ? (
+          {userRows.length === 0 ? (
             <p className="text-sm text-foreground/70">Belum ada pengguna.</p>
           ) : (
             <div
@@ -169,7 +222,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((u) => (
+                  {userRows.map((u) => (
                     <tr
                       key={u.email}
                       className="border-b border-border/40 align-middle last:border-b-0"
@@ -230,6 +283,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </table>
             </div>
           )}
+
+          <Pagination
+            page={userPageInfo.page}
+            pageCount={userPageInfo.pageCount}
+            label="Navigasi halaman daftar pengguna"
+            buildHref={(p) =>
+              adminUrl({
+                status: statusFilter,
+                range: rangeFilter,
+                userId: userFilter,
+                page: pageInfo.page,
+                userPage: p,
+              })
+            }
+          />
         </CardContent>
       </Card>
 
@@ -238,29 +306,60 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <CardTitle>Audit lintas pengguna</CardTitle>
         </CardHeader>
         <CardContent>
-          <nav
-            className="mb-4 flex flex-wrap gap-2"
-            aria-label="Filter status audit"
-          >
-            {STATUS_FILTERS.map((s) => (
-              <a
-                key={s}
-                href={adminAuditUrl(s, 1)}
-                aria-current={statusFilter === s ? "page" : undefined}
-                className={`inline-flex items-center rounded-base border-2 border-border px-3 py-1 text-xs font-heading ${
-                  statusFilter === s
-                    ? "bg-main text-main-foreground"
-                    : "bg-secondary-background text-foreground"
-                }`}
-              >
-                {STATUS_FILTER_LABELS[s]}
-              </a>
-            ))}
-          </nav>
+          {/* Filter rentang waktu & status. Rentang ditulis lebih dulu karena
+              memengaruhi jumlah data yang dihitung, baru status mempersempit di
+              dalamnya. Satu form GET berisi kedua <select>, jadi tetap
+              berfungsi tanpa JavaScript dan tidak menghapus filter lain. */}
+          <div className="mb-4">
+            <FilterBar
+              fields={[
+                {
+                  name: "range",
+                  label: "Rentang waktu",
+                  value: rangeFilter,
+                  options: RANGE_FILTERS.map((r) => ({
+                    value: r,
+                    label: RANGE_FILTER_LABELS[r],
+                  })),
+                },
+                {
+                  name: "status",
+                  label: "Status",
+                  value: statusFilter,
+                  options: STATUS_FILTERS.map((s) => ({
+                    value: s,
+                    label: STATUS_FILTER_LABELS[s],
+                  })),
+                },
+                {
+                  name: "user",
+                  label: "Pengguna",
+                  value: userFilter,
+                  options: [
+                    { value: ALL_USERS, label: "Semua pengguna" },
+                    ...userOptions.map((u) => ({
+                      value: u.id,
+                      label: u.email,
+                    })),
+                    // Jaring pengaman: bila id di URL tidak ada di daftar (mis.
+                    // tautan lama, atau user yang lognya sudah tak ada), tetap
+                    // tampilkan entri agar dropdown TIDAK diam-diam berpindah ke
+                    // "Semua pengguna" sementara tabel sebenarnya tersaring.
+                    ...(userFilter !== ALL_USERS &&
+                      !userOptions.some((u) => u.id === userFilter)
+                      ? [{ value: userFilter, label: "Pengguna terpilih" }]
+                      : []),
+                  ],
+                },
+              ]}
+            />
+          </div>
 
           {auditLogs.length === 0 ? (
             <p className="text-sm text-foreground/70">
-              Tidak ada catatan audit untuk filter ini.
+              {userFilter === ALL_USERS
+                ? "Tidak ada catatan audit untuk filter ini."
+                : "Pengguna ini tidak punya catatan audit pada filter ini."}
             </p>
           ) : (
             <div
@@ -317,36 +416,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           )}
 
-          {pageInfo.pageCount > 1 && (
-            <nav
-              className="mt-4 flex items-center justify-between gap-3"
-              aria-label="Navigasi halaman audit"
-            >
-              {pageInfo.page > 1 ? (
-                <a
-                  href={adminAuditUrl(statusFilter, pageInfo.page - 1)}
-                  className="inline-flex items-center rounded-base border-2 border-border bg-secondary-background px-3 py-1 text-sm font-heading"
-                >
-                  ← Sebelumnya
-                </a>
-              ) : (
-                <span />
-              )}
-              <span className="text-xs text-foreground/60">
-                Halaman {pageInfo.page} dari {pageInfo.pageCount}
-              </span>
-              {pageInfo.page < pageInfo.pageCount ? (
-                <a
-                  href={adminAuditUrl(statusFilter, pageInfo.page + 1)}
-                  className="inline-flex items-center rounded-base border-2 border-border bg-secondary-background px-3 py-1 text-sm font-heading"
-                >
-                  Berikutnya →
-                </a>
-              ) : (
-                <span />
-              )}
-            </nav>
-          )}
+          <Pagination
+            page={pageInfo.page}
+            pageCount={pageInfo.pageCount}
+            label="Navigasi halaman audit"
+            buildHref={(p) =>
+              adminUrl({
+                status: statusFilter,
+                range: rangeFilter,
+                userId: userFilter,
+                page: p,
+                userPage: userPageInfo.page,
+              })
+            }
+          />
         </CardContent>
       </Card>
     </div>

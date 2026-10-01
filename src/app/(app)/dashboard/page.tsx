@@ -11,9 +11,15 @@ import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
+import {
+  parseRangeFilter,
+  RANGE_FILTER_LABELS,
+  RANGE_FILTERS,
+} from "@/lib/audit-log";
 import SubmitReportButton from "./submit-report-button";
 import StatsCards from "./stats-cards";
 import TrendChart from "./trend-chart";
+import FilterBar from "@/components/filter-bar";
 import { getDashboardStats, todayJakartaISODate } from "./stats-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +30,11 @@ import { Message } from "@/components/ui/message";
 // Pemeriksaan sesi juga dilakukan di layout (app)/dashboard, tapi kita ulangi
 // di sini supaya halaman ini tetap benar walau suatu saat dipindah. Lihat
 // SPEC.md §5.8.
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  // Di Next.js 16, `searchParams` adalah Promise yang harus di-await.
+  searchParams: Promise<{ range?: string }>;
+};
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const session = await auth();
 
   if (!session?.user) {
@@ -41,6 +51,9 @@ export default async function DashboardPage() {
   const role = (session.user as { role?: string }).role ?? "USER";
   const isAdmin = role === "ADMIN";
 
+  const params = await searchParams;
+  const range = parseRangeFilter(params.range);
+
   // Satu `now` dipakai ulang untuk panel "Status Hari Ini" supaya batas harinya
   // tidak bisa berbeda dengan hari-hari di grafik (lihat stats-query.ts).
   const now = new Date();
@@ -52,12 +65,12 @@ export default async function DashboardPage() {
   // Status kredensial nyata, supaya kartu di bawah jujur saat sesi Monev mati,
   // bukan selalu menyuruh "Atur kredensial" walau semuanya sehat.
   // Statistik ringkas, dihitung di server, hanya membaca data milik pengguna.
-  const [credential, { stats, trend }] = await Promise.all([
+  const [credential, { stats, trend, chartDays }] = await Promise.all([
     prisma.maganghubCredential.findUnique({
       where: { userId },
       select: { status: true, tokenCiphertext: true, emailMonev: true },
     }),
-    getDashboardStats(userId, now),
+    getDashboardStats(userId, range, now),
   ]);
 
   const punyaToken = Boolean(credential?.tokenCiphertext);
@@ -68,8 +81,8 @@ export default async function DashboardPage() {
   // batas harinya konsisten (bukan tanggal jam perangkat pengguna).
   const hariIni = todayJakartaISODate(now);
 
-  // Apakah hari ini sudah ada pengiriman sukses? Trend hanya memuat 30 hari
-  // terakhir, cukup untuk menjawab pertanyaan ini.
+  // Apakah hari ini sudah ada pengiriman sukses? Setiap rentang (7d/30d/90d/
+  // 1y/Semua) selalu memuat hari ini, jadi tren apa pun cukup untuk menjawab.
   const sudahKirimHariIni = trend.some(
     (p) => p.date === hariIni && p.success > 0,
   );
@@ -127,6 +140,25 @@ export default async function DashboardPage() {
         </Message>
       )}
 
+      {/* Filter rentang waktu untuk kartu statistik & grafik di bawah. <select>
+          native di dalam <form method="get">, jadi tetap berfungsi tanpa JS dan
+          bisa di-bookmark. */}
+      <div className="mb-4">
+        <FilterBar
+          fields={[
+            {
+              name: "range",
+              label: "Rentang waktu",
+              value: range,
+              options: RANGE_FILTERS.map((r) => ({
+                value: r,
+                label: RANGE_FILTER_LABELS[r],
+              })),
+            },
+          ]}
+        />
+      </div>
+
       <StatsCards stats={stats} />
 
       {/* Panel "Status Hari Ini", ringkasan satu baris yang menjawab
@@ -160,7 +192,7 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      <TrendChart trend={trend} />
+      <TrendChart trend={trend} range={range} chartDays={chartDays} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>

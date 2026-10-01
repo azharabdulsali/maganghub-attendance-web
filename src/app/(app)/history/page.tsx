@@ -9,12 +9,13 @@
 // disengketakan, jadi TIDAK ada tombol edit/hapus di sini.
 
 import { redirect } from "next/navigation";
-import Link from "next/link";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
+import FilterBar from "@/components/filter-bar";
+import Pagination from "@/components/pagination";
 import {
   badgeVariant,
   describeSubmitStatus,
@@ -22,10 +23,15 @@ import {
   formatJakartaTimestamp,
   paginate,
   parsePage,
+  parseRangeFilter,
   parseStatusFilter,
+  rangeStartDate,
   summarizeLogs,
+  RANGE_FILTER_LABELS,
+  RANGE_FILTERS,
   STATUS_FILTER_LABELS,
   STATUS_FILTERS,
+  type RangeFilter,
   type StatusFilter,
 } from "@/lib/audit-log";
 import type { SubmitStatus } from "@/generated/prisma/enums";
@@ -33,10 +39,15 @@ import type { SubmitStatus } from "@/generated/prisma/enums";
 /** Jumlah baris per halaman. */
 const PAGE_SIZE = 20;
 
-/** Bangun URL halaman ini dengan filter & nomor halaman tertentu. */
-function historyUrl(status: StatusFilter, page: number): string {
+/** Bangun URL halaman ini dengan filter status, rentang waktu & halaman. */
+function historyUrl(
+  status: StatusFilter,
+  range: RangeFilter,
+  page: number,
+): string {
   const params = new URLSearchParams();
   if (status !== "ALL") params.set("status", status);
+  if (range !== "30d") params.set("range", range);
   if (page > 1) params.set("page", String(page));
   const qs = params.toString();
   return qs ? `/history?${qs}` : "/history";
@@ -44,7 +55,7 @@ function historyUrl(status: StatusFilter, page: number): string {
 
 type HistoryPageProps = {
   // Di Next.js 16, `searchParams` adalah Promise yang harus di-await.
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; range?: string; page?: string }>;
 };
 
 export default async function HistoryPage({ searchParams }: HistoryPageProps) {
@@ -56,13 +67,19 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
 
   const params = await searchParams;
   const statusFilter = parseStatusFilter(params.status);
+  const rangeFilter = parseRangeFilter(params.range);
   const requestedPage = parsePage(params.page);
+
+  // Batas bawah rentang di zona WIB (atau null untuk "Semua").
+  const since = rangeStartDate(rangeFilter);
 
   // Filter diterapkan di database, bukan di memori: dengan begitu paginasi
   // menghitung jumlah halaman dari hasil yang sudah tersaring, angka di
-  // tombol halaman selalu cocok dengan isi tabel.
+  // tombol halaman selalu cocok dengan isi tabel. Batas waktu masuk ke `where`
+  // yang sama, jadi tabel & hitungan halaman selalu sepakat.
   const where = {
     userId: session.user.id,
+    ...(since ? { createdAt: { gte: since } } : {}),
     ...(statusFilter === "ALL"
       ? {}
       : { status: statusFilter as SubmitStatus }),
@@ -71,9 +88,10 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   const [totalFiltered, allForSummary] = await Promise.all([
     prisma.submitLog.count({ where }),
     // Ringkasan selalu dihitung dari SELURUH log (bukan satu halaman saja),
-    // supaya angkanya tidak berubah-ubah saat berpindah halaman.
+    // supaya angkanya tidak berubah-ubah saat berpindah halaman. Ia tetap
+    // mengikuti rentang waktu terpilih agar cocok dengan isi tabel.
     prisma.submitLog.findMany({
-      where: { userId: session.user.id },
+      where: { userId: session.user.id, ...(since ? { createdAt: { gte: since } } : {}) },
       select: { status: true, createdAt: true },
     }),
   ]);
@@ -127,39 +145,47 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
         </CardContent>
       </Card>
 
-      {/* Filter status, tautan biasa yang mengubah URL, jadi tanpa JS dan
-          bisa di-bookmark. Nilai aktif ditandai warna bg-main. */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {STATUS_FILTERS.map((filter) => {
-          const active = filter === statusFilter;
-          return (
-            <Link
-              key={filter}
-              href={historyUrl(filter, 1)}
-              aria-current={active ? "page" : undefined}
-              className={`inline-flex items-center rounded-base border-2 border-border px-3 py-1 text-xs font-heading transition-colors ${
-                active
-                  ? "bg-main text-main-foreground"
-                  : "bg-secondary-background text-foreground hover:bg-background"
-              }`}
-            >
-              {STATUS_FILTER_LABELS[filter]}
-            </Link>
-          );
-        })}
+      {/* Filter rentang waktu & status. Rentang ditulis lebih dulu karena
+          memengaruhi jumlah data yang dihitung, baru status mempersempit di
+          dalamnya. Satu form GET berisi kedua <select>, jadi tetap berfungsi
+          tanpa JavaScript dan tidak menghapus filter lain saat diubah. */}
+      <div className="mb-4">
+        <FilterBar
+          fields={[
+            {
+              name: "range",
+              label: "Rentang waktu",
+              value: rangeFilter,
+              options: RANGE_FILTERS.map((f) => ({
+                value: f,
+                label: RANGE_FILTER_LABELS[f],
+              })),
+            },
+            {
+              name: "status",
+              label: "Status",
+              value: statusFilter,
+              options: STATUS_FILTERS.map((f) => ({
+                value: f,
+                label: STATUS_FILTER_LABELS[f],
+              })),
+            },
+          ]}
+        />
         {totalFiltered > 0 && (
-          <span className="ml-auto text-xs text-foreground/60">
+          <p className="mt-2 text-xs text-foreground/60">
             {totalFiltered} catatan
-          </span>
+          </p>
         )}
       </div>
+
 
       {logs.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="text-sm text-foreground/70">
             {statusFilter === "ALL"
-              ? "Belum ada riwayat. Setelah Anda menekan “Kirim Absen”, catatan akan muncul di sini."
-              : `Tidak ada catatan berstatus “${STATUS_FILTER_LABELS[statusFilter]}”.`}
+              ? `Belum ada riwayat dalam rentang “${RANGE_FILTER_LABELS[rangeFilter]}”. Setelah Anda menekan “Kirim Absen”, catatan akan muncul di sini.`
+              : `Tidak ada catatan berstatus “${STATUS_FILTER_LABELS[statusFilter]}” dalam rentang “${RANGE_FILTER_LABELS[rangeFilter]}”.`}
           </CardContent>
         </Card>
       ) : (
@@ -170,7 +196,11 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
             aria-label="Tabel riwayat absensi (dapat digulir)"
             tabIndex={0}
           >
-            <table className="w-full border-collapse text-sm">
+            {/* `min-w-[40rem]`: tanpa lebar minimum, `<table class="w-full">`
+                hanya "dipepetkan" di layar sempit sehingga TIDAK ada yang bisa
+                digulir horizontal. Dengan min-width, kolom mempertahankan lebar
+                wajar dan wadah `overflow-x-auto` benar-benar bisa digeser. */}
+            <table className="w-full min-w-[40rem] border-collapse text-sm">
               <thead>
                 <tr className="border-b-2 border-border text-left text-xs text-foreground/60">
                   <th className="p-3 font-heading">Waktu</th>
@@ -215,36 +245,12 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
         </Card>
       )}
 
-      {pageInfo.pageCount > 1 && (
-        <nav
-          className="mt-4 flex items-center justify-between gap-3"
-          aria-label="Navigasi halaman riwayat"
-        >
-          {pageInfo.page > 1 ? (
-            <Link
-              href={historyUrl(statusFilter, pageInfo.page - 1)}
-              className="inline-flex items-center rounded-base border-2 border-border bg-secondary-background px-3 py-1 text-sm font-heading"
-            >
-              ← Sebelumnya
-            </Link>
-          ) : (
-            <span />
-          )}
-          <span className="text-xs text-foreground/60">
-            Halaman {pageInfo.page} dari {pageInfo.pageCount}
-          </span>
-          {pageInfo.page < pageInfo.pageCount ? (
-            <Link
-              href={historyUrl(statusFilter, pageInfo.page + 1)}
-              className="inline-flex items-center rounded-base border-2 border-border bg-secondary-background px-3 py-1 text-sm font-heading"
-            >
-              Berikutnya →
-            </Link>
-          ) : (
-            <span />
-          )}
-        </nav>
-      )}
+      <Pagination
+        page={pageInfo.page}
+        pageCount={pageInfo.pageCount}
+        label="Navigasi halaman riwayat"
+        buildHref={(p) => historyUrl(statusFilter, rangeFilter, p)}
+      />
     </div>
   );
 }

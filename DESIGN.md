@@ -1,4 +1,4 @@
-# DESIGN.md — MagangHub Absensi
+# DESIGN.md — MagangHub Autoabsen
 
 Arah desain ini disusun dari UI yang **sudah ada** (`src/app/globals.css`,
 `src/app/page.tsx`, `src/components/ui/button.tsx`), bukan dikarang dari nol.

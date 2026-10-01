@@ -110,6 +110,17 @@ pil melengkung penuh, melayang **sticky di tengah atas area konten**
 (`<main>`), terlihat oleh **semua peran** (user & admin). Dipasang sekali di
 `src/app/(app)/layout.tsx`, sebelum spanduk wajib-ganti-sandi.
 
+**HANYA jam yang sticky — bilah header mobile TIDAK.** Header kecil di
+`app-sidebar.tsx` (brand + tombol hamburger) sengaja tidak lagi `sticky`: ia ikut
+tergulir hilang ke atas, lalu jam menggantikannya menempel di puncak. Kalau
+header dibiarkan sticky, layar sempit memakan **dua** baris menempel sekaligus
+(header + jam) dan area baca ikut menyusut.
+
+Karena itu jam memakai `top-0` polos di **semua** breakpoint, dengan `pt-safe`
+supaya di perangkat berponi ia turun sejauh tinggi poni dan tidak tertutup.
+`z-20` menahannya di atas konten (header tak lagi mengambang, jadi tidak ada
+yang menutupinya). Lihat komentar di `jam-island.tsx` sebelum mengubah.
+
 Isi: `Sen, 29 Sep · 14:32:07 WIB` (detik berjalan). Format murni ada di
 `src/lib/jam-dinding.ts` dan dikunci tes (`jam-dinding.test.ts`).
 
@@ -307,6 +318,14 @@ mengalaminya, jadi keduanya di halaman admin sudah diperbaiki. Beri juga
 `role="region"` + `aria-label` supaya area fokusnya diumumkan dengan jelas
 ("Tabel … (dapat digulir)"), bukan sekadar "grup". Berlaku juga untuk `<pre>`
 `overflow-auto` di dev-tools.
+
+**Tabel WAJIB punya lebar minimum agar bisa digulir horizontal.** `<table
+class="w-full">` tanpa `min-w-*` di dalam `overflow-x-auto` **tidak** bisa
+digulir di layar sempit: tabel cukup "dipepetkan" mengikuti lebar wadah, kolom
+menyempit/membungkus, dan tak ada isi yang melampaui wadah — jadi tidak ada yang
+bisa digeser. Tabel lebar (≥ ±5 kolom) harus diberi `min-w-[40rem]`/`52rem`/dst.
+Contoh yang sudah diperbaiki: Riwayat Absensi (5 kolom → `min-w-[40rem]`),
+riwayat template laporan (6 kolom → `min-w-[52rem]`), admin (52rem/48rem).
 
 Pengecualian: kontainer gulir yang isinya **tombol** (mis. strip chip topik di
 halaman docs) tidak perlu `tabIndex`, tombol sudah fokusabel, dan Tab akan

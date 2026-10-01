@@ -7,6 +7,7 @@
 // Tidak ada rahasia di sini, audit log hanya memuat status, pesan, tanggal.
 
 import type { SubmitStatus, TriggerType } from "@/generated/prisma/enums";
+import { startOfJakartaDay } from "./calendar";
 
 /** Warna badge per status. Dipetakan ke kelas Tailwind, bukan enum Prisma. */
 export type BadgeVariant = "success" | "failure" | "warning";
@@ -156,6 +157,140 @@ export function parsePage(raw: string | undefined): number {
   if (!raw) return 1;
   const n = Number.parseInt(raw, 10);
   return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
+// ---------------------------------------------------------------------------
+// Filter rentang waktu (murni, tanpa DB)
+// ---------------------------------------------------------------------------
+//
+// Rentang dihitung dalam HARI KALENDER WIB (Asia/Jakarta), lewat
+// `startOfJakartaDay` di lib/calendar, sumber batas hari yang SAMA dengan
+// grafik dashboard & halaman /calendar. Jadi "7 hari" di sini berarti 7 hari
+// kalender WIB termasuk hari ini, bukan 7×24 jam, dan tidak pernah berbeda
+// dari hitungan di halaman lain walau jam server beda zona.
+
+/**
+ * Nilai rentang yang dikenali dari URL. `ALL` = tanpa batas waktu. Selain ini
+ * diabaikan (jatuh ke default `30d`), jadi URL salah ketik tidak pernah
+ * menampilkan tabel kosong atau error.
+ */
+export const RANGE_FILTERS = ["7d", "30d", "90d", "1y", "ALL"] as const;
+export type RangeFilter = (typeof RANGE_FILTERS)[number];
+
+/** Label manusia untuk tiap pilihan rentang, dipakai tombol filter. */
+export const RANGE_FILTER_LABELS: Record<RangeFilter, string> = {
+  "7d": "7 hari",
+  "30d": "30 hari",
+  "90d": "90 hari",
+  "1y": "1 tahun",
+  ALL: "Semua",
+};
+
+/**
+ * Rentang default saat URL tidak menyebut (`?range=` kosong/tak dikenal).
+ * Dipilih 30 hari, bukan `ALL`, supaya query tetap ringan di data besar;
+ * "Semua" harus dipilih sengaja oleh pengguna.
+ */
+export const DEFAULT_RANGE: RangeFilter = "30d";
+
+/**
+ * Ubah nilai mentah `?range=` menjadi RangeFilter yang sah. Nilai tak dikenal
+ * (termasuk `undefined`) jatuh ke `DEFAULT_RANGE`, jadi URL salah ketik tidak
+ * pernah membuat halaman kosong.
+ */
+export function parseRangeFilter(raw: string | undefined): RangeFilter {
+  if (!raw) return DEFAULT_RANGE;
+  const lower = raw.trim().toLowerCase();
+  // Dibandingkan tanpa peduli huruf besar/kecil karena `RANGE_FILTERS` memuat
+  // "ALL" (huruf besar) sementara nilai lain huruf kecil.
+  const match = (RANGE_FILTERS as readonly string[]).find(
+    (r) => r.toLowerCase() === lower,
+  );
+  return (match as RangeFilter | undefined) ?? DEFAULT_RANGE;
+}
+
+/**
+ * Jumlah hari ke belakang untuk sebuah rentang (dihitung termasuk hari ini),
+ * atau `null` untuk `ALL` (tanpa batas). Dipakai bersama `startOfJakartaDay`
+ * oleh `rangeStartDate`; dipisah agar bisa diuji sendiri.
+ */
+export function rangeDays(range: RangeFilter): number | null {
+  switch (range) {
+    case "7d":
+      return 7;
+    case "30d":
+      return 30;
+    case "90d":
+      return 90;
+    case "1y":
+      return 365;
+    case "ALL":
+      return null;
+    default:
+      return 30;
+  }
+}
+
+/**
+ * Waktu mulai (batas bawah, inklusif) sebuah rentang di zona WIB, atau `null`
+ * bila rentangnya `ALL` (tidak ada batas). MURNI terhadap `Date` masukan
+ * (memakai `now` yang diberikan, tidak menyentuh jam perangkat).
+ *
+ * Contoh "7 hari" pada 10 Juli 2026 → mulai 00:00 WIB tanggal 4 Juli 2026
+ * (7 hari kalender: 4,5,6,7,8,9,10). Rumus: `(hari - 1)` hari ke belakang dari
+ * awal hari ini, sama seperti grafik 30 hari di stats-query.ts.
+ */
+export function rangeStartDate(
+  range: RangeFilter,
+  now: Date = new Date(),
+): Date | null {
+  const days = rangeDays(range);
+  if (days === null) return null;
+  const startOfToday = startOfJakartaDay(now);
+  return new Date(startOfToday.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+}
+// ---------------------------------------------------------------------------
+// Filter pengguna (khusus halaman admin: audit lintas pengguna)
+// ---------------------------------------------------------------------------
+
+/**
+ * Nilai khusus untuk "semua pengguna" pada `?user=`. Dipakai sebagai sentinel
+ * agar URL bersih (tanpa parameter) dan nilai defaultnya eksplisit, bukan
+ * string kosong yang ambigu dengan "belum dipilih".
+ */
+export const ALL_USERS = "ALL";
+
+/**
+ * Bersihkan nilai mentah `?user=` menjadi id pengguna atau `ALL_USERS`. MURNI.
+ *
+ * Sengaja TIDAK divalidasi terhadap daftar id yang ada: tugas halaman admin
+ * yang tahu daftarnya. Di sini hanya dipastikan bentuknya wajar (trim, tolak
+ * kosong/terlalu panjang/berisi karakter aneh) supaya URL ngawur tidak
+ * diteruskan mentah ke Prisma. Bila id tidak ada, query mengembalikan nol baris
+ * dan tabel menampilkan pesan kosong — bukan error.
+ */
+export function parseUserFilter(raw: string | undefined): string {
+  if (!raw) return ALL_USERS;
+  const value = raw.trim();
+  if (!value) return ALL_USERS;
+  if (value === ALL_USERS) return ALL_USERS;
+  // Id Prisma adalah cuid: huruf, angka, dan sesekali "-"/"_". Batasi panjang
+  // agar query tidak bisa disalahgunakan untuk membebani DB.
+  if (value.length > 64) return ALL_USERS;
+  if (!/^[A-Za-z0-9_-]+$/.test(value)) return ALL_USERS;
+  return value;
+}
+
+/**
+ * Judul kolom email pada baris penanda. Dipisah agar teksnya konsisten di satu
+ * tempat (dipakai tabel & pengujian).
+ */
+export function describeUserFilter(
+  userId: string,
+  email: string | undefined,
+): string {
+  if (userId === ALL_USERS) return "Semua pengguna";
+  return email ?? "pengguna tidak dikenal";
 }
 
 export interface Pagination {

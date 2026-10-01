@@ -28,7 +28,7 @@ export const SITE_TITLE =
  * dikosongkan saat situs dipublikasikan.
  * Sengaja satu konstanta: cukup ubah di sini, halaman otomatis ikut terbarui.
  */
-export const CONTACT_EMAIL = "syafiq.azhar02@gmail.com";
+export const CONTACT_EMAIL = "azharabdulsali@gmail.com";
 
 /** True bila CONTACT_EMAIL masih placeholder (dipakai untuk menyembunyikan UI). */
 export const CONTACT_EMAIL_IS_PLACEHOLDER = CONTACT_EMAIL.startsWith("[");

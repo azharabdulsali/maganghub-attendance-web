@@ -3,14 +3,20 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  ALL_USERS,
   badgeVariant,
   describeSubmitStatus,
   describeTrigger,
   formatJakartaTimestamp,
   paginate,
   parsePage,
+  parseRangeFilter,
   parseStatusFilter,
+  parseUserFilter,
+  rangeDays,
+  rangeStartDate,
   summarizeLogs,
+  DEFAULT_RANGE,
   type AuditRow,
 } from "./audit-log";
 
@@ -155,5 +161,98 @@ describe("paginate", () => {
     const p = paginate(10, 1, 0);
     expect(p.pageCount).toBe(10);
     expect(Number.isFinite(p.start)).toBe(true);
+  });
+});
+
+describe("parseRangeFilter", () => {
+  it("menerima nilai yang sah (case-insensitive)", () => {
+    expect(parseRangeFilter("7d")).toBe("7d");
+    expect(parseRangeFilter("30D")).toBe("30d");
+    expect(parseRangeFilter("90d")).toBe("90d");
+    expect(parseRangeFilter("1y")).toBe("1y");
+    expect(parseRangeFilter("ALL")).toBe("ALL");
+    expect(parseRangeFilter(" all ")).toBe("ALL");
+  });
+
+  it("jatuh ke default untuk nilai kosong/tak dikenal", () => {
+    expect(parseRangeFilter(undefined)).toBe(DEFAULT_RANGE);
+    expect(parseRangeFilter("")).toBe(DEFAULT_RANGE);
+    expect(parseRangeFilter("2w")).toBe(DEFAULT_RANGE);
+    expect(parseRangeFilter("'; DROP TABLE")).toBe(DEFAULT_RANGE);
+  });
+
+  it("default-nya 30d, bukan ALL (query tetap ringan)", () => {
+    expect(DEFAULT_RANGE).toBe("30d");
+  });
+});
+
+describe("rangeDays", () => {
+  it("memetakan tiap rentang ke jumlah hari", () => {
+    expect(rangeDays("7d")).toBe(7);
+    expect(rangeDays("30d")).toBe(30);
+    expect(rangeDays("90d")).toBe(90);
+    expect(rangeDays("1y")).toBe(365);
+  });
+
+  it("ALL = null (tanpa batas)", () => {
+    expect(rangeDays("ALL")).toBeNull();
+  });
+});
+
+describe("rangeStartDate", () => {
+  // 10 Juli 2026, 08:00 WIB (01:00 UTC).
+  const now = new Date("2026-07-10T01:00:00.000Z");
+
+  it("7 hari mencakup hari ini: mulai 6 hari ke belakang, awal hari WIB", () => {
+    const start = rangeStartDate("7d", now);
+    // 4 Juli 2026 00:00 WIB = 3 Juli 2026 17:00 UTC.
+    expect(start?.toISOString()).toBe("2026-07-03T17:00:00.000Z");
+  });
+
+  it("30 hari mulai 29 hari ke belakang", () => {
+    const start = rangeStartDate("30d", now);
+    // 11 Juni 2026 00:00 WIB = 10 Juni 2026 17:00 UTC.
+    expect(start?.toISOString()).toBe("2026-06-10T17:00:00.000Z");
+  });
+
+  it("ALL tidak punya batas bawah", () => {
+    expect(rangeStartDate("ALL", now)).toBeNull();
+  });
+
+  it("memakai batas hari WIB, bukan zona server (jam 00:30 WIB tetap hari ini)", () => {
+    // 10 Juli 2026 00:30 WIB = 9 Juli 2026 17:30 UTC. Tanpa WIB, ini akan
+    // dianggap tanggal 9 dan batasnya bergeser sehari.
+    const dini = new Date("2026-07-09T17:30:00.000Z");
+    const start = rangeStartDate("7d", dini);
+    expect(start?.toISOString()).toBe("2026-07-03T17:00:00.000Z");
+  });
+});
+
+
+
+describe("parseUserFilter", () => {
+  it("meneruskan id yang wajar apa adanya", () => {
+    expect(parseUserFilter("clx123abc")).toBe("clx123abc");
+    expect(parseUserFilter("abc-DEF_123")).toBe("abc-DEF_123");
+    expect(parseUserFilter("  clx9  ")).toBe("clx9");
+  });
+
+  it("kosong/absen berarti semua pengguna", () => {
+    expect(parseUserFilter(undefined)).toBe(ALL_USERS);
+    expect(parseUserFilter("")).toBe(ALL_USERS);
+    expect(parseUserFilter("   ")).toBe(ALL_USERS);
+    expect(parseUserFilter(ALL_USERS)).toBe(ALL_USERS);
+  });
+
+  it("menolak nilai mencurigakan (kembali ke semua)", () => {
+    expect(parseUserFilter("DROP TABLE users")).toBe(ALL_USERS);
+    expect(parseUserFilter("a".repeat(65))).toBe(ALL_USERS);
+    expect(parseUserFilter("id<script>")).toBe(ALL_USERS);
+    expect(parseUserFilter("a/b")).toBe(ALL_USERS);
+  });
+
+  it("id tepat 64 karakter masih diterima", () => {
+    const id = "a".repeat(64);
+    expect(parseUserFilter(id)).toBe(id);
   });
 });

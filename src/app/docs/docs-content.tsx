@@ -114,7 +114,7 @@ export default function DocsContent() {
           </span>
           <span className="flex flex-col">
             <span className="font-heading text-sm leading-tight">
-              MagangHub Bot
+              MagangHub Autoabsen
             </span>
             <span className="text-[10px] leading-none text-foreground/60">
               Attendance &amp; Reports

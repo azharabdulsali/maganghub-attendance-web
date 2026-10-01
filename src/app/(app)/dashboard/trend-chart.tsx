@@ -1,23 +1,49 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RANGE_FILTER_LABELS, type RangeFilter } from "@/lib/audit-log";
 import type { TrendPoint } from "./stats-query";
 
-// Grafik tren 30 hari, SVG batang (bar) sederhana yang digambar manual.
+// Grafik tren pengiriman, SVG batang (bar) sederhana yang digambar manual.
 //
 // SENGAJA tidak memakai library chart apa pun: AGENTS.md §2 melarang menambah
-// dependensi tanpa alasan kuat, dan kebutuhan di sini hanya "lihat naik-turun
-// 30 hari". SVG murni = nol byte tambahan, tetap tajam di semua layar.
+// dependensi tanpa alasan kuat, dan kebutuhan di sini hanya "lihat naik-turun".
+// SVG murni = nol byte tambahan, tetap tajam di semua layar.
+//
+// Rentang mengikuti filter di halaman dashboard. Untuk rentang "Semua", grafik
+// tetap dibatasi 1 tahun (lihat `chartDaysFor`) supaya batang tidak terlalu
+// rapat; judulnya menyebut batas itu apa adanya.
 
-export default function TrendChart({ trend }: { trend: TrendPoint[] }) {
+export default function TrendChart({
+  trend,
+  range,
+  chartDays,
+}: {
+  trend: TrendPoint[];
+  range: RangeFilter;
+  chartDays: number;
+}) {
   // Tinggi maksimum batang mengikuti nilai tertinggi; minimal 1 supaya tidak
   // bagi nol saat semua hari kosong.
   const max = Math.max(1, ...trend.map((p) => p.success + p.failed));
   const totalSukses = trend.reduce((a, p) => a + p.success, 0);
   const totalGagal = trend.reduce((a, p) => a + p.failed, 0);
 
+  // Judul jujur: untuk "Semua" grafik hanya 1 tahun terakhir, bukan seluruh
+  // waktu, jadi jangan menulis "Semua" di judul grafik.
+  const title =
+    range === "ALL"
+      ? "1 tahun terakhir"
+      : `${RANGE_FILTER_LABELS[range]} terakhir`;
+
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>30 hari terakhir</CardTitle>
+        <CardTitle>{title}</CardTitle>
+        {range === "ALL" && (
+          <p className="text-xs text-foreground/60">
+            Grafik dibatasi 1 tahun terakhir agar tetap terbaca; kartu Ringkasan
+            di atas tetap menghitung seluruh waktu.
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         {/* Legenda warna. */}
@@ -34,13 +60,13 @@ export default function TrendChart({ trend }: { trend: TrendPoint[] }) {
 
         {trend.every((p) => p.success === 0 && p.failed === 0) ? (
           <p className="py-8 text-center text-sm text-foreground/60">
-            Belum ada pengiriman dalam 30 hari terakhir.
+            Belum ada pengiriman dalam {chartDays} hari terakhir.
           </p>
         ) : (
           <div
             className="flex h-40 items-end gap-[3px]"
             role="img"
-            aria-label={`Grafik 30 hari: ${totalSukses} berhasil, ${totalGagal} gagal`}
+            aria-label={`Grafik ${title}: ${totalSukses} berhasil, ${totalGagal} gagal`}
           >
             {trend.map((p) => {
               const total = p.success + p.failed;

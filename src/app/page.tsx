@@ -7,6 +7,7 @@ import {
   Clock,
   KeyRound,
   Lock,
+  Plus,
   Send,
   ShieldCheck,
   Timer,
@@ -14,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { JsonLd } from "@/components/json-ld";
+import FooterComponent01 from "@/components/shadcn-studio/blocks/footer-component-01/footer-component-01";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, FAQ_ITEMS } from "@/lib/site";
 
 // Landing PUBLIK di "/". Halaman ini SELALU tampil untuk siapa pun, termasuk
@@ -185,7 +187,7 @@ export default function Home() {
           </span>
           <span className="flex flex-col">
             <span className="font-heading text-sm leading-tight">
-              MagangHub Bot
+              MagangHub Autoabsen
             </span>
             <span className="text-[10px] leading-none text-foreground/60">
               Attendance &amp; Reports
@@ -260,12 +262,12 @@ export default function Home() {
 
       <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         {/* Fitur-fitur utama. */}
-        <section id="fitur" className="mb-14 sm:mb-20">
+        <section id="fitur" className="mb-14 scroll-mt-20 sm:mb-20">
           <div className="mx-auto mb-8 max-w-xl space-y-2 text-center">
             <h2 className="text-2xl font-heading sm:text-3xl">
               Masalah nyata yang diselesaikan
             </h2>
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-foreground/80">
               Bukan sekadar bot, asisten yang menjaga hak dan penilaian magang
               Anda tetap aman.
             </p>
@@ -289,13 +291,13 @@ export default function Home() {
         {/* Cara kerja, tiga langkah. */}
         <section
           id="alur"
-          className="mb-14 rounded-base border-2 border-border bg-secondary-background/60 p-6 sm:mb-20 sm:p-10"
+          className="mb-14 scroll-mt-20 rounded-base border-2 border-border bg-secondary-background/60 p-6 sm:mb-20 sm:p-10"
         >
           <div className="mx-auto mb-8 max-w-xl space-y-2 text-center">
             <h2 className="text-2xl font-heading sm:text-3xl">
               Alur singkat tiga langkah
             </h2>
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-foreground/80">
               Dari simpan template sampai laporan masuk ke portal Monev.
             </p>
           </div>
@@ -348,12 +350,12 @@ export default function Home() {
         </section>
 
         {/* Panduan, pintasan ke halaman dashboard yang memang ada. */}
-        <section id="panduan" className="mb-14 sm:mb-20">
+        <section id="panduan" className="mb-14 scroll-mt-20 sm:mb-20">
           <div className="mx-auto mb-8 max-w-xl space-y-2 text-center">
             <h2 className="text-2xl font-heading sm:text-3xl">
               Panduan setup praktis
             </h2>
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-foreground/80">
               Setelah masuk, atur semuanya dari dashboard dalam beberapa menit.
             </p>
           </div>
@@ -368,7 +370,7 @@ export default function Home() {
                   <item.icon className="size-4" />
                   {item.judul}
                 </div>
-                <p className="text-xs text-foreground/70">{item.isi}</p>
+                <p className="text-sm text-foreground/80">{item.isi}</p>
               </Link>
             ))}
           </div>
@@ -378,26 +380,50 @@ export default function Home() {
             `id="faq"` supaya bisa ditautkan dari footer dan hasil pencarian.
             Memakai <details>/<summary> native: setiap pertanyaan dan jawaban
             benar-benar ada di HTML (tanpa JS), syarat wajib agar schema
-            FAQPage di bawah sah menurut pedoman Google. */}
-        <section id="faq" className="mb-14 sm:mb-20">
-          <div className="mb-8 space-y-2 text-center">
-            <h2 className="text-2xl font-heading sm:text-3xl">
+            FAQPage di bawah sah menurut pedoman Google.
+            Karena itu jawaban SELALU dirender (bukan {terbuka && ...}), hanya
+            disembunyikan lewat CSS, supaya crawler tetap membacanya. */}
+        <section id="faq" className="mb-14 scroll-mt-20 sm:mb-20">
+          <div className="mb-8 flex flex-col items-center gap-3 text-center">
+            <span className="rounded-full border-2 border-border bg-secondary-background px-3 py-1 font-heading text-xs">
+              FAQ
+            </span>
+            <h2 className="max-w-lg text-2xl font-heading sm:text-3xl">
               Pertanyaan yang sering diajukan
             </h2>
-            <p className="text-sm text-foreground/70">
+            <p className="max-w-xl text-sm text-foreground/80">
               Jawaban lugas tentang keamanan, cara kerja, dan batasan aplikasi.
             </p>
           </div>
-          <div className="mx-auto max-w-3xl space-y-3">
-            {FAQ_ITEMS.map((item) => (
+          <div className="mx-auto flex max-w-3xl flex-col gap-4">
+            {FAQ_ITEMS.map((item, index) => (
               <details
                 key={item.q}
-                className="group rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow"
+                className="group ring-offset-background animate-in fade-in slide-in-from-bottom-4 fill-mode-both rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow transition-colors duration-700 open:bg-main"
+                // Jeda bertingkat: tiap kartu masuk sedikit setelah kartu di
+                // atasnya. Kelas delay-* ditulis eksplisit (bukan interpolasi)
+                // karena Tailwind hanya menyertakan kelas yang benar-benar
+                // tertulis di kode.
+                style={{ animationDelay: `${index * 80}ms` }}
               >
-                <summary className="cursor-pointer list-none font-heading text-sm">
+                {/* Cincin fokus wajib ada di sini: `globals.css` tidak mengatur
+                    `summary`, jadi tanpa ini pengguna keyboard kehilangan jejak
+                    saat berpindah antar pertanyaan (WCAG 2.4.7). Polanya sama
+                    dengan kontrol lain di aplikasi. */}
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-base font-heading text-base focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   {item.q}
+                  <Plus
+                    aria-hidden="true"
+                    className="size-5 shrink-0 transition-transform duration-200 group-open:rotate-45"
+                  />
                 </summary>
-                <p className="mt-2 text-xs text-foreground/80">{item.a}</p>
+                {/* Grid 0fr→1fr: transisi tinggi tanpa mengukur piksel dan
+                    tanpa JS. Isi tetap ada di DOM saat tertutup. */}
+                <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 group-open:grid-rows-[1fr]">
+                  <div className="overflow-hidden">
+                    <p className="pt-2 text-sm text-foreground/80">{item.a}</p>
+                  </div>
+                </div>
               </details>
             ))}
           </div>
@@ -424,68 +450,14 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="pb-safe border-t-2 border-border bg-secondary-background px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-xs text-foreground/60 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <CalendarCheck className="size-4 text-foreground" />
-            <span className="font-heading text-foreground/80">
-              MagangHub Absensi
-            </span>
-            <span>•</span>
-            <span>Untuk peserta magang Kemnaker</span>
-          </div>
-          <div className="flex items-center gap-5">
-            <a
-              href="#fitur"
-              className="transition-colors hover:text-foreground"
-            >
-              Fitur
-            </a>
-            <a href="#alur" className="transition-colors hover:text-foreground">
-              Cara Kerja
-            </a>
-            <a
-              href="#panduan"
-              className="transition-colors hover:text-foreground"
-            >
-              Panduan
-            </a>
-            <a href="#faq" className="transition-colors hover:text-foreground">
-              FAQ
-            </a>
-            <Link
-              href="/docs"
-              className="transition-colors hover:text-foreground"
-            >
-              Dokumentasi
-            </Link>
-            <Link
-              href="/panduan"
-              className="transition-colors hover:text-foreground"
-            >
-              Artikel
-            </Link>
-            <Link
-              href="/privacy"
-              className="transition-colors hover:text-foreground"
-            >
-              Privasi
-            </Link>
-            <Link
-              href="/terms"
-              className="transition-colors hover:text-foreground"
-            >
-              Syarat
-            </Link>
-            <Link
-              href="/login"
-              className="font-heading text-foreground transition-colors hover:text-main-foreground"
-            >
-              Masuk
-            </Link>
-          </div>
-        </div>
-      </footer>
+      {/* Footer landing memakai blok footer-component-01
+          (`@/components/shadcn-studio/blocks/footer-component-01`): baris
+          brand | tautan | CTA, garis pemisah, lalu baris copyright terpusat.
+          Struktur ini menggantikan footer inline lama yang menjejalkan
+          sembilan tautan dalam dua kolom `justify-between` sehingga menabrak
+          blok brand. Lihat komentar di berkas blok untuk daftar penyesuaian
+          (brand, tautan nyata, ikon sosial → CTA). */}
+      <FooterComponent01 />
     </div>
   );
 }

@@ -202,12 +202,25 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
       {/* Bilah atas khusus layar kecil: tombol hamburger.
           `pt-safe` + `pl-safe`/`pr-safe`: di iPhone landscape, poni bisa
           menutupi tepi atas/kiri-kanan; padding safe-area menjaga brand & tombol
-          tetap terjangkau. Di perangkat tanpa poni nilainya 0. */}
-      <header className="pt-safe pl-safe pr-safe sticky top-0 z-30 flex items-center justify-between gap-3 border-b-2 border-border bg-secondary-background px-4 py-3 md:hidden">
-        <span className="font-heading">MagangHub Absensi</span>
+          tetap terjangkau. Di perangkat tanpa poni nilainya 0.
+
+          SENGAJA TIDAK sticky (dulu `sticky top-0 z-30`). Hanya jam
+          (src/components/jam-island.tsx) yang boleh menempel; bilah ini ikut
+          tergulir hilang ke atas agar layar sempit tidak dimakan dua baris
+          sticky sekaligus. Jam tetap `z-20` > konten, dan header `z-30` hanya
+          berlaku saat ia masih terlihat (tidak menutupi apa pun karena tidak
+          lagi mengambang). Lihat docs/UI-LAYOUT.md §3b. */}
+      <header className="pt-safe pl-safe pr-safe z-30 flex items-center justify-between gap-3 border-b-2 border-border bg-secondary-background px-4 py-2 md:hidden">
+        {/* `min-w-0` + `truncate`: tanpa ini nama panjang bisa mendorong/menabrak
+            tombol hamburger di layar sempit (flex item default tak boleh menyusut
+            di bawah lebar kontennya). Tombol diberi `shrink-0` agar selalu utuh. */}
+        <span className="min-w-0 truncate font-heading">
+          MagangHub Autoabsen
+        </span>
         <Button
           variant="neutral"
           size="icon-sm"
+          className="shrink-0"
           aria-label="Buka menu navigasi"
           aria-expanded={open}
           onClick={() => setOpen(true)}
