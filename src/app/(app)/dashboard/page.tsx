@@ -10,6 +10,7 @@ import {
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
+import { refreshTokenHealth } from "@/lib/credential-session";
 import { cn } from "@/lib/utils";
 import {
   parseRangeFilter,
@@ -34,7 +35,9 @@ type DashboardPageProps = {
   // Di Next.js 16, `searchParams` adalah Promise yang harus di-await.
   searchParams: Promise<{ range?: string }>;
 };
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+export default async function DashboardPage({
+  searchParams,
+}: DashboardPageProps) {
   const session = await auth();
 
   if (!session?.user) {
@@ -65,13 +68,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   // Status kredensial nyata, supaya kartu di bawah jujur saat sesi Monev mati,
   // bukan selalu menyuruh "Atur kredensial" walau semuanya sehat.
   // Statistik ringkas, dihitung di server, hanya membaca data milik pengguna.
-  const [credential, { stats, trend, chartDays }] = await Promise.all([
-    prisma.maganghubCredential.findUnique({
-      where: { userId },
-      select: { status: true, tokenCiphertext: true, emailMonev: true },
-    }),
-    getDashboardStats(userId, range, now),
-  ]);
+  const [credential, { stats, trend, chartDays }, tokenHealth] =
+    await Promise.all([
+      prisma.maganghubCredential.findUnique({
+        where: { userId },
+        select: { status: true, tokenCiphertext: true, emailMonev: true },
+      }),
+      getDashboardStats(userId, range, now),
+      refreshTokenHealth(userId),
+    ]);
 
   const punyaToken = Boolean(credential?.tokenCiphertext);
   const perluPerhatian = credential?.status === "INVALID";
@@ -91,6 +96,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   // spesifik: "belum diatur" vs "sudah ada tapi token mati".
   const belumAdaKredensial = !credential;
   const adaMasalah = belumAdaKredensial || perluPerhatian || !punyaToken;
+
+  // Pengingat dini: sesi masih sehat, tapi refresh token akan kedaluwarsa dalam
+  // <= 7 hari. Hanya ditampilkan saat TIDAK ada masalah lain (kalau sesi sudah
+  // INVALID, banner merah di atas sudah lebih mendesak & memberi langkah sama).
+  const perluIngatkanRefresh =
+    !adaMasalah && tokenHealth.nearingExpiry && tokenHealth.daysLeft !== null;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -130,11 +141,31 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 </p>
               </div>
             </div>
-            <Button
-              className="shrink-0"
-              render={<Link href="/credentials" />}
-            >
+            <Button className="shrink-0" render={<Link href="/credentials" />}>
               {perluPerhatian ? "Perbarui token" : "Atur kredensial"}
+            </Button>
+          </div>
+        </Message>
+      )}
+
+      {/* Pengingat dini (bukan error): sesi sehat, tapi refresh token hampir
+          habis. Nada `neutral` supaya tidak terlihat seperti kegagalan; beri
+          tahu jumlah hari & langkah yang sama agar bisa disiapkan sebelum mati,
+          bukan setelah absensi gagal. */}
+      {perluIngatkanRefresh && (
+        <Message tone="neutral" as="div" className="mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <CircleAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
+              <div>
+                <p className="font-heading">Sesi Monev segera berakhir</p>
+                <p className="mt-1 text-xs text-foreground/80">
+                  {`Sesi otomatis berakhir dalam ±${tokenHealth.daysLeft} hari. Login ulang di portal lalu tempel token baru sebelum itu supaya absensi otomatis tidak terhenti.`}
+                </p>
+              </div>
+            </div>
+            <Button className="shrink-0" render={<Link href="/credentials" />}>
+              Perbarui sesi
             </Button>
           </div>
         </Message>
@@ -218,7 +249,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <ReadinessItem ok={Boolean(credential)}>
                 Kredensial Monev tersimpan
               </ReadinessItem>
-              <ReadinessItem ok={punyaToken}>Token sesi Monev aktif</ReadinessItem>
+              <ReadinessItem ok={punyaToken}>
+                Token sesi Monev aktif
+              </ReadinessItem>
               <ReadinessItem ok={punyaToken && !perluPerhatian}>
                 Siap mengirim absensi harian
               </ReadinessItem>
@@ -239,8 +272,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </span>
           {!env.ADMIN_EMAIL && (
             <p className="w-full text-xs text-foreground/60">
-              Catatan: <code>ADMIN_EMAIL</code> belum diisi, jadi tidak ada admin
-              yang dibuat otomatis.
+              Catatan: <code>ADMIN_EMAIL</code> belum diisi, jadi tidak ada
+              admin yang dibuat otomatis.
             </p>
           )}
         </CardContent>
@@ -280,4 +313,3 @@ function ReadinessItem({
     </li>
   );
 }
-

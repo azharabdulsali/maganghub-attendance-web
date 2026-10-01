@@ -3,7 +3,7 @@
 Panduan untuk AI agent (dan kontributor) yang bekerja di repo ini.
 
 > **Baca ini dulu, lalu baca `SPEC.md`.** `SPEC.md` adalah sumber kebenaran
-> untuk *apa* yang dibangun. File ini menjelaskan *bagaimana* bekerja di
+> untuk _apa_ yang dibangun. File ini menjelaskan _bagaimana_ bekerja di
 > dalamnya tanpa merusak apa pun.
 
 ---
@@ -14,6 +14,7 @@ Aplikasi web **multi-user** untuk mengelola presensi dan laporan harian magang
 ke portal Monev MagangHub Kemnaker.
 
 Tiga kemampuan inti:
+
 1. Menyimpan kredensial Monev pengguna secara terenkripsi (AES-256-GCM).
 2. Menyusun laporan harian dari **3 kolom** (Uraian Aktivitas, Pembelajaran
    yang Diperoleh, Kendala). Kolom bisa diisi manual, atau disusun lewat tombol
@@ -55,6 +56,7 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
 ## 2. Aturan Paling Penting
 
 ### Jangan pernah
+
 - **Jangan menyentuh folder proyek Python `../maganghub-autoabsen/`.**
   Itu sistem produksi terpisah yang setiap hari mengirim absen. Satu perubahan
   yang tidak sengaja di sana bisa membuat absen bolong. Proyek ini berdiri
@@ -75,6 +77,7 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
   lain.
 
 ### Selalu
+
 - **Validasi semua input dengan Zod di sisi server** sebelum menyentuh DB.
 - **Enkripsi kredensial sebelum masuk database**; DB hanya boleh menyimpan
   ciphertext + IV + auth tag.
@@ -88,25 +91,25 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
 
 ## 3. Tech Stack
 
-| Layer | Teknologi |
-| :--- | :--- |
-| Framework | Next.js (App Router), TypeScript |
-| Styling | Tailwind CSS v4 + **neobrutalism.dev** (via shadcn CLI) |
-| UI base | **Base UI** (`@base-ui/react`), komponen neobrutalism memakai ini |
-| Database | PostgreSQL (Neon) |
-| ORM | Prisma 7 (driver adapter `@prisma/adapter-neon`) |
-| Auth | NextAuth.js v5 (**email/password saja**, tanpa OAuth) |
-| Enkripsi | AES-256-GCM (`node:crypto`) |
-| AI | **Tidak dipakai**, template tetap menggantikan peringkasan AI |
-| Test | Vitest 3.2.7 (environment `node`) |
-| Deploy | Vercel (serverless, paket gratis) |
+| Layer     | Teknologi                                                         |
+| :-------- | :---------------------------------------------------------------- |
+| Framework | Next.js (App Router), TypeScript                                  |
+| Styling   | Tailwind CSS v4 + **neobrutalism.dev** (via shadcn CLI)           |
+| UI base   | **Base UI** (`@base-ui/react`), komponen neobrutalism memakai ini |
+| Database  | PostgreSQL (Neon)                                                 |
+| ORM       | Prisma 7 (driver adapter `@prisma/adapter-neon`)                  |
+| Auth      | NextAuth.js v5 (**email/password saja**, tanpa OAuth)             |
+| Enkripsi  | AES-256-GCM (`node:crypto`)                                       |
+| AI        | **Tidak dipakai**, template tetap menggantikan peringkasan AI     |
+| Test      | Vitest 3.2.7 (environment `node`)                                 |
+| Deploy    | Vercel (serverless, paket gratis)                                 |
 
 Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
 
 ### Aturan Prisma 7 (penting)
 
 - **Prisma 7 WAJIB memakai driver adapter.** `new PrismaClient()` polos akan
-  gagal: *"A driver adapter is required to connect to your database."*
+  gagal: _"A driver adapter is required to connect to your database."_
   Selalu pakai instance bersama dari `src/lib/prisma.ts`.
   ```ts
   import { prisma } from "@/lib/prisma"; // BENAR
@@ -121,8 +124,8 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
   3. Kolom katalog Postgres bertipe `name` (mis. `table_name`) **tidak bisa**
      dideserialisasi Prisma, `SELECT table_name::text AS table_name`.
   4. **Top-level `await` tidak didukung**, `tsx` memakai output **CJS** di
-     proyek ini, error: *"Top-level await is currently not supported with the
-     cjs output format"*. Bungkus dalam `async function main()` lalu
+     proyek ini, error: _"Top-level await is currently not supported with the
+     cjs output format"_. Bungkus dalam `async function main()` lalu
      `main().catch(...).finally(() => prisma.$disconnect())`.
 - Proyek ini memakai **`prisma db push`**, bukan migrasi (tidak ada folder
   `prisma/migrations`). Per 2026-09, **9 tabel sudah ada di Neon** dan cocok
@@ -181,11 +184,13 @@ maganghub-attendance-web/
 ```
 
 **Aturan penempatan:**
+
 - Kode yang menyentuh rahasia (dekripsi, API key) hanya di `src/lib/` dan
   `src/services/`, tidak pernah di `components/`.
 - Komponen UI tidak boleh mengimpor Prisma langsung, lewat server action.
 
 **Yang sudah ada (per 2026-09):**
+
 - `src/lib/`, `env.ts`, `auth.ts`, `prisma.ts`, `crypto.ts` (+test),
   `validate.ts` (+test), `utils.ts`
 - `src/app/api/`, `auth/[...nextauth]`, `register`, `credentials`,
@@ -197,6 +202,7 @@ maganghub-attendance-web/
   `src/app/(app)/layout.tsx`.
 
 ### Aturan penyimpanan kredensial Monev
+
 - Password Monev **TIDAK di-hash** (beda dari password akun aplikasi), harus
   bisa dipakai ulang untuk login ke portal, jadi disimpan terenkripsi dua arah.
 - **Jangan pernah mengembalikan password Monev ke klien.** `GET /api/credentials`
@@ -212,6 +218,7 @@ maganghub-attendance-web/
   penyerang tanpa sesi tidak bisa membedakan respons.
 
 ### Login otomatis ke Monev (Opsi A), jalur utama
+
 - Pengguna cukup isi email+password Monev sekali; server yang login ke SSO
   memakai kredensial tersimpan, lalu menyimpan **access token** (6 jam) dan,
   bila portal mengirimkannya, **refresh token** (30 hari). Semua terenkripsi.
@@ -237,7 +244,26 @@ maganghub-attendance-web/
   akun: apakah `code` muncul di `redirect_uri` respons login, dan apakah
   callback mengirim `monev_refresh_token` lewat Set-Cookie. Kode sudah jujur
   memberi `ERROR`/menyimpan apa adanya bila bentuknya berbeda.
-
+- **Pengingat dini sesi hampir habis** (mitigasi celah "mati setelah 30 hari").
+  Umur refresh token dibaca **dari klaim `exp` di dalam JWT-nya**, bukan dari
+  kolom DB baru — proyek ini memakai `prisma db push`, jadi menambah kolom =
+  operasi eksternal ke Neon yang tidak sepadan untuk sekadar pengingat.
+  Helper MURNI & teruji: `src/lib/refresh-token-age.ts`
+  (`refreshTokenExpiresAt`, `isRefreshTokenNearingExpiry`,
+  `daysUntilRefreshExpiry`, ambang `REFRESH_EXPIRY_WARNING_MS` = 7 hari).
+  Pembacaan sisi server: `refreshTokenHealth(userId)` di
+  `credential-session.ts` (dekripsi sesaat, hanya baca `exp`, token mentah
+  tidak pernah keluar). Dashboard menampilkan banner `neutral` "Sesi Monev
+  segera berakhir" bila sisa <= 7 hari **dan** sesi tidak sedang bermasalah.
+  Prinsip: bila `exp` tak dapat dipastikan (bukan JWT / kunci berubah),
+  hasilnya `null` dan **tidak ada** banner — jangan menebak, jangan ada
+  peringatan palsu.
+- ⚠️ **Batas yang diketahui**: pengingat ini hanya **tampil di dashboard**,
+  tidak mengirim email/notifikasi. Bila pengguna tidak membuka dashboard > 7
+  hari sebelum token mati, ia akan tetap melewatkannya. Tidak ada login-ulang
+  otomatis di cron — itu sengaja (menghindari password dipakai aktif tanpa
+  pengawasan). Kalau nanti dibutuhkan penutup penuh, opsi yang lebih aman
+  adalah notifikasi keluar, bukan menyimpan password untuk auto-login berkala.
 
 ---
 
@@ -260,6 +286,7 @@ Aturan praktis saat menulis kode:
   perbaiki atau laporkan, jangan diabaikan.
 
 ### Aturan `ENCRYPTION_KEY` (jangan sampai salah)
+
 - **64 karakter hex** (32 byte) untuk AES-256-GCM. `env.ts` memvalidasi ini
   lewat regex `^[0-9a-fA-F]{64}$`.
 - Boleh ditulis **dengan atau tanpa tanda kutip** di `.env.local`; `dotenv`
@@ -310,11 +337,12 @@ Sudah ada: **Vitest 3.2.7** (`vitest.config.ts`, environment `node`).
 
 > **Jebakan versi:** pakai **Vitest 3**, JANGAN Vitest 5. Vitest 5 menuntut
 > `@types/node` v22+, sedangkan proyek ini di `@types/node` v20, `npm install
-> vitest` polos akan gagal `ERESOLVE`. Selain itu `@vitejs/plugin-react`
+vitest` polos akan gagal `ERESOLVE`. Selain itu `@vitejs/plugin-react`
 > **bentrok** dengan `@babel/*` bawaan `shadcn`; plugin itu tidak dibutuhkan
 > selama test hanya menguji fungsi Node (tanpa JSX).
 
 Prioritas test:
+
 1. ✅ **Enkripsi** (`src/lib/crypto.test.ts`, 14 test), round-trip, IV selalu
    baru, anti-tamper (ciphertext & authTag diubah → gagal), kunci salah → gagal,
    `safeEqual`.
@@ -325,6 +353,7 @@ Prioritas test:
 5. **Penanganan error API Monev**: 409, 422, 403 tidak membuat sistem crash.
 
 ### Aturan 100 karakter laporan (dari bot Python & portal)
+
 - Angka `100` dan `5000` adalah aturan **pihak ketiga**. Jangan diubah tanpa
   bukti dari portal. Sumber tunggal: `src/lib/report-rules.ts`.
 - Perhitungan memakai **panjang setelah trim** (`len(value.strip()) < 100` di
@@ -338,6 +367,7 @@ Prioritas test:
   identik. Ini mencegah bug halus: jumlah karakter beda 1 per baris.
 
 ### Struktur data template
+
 - `ReportTemplate` = **satu baris per user** (`userId @unique`) dengan **3
   kolom**: `activity`, `learning`, `obstacles`. Bukan banyak baris.
 - Isi template **bukan rahasia**, boleh dikembalikan penuh ke klien (beda dari
@@ -381,8 +411,8 @@ Prioritas test:
     tanggal, form memanggil `router.refresh()` agar baris baru langsung muncul
     tanpa refresh manual. `router.refresh()` TIDAK mengubah `key` (query sama),
     jadi state form yang sedang diketik tetap utuh.
-  Kutipan lama "Riwayat Laporan Terakhir" dari `SubmitLog` dihapus dari halaman ini
-  (riwayat percobaan kirim tetap lengkap di `/history`).
+    Kutipan lama "Riwayat Laporan Terakhir" dari `SubmitLog` dihapus dari halaman ini
+    (riwayat percobaan kirim tetap lengkap di `/history`).
 - **Date picker tanggal khusus = `DatePicker` sendiri** (`src/components/ui/date-picker.tsx`),
   bukan `<input type="date">` bawaan peramban: input bawaan tidak mengizinkan
   menonaktifkan tanggal tertentu, sedangkan tanggal LIBUR (Sabtu/Minggu + libur
@@ -411,16 +441,16 @@ Prioritas test:
 
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
 (gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan
-test benar-benar bisa gagal (sengaja rusakkan kode → test harus merah → 
+test benar-benar bisa gagal (sengaja rusakkan kode → test harus merah →
 kembalikan), karena test yang selalu hijau belum tentu menguji apa pun.
 
 ### Catatan `npm audit`
+
 `npm audit` melaporkan 6 kerentanan (`vitest`, `@vitest/mocker`, `deepmerge-ts`,
 `mysql2`). Semuanya **dev/transitif** dan tidak masuk bundle produksi; `mysql2`
 (driver MySQL) bahkan tidak pernah dirujuk karena proyek memakai Postgres.
 **Jangan** jalankan `npm audit fix --force`, risikonya breaking change demi
 paket yang tidak terpakai.
-
 
 ---
 
@@ -432,6 +462,7 @@ Agent **boleh**: menulis file, mengedit kode, menjalankan test, menjalankan
 build, memeriksa `git status` / `git diff` / `git log` (read-only).
 
 Agent **TIDAK boleh**:
+
 - `git commit`
 - `git push` / `git push --force`
 - `git tag`, `git merge`, `git rebase`, `git reset`
@@ -461,7 +492,8 @@ tidak sengaja ikut ter-commit.
 ### Kalau pemilik secara eksplisit meminta commit
 
 Pemilik tetap boleh memerintahkan commit untuk sesi tertentu, misalnya
-*"commit dan push sekarang"*. Kalau itu terjadi, agent **boleh** melakukannya, tetapi tetap wajib:
+_"commit dan push sekarang"_. Kalau itu terjadi, agent **boleh** melakukannya, tetapi tetap wajib:
+
 - memeriksa `git status` dan `git diff` **sebelum** `git add`,
 - memastikan **tidak ada** file `.env`, kredensial, atau rahasia yang ikut,
 - memakai pesan commit yang jelas dan jujur (tidak melebih-lebihkan).
@@ -485,10 +517,10 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 
 ## 10. Hubungan dengan Proyek Python Lama
 
-| | `maganghub-autoabsen` | Proyek ini |
-| :--- | :--- | :--- |
-| Mesin submit | Playwright + Chromium | Direct REST API |
-| Status | Produksi, tetap jalan | Baru, tahap rencana |
+|              | `maganghub-autoabsen` | Proyek ini          |
+| :----------- | :-------------------- | :------------------ |
+| Mesin submit | Playwright + Chromium | Direct REST API     |
+| Status       | Produksi, tetap jalan | Baru, tahap rencana |
 
 - **Tidak saling bergantung.** Proyek web tidak boleh mengimpor dari proyek
   Python, dan sebaliknya.
@@ -501,16 +533,15 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 
 ## 11. Q&A Cepat untuk Agent
 
-| Situasi | Tindakan |
-| :--- | :--- |
-| Selesai menulis kode | **Berhenti. Jangan commit.** Serahkan ke pemilik |
-| Butuh nilai rahasia untuk test | Buat kunci acak sementara; jangan pakai nilai nyata |
-| Ragu soal arsitektur | Baca `SPEC.md`; kalau menyimpang, catat di sana |
-| Diminta menyentuh folder Python lama | **Tolak**, kecuali pemilik memerintahkan eksplisit |
-| Kena `403` dari portal | Tampilkan pesannya; jangan spoof UA / proxy |
-| Input dari pengguna | Validasi dengan Zod dulu, di server |
-| Menyimpan kredensial | Enkripsi AES-256-GCM dulu, baru masuk DB |
-| Gagal submit | Catat gagal apa adanya; jangan tandai sukses |
-| Portal balas `409` | Sudah ada presensi hari itu, catat, jangan ulangi |
-| Ragu perubahan aman | `npm test` + `npm run typecheck` + `npm run build` |
-
+| Situasi                              | Tindakan                                            |
+| :----------------------------------- | :-------------------------------------------------- |
+| Selesai menulis kode                 | **Berhenti. Jangan commit.** Serahkan ke pemilik    |
+| Butuh nilai rahasia untuk test       | Buat kunci acak sementara; jangan pakai nilai nyata |
+| Ragu soal arsitektur                 | Baca `SPEC.md`; kalau menyimpang, catat di sana     |
+| Diminta menyentuh folder Python lama | **Tolak**, kecuali pemilik memerintahkan eksplisit  |
+| Kena `403` dari portal               | Tampilkan pesannya; jangan spoof UA / proxy         |
+| Input dari pengguna                  | Validasi dengan Zod dulu, di server                 |
+| Menyimpan kredensial                 | Enkripsi AES-256-GCM dulu, baru masuk DB            |
+| Gagal submit                         | Catat gagal apa adanya; jangan tandai sukses        |
+| Portal balas `409`                   | Sudah ada presensi hari itu, catat, jangan ulangi   |
+| Ragu perubahan aman                  | `npm test` + `npm run typecheck` + `npm run build`  |
