@@ -700,7 +700,14 @@ function TopikBatasan() {
           <li className="flex gap-2">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
             <span>
-              Tidak ada fitur AI atau integrasi GitHub, sesuai cakupan proyek.
+              Draf AI opsional; bila gagal, draf disusun lokal tanpa AI.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            <span>
+              Tidak ada integrasi GitHub sebagai fitur aplikasi, sesuai cakupan
+              proyek.
             </span>
           </li>
           <li className="flex gap-2">

@@ -527,7 +527,7 @@ export default function ReportTemplatesForm({
               onChange={(e) => setUnit(e.target.value)}
               maxLength={120}
               disabled={drafting || saving || deleting}
-              placeholder="mis. Divisi Teknologi Informasi"
+              placeholder="mis. IT, Operasional, Finance"
             />
           </div>
           <Button

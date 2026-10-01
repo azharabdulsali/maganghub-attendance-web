@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { refreshTokenHealth } from "@/lib/credential-session";
+import { checkReportField } from "@/lib/report-rules";
 import { cn } from "@/lib/utils";
 import {
   parseRangeFilter,
@@ -68,7 +69,7 @@ export default async function DashboardPage({
   // Status kredensial nyata, supaya kartu di bawah jujur saat sesi Monev mati,
   // bukan selalu menyuruh "Atur kredensial" walau semuanya sehat.
   // Statistik ringkas, dihitung di server, hanya membaca data milik pengguna.
-  const [credential, { stats, trend, chartDays }, tokenHealth] =
+  const [credential, { stats, trend, chartDays }, tokenHealth, template] =
     await Promise.all([
       prisma.maganghubCredential.findUnique({
         where: { userId },
@@ -76,10 +77,28 @@ export default async function DashboardPage({
       }),
       getDashboardStats(userId, range, now),
       refreshTokenHealth(userId),
+      // Template harian dipakai untuk menilai kesiapan "3 laporan". Hanya kolom
+      // yang dibutuhkan yang diambil; aturan panjangnya menyusul di bawah.
+      prisma.reportTemplate.findUnique({
+        where: { userId },
+        select: { activity: true, learning: true, obstacles: true },
+      }),
     ]);
 
   const punyaToken = Boolean(credential?.tokenCiphertext);
   const perluPerhatian = credential?.status === "INVALID";
+
+  // "3 laporan sudah disimpan" = ketiga template tetap (Uraian Aktivitas,
+  // Pembelajaran, Kendala) sudah terisi DAN memenuhi panjang minimal portal.
+  // Memakai `checkReportField` (sumber kebenaran yang sama dengan jalur kirim)
+  // supaya item ini tidak pernah hijau untuk isi yang sebenarnya ditolak portal.
+  // Lihat src/lib/report-rules.ts & SPEC.md §5.3.
+  const templateLengkap = Boolean(
+    template &&
+      checkReportField(template.activity) === null &&
+      checkReportField(template.learning) === null &&
+      checkReportField(template.obstacles) === null,
+  );
 
   // Tanggal hari ini di zona Asia/Jakarta (YYYY-MM-DD), dipakai panel
   // "Status Hari Ini". Memakai helper yang sama dengan penghitung tren supaya
@@ -251,6 +270,9 @@ export default async function DashboardPage({
               </ReadinessItem>
               <ReadinessItem ok={punyaToken}>
                 Token sesi Monev aktif
+              </ReadinessItem>
+              <ReadinessItem ok={templateLengkap}>
+                3 laporan sudah disimpan
               </ReadinessItem>
               <ReadinessItem ok={punyaToken && !perluPerhatian}>
                 Siap mengirim absensi harian

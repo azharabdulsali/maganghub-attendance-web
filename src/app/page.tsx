@@ -120,11 +120,13 @@ const PANDUAN = [
 ];
 
 // Batasan yang diakui terbuka, kebalikan dari klaim berlebihan. Semua ini
-// sesuai SPEC: tidak ada AI, tidak ada integrasi GitHub, laporan tetap harus
-// pernah dibuat sendiri setidaknya sekali untuk mengisi template.
+// sesuai SPEC: draf AI bisa gagal (selalu ada fallback lokal), tidak ada
+// integrasi GitHub sebagai fitur aplikasi, dan laporan tetap harus pernah
+// dibuat sendiri setidaknya sekali untuk mengisi template.
 const BATASAN = [
   "Tidak menulis laporan atas nama Anda, isi template tetap dari Anda.",
-  "Tidak ada fitur AI atau integrasi GitHub, sesuai cakupan proyek.",
+  "Draf AI bersifat opsional; bila gagal, draf disusun lokal tanpa AI.",
+  "Tidak ada integrasi GitHub sebagai fitur aplikasi, sesuai cakupan proyek.",
   "Bergantung pada portal Monev; bila portal berubah, kirim bisa gagal.",
 ];
 
@@ -270,7 +272,7 @@ export default function Home() {
         <section id="fitur" className="mb-14 scroll-mt-20 sm:mb-20">
           <div className="mx-auto mb-8 max-w-xl space-y-2 text-center">
             <h2 className="text-2xl font-heading sm:text-3xl">
-              Masalah nyata yang diselesaikan
+              Solusi agar absen dan logbook tidak pernah terlewat
             </h2>
             <p className="text-sm text-foreground/80">
               Bukan sekadar bot, asisten yang menjaga hak dan penilaian magang
