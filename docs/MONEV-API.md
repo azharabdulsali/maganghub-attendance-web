@@ -698,6 +698,26 @@ direkam** pada kirim sungguhan pertama untuk tanggal yang belum ada. Fungsi murn
 membawa body JSON, pesan portal kini dipakai di audit log (fallback ke teks
 internal bila body kosong/HTML).
 
+### 8.5a ✅ Pra-cek duplikat (RB-03) SUDAH DIIMPLEMENTASI
+
+Sesuai §12.6 dan SPEC §11B, sebelum setiap pengiriman nyata kita **membaca dulu**
+`GET /api/v1/daily-logs?date=<target>` dan **berhenti bila laporan tanggal itu
+sudah ada** — jangan bergantung pada `409` saja. Alasannya konkret: portal
+**tidak** menolak submit ulang untuk tanggal yang sudah diisi lewat **UI portal
+(jalur manual pengguna)**; `409` hanya muncul bila endpoint API ini dipanggil dua
+kali. Tanpa pra-cek, cron bisa **menimpa** laporan manual (kejadian nyata:
+laporan manual 18:00 lalu cron 18:52 membalas `201`).
+
+Titik pemasangan: `src/lib/monev-submit.ts` menyediakan `checkDailyLogExists()`
+(jaringan) + `interpretDailyLogs()`/`duplicateGuardAllows()` (murni), dan
+`src/lib/perform-submit.ts` memanggilnya **setelah access token diperoleh, sebelum
+`submitReport`**. Kebijakan default-**aman**: hanya `ABSENT` yang mengizinkan
+kirim; `EXISTS` → `ALREADY_SUBMITTED` (dicatat `DUPLICATE`); `UNKNOWN` (jaringan
+gagal / 401 / bentuk respons tak dikenal) **juga membatalkan** (dicatat `FAILED`)
+— melewatkan sehari jauh lebih ringan daripada menghapus tulisan pengguna.
+Pengecekan dilewati saat dry-run (tidak menyentuh jaringan). Pencocokan
+memakai **tanggal target**, bukan sekadar "ada log" (§12.7.3).
+
 ### 8.5b Route submit (Tahap 4), ✅ TERPASANG, gated
 
 `src/app/api/reports/submit/route.ts` menyatukan alur penuh:

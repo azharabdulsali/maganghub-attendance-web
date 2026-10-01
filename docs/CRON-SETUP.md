@@ -179,7 +179,8 @@ Bila server memakai UTC, jadwalnya jadi `30 0 * * *`.
 | `200 { dryRun: true, status: "DRY_RUN" }` | Belum `ALLOW_LIVE_SUBMIT=1`. | Nyalakan gerbang bila sudah siap. |
 | `200 { skipped: true }` | Otomasi nonaktif, **atau** libur/program berakhir. | Cek `reason` di body. |
 | `200 { ok: false, status: "DUPLICATE" }` | Laporan tanggal itu sudah ada di portal. | Normal. |
-| `200 { ok: false, status: "FAILED" }` | Token tidak terbaca / sesi Monev mati. | Login ulang di portal, tempel token baru. |
+| `200 { ok: false, status: "ALREADY_SUBMITTED" }` | Pra-cek `GET /daily-logs` menemukan laporan tanggal itu **sudah ada** (mis. diisi manual lewat UI portal) → kirim dibatalkan agar tidak menimpa. | Normal, tidak perlu tindakan. |
+| `200 { ok: false, status: "FAILED" }` | Token tidak terbaca / sesi Monev mati, **atau** pra-cek duplikat tak bisa dipastikan (jaringan/401) sehingga kirim dibatalkan demi aman. | Bila sebabnya sesi: login ulang di portal, tempel token baru. Bila pra-cek gagal: cek koneksi portal, coba lagi jam berikutnya. |
 | `401` | Kunci salah/kosong. | Salin ulang `webhookKey` dari dashboard (atau pakai header Bearer). |
 | `400` | Rahasia kosong / tanggal tidak sah. | Perbaiki URL/header cron. |
 | `429` | Kena rate limit (30/5 menit per IP). | Kurangi frekuensi; bukan aktivitas normal. |

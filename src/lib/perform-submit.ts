@@ -14,7 +14,12 @@
 
 import { decrypt } from "@/lib/crypto";
 import { prisma } from "@/lib/prisma";
-import { exchangeRefreshForAccess, submitReport } from "@/lib/monev-submit";
+import {
+  checkDailyLogExists,
+  duplicateGuardAllows,
+  exchangeRefreshForAccess,
+  submitReport,
+} from "@/lib/monev-submit";
 import { isAccessTokenFresh } from "@/lib/credential-session-policy";
 import {
   assessReadiness,
@@ -337,6 +342,41 @@ export async function performSubmit(opts: {
     }
 
     accessToken = exchange.accessToken;
+  }
+
+  // --- Pra-cek duplikat (RB-03) ----------------------------------------------
+  // WAJIB sebelum menembak submit (MONEV-API §12.6). Portal TIDAK menolak submit
+  // ulang untuk tanggal yang sudah diisi lewat UI portal — hanya `409` bila
+  // endpoint API dipanggil dua kali. Tanpa pra-cek ini, cron bisa menimpa
+  // laporan manual pengguna (kejadian nyata: manual 18:00, cron 18:52 → 201).
+  //
+  // Kalau pra-cek gagal (`UNKNOWN`, mis. jaringan), kita BATALKAN demi aman:
+  // melewatkan sehari jauh lebih ringan daripada menghapus tulisan pengguna.
+  const presence = await checkDailyLogExists(accessToken, readiness.date);
+  if (!duplicateGuardAllows(presence)) {
+    const unknownMessage =
+      presence.status === "UNKNOWN" ? presence.message : "";
+    const message =
+      presence.status === "EXISTS"
+        ? "Laporan untuk tanggal ini sudah ada di portal. Dibatalkan agar tidak menimpa."
+        : `Cek laporan ke portal gagal (${unknownMessage}). Dibatalkan demi aman.`;
+
+    // EXISTS = fakta "sudah ada" → catat DUPLICATE (agar terlihat di riwayat,
+    // sama seperti respons 409). UNKNOWN = tak bisa dipastikan → FAILED.
+    await safeLog({
+      userId,
+      status: presence.status === "EXISTS" ? "DUPLICATE" : "FAILED",
+      message,
+      trigger,
+    });
+
+    return {
+      kind: "SUBMITTED",
+      ok: false,
+      status: presence.status === "EXISTS" ? "ALREADY_SUBMITTED" : "ERROR",
+      message,
+      date: readiness.date,
+    };
   }
 
   // --- Kirim -----------------------------------------------------------------

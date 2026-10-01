@@ -270,6 +270,170 @@ export async function submitReport(
 }
 
 // ---------------------------------------------------------------------------
+// Cek duplikasi (RB-03), `GET /api/v1/daily-logs` — SPEC.md §11B, MONEV-API §8.2
+// ---------------------------------------------------------------------------
+//
+// KENAPA ini ada: portal Monev TIDAK menolak submit ulang untuk tanggal yang
+// sudah diisi lewat UI portal (jalur manual pengguna). Ia hanya membalas `409`
+// bila ENDPOINT API ini dipanggil dua kali. Akibatnya, kalau kita mengandalkan
+// `409` saja, cron bisa MENIMPA laporan yang sudah diisi manual — kejadian nyata
+// terlihat di audit (laporan manual 18:00 tertimpa cron 18:52).
+//
+// Aturan tegas dari MONEV-API §12.6:
+//   "fitur submit web WAJIB memeriksa status hari ini lebih dulu dan berhenti
+//    bila sudah ada."
+//
+// Bot Python lama pun masih berjalan di produksi, jadi pra-cek ini melindungi
+// dari tabrakan lintas-sistem.
+
+/** Hasil pra-cek keberadaan daily-log untuk satu tanggal. */
+export type DailyLogPresence =
+  /** Pasti sudah ada → batalkan, jangan tembak submit. */
+  | { status: "EXISTS" }
+  /** Dipastikan belum ada → aman melanjutkan. */
+  | { status: "ABSENT" }
+  /**
+   * Tidak bisa dipastikan (jaringan mati, 401/403, bentuk respons tak dikenal).
+   * Pemanggil MEMUTUSKAN: default aman = batalkan. Lihat `duplicateGuardAllows`.
+   */
+  | { status: "UNKNOWN"; message: string };
+
+/** Ambil array item dari beragam bentuk amplop respons portal. MURNI. */
+function extractList(parsed: unknown): unknown[] | null {
+  if (Array.isArray(parsed)) return parsed;
+  if (!parsed || typeof parsed !== "object") return null;
+  const rec = parsed as Record<string, unknown>;
+  for (const key of ["data", "items", "results", "daily_logs", "dailyLogs"]) {
+    const v = rec[key];
+    if (Array.isArray(v)) return v;
+    // `data` kadang membungkus lagi: { data: { items: [...] } }
+    if (v && typeof v === "object") {
+      const inner = v as Record<string, unknown>;
+      for (const k2 of ["items", "results", "data"]) {
+        if (Array.isArray(inner[k2])) return inner[k2] as unknown[];
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Tafsirkan respons daily-logs: apakah daftar berisi log untuk `date`? MURNI.
+ *
+ * Dipisah dari jaringan supaya bisa diuji tanpa fetch. Bentuk respons portal
+ * belum terekam sempurna (§8.2/§8.4), jadi fungsi ini toleran.
+ *
+ * Aturan penting (§12.7.3, bug laten bot lama): cocokkan TANGGAL TARGET, jangan
+ * sekadar "ada log". Portal bisa mengembalikan log untuk tanggal lain.
+ */
+export function interpretDailyLogs(
+  httpCode: number,
+  bodyText: string,
+  targetDate: string,
+): DailyLogPresence {
+  if (httpCode === 401 || httpCode === 403) {
+    return {
+      status: "UNKNOWN",
+      message: "Sesi Monev tidak berwenang untuk cek laporan.",
+    };
+  }
+  if (httpCode < 200 || httpCode >= 300) {
+    return {
+      status: "UNKNOWN",
+      message: `Portal membalas HTTP ${httpCode} saat cek laporan.`,
+    };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(bodyText);
+  } catch {
+    return { status: "UNKNOWN", message: "Respons cek laporan bukan JSON." };
+  }
+
+  const list = extractList(parsed);
+  if (list === null) {
+    return { status: "UNKNOWN", message: "Bentuk respons cek laporan tidak dikenal." };
+  }
+
+  for (const item of list) {
+    if (!item || typeof item !== "object") continue;
+    const rec = item as Record<string, unknown>;
+    for (const key of ["date", "log_date", "daily_log_date"]) {
+      const v = rec[key];
+      if (typeof v === "string" && v.slice(0, 10) === targetDate) {
+        return { status: "EXISTS" };
+      }
+    }
+  }
+  return { status: "ABSENT" };
+}
+
+/**
+ * Putuskan boleh-kirim berdasarkan hasil pra-cek. MURNI.
+ *
+ * Kebijakan default: HANYA `ABSENT` yang mengizinkan kirim. `EXISTS` jelas
+ * membatalkan; `UNKNOWN` juga membatalkan — lebih baik melewatkan sehari
+ * daripada menimpa laporan yang sudah ada (laporan besok tetap bisa dikirim).
+ */
+export function duplicateGuardAllows(presence: DailyLogPresence): boolean {
+  return presence.status === "ABSENT";
+}
+
+/**
+ * Tembak `GET /api/v1/daily-logs?date=<target>`. **Menembak jaringan**.
+ *
+ * Bentuk amplop responsnya belum sepenuhnya terekam, jadi penafsiran diserahkan
+ * ke `interpretDailyLogs` yang toleran. Kegagalan apa pun → `UNKNOWN`, BUKAN
+ * `ABSENT`: jangan pernah melanjutkan kirim hanya karena cek-nya gagal — itu
+ * justru jalan menuju penimpaan.
+ */
+export async function checkDailyLogExists(
+  accessToken: string,
+  targetDate: string,
+  options?: { buildId?: string; timeoutMs?: number },
+): Promise<DailyLogPresence> {
+  if (!accessToken || accessToken.trim().length === 0) {
+    return { status: "UNKNOWN", message: "Token akses kosong saat cek laporan." };
+  }
+
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const buildId = options?.buildId ?? (await fetchBuildId({ timeoutMs }));
+    const url =
+      `${MONEV_API_BASE}${READ_ENDPOINTS.dailyLogs}` +
+      `?date=${encodeURIComponent(targetDate)}&limit=100`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        Origin: MONEV_FRONTEND_ORIGIN,
+        "User-Agent": MONEV_USER_AGENT,
+        "x-frontend-build-id": buildId,
+        accept: "application/json, */*",
+        authorization: `Bearer ${accessToken}`,
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    const text = await res.text().catch(() => "");
+    return interpretDailyLogs(res.status, text, targetDate);
+  } catch (err) {
+    const message =
+      err instanceof Error && err.name === "AbortError"
+        ? "Waktu cek laporan ke portal habis."
+        : "Tidak dapat menghubungi portal Monev saat cek laporan.";
+    return { status: "UNKNOWN", message };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Penukaran refresh token → access token (§4.4)
 // ---------------------------------------------------------------------------
 

@@ -16,6 +16,8 @@ import {
   exchangeRefreshForAccess,
   interpretRefreshResponse,
   interpretSubmitResponse,
+  interpretDailyLogs,
+  duplicateGuardAllows,
   submitReport,
   type ReportPayload,
 } from "./monev-submit";
@@ -313,3 +315,77 @@ describe("READ_ENDPOINTS.home (rekaman §4.5)", () => {
     expect(READ_ENDPOINTS.home).toBe("/api/v1/users/me/home");
   });
 });
+
+describe("interpretDailyLogs, pra-cek duplikat (§8.2, §12.6)", () => {
+  const DATE = "2026-09-28";
+
+  it("ABSENT saat daftar kosong", () => {
+    expect(interpretDailyLogs(200, JSON.stringify({ data: [] }), DATE)).toEqual({
+      status: "ABSENT",
+    });
+  });
+
+  it("ABSENT saat amplop tak dikenal-rekognisi tapi daftar ada & kosong", () => {
+    expect(interpretDailyLogs(200, JSON.stringify({ items: [] }), DATE)).toEqual({
+      status: "ABSENT",
+    });
+  });
+
+  it("EXISTS saat ada item bertanggal sama (field `date`)", () => {
+    const body = JSON.stringify({
+      data: [{ id: "1", date: "2026-09-28T00:00:00Z", activity_log: "x" }],
+    });
+    expect(interpretDailyLogs(200, body, DATE)).toEqual({ status: "EXISTS" });
+  });
+
+  it("EXISTS walau tanggal berisi waktu (cocok 10 karakter pertama)", () => {
+    const body = JSON.stringify({ items: [{ log_date: "2026-09-28 18:00:00" }] });
+    expect(interpretDailyLogs(200, body, DATE)).toEqual({ status: "EXISTS" });
+  });
+
+  it("ABSENT bila hanya ada log tanggal LAIN (bug laten bot lama §12.7.3)", () => {
+    const body = JSON.stringify({
+      data: [{ date: "2026-09-27" }, { date: "2026-09-26" }],
+    });
+    expect(interpretDailyLogs(200, body, DATE)).toEqual({ status: "ABSENT" });
+  });
+
+  it("UNKNOWN (bukan ABSENT) saat 401/403", () => {
+    expect(interpretDailyLogs(401, "", DATE).status).toBe("UNKNOWN");
+    expect(interpretDailyLogs(403, "", DATE).status).toBe("UNKNOWN");
+  });
+
+  it("UNKNOWN saat HTTP 5xx", () => {
+    expect(interpretDailyLogs(500, "{}", DATE).status).toBe("UNKNOWN");
+  });
+
+  it("UNKNOWN saat badan bukan JSON", () => {
+    expect(interpretDailyLogs(200, "<html>error</html>", DATE).status).toBe("UNKNOWN");
+  });
+
+  it("UNKNOWN saat bentuk respons tidak dikenal", () => {
+    expect(interpretDailyLogs(200, JSON.stringify({ foo: "bar" }), DATE).status).toBe(
+      "UNKNOWN",
+    );
+  });
+
+  it("membaca array di akar maupun `data.items` bersarang", () => {
+    const root = JSON.stringify([{ date: DATE }]);
+    expect(interpretDailyLogs(200, root, DATE)).toEqual({ status: "EXISTS" });
+    const nested = JSON.stringify({ data: { items: [{ date: DATE }] } });
+    expect(interpretDailyLogs(200, nested, DATE)).toEqual({ status: "EXISTS" });
+  });
+});
+
+describe("duplicateGuardAllows, kebijakan default-aman (§12.6)", () => {
+  it("hanya ABSENT yang mengizinkan kirim", () => {
+    expect(duplicateGuardAllows({ status: "ABSENT" })).toBe(true);
+  });
+  it("EXISTS membatalkan", () => {
+    expect(duplicateGuardAllows({ status: "EXISTS" })).toBe(false);
+  });
+  it("UNKNOWN juga membatalkan (jangan timpa saat ragu)", () => {
+    expect(duplicateGuardAllows({ status: "UNKNOWN", message: "x" })).toBe(false);
+  });
+});
+

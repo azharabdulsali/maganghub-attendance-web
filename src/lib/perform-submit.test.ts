@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const decryptMock = vi.fn();
 const submitReportMock = vi.fn();
 const exchangeMock = vi.fn();
+const checkDailyLogMock = vi.fn();
 const submitLogCreateMock = vi.fn();
 const credentialUpdateMock = vi.fn();
 
@@ -21,6 +22,10 @@ vi.mock("@/lib/crypto", () => ({
 vi.mock("@/lib/monev-submit", () => ({
   submitReport: (...args: unknown[]) => submitReportMock(...args),
   exchangeRefreshForAccess: (...args: unknown[]) => exchangeMock(...args),
+  checkDailyLogExists: (...args: unknown[]) => checkDailyLogMock(...args),
+  // Kebijakan nyata: hanya ABSENT yang lolos. Disalin apa adanya agar tes
+  // mencerminkan perilaku produksi, bukan versi yang dilonggarkan.
+  duplicateGuardAllows: (p: { status: string }) => p.status === "ABSENT",
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -69,6 +74,9 @@ beforeEach(() => {
   // menguji dekripsi/tukar-token. Blok gerbang menyetelnya sendiri (delete/"0").
   process.env.ALLOW_LIVE_SUBMIT = "1";
   submitLogCreateMock.mockResolvedValue({});
+  // Default: portal LAPOR belum ada laporan hari ini → aman lanjut kirim.
+  // Tes khusus pra-cek menimpanya sendiri.
+  checkDailyLogMock.mockResolvedValue({ status: "ABSENT" });
 });
 
 describe("performSubmit, kesiapan", () => {
@@ -294,6 +302,63 @@ describe("performSubmit, access token hasil login otomatis", () => {
       tokenIv: null,
       tokenAuthTag: null,
     };
+
+describe("performSubmit, pra-cek duplikat (§12.6)", () => {
+  function arrangeLive() {
+    process.env.ALLOW_LIVE_SUBMIT = "1";
+    decryptMock.mockReturnValue("refresh-token");
+    exchangeMock.mockResolvedValue({ status: "OK", accessToken: "at", httpCode: 200 });
+    submitReportMock.mockResolvedValue({ status: "SUCCESS", httpCode: 200 });
+  }
+
+  it("laporan sudah ada → BATAL, submit TIDAK ditembak", async () => {
+    arrangeLive();
+    checkDailyLogMock.mockResolvedValue({ status: "EXISTS" });
+
+    const out = await performSubmit(base());
+
+    expect(submitReportMock).not.toHaveBeenCalled();
+    expect(out).toMatchObject({
+      kind: "SUBMITTED",
+      ok: false,
+      status: "ALREADY_SUBMITTED",
+    });
+    expect(submitLogCreateMock.mock.calls[0][0].data.status).toBe("DUPLICATE");
+  });
+
+  it("hasil cek tak pasti (UNKNOWN) → BATAL demi aman, tidak menimpa", async () => {
+    arrangeLive();
+    checkDailyLogMock.mockResolvedValue({ status: "UNKNOWN", message: "jaringan mati" });
+
+    const out = await performSubmit(base());
+
+    expect(submitReportMock).not.toHaveBeenCalled();
+    expect(out).toMatchObject({ kind: "SUBMITTED", ok: false, status: "ERROR" });
+    expect(submitLogCreateMock.mock.calls[0][0].data.status).toBe("FAILED");
+  });
+
+  it("pra-cek ABSENT → lanjut kirim seperti biasa", async () => {
+    arrangeLive();
+    checkDailyLogMock.mockResolvedValue({ status: "ABSENT" });
+
+    const out = await performSubmit(base());
+
+    expect(checkDailyLogMock).toHaveBeenCalledWith("at", WEEKDAY);
+    expect(submitReportMock).toHaveBeenCalledTimes(1);
+    expect(out).toMatchObject({ kind: "SUBMITTED", ok: true });
+  });
+
+  it("pra-cek DILEWATI saat dry-run (tidak menyentuh jaringan portal)", async () => {
+    process.env.ALLOW_LIVE_SUBMIT = "0";
+
+    const out = await performSubmit(base());
+
+    expect(out.kind).toBe("DRY_RUN");
+    expect(checkDailyLogMock).not.toHaveBeenCalled();
+    expect(submitReportMock).not.toHaveBeenCalled();
+  });
+});
+
     const out = await performSubmit(base({ credential: kosong }));
     expect(out).toMatchObject({ kind: "NOT_READY", reason: "NO_TOKEN" });
   });
