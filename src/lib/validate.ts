@@ -5,6 +5,7 @@
 
 import { z } from "zod";
 import { checkReportField } from "./report-rules";
+import { isPlainDate } from "./report-policy";
 
 /**
  * Kredensial portal Monev. Berbeda dari akun aplikasi ini, password Monev
@@ -77,6 +78,32 @@ export const reportTemplatesSchema = z.object({
 });
 
 export type ReportTemplatesInput = z.infer<typeof reportTemplatesSchema>;
+
+/**
+ * Template laporan untuk SATU tanggal tertentu (penimpa template harian).
+ *
+ * Tiga kolomnya memakai aturan yang SAMA PERSIS dengan template harian
+ * (`reportTemplatesSchema`), portal tidak membedakan asal template, jadi
+ * syarat 100–5000 karakter juga sama. Yang ditambah hanya `date`.
+ *
+ * Tanggal divalidasi dua lapis:
+ *   - bentuk `YYYY-MM-DD` lewat regex, lalu
+ *   - keberadaan tanggalnya lewat `isPlainDate` (menolak 2026-02-30 dan
+ *     2026-13-01 yang lolos regex tapi bukan tanggal nyata).
+ *
+ * Sengaja TIDAK menolak tanggal yang jatuh pada hari libur: menyimpan template
+ * untuk Sabtu itu sah dan berguna (mis. agenda khusus), hanya saja otomasi
+ * tidak akan mengirim di hari itu. Aturan libur tetap di report-policy.ts.
+ */
+export const datedReportTemplateSchema = reportTemplatesSchema.extend({
+  date: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal harus berformat YYYY-MM-DD.")
+    .refine(isPlainDate, "Tanggal itu tidak ada di kalender."),
+});
+
+export type DatedReportTemplateInput = z.infer<typeof datedReportTemplateSchema>;
 
 /**
  * Input untuk menyusun DRAF laporan (tombol "Susun dengan Bantuan").

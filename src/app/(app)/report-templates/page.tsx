@@ -10,7 +10,9 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { todayInJakarta, toPlainDate } from "@/lib/submit-service";
 import ReportTemplatesForm from "./report-templates-form";
+import DatedTemplatesList from "./dated-templates-list";
 import RecentSubmitHistory from "./recent-submit-history";
 
 export default async function ReportTemplatesPage() {
@@ -24,6 +26,28 @@ export default async function ReportTemplatesPage() {
     where: { userId: session.user.id },
     select: { activity: true, learning: true, obstacles: true, updatedAt: true },
   });
+
+  // Template khusus tanggal (penimpa). Diambil sekaligus agar tidak ada dua
+  // query berurutan pada halaman yang sama.
+  const datedRows = await prisma.datedReportTemplate.findMany({
+    where: { userId: session.user.id },
+    orderBy: { date: "asc" },
+    select: {
+      date: true,
+      activity: true,
+      learning: true,
+      obstacles: true,
+      updatedAt: true,
+    },
+  });
+
+  const datedTemplates = datedRows.map((r) => ({
+    date: toPlainDate(r.date),
+    activity: r.activity,
+    learning: r.learning,
+    obstacles: r.obstacles,
+    updatedAt: r.updatedAt.toISOString(),
+  }));
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
@@ -41,6 +65,13 @@ export default async function ReportTemplatesPage() {
         initialLearning={template?.learning ?? ""}
         initialObstacles={template?.obstacles ?? ""}
         updatedAt={template?.updatedAt?.toISOString() ?? null}
+      />
+
+      {/* Template khusus tanggal, ditaruh SETELAH form harian karena ia
+          "penimpa": pengguna perlu memahami dasar (harian) lebih dulu. */}
+      <DatedTemplatesList
+        today={todayInJakarta()}
+        initialTemplates={datedTemplates}
       />
 
       {/* Ringkasan riwayat submit, ditaruh SETELAH template karena sifatnya

@@ -276,6 +276,7 @@ export type UserWhereInput = {
   sessions?: Prisma.SessionListRelationFilter
   credential?: Prisma.XOR<Prisma.MaganghubCredentialNullableScalarRelationFilter, Prisma.MaganghubCredentialWhereInput> | null
   template?: Prisma.XOR<Prisma.ReportTemplateNullableScalarRelationFilter, Prisma.ReportTemplateWhereInput> | null
+  datedTemplates?: Prisma.DatedReportTemplateListRelationFilter
   reports?: Prisma.ReportListRelationFilter
   submitLogs?: Prisma.SubmitLogListRelationFilter
   automation?: Prisma.XOR<Prisma.AutomationConfigNullableScalarRelationFilter, Prisma.AutomationConfigWhereInput> | null
@@ -300,6 +301,7 @@ export type UserOrderByWithRelationInput = {
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   credential?: Prisma.MaganghubCredentialOrderByWithRelationInput
   template?: Prisma.ReportTemplateOrderByWithRelationInput
+  datedTemplates?: Prisma.DatedReportTemplateOrderByRelationAggregateInput
   reports?: Prisma.ReportOrderByRelationAggregateInput
   submitLogs?: Prisma.SubmitLogOrderByRelationAggregateInput
   automation?: Prisma.AutomationConfigOrderByWithRelationInput
@@ -327,6 +329,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   sessions?: Prisma.SessionListRelationFilter
   credential?: Prisma.XOR<Prisma.MaganghubCredentialNullableScalarRelationFilter, Prisma.MaganghubCredentialWhereInput> | null
   template?: Prisma.XOR<Prisma.ReportTemplateNullableScalarRelationFilter, Prisma.ReportTemplateWhereInput> | null
+  datedTemplates?: Prisma.DatedReportTemplateListRelationFilter
   reports?: Prisma.ReportListRelationFilter
   submitLogs?: Prisma.SubmitLogListRelationFilter
   automation?: Prisma.XOR<Prisma.AutomationConfigNullableScalarRelationFilter, Prisma.AutomationConfigWhereInput> | null
@@ -389,6 +392,7 @@ export type UserCreateInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
@@ -413,6 +417,7 @@ export type UserUncheckedCreateInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
@@ -437,6 +442,7 @@ export type UserUpdateInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
@@ -461,6 +467,7 @@ export type UserUncheckedUpdateInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
@@ -645,6 +652,20 @@ export type UserUpdateOneRequiredWithoutTemplateNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTemplateInput, Prisma.UserUpdateWithoutTemplateInput>, Prisma.UserUncheckedUpdateWithoutTemplateInput>
 }
 
+export type UserCreateNestedOneWithoutDatedTemplatesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDatedTemplatesInput, Prisma.UserUncheckedCreateWithoutDatedTemplatesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDatedTemplatesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutDatedTemplatesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDatedTemplatesInput, Prisma.UserUncheckedCreateWithoutDatedTemplatesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDatedTemplatesInput
+  upsert?: Prisma.UserUpsertWithoutDatedTemplatesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDatedTemplatesInput, Prisma.UserUpdateWithoutDatedTemplatesInput>, Prisma.UserUncheckedUpdateWithoutDatedTemplatesInput>
+}
+
 export type UserCreateNestedOneWithoutReportsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutReportsInput, Prisma.UserUncheckedCreateWithoutReportsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutReportsInput
@@ -745,6 +766,7 @@ export type UserCreateWithoutAccountsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
@@ -768,6 +790,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
@@ -807,6 +830,7 @@ export type UserUpdateWithoutAccountsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
@@ -830,6 +854,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
@@ -853,6 +878,7 @@ export type UserCreateWithoutCredentialInput = {
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
@@ -876,6 +902,7 @@ export type UserUncheckedCreateWithoutCredentialInput = {
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
@@ -915,6 +942,7 @@ export type UserUpdateWithoutCredentialInput = {
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
@@ -938,6 +966,7 @@ export type UserUncheckedUpdateWithoutCredentialInput = {
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
@@ -961,6 +990,7 @@ export type UserCreateWithoutTemplateInput = {
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
@@ -984,6 +1014,7 @@ export type UserUncheckedCreateWithoutTemplateInput = {
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
@@ -1023,6 +1054,7 @@ export type UserUpdateWithoutTemplateInput = {
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
@@ -1046,6 +1078,119 @@ export type UserUncheckedUpdateWithoutTemplateInput = {
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
+  submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
+  automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
+}
+
+export type UserCreateWithoutDatedTemplatesInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name?: string | null
+  role?: $Enums.Role
+  emailVerified?: Date | string | null
+  image?: string | null
+  sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
+  template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  reports?: Prisma.ReportCreateNestedManyWithoutUserInput
+  submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
+  automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
+}
+
+export type UserUncheckedCreateWithoutDatedTemplatesInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name?: string | null
+  role?: $Enums.Role
+  emailVerified?: Date | string | null
+  image?: string | null
+  sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
+  template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
+  submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
+  automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
+}
+
+export type UserCreateOrConnectWithoutDatedTemplatesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDatedTemplatesInput, Prisma.UserUncheckedCreateWithoutDatedTemplatesInput>
+}
+
+export type UserUpsertWithoutDatedTemplatesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDatedTemplatesInput, Prisma.UserUncheckedUpdateWithoutDatedTemplatesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDatedTemplatesInput, Prisma.UserUncheckedCreateWithoutDatedTemplatesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDatedTemplatesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDatedTemplatesInput, Prisma.UserUncheckedUpdateWithoutDatedTemplatesInput>
+}
+
+export type UserUpdateWithoutDatedTemplatesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
+  template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
+  submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
+  automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDatedTemplatesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
+  template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
@@ -1070,6 +1215,7 @@ export type UserCreateWithoutReportsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
@@ -1093,6 +1239,7 @@ export type UserUncheckedCreateWithoutReportsInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
@@ -1132,6 +1279,7 @@ export type UserUpdateWithoutReportsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
@@ -1155,6 +1303,7 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
@@ -1178,6 +1327,7 @@ export type UserCreateWithoutSubmitLogsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
@@ -1201,6 +1351,7 @@ export type UserUncheckedCreateWithoutSubmitLogsInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
@@ -1240,6 +1391,7 @@ export type UserUpdateWithoutSubmitLogsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
@@ -1263,6 +1415,7 @@ export type UserUncheckedUpdateWithoutSubmitLogsInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
@@ -1286,6 +1439,7 @@ export type UserCreateWithoutAutomationInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
@@ -1309,6 +1463,7 @@ export type UserUncheckedCreateWithoutAutomationInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
@@ -1348,6 +1503,7 @@ export type UserUpdateWithoutAutomationInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
@@ -1371,6 +1527,7 @@ export type UserUncheckedUpdateWithoutAutomationInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
@@ -1393,6 +1550,7 @@ export type UserCreateWithoutSessionsInput = {
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
@@ -1416,6 +1574,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
@@ -1455,6 +1614,7 @@ export type UserUpdateWithoutSessionsInput = {
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
@@ -1478,6 +1638,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
@@ -1502,6 +1663,7 @@ export type UserCreateWithoutAdminActionsPerformedInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
@@ -1525,6 +1687,7 @@ export type UserUncheckedCreateWithoutAdminActionsPerformedInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
@@ -1553,6 +1716,7 @@ export type UserCreateWithoutAdminActionsReceivedInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
@@ -1576,6 +1740,7 @@ export type UserUncheckedCreateWithoutAdminActionsReceivedInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
@@ -1615,6 +1780,7 @@ export type UserUpdateWithoutAdminActionsPerformedInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
@@ -1638,6 +1804,7 @@ export type UserUncheckedUpdateWithoutAdminActionsPerformedInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
@@ -1672,6 +1839,7 @@ export type UserUpdateWithoutAdminActionsReceivedInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
@@ -1695,6 +1863,7 @@ export type UserUncheckedUpdateWithoutAdminActionsReceivedInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
@@ -1709,6 +1878,7 @@ export type UserUncheckedUpdateWithoutAdminActionsReceivedInput = {
 export type UserCountOutputType = {
   accounts: number
   sessions: number
+  datedTemplates: number
   reports: number
   submitLogs: number
   adminActionsPerformed: number
@@ -1718,6 +1888,7 @@ export type UserCountOutputType = {
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   accounts?: boolean | UserCountOutputTypeCountAccountsArgs
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
+  datedTemplates?: boolean | UserCountOutputTypeCountDatedTemplatesArgs
   reports?: boolean | UserCountOutputTypeCountReportsArgs
   submitLogs?: boolean | UserCountOutputTypeCountSubmitLogsArgs
   adminActionsPerformed?: boolean | UserCountOutputTypeCountAdminActionsPerformedArgs
@@ -1746,6 +1917,13 @@ export type UserCountOutputTypeCountAccountsArgs<ExtArgs extends runtime.Types.E
  */
 export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.SessionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDatedTemplatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DatedReportTemplateWhereInput
 }
 
 /**
@@ -1794,6 +1972,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   credential?: boolean | Prisma.User$credentialArgs<ExtArgs>
   template?: boolean | Prisma.User$templateArgs<ExtArgs>
+  datedTemplates?: boolean | Prisma.User$datedTemplatesArgs<ExtArgs>
   reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
   submitLogs?: boolean | Prisma.User$submitLogsArgs<ExtArgs>
   automation?: boolean | Prisma.User$automationArgs<ExtArgs>
@@ -1853,6 +2032,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   credential?: boolean | Prisma.User$credentialArgs<ExtArgs>
   template?: boolean | Prisma.User$templateArgs<ExtArgs>
+  datedTemplates?: boolean | Prisma.User$datedTemplatesArgs<ExtArgs>
   reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
   submitLogs?: boolean | Prisma.User$submitLogsArgs<ExtArgs>
   automation?: boolean | Prisma.User$automationArgs<ExtArgs>
@@ -1870,6 +2050,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     credential: Prisma.$MaganghubCredentialPayload<ExtArgs> | null
     template: Prisma.$ReportTemplatePayload<ExtArgs> | null
+    /**
+     * * Template khusus tanggal tertentu (penimpa template harian).
+     */
+    datedTemplates: Prisma.$DatedReportTemplatePayload<ExtArgs>[]
     reports: Prisma.$ReportPayload<ExtArgs>[]
     submitLogs: Prisma.$SubmitLogPayload<ExtArgs>[]
     automation: Prisma.$AutomationConfigPayload<ExtArgs> | null
@@ -2287,6 +2471,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   credential<T extends Prisma.User$credentialArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$credentialArgs<ExtArgs>>): Prisma.Prisma__MaganghubCredentialClient<runtime.Types.Result.GetResult<Prisma.$MaganghubCredentialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   template<T extends Prisma.User$templateArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$templateArgs<ExtArgs>>): Prisma.Prisma__ReportTemplateClient<runtime.Types.Result.GetResult<Prisma.$ReportTemplatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  datedTemplates<T extends Prisma.User$datedTemplatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$datedTemplatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DatedReportTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reports<T extends Prisma.User$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   submitLogs<T extends Prisma.User$submitLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$submitLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubmitLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   automation<T extends Prisma.User$automationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$automationArgs<ExtArgs>>): Prisma.Prisma__AutomationConfigClient<runtime.Types.Result.GetResult<Prisma.$AutomationConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -2809,6 +2994,30 @@ export type User$templateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    */
   include?: Prisma.ReportTemplateInclude<ExtArgs> | null
   where?: Prisma.ReportTemplateWhereInput
+}
+
+/**
+ * User.datedTemplates
+ */
+export type User$datedTemplatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DatedReportTemplate
+   */
+  select?: Prisma.DatedReportTemplateSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DatedReportTemplate
+   */
+  omit?: Prisma.DatedReportTemplateOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DatedReportTemplateInclude<ExtArgs> | null
+  where?: Prisma.DatedReportTemplateWhereInput
+  orderBy?: Prisma.DatedReportTemplateOrderByWithRelationInput | Prisma.DatedReportTemplateOrderByWithRelationInput[]
+  cursor?: Prisma.DatedReportTemplateWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DatedReportTemplateScalarFieldEnum | Prisma.DatedReportTemplateScalarFieldEnum[]
 }
 
 /**

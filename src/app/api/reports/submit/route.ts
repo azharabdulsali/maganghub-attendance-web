@@ -23,7 +23,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
-import { todayInJakarta } from "@/lib/submit-service";
+import { todayInJakarta, toPlainDate } from "@/lib/submit-service";
+import { chooseTemplate } from "@/lib/template-selection";
 import {
   type SubmitOutcome,
   type SubmitTrigger,
@@ -72,10 +73,19 @@ export async function POST(request: Request) {
       : todayInJakarta();
 
   // --- Ambil data yang dibutuhkan performSubmit ------------------------------
-  const [template, credential] = await Promise.all([
+  //
+  // Template dipilih DI SINI, bukan di performSubmit: aturannya sama untuk
+  // ketiga jalur kirim (manual, webhook cron, dispatcher massal), dan
+  // performSubmit sengaja tetap tidak tahu soal "template harian vs bertanggal".
+  // Lihat src/lib/template-selection.ts.
+  const [template, datedTemplates, credential] = await Promise.all([
     prisma.reportTemplate.findUnique({
       where: { userId },
       select: { activity: true, learning: true, obstacles: true },
+    }),
+    prisma.datedReportTemplate.findMany({
+      where: { userId },
+      select: { date: true, activity: true, learning: true, obstacles: true },
     }),
     prisma.maganghubCredential.findUnique({
       where: { userId },
@@ -91,12 +101,25 @@ export async function POST(request: Request) {
     }),
   ]);
 
+  // Template bertanggal (tanggal ini) menang atas template harian.
+  // Tanggal DB bertipe `@db.Date` → bandingkan sebagai `YYYY-MM-DD`.
+  const chosen = chooseTemplate(
+    date,
+    template,
+    datedTemplates.map((t) => ({
+      date: toPlainDate(t.date),
+      activity: t.activity,
+      learning: t.learning,
+      obstacles: t.obstacles,
+    })),
+  );
+
   // logOnNotReady=false: manual TIDAK mencatat libur/akhir program sebagai
   // FAILED (bukan kegagalan yang bisa diulang).
   const outcome = await performSubmit({
     userId,
     date,
-    template,
+    template: chosen.template,
     credential,
     trigger,
     logOnNotReady: false,

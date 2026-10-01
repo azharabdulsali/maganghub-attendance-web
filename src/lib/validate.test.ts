@@ -8,6 +8,7 @@ import { describe, it, expect } from "vitest";
 import {
   credentialsSchema,
   reportTemplatesSchema,
+  datedReportTemplateSchema,
   monevTokenSchema,
   changePasswordSchema,
   changeEmailSchema,
@@ -432,5 +433,60 @@ describe("automationSchema, action rotasi (VERIFY-002)", () => {
   });
 });
 
+describe("datedReportTemplateSchema, template per-tanggal", () => {
+  const panjang = "a".repeat(120);
+  const isi = {
+    activity: panjang,
+    learning: panjang,
+    obstacles: panjang,
+  };
+
+  it("menerima tanggal & isi yang sah", () => {
+    const r = datedReportTemplateSchema.safeParse({
+      ...isi,
+      date: "2026-04-10",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("menolak tanggal berformat lain", () => {
+    for (const date of ["10-04-2026", "2026/04/10", "2026-4-10", "besok"]) {
+      expect(datedReportTemplateSchema.safeParse({ ...isi, date }).success).toBe(
+        false,
+      );
+    }
+  });
+
+  it("menolak tanggal yang bentuknya benar tetapi tidak ada di kalender", () => {
+    // Lolos regex ^\d{4}-\d{2}-\d{2}$ tapi bukan tanggal nyata.
+    for (const date of ["2026-02-30", "2026-13-01", "2026-00-10", "2026-02-29"]) {
+      expect(datedReportTemplateSchema.safeParse({ ...isi, date }).success).toBe(
+        false,
+      );
+    }
+  });
+
+  it("menerima 29 Februari pada tahun kabisat", () => {
+    const r = datedReportTemplateSchema.safeParse({
+      ...isi,
+      date: "2028-02-29",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("tetap memberlakukan aturan panjang isi seperti template harian", () => {
+    // Terlalu pendek: kolom kosong tidak boleh lolos hanya karena bertanggal.
+    expect(
+      datedReportTemplateSchema.safeParse({ ...isi, date: "2026-04-10", activity: "" })
+        .success,
+    ).toBe(false);
+  });
+
+  it("TIDAK menolak tanggal di akhir pekan (menyimpan agenda Sabtu itu sah)", () => {
+    expect(
+      datedReportTemplateSchema.safeParse({ ...isi, date: "2026-04-11" }).success,
+    ).toBe(true);
+  });
+});
 
 });

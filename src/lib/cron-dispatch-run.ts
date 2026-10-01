@@ -10,7 +10,8 @@
 // perform-submit.ts.
 
 import { prisma } from "@/lib/prisma";
-import { todayInJakarta } from "@/lib/submit-service";
+import { todayInJakarta, toPlainDate } from "@/lib/submit-service";
+import { chooseTemplate } from "@/lib/template-selection";
 import { performSubmit, type SubmitOutcome } from "@/lib/perform-submit";
 import { jakartaHour, planDispatch, type DueCandidate } from "@/lib/cron-dispatch";
 
@@ -59,6 +60,9 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
       user: {
         select: {
           template: { select: { activity: true, learning: true, obstacles: true } },
+          datedTemplates: {
+            select: { date: true, activity: true, learning: true, obstacles: true },
+          },
           credential: {
             select: {
               tokenCiphertext: true,
@@ -103,7 +107,16 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
           const outcome: SubmitOutcome = await performSubmit({
             userId: cfg.userId,
             date,
-            template: cfg.user.template,
+            template: chooseTemplate(
+              date,
+              cfg.user.template,
+              cfg.user.datedTemplates.map((t) => ({
+                date: toPlainDate(t.date),
+                activity: t.activity,
+                learning: t.learning,
+                obstacles: t.obstacles,
+              })),
+            ).template,
             credential: cfg.user.credential,
             trigger: "CRON",
             logOnNotReady: true,

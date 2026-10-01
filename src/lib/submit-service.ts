@@ -49,6 +49,18 @@ export function plainDateToUtcDate(date: string): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+/**
+ * Ubah `Date` (kolom `@db.Date`) → `YYYY-MM-DD`, MURNI. Kebalikan dari
+ * `plainDateToUtcDate`, dan disengaja memakai `getUTC*`: kolom `@db.Date`
+ * disimpan sebagai tengah malam UTC, jadi membaca komponen lokal akan
+ * menggeser tanggalnya di server zona barat. Selalu UTC.
+ */
+export function toPlainDate(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
 /** Terjemahan keputusan policy → pesan Indonesia untuk UI. */
 export function policyMessage(decision: PolicyDecision): string {

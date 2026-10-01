@@ -344,6 +344,15 @@ Prioritas test:
   password Monev). Pengguna harus bisa melihat & menyuntingnya.
 - Penghitung karakter di form memakai `countReportLength` yang **sama** dengan
   server, jadi angka di layar tidak mungkin berbeda dari yang divalidasi.
+- `DatedReportTemplate` = **satu baris per (user, tanggal)** dengan 3 kolom yang
+  sama. Ini **penimpa**: dipakai hanya untuk tanggalnya, tanggal lain tetap
+  memakai `ReportTemplate`. Pemilihan ada di `src/lib/template-selection.ts`
+  (`chooseTemplate`) dan dipanggil di **tiap** jalur kirim (manual/cron/dispatch),
+  bukan di `performSubmit`, agar satu aturan untuk semua jalur.
+- Template bertanggal **tidak** mengubah aturan libur: `decide()` di
+  `report-policy.ts` tetap melewati Sabtu/Minggu/libur nasional/akhir program.
+  Tanggal disimpan `@db.Date` dan dibandingkan sebagai string `YYYY-MM-DD`
+  (leksikografis = kronologis) supaya tidak tergeser zona waktu.
 
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
 (gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan

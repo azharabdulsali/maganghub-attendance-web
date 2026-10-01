@@ -402,6 +402,7 @@ export const ModelName = {
   VerificationToken: 'VerificationToken',
   MaganghubCredential: 'MaganghubCredential',
   ReportTemplate: 'ReportTemplate',
+  DatedReportTemplate: 'DatedReportTemplate',
   Report: 'Report',
   SubmitLog: 'SubmitLog',
   AutomationConfig: 'AutomationConfig',
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "verificationToken" | "maganghubCredential" | "reportTemplate" | "report" | "submitLog" | "automationConfig" | "session" | "adminActionLog"
+    modelProps: "user" | "account" | "verificationToken" | "maganghubCredential" | "reportTemplate" | "datedReportTemplate" | "report" | "submitLog" | "automationConfig" | "session" | "adminActionLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -793,6 +794,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ReportTemplateCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ReportTemplateCountAggregateOutputType> | number
+        }
+      }
+    }
+    DatedReportTemplate: {
+      payload: Prisma.$DatedReportTemplatePayload<ExtArgs>
+      fields: Prisma.DatedReportTemplateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DatedReportTemplateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DatedReportTemplateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload>
+        }
+        findFirst: {
+          args: Prisma.DatedReportTemplateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DatedReportTemplateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload>
+        }
+        findMany: {
+          args: Prisma.DatedReportTemplateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload>[]
+        }
+        create: {
+          args: Prisma.DatedReportTemplateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload>
+        }
+        createMany: {
+          args: Prisma.DatedReportTemplateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DatedReportTemplateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload>[]
+        }
+        delete: {
+          args: Prisma.DatedReportTemplateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload>
+        }
+        update: {
+          args: Prisma.DatedReportTemplateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload>
+        }
+        deleteMany: {
+          args: Prisma.DatedReportTemplateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DatedReportTemplateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DatedReportTemplateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload>[]
+        }
+        upsert: {
+          args: Prisma.DatedReportTemplateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DatedReportTemplatePayload>
+        }
+        aggregate: {
+          args: Prisma.DatedReportTemplateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDatedReportTemplate>
+        }
+        groupBy: {
+          args: Prisma.DatedReportTemplateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DatedReportTemplateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DatedReportTemplateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DatedReportTemplateCountAggregateOutputType> | number
         }
       }
     }
@@ -1285,6 +1360,20 @@ export const ReportTemplateScalarFieldEnum = {
 export type ReportTemplateScalarFieldEnum = (typeof ReportTemplateScalarFieldEnum)[keyof typeof ReportTemplateScalarFieldEnum]
 
 
+export const DatedReportTemplateScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  date: 'date',
+  activity: 'activity',
+  learning: 'learning',
+  obstacles: 'obstacles',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DatedReportTemplateScalarFieldEnum = (typeof DatedReportTemplateScalarFieldEnum)[keyof typeof DatedReportTemplateScalarFieldEnum]
+
+
 export const ReportScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -1699,6 +1788,7 @@ export type GlobalOmitConfig = {
   verificationToken?: Prisma.VerificationTokenOmit
   maganghubCredential?: Prisma.MaganghubCredentialOmit
   reportTemplate?: Prisma.ReportTemplateOmit
+  datedReportTemplate?: Prisma.DatedReportTemplateOmit
   report?: Prisma.ReportOmit
   submitLog?: Prisma.SubmitLogOmit
   automationConfig?: Prisma.AutomationConfigOmit

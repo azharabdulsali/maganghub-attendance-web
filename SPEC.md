@@ -119,6 +119,24 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
 - Template bisa diubah kapan saja; perubahan tidak memengaruhi laporan yang
   sudah `SUBMITTED`.
 
+### 5.3a Template Khusus Tanggal Tertentu
+- Selain template harian, pengguna boleh menyimpan template untuk **tanggal
+  tertentu** (`DatedReportTemplate`, unik per `userId + date`).
+- Saat menyusun/mengirim laporan tanggal X: bila ada template bertanggal untuk
+  X, itu yang dipakai; bila tidak ada, jatuh ke template harian. Satu aturan ini
+  berlaku sama di **semua** jalur kirim (manual, cron, dan dispatch webhook).
+- **Template bertanggal hanya menimpa ISI, bukan pemicu kirim.** Aturan libur
+  tetap berlaku: otomasi tetap melewati Sabtu, Minggu, libur nasional, dan
+  tanggal di luar masa program, walaupun ada template untuk tanggal itu.
+- Menyimpan template untuk Sabtu **sah** (mis. agenda khusus), hanya saja
+  otomasi tidak akan mengirim di hari itu. UI menandai tanggal tersebut
+  "Libur" agar pengguna tidak salah paham.
+- Aturan validasi (100–5000 karakter per kolom) sama persis dengan template
+  harian; tanggal divalidasi bentuknya (`YYYY-MM-DD`) dan keberadaannya di
+  kalender (menolak `2026-02-30`).
+- Menghapus template bertanggal **tidak** menghapus `Report` yang sudah
+  terkirim; riwayat adalah bukti, bukan bagian dari template.
+
 ### 5.4 Penyusun Laporan (tanpa AI)
 - Laporan harian **berasal dari template pengguna**, bukan dari commit.
 - Dua jalur, keduanya sah:
@@ -529,6 +547,7 @@ Ringkas; nama field dapat menyesuaikan saat implementasi.
 | `Account` / `Session` | tabel bawaan NextAuth |
 | `MaganghubCredential` | userId, email Monev, `ciphertext`, `iv`, `authTag`, status |
 | `ReportTemplate` | userId, `activity`, `learning`, `obstacles`, waktu diubah |
+| `DatedReportTemplate` | userId, `date` (`@db.Date`), 3 kolom; unik per `userId + date` (penimpa harian) |
 | `Report` | userId, tanggal, activity, learning, obstacles, source, status |
 | `SubmitLog` | reportId, userId, status, message, httpCode, pemicu, attempt |
 | `AutomationConfig` | userId, isEnabled, `webhookKey`, jam, timezone |
@@ -554,6 +573,7 @@ Batasan: `Report` unik per `(userId, date)`, mencegah draf ganda.
 | `GET/PUT` | `/api/automation` | Baca/simpan jadwal otomasi + webhook key | Cookie sesi | 20/menit |
 | `GET/POST` | `/api/auth/[...nextauth]` | Autentikasi (login/logout) | Publik / callback | **10/15 menit per IP** (login) |
 | `GET/PUT` | `/api/template` | Baca & simpan 3 template pengguna | Cookie sesi | 20/menit |
+| `GET/PUT/DELETE` | `/api/report-templates/dated` | Kelola template per-tanggal (`?date=` untuk DELETE) | Cookie sesi | 20/menit |
 | `POST` | `/api/reports/draft` | Buat draf dari template | Cookie sesi | 20/menit |
 | `POST` | `/api/reports/submit` | Kirim draf langsung ke Monev | Cookie sesi | 20/10 menit per pengguna |
 | `PATCH` | `/api/profile` | Ubah nama tampilan pengguna sendiri | Cookie sesi | - (belum dibatasi) |

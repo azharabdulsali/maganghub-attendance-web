@@ -56,6 +56,7 @@ export const ModelName = {
   VerificationToken: 'VerificationToken',
   MaganghubCredential: 'MaganghubCredential',
   ReportTemplate: 'ReportTemplate',
+  DatedReportTemplate: 'DatedReportTemplate',
   Report: 'Report',
   SubmitLog: 'SubmitLog',
   AutomationConfig: 'AutomationConfig',
@@ -157,6 +158,20 @@ export const ReportTemplateScalarFieldEnum = {
 } as const
 
 export type ReportTemplateScalarFieldEnum = (typeof ReportTemplateScalarFieldEnum)[keyof typeof ReportTemplateScalarFieldEnum]
+
+
+export const DatedReportTemplateScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  date: 'date',
+  activity: 'activity',
+  learning: 'learning',
+  obstacles: 'obstacles',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DatedReportTemplateScalarFieldEnum = (typeof DatedReportTemplateScalarFieldEnum)[keyof typeof DatedReportTemplateScalarFieldEnum]
 
 
 export const ReportScalarFieldEnum = {

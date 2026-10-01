@@ -70,6 +70,25 @@ export type MaganghubCredential = Prisma.MaganghubCredentialModel
  */
 export type ReportTemplate = Prisma.ReportTemplateModel
 /**
+ * Model DatedReportTemplate
+ * Template khusus untuk SATU tanggal (penimpa).
+ * 
+ * Kenapa terpisah dari `ReportTemplate`: `ReportTemplate` adalah template
+ * HARIAN (satu baris per user). Model ini MENIMPA isinya untuk tanggal
+ * tertentu saja, mis. laporan khusus saat ada agenda tertentu minggu depan.
+ * Saat mengirim untuk tanggal X, isi di sini dipakai BILA ADA; kalau tidak ada,
+ * template harian yang dipakai. Jadi tidak ada tanggal yang "kosong".
+ * 
+ * `@@unique([userId, date])` disengaja: satu tanggal = satu template. Portal
+ * Monev pun hanya menerima satu laporan per hari, jadi lebih dari satu hanya
+ * akan membingungkan "yang mana yang dipakai".
+ * 
+ * Catatan penting: baris di sini TIDAK membuat otomasi mengirim di hari libur.
+ * Aturan libur/akhir pekan tetap berlaku (report-policy.ts `decide()`), jadi
+ * tanggal yang jatuh pada Sabtu/Minggu/libur nasional tetap SKIPPED.
+ */
+export type DatedReportTemplate = Prisma.DatedReportTemplateModel
+/**
  * Model Report
  * Satu laporan untuk satu tanggal. `source` menandai apakah isinya
  * diambil apa adanya dari template atau diedit manual (SPEC.md §7).
