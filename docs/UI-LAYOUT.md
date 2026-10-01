@@ -150,21 +150,34 @@ Dibagi dua supaya batas *melihat* vs *mengubah* jelas:
   (`DELETE` untuk hapus, `reset-password` untuk atur ulang).
 - **Atur ulang kata sandi**: server membuat kata sandi sementara acak
   (16 karakter, tanpa `0/O/1/I/l`), menyimpan hash bcrypt cost 12, menaikkan
-  `sessionVersion` (semua sesi pengguna tercabut), lalu mengembalikan kata sandi
-  **mentah sekali** ke admin. Dialog menampilkan kata sandi itu dengan tombol
-  Salin dan gerbang centang "sudah menyalin" sebelum bisa ditutup. Respons
-  memakai `Cache-Control: no-store`; kata sandi tidak pernah masuk log.
-- **Hapus** dirancang **soft delete** (menandai `deletedAt`), agar riwayat laporan
-  & audit tetap utuh. ⚠️ Kolom `deletedAt` belum ada di skema → endpoint masih
-  membalas `501` sampai migrasi dijalankan (tahap 2). Menghapus data sungguhan
-  tanpa kolom itu tidak dilakukan.
+  `sessionVersion` (semua sesi pengguna tercabut), menandai
+  `mustChangePassword = true`, lalu mengembalikan kata sandi **mentah sekali**
+  ke admin. Dialog menampilkan kata sandi itu dengan tombol Salin dan gerbang
+  centang "sudah menyalin" sebelum bisa ditutup. Respons memakai
+  `Cache-Control: no-store`; kata sandi tidak pernah masuk log.
+- **Wajib ganti kata sandi**: setelah reset, sesi pengguna membawa
+  `mustChangePassword`. Layout `src/app/(app)/layout.tsx` menampilkan spanduk
+  `must-change-password-banner.tsx` yang mengarah ke `/settings`. Flag direset
+  ke `false` di DB begitu pengguna berhasil mengganti sandinya sendiri
+  (`/api/account/password`), dan klien menyinkronkan sesinya lewat
+  `useSession().update({ mustChangePassword: false })`.
+- **Hapus** memakai **soft delete**: `deletedAt` diisi, `sessionVersion`
+  dinaikkan (sesi beredar langsung tak sah), sehingga pengguna tak bisa login
+  lagi (`auth.ts` menolak `deletedAt != null`) dan hilang dari daftar admin
+  (`admin-query.ts` memfilter `deletedAt: null`). Riwayat laporan & audit tetap
+  utuh dan bisa dipulihkan.
 - **Penjagaan**: diri sendiri & admin lain selalu ditolak (403), sasaran tak ada
-  → 404. Rate limit scope `adminUserAction` (20/10 menit per admin). Aksi dicatat
-  lewat `src/lib/admin-action-log.ts` (sementara ke log server; tabel
-  `AdminActionLog` menyusul di tahap 2).
-- **Tahap 2 (belum)**: kolom `User.mustChangePassword` + spanduk paksa-ganti
-  setelah reset, tabel `AdminActionLog`, dan kolom `deletedAt` — semuanya butuh
-  satu migrasi Neon.
+  / sudah dihapus → 404. Rate limit scope `adminUserAction` (20/10 menit per
+  admin).
+- **Audit**: aksi dicatat ke tabel `AdminActionLog` lewat
+  `src/lib/admin-action-log.ts` (jenis aksi, id aktor & sasaran, alasan
+  penolakan). Penulisan dibungkus try/catch — bila tabel belum ada di suatu
+  lingkungan, aksi tetap berjalan dan baris dicetak ke log server sebagai
+  jaring pengaman. Kata sandi/token tidak pernah dicatat.
+- **Catatan migrasi**: kolom `User.deletedAt`, `User.mustChangePassword`, dan
+  tabel `admin_action_logs` ditambahkan di `prisma/schema.prisma`. Selama
+  `prisma db push` belum dijalankan di lingkungan itu, kolom baru belum ada di
+  DB — lihat README/CONTRIBUTING untuk langkah deploy.
 
 ---
 

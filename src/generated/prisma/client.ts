@@ -92,3 +92,12 @@ export type AutomationConfig = Prisma.AutomationConfigModel
  * 
  */
 export type Session = Prisma.SessionModel
+/**
+ * Model AdminActionLog
+ * Audit aksi ADMIN atas pengguna (hapus / atur ulang kata sandi). Dipisah dari
+ * SubmitLog supaya arti tabel audit submit tetap murni: SubmitLog = percobaan
+ * kirim laporan, AdminActionLog = tindakan admin atas akun orang lain
+ * (SPEC.md §4, §10). Tidak pernah menyimpan kata sandi/token, hanya jenis
+ * aksi, hasil, dan id aktor/sasaran.
+ */
+export type AdminActionLog = Prisma.AdminActionLogModel

@@ -64,7 +64,10 @@ export default function PasswordForm() {
       // ter-logout. Kalau pembaruan ini gagal, sesi berlaku tetap sah sampai
       // permintaan berikutnya, bukan kegagalan diam yang berbahaya.
       if (typeof data?.sessionVersion === "number") {
-        await update({ sessionVersion: data.sessionVersion });
+        await update({
+          sessionVersion: data.sessionVersion,
+          mustChangePassword: false,
+        });
       }
       setCurrent("");
       setNext("");

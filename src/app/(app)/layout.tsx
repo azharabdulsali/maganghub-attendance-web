@@ -26,6 +26,7 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/app-sidebar";
+import { MustChangePasswordBanner } from "./must-change-password-banner";
 
 // Semua halaman di grup ini WAJIB `noindex` (audit T-4). Redirect di bawah
 // adalah penjaga keamanan; noindex adalah sinyal SEO yang tegas supaya isi
@@ -45,6 +46,9 @@ export default async function AppLayout({
   }
 
   const role = (session.user as { role?: string }).role ?? "USER";
+  const mustChangePassword =
+    (session.user as { mustChangePassword?: boolean }).mustChangePassword ===
+    true;
   const user = {
     name: session.user.name ?? null,
     email: session.user.email ?? "",
@@ -74,6 +78,7 @@ export default async function AppLayout({
       </a>
       <AppSidebar user={user} />
       <main id="konten" className="min-w-0 flex-1">
+        {mustChangePassword && <MustChangePasswordBanner />}
         {children}
       </main>
     </div>

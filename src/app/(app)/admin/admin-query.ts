@@ -17,6 +17,8 @@ import type { AdminUserRow } from "@/lib/admin";
  */
 export async function getAdminUsers(): Promise<AdminUserRow[]> {
   const users = await prisma.user.findMany({
+    // Pengguna yang di-soft-delete tidak ditampilkan lagi.
+    where: { deletedAt: null },
     orderBy: [{ role: "desc" }, { createdAt: "desc" }],
     select: {
       id: true,

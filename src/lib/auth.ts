@@ -17,7 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { env, isAdminEmail } from "@/lib/env";
 import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
-import { sesiMasihSah, versiSesiDariKlien } from "@/lib/session-version";
+import { sesiMasihSah, versiSesiDariKlien, wajibGantiDariKlien } from "@/lib/session-version";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -67,6 +67,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // "password salah", supaya tidak bisa dipakai menebak email terdaftar.
         if (!user) return null;
 
+        // Akun yang di-soft-delete (deletedAt terisi) tidak bisa login lagi,
+        // walau kata sandinya benar. Diperlakukan sama seperti tidak ada akun.
+        if (user.deletedAt) return null;
+
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
 
@@ -78,6 +82,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Disalin ke JWT agar callback `jwt` bisa mengecek generasi sesi
           // tanpa query tambahan di jalur login (lihat callback `jwt`).
           sessionVersion: user.sessionVersion,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
@@ -92,6 +97,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // menambah satu query lagi di jalur login.
         const v = (user as { sessionVersion?: unknown }).sessionVersion;
         token.sessionVersion = typeof v === "number" ? v : 0;
+        token.mustChangePassword =
+          (user as { mustChangePassword?: unknown }).mustChangePassword === true;
         return token;
       }
 
@@ -120,6 +127,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (typeof e === "string" && e.trim().length > 0) {
           token.email = e.trim().toLowerCase();
         }
+        // Setelah pengguna berhasil mengganti kata sandi, klien mengirim
+        // `mustChangePassword: false` untuk mematikan spanduk tanpa login ulang.
+        const m = wajibGantiDariKlien(session);
+        if (m !== null) {
+          token.mustChangePassword = m;
+        }
         return token;
       }
 
@@ -131,13 +144,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       const current = await prisma.user.findUnique({
         where: { id },
-        select: { sessionVersion: true },
+        select: { sessionVersion: true, deletedAt: true, mustChangePassword: true },
       });
-      if (!current) return null;
+      // Akun yang di-soft-delete langsung mengakhiri sesi yang masih beredar.
+      if (!current || current.deletedAt) return null;
 
       if (!sesiMasihSah(token.sessionVersion, current.sessionVersion)) {
         return null;
       }
+
+      // Sumber kebenaran flag wajib-ganti adalah DB, bukan klien: admin yang
+      // baru mengatur ulang kata sandi akan terlihat oleh sesi yang masih hidup.
+      token.mustChangePassword = current.mustChangePassword;
 
       return token;
     },
@@ -152,6 +170,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
         (session.user as { role?: string }).role =
           (token.role as string) ?? "USER";
+        // Flag wajib-ganti dipakai layout (app) untuk menampilkan spanduk.
+        (session.user as { mustChangePassword?: boolean }).mustChangePassword =
+          token.mustChangePassword === true;
       }
       return session;
     },

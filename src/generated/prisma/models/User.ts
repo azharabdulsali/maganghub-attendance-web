@@ -43,6 +43,8 @@ export type UserMinAggregateOutputType = {
   emailVerified: Date | null
   image: string | null
   sessionVersion: number | null
+  deletedAt: Date | null
+  mustChangePassword: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -56,6 +58,8 @@ export type UserMaxAggregateOutputType = {
   emailVerified: Date | null
   image: string | null
   sessionVersion: number | null
+  deletedAt: Date | null
+  mustChangePassword: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -69,6 +73,8 @@ export type UserCountAggregateOutputType = {
   emailVerified: number
   image: number
   sessionVersion: number
+  deletedAt: number
+  mustChangePassword: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -92,6 +98,8 @@ export type UserMinAggregateInputType = {
   emailVerified?: true
   image?: true
   sessionVersion?: true
+  deletedAt?: true
+  mustChangePassword?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -105,6 +113,8 @@ export type UserMaxAggregateInputType = {
   emailVerified?: true
   image?: true
   sessionVersion?: true
+  deletedAt?: true
+  mustChangePassword?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -118,6 +128,8 @@ export type UserCountAggregateInputType = {
   emailVerified?: true
   image?: true
   sessionVersion?: true
+  deletedAt?: true
+  mustChangePassword?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -218,6 +230,8 @@ export type UserGroupByOutputType = {
   emailVerified: Date | null
   image: string | null
   sessionVersion: number
+  deletedAt: Date | null
+  mustChangePassword: boolean
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -254,6 +268,8 @@ export type UserWhereInput = {
   emailVerified?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   image?: Prisma.StringNullableFilter<"User"> | string | null
   sessionVersion?: Prisma.IntFilter<"User"> | number
+  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  mustChangePassword?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   accounts?: Prisma.AccountListRelationFilter
@@ -263,6 +279,8 @@ export type UserWhereInput = {
   reports?: Prisma.ReportListRelationFilter
   submitLogs?: Prisma.SubmitLogListRelationFilter
   automation?: Prisma.XOR<Prisma.AutomationConfigNullableScalarRelationFilter, Prisma.AutomationConfigWhereInput> | null
+  adminActionsPerformed?: Prisma.AdminActionLogListRelationFilter
+  adminActionsReceived?: Prisma.AdminActionLogListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -274,6 +292,8 @@ export type UserOrderByWithRelationInput = {
   emailVerified?: Prisma.SortOrderInput | Prisma.SortOrder
   image?: Prisma.SortOrderInput | Prisma.SortOrder
   sessionVersion?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   accounts?: Prisma.AccountOrderByRelationAggregateInput
@@ -283,6 +303,8 @@ export type UserOrderByWithRelationInput = {
   reports?: Prisma.ReportOrderByRelationAggregateInput
   submitLogs?: Prisma.SubmitLogOrderByRelationAggregateInput
   automation?: Prisma.AutomationConfigOrderByWithRelationInput
+  adminActionsPerformed?: Prisma.AdminActionLogOrderByRelationAggregateInput
+  adminActionsReceived?: Prisma.AdminActionLogOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -297,6 +319,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   emailVerified?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   image?: Prisma.StringNullableFilter<"User"> | string | null
   sessionVersion?: Prisma.IntFilter<"User"> | number
+  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  mustChangePassword?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   accounts?: Prisma.AccountListRelationFilter
@@ -306,6 +330,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   reports?: Prisma.ReportListRelationFilter
   submitLogs?: Prisma.SubmitLogListRelationFilter
   automation?: Prisma.XOR<Prisma.AutomationConfigNullableScalarRelationFilter, Prisma.AutomationConfigWhereInput> | null
+  adminActionsPerformed?: Prisma.AdminActionLogListRelationFilter
+  adminActionsReceived?: Prisma.AdminActionLogListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -317,6 +343,8 @@ export type UserOrderByWithAggregationInput = {
   emailVerified?: Prisma.SortOrderInput | Prisma.SortOrder
   image?: Prisma.SortOrderInput | Prisma.SortOrder
   sessionVersion?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -338,6 +366,8 @@ export type UserScalarWhereWithAggregatesInput = {
   emailVerified?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   image?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   sessionVersion?: Prisma.IntWithAggregatesFilter<"User"> | number
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  mustChangePassword?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -351,6 +381,8 @@ export type UserCreateInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
@@ -360,6 +392,8 @@ export type UserCreateInput = {
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -371,6 +405,8 @@ export type UserUncheckedCreateInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
@@ -380,6 +416,8 @@ export type UserUncheckedCreateInput = {
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
 }
 
 export type UserUpdateInput = {
@@ -391,6 +429,8 @@ export type UserUpdateInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
@@ -400,6 +440,8 @@ export type UserUpdateInput = {
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -411,6 +453,8 @@ export type UserUncheckedUpdateInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
@@ -420,6 +464,8 @@ export type UserUncheckedUpdateInput = {
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -431,6 +477,8 @@ export type UserCreateManyInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -444,6 +492,8 @@ export type UserUpdateManyMutationInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -457,6 +507,8 @@ export type UserUncheckedUpdateManyInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -470,6 +522,8 @@ export type UserCountOrderByAggregateInput = {
   emailVerified?: Prisma.SortOrder
   image?: Prisma.SortOrder
   sessionVersion?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -487,6 +541,8 @@ export type UserMaxOrderByAggregateInput = {
   emailVerified?: Prisma.SortOrder
   image?: Prisma.SortOrder
   sessionVersion?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -500,6 +556,8 @@ export type UserMinOrderByAggregateInput = {
   emailVerified?: Prisma.SortOrder
   image?: Prisma.SortOrder
   sessionVersion?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -535,6 +593,10 @@ export type IntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -639,6 +701,34 @@ export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSessionsInput, Prisma.UserUpdateWithoutSessionsInput>, Prisma.UserUncheckedUpdateWithoutSessionsInput>
 }
 
+export type UserCreateNestedOneWithoutAdminActionsPerformedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsPerformedInput, Prisma.UserUncheckedCreateWithoutAdminActionsPerformedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAdminActionsPerformedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutAdminActionsReceivedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsReceivedInput, Prisma.UserUncheckedCreateWithoutAdminActionsReceivedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAdminActionsReceivedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutAdminActionsPerformedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsPerformedInput, Prisma.UserUncheckedCreateWithoutAdminActionsPerformedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAdminActionsPerformedInput
+  upsert?: Prisma.UserUpsertWithoutAdminActionsPerformedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAdminActionsPerformedInput, Prisma.UserUpdateWithoutAdminActionsPerformedInput>, Prisma.UserUncheckedUpdateWithoutAdminActionsPerformedInput>
+}
+
+export type UserUpdateOneRequiredWithoutAdminActionsReceivedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsReceivedInput, Prisma.UserUncheckedCreateWithoutAdminActionsReceivedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAdminActionsReceivedInput
+  upsert?: Prisma.UserUpsertWithoutAdminActionsReceivedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAdminActionsReceivedInput, Prisma.UserUpdateWithoutAdminActionsReceivedInput>, Prisma.UserUncheckedUpdateWithoutAdminActionsReceivedInput>
+}
+
 export type UserCreateWithoutAccountsInput = {
   id?: string
   email: string
@@ -648,6 +738,8 @@ export type UserCreateWithoutAccountsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -656,6 +748,8 @@ export type UserCreateWithoutAccountsInput = {
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
 }
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -667,6 +761,8 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -675,6 +771,8 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
 }
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -702,6 +800,8 @@ export type UserUpdateWithoutAccountsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -710,6 +810,8 @@ export type UserUpdateWithoutAccountsInput = {
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -721,6 +823,8 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -729,6 +833,8 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
 }
 
 export type UserCreateWithoutCredentialInput = {
@@ -740,6 +846,8 @@ export type UserCreateWithoutCredentialInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
@@ -748,6 +856,8 @@ export type UserCreateWithoutCredentialInput = {
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
 }
 
 export type UserUncheckedCreateWithoutCredentialInput = {
@@ -759,6 +869,8 @@ export type UserUncheckedCreateWithoutCredentialInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
@@ -767,6 +879,8 @@ export type UserUncheckedCreateWithoutCredentialInput = {
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
 }
 
 export type UserCreateOrConnectWithoutCredentialInput = {
@@ -794,6 +908,8 @@ export type UserUpdateWithoutCredentialInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
@@ -802,6 +918,8 @@ export type UserUpdateWithoutCredentialInput = {
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCredentialInput = {
@@ -813,6 +931,8 @@ export type UserUncheckedUpdateWithoutCredentialInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
@@ -821,6 +941,8 @@ export type UserUncheckedUpdateWithoutCredentialInput = {
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
 }
 
 export type UserCreateWithoutTemplateInput = {
@@ -832,6 +954,8 @@ export type UserCreateWithoutTemplateInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
@@ -840,6 +964,8 @@ export type UserCreateWithoutTemplateInput = {
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
 }
 
 export type UserUncheckedCreateWithoutTemplateInput = {
@@ -851,6 +977,8 @@ export type UserUncheckedCreateWithoutTemplateInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
@@ -859,6 +987,8 @@ export type UserUncheckedCreateWithoutTemplateInput = {
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
 }
 
 export type UserCreateOrConnectWithoutTemplateInput = {
@@ -886,6 +1016,8 @@ export type UserUpdateWithoutTemplateInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
@@ -894,6 +1026,8 @@ export type UserUpdateWithoutTemplateInput = {
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTemplateInput = {
@@ -905,6 +1039,8 @@ export type UserUncheckedUpdateWithoutTemplateInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
@@ -913,6 +1049,8 @@ export type UserUncheckedUpdateWithoutTemplateInput = {
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
 }
 
 export type UserCreateWithoutReportsInput = {
@@ -924,6 +1062,8 @@ export type UserCreateWithoutReportsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
@@ -932,6 +1072,8 @@ export type UserCreateWithoutReportsInput = {
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
 }
 
 export type UserUncheckedCreateWithoutReportsInput = {
@@ -943,6 +1085,8 @@ export type UserUncheckedCreateWithoutReportsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
@@ -951,6 +1095,8 @@ export type UserUncheckedCreateWithoutReportsInput = {
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
 }
 
 export type UserCreateOrConnectWithoutReportsInput = {
@@ -978,6 +1124,8 @@ export type UserUpdateWithoutReportsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
@@ -986,6 +1134,8 @@ export type UserUpdateWithoutReportsInput = {
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReportsInput = {
@@ -997,6 +1147,8 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
@@ -1005,6 +1157,8 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
 }
 
 export type UserCreateWithoutSubmitLogsInput = {
@@ -1016,6 +1170,8 @@ export type UserCreateWithoutSubmitLogsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
@@ -1024,6 +1180,8 @@ export type UserCreateWithoutSubmitLogsInput = {
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
 }
 
 export type UserUncheckedCreateWithoutSubmitLogsInput = {
@@ -1035,6 +1193,8 @@ export type UserUncheckedCreateWithoutSubmitLogsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
@@ -1043,6 +1203,8 @@ export type UserUncheckedCreateWithoutSubmitLogsInput = {
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
 }
 
 export type UserCreateOrConnectWithoutSubmitLogsInput = {
@@ -1070,6 +1232,8 @@ export type UserUpdateWithoutSubmitLogsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
@@ -1078,6 +1242,8 @@ export type UserUpdateWithoutSubmitLogsInput = {
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSubmitLogsInput = {
@@ -1089,6 +1255,8 @@ export type UserUncheckedUpdateWithoutSubmitLogsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
@@ -1097,6 +1265,8 @@ export type UserUncheckedUpdateWithoutSubmitLogsInput = {
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
 }
 
 export type UserCreateWithoutAutomationInput = {
@@ -1108,6 +1278,8 @@ export type UserCreateWithoutAutomationInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
@@ -1116,6 +1288,8 @@ export type UserCreateWithoutAutomationInput = {
   template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
 }
 
 export type UserUncheckedCreateWithoutAutomationInput = {
@@ -1127,6 +1301,8 @@ export type UserUncheckedCreateWithoutAutomationInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
@@ -1135,6 +1311,8 @@ export type UserUncheckedCreateWithoutAutomationInput = {
   template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
 }
 
 export type UserCreateOrConnectWithoutAutomationInput = {
@@ -1162,6 +1340,8 @@ export type UserUpdateWithoutAutomationInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
@@ -1170,6 +1350,8 @@ export type UserUpdateWithoutAutomationInput = {
   template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAutomationInput = {
@@ -1181,6 +1363,8 @@ export type UserUncheckedUpdateWithoutAutomationInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
@@ -1189,6 +1373,8 @@ export type UserUncheckedUpdateWithoutAutomationInput = {
   template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
 }
 
 export type UserCreateWithoutSessionsInput = {
@@ -1200,6 +1386,8 @@ export type UserCreateWithoutSessionsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
@@ -1208,6 +1396,8 @@ export type UserCreateWithoutSessionsInput = {
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -1219,6 +1409,8 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
@@ -1227,6 +1419,8 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -1254,6 +1448,8 @@ export type UserUpdateWithoutSessionsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
@@ -1262,6 +1458,8 @@ export type UserUpdateWithoutSessionsInput = {
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -1273,6 +1471,8 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
@@ -1281,6 +1481,224 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
+}
+
+export type UserCreateWithoutAdminActionsPerformedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name?: string | null
+  role?: $Enums.Role
+  emailVerified?: Date | string | null
+  image?: string | null
+  sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
+  template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  reports?: Prisma.ReportCreateNestedManyWithoutUserInput
+  submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
+  automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
+}
+
+export type UserUncheckedCreateWithoutAdminActionsPerformedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name?: string | null
+  role?: $Enums.Role
+  emailVerified?: Date | string | null
+  image?: string | null
+  sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
+  template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
+  submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
+  automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
+}
+
+export type UserCreateOrConnectWithoutAdminActionsPerformedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsPerformedInput, Prisma.UserUncheckedCreateWithoutAdminActionsPerformedInput>
+}
+
+export type UserCreateWithoutAdminActionsReceivedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name?: string | null
+  role?: $Enums.Role
+  emailVerified?: Date | string | null
+  image?: string | null
+  sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
+  template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  reports?: Prisma.ReportCreateNestedManyWithoutUserInput
+  submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
+  automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+}
+
+export type UserUncheckedCreateWithoutAdminActionsReceivedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name?: string | null
+  role?: $Enums.Role
+  emailVerified?: Date | string | null
+  image?: string | null
+  sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
+  template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
+  submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
+  automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+}
+
+export type UserCreateOrConnectWithoutAdminActionsReceivedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsReceivedInput, Prisma.UserUncheckedCreateWithoutAdminActionsReceivedInput>
+}
+
+export type UserUpsertWithoutAdminActionsPerformedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAdminActionsPerformedInput, Prisma.UserUncheckedUpdateWithoutAdminActionsPerformedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsPerformedInput, Prisma.UserUncheckedCreateWithoutAdminActionsPerformedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAdminActionsPerformedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAdminActionsPerformedInput, Prisma.UserUncheckedUpdateWithoutAdminActionsPerformedInput>
+}
+
+export type UserUpdateWithoutAdminActionsPerformedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
+  template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
+  submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
+  automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAdminActionsPerformedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
+  template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
+  submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
+  automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
+}
+
+export type UserUpsertWithoutAdminActionsReceivedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAdminActionsReceivedInput, Prisma.UserUncheckedUpdateWithoutAdminActionsReceivedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsReceivedInput, Prisma.UserUncheckedCreateWithoutAdminActionsReceivedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAdminActionsReceivedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAdminActionsReceivedInput, Prisma.UserUncheckedUpdateWithoutAdminActionsReceivedInput>
+}
+
+export type UserUpdateWithoutAdminActionsReceivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
+  template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
+  submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
+  automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAdminActionsReceivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
+  template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
+  submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
+  automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 
@@ -1293,6 +1711,8 @@ export type UserCountOutputType = {
   sessions: number
   reports: number
   submitLogs: number
+  adminActionsPerformed: number
+  adminActionsReceived: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1300,6 +1720,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
   reports?: boolean | UserCountOutputTypeCountReportsArgs
   submitLogs?: boolean | UserCountOutputTypeCountSubmitLogsArgs
+  adminActionsPerformed?: boolean | UserCountOutputTypeCountAdminActionsPerformedArgs
+  adminActionsReceived?: boolean | UserCountOutputTypeCountAdminActionsReceivedArgs
 }
 
 /**
@@ -1340,6 +1762,20 @@ export type UserCountOutputTypeCountSubmitLogsArgs<ExtArgs extends runtime.Types
   where?: Prisma.SubmitLogWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAdminActionsPerformedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AdminActionLogWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAdminActionsReceivedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AdminActionLogWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1350,6 +1786,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   emailVerified?: boolean
   image?: boolean
   sessionVersion?: boolean
+  deletedAt?: boolean
+  mustChangePassword?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
@@ -1359,6 +1797,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
   submitLogs?: boolean | Prisma.User$submitLogsArgs<ExtArgs>
   automation?: boolean | Prisma.User$automationArgs<ExtArgs>
+  adminActionsPerformed?: boolean | Prisma.User$adminActionsPerformedArgs<ExtArgs>
+  adminActionsReceived?: boolean | Prisma.User$adminActionsReceivedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1371,6 +1811,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   emailVerified?: boolean
   image?: boolean
   sessionVersion?: boolean
+  deletedAt?: boolean
+  mustChangePassword?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1384,6 +1826,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   emailVerified?: boolean
   image?: boolean
   sessionVersion?: boolean
+  deletedAt?: boolean
+  mustChangePassword?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1397,11 +1841,13 @@ export type UserSelectScalar = {
   emailVerified?: boolean
   image?: boolean
   sessionVersion?: boolean
+  deletedAt?: boolean
+  mustChangePassword?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "name" | "role" | "emailVerified" | "image" | "sessionVersion" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "name" | "role" | "emailVerified" | "image" | "sessionVersion" | "deletedAt" | "mustChangePassword" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
@@ -1410,6 +1856,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
   submitLogs?: boolean | Prisma.User$submitLogsArgs<ExtArgs>
   automation?: boolean | Prisma.User$automationArgs<ExtArgs>
+  adminActionsPerformed?: boolean | Prisma.User$adminActionsPerformedArgs<ExtArgs>
+  adminActionsReceived?: boolean | Prisma.User$adminActionsReceivedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1425,6 +1873,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     reports: Prisma.$ReportPayload<ExtArgs>[]
     submitLogs: Prisma.$SubmitLogPayload<ExtArgs>[]
     automation: Prisma.$AutomationConfigPayload<ExtArgs> | null
+    adminActionsPerformed: Prisma.$AdminActionLogPayload<ExtArgs>[]
+    adminActionsReceived: Prisma.$AdminActionLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1435,6 +1885,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     emailVerified: Date | null
     image: string | null
     sessionVersion: number
+    deletedAt: Date | null
+    mustChangePassword: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1838,6 +2290,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   reports<T extends Prisma.User$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   submitLogs<T extends Prisma.User$submitLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$submitLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubmitLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   automation<T extends Prisma.User$automationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$automationArgs<ExtArgs>>): Prisma.Prisma__AutomationConfigClient<runtime.Types.Result.GetResult<Prisma.$AutomationConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  adminActionsPerformed<T extends Prisma.User$adminActionsPerformedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminActionsPerformedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminActionLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  adminActionsReceived<T extends Prisma.User$adminActionsReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminActionsReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminActionLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1875,6 +2329,8 @@ export interface UserFieldRefs {
   readonly emailVerified: Prisma.FieldRef<"User", 'DateTime'>
   readonly image: Prisma.FieldRef<"User", 'String'>
   readonly sessionVersion: Prisma.FieldRef<"User", 'Int'>
+  readonly deletedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly mustChangePassword: Prisma.FieldRef<"User", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
@@ -2420,6 +2876,54 @@ export type User$automationArgs<ExtArgs extends runtime.Types.Extensions.Interna
    */
   include?: Prisma.AutomationConfigInclude<ExtArgs> | null
   where?: Prisma.AutomationConfigWhereInput
+}
+
+/**
+ * User.adminActionsPerformed
+ */
+export type User$adminActionsPerformedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AdminActionLog
+   */
+  select?: Prisma.AdminActionLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AdminActionLog
+   */
+  omit?: Prisma.AdminActionLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AdminActionLogInclude<ExtArgs> | null
+  where?: Prisma.AdminActionLogWhereInput
+  orderBy?: Prisma.AdminActionLogOrderByWithRelationInput | Prisma.AdminActionLogOrderByWithRelationInput[]
+  cursor?: Prisma.AdminActionLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AdminActionLogScalarFieldEnum | Prisma.AdminActionLogScalarFieldEnum[]
+}
+
+/**
+ * User.adminActionsReceived
+ */
+export type User$adminActionsReceivedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AdminActionLog
+   */
+  select?: Prisma.AdminActionLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AdminActionLog
+   */
+  omit?: Prisma.AdminActionLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AdminActionLogInclude<ExtArgs> | null
+  where?: Prisma.AdminActionLogWhereInput
+  orderBy?: Prisma.AdminActionLogOrderByWithRelationInput | Prisma.AdminActionLogOrderByWithRelationInput[]
+  cursor?: Prisma.AdminActionLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AdminActionLogScalarFieldEnum | Prisma.AdminActionLogScalarFieldEnum[]
 }
 
 /**

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { sesiMasihSah, versiSesiDariKlien } from "./session-version";
+import {
+  sesiMasihSah,
+  versiSesiDariKlien,
+  wajibGantiDariKlien,
+} from "./session-version";
 
 describe("sesiMasihSah", () => {
   it("token dengan versi sama dengan DB tetap sah", () => {
@@ -44,5 +48,27 @@ describe("versiSesiDariKlien", () => {
     expect(versiSesiDariKlien(undefined)).toBeNull();
     expect(versiSesiDariKlien("apa saja")).toBeNull();
     expect(versiSesiDariKlien({})).toBeNull();
+  });
+});
+
+describe("wajibGantiDariKlien", () => {
+  it("menerima boolean apa pun (true menyalakan, false mematikan spanduk)", () => {
+    expect(wajibGantiDariKlien({ mustChangePassword: true })).toBe(true);
+    // Setelah pengguna berhasil ganti sandi, klien mengirim false.
+    expect(wajibGantiDariKlien({ mustChangePassword: false })).toBe(false);
+  });
+
+  it("menolak nilai non-boolean (klien tak dipercaya begitu saja)", () => {
+    expect(wajibGantiDariKlien({ mustChangePassword: "true" })).toBeNull();
+    expect(wajibGantiDariKlien({ mustChangePassword: 1 })).toBeNull();
+    expect(wajibGantiDariKlien({ mustChangePassword: 0 })).toBeNull();
+    expect(wajibGantiDariKlien({ mustChangePassword: null })).toBeNull();
+  });
+
+  it("menolak bentuk tak terduga tanpa melempar", () => {
+    expect(wajibGantiDariKlien(null)).toBeNull();
+    expect(wajibGantiDariKlien(undefined)).toBeNull();
+    expect(wajibGantiDariKlien("apa saja")).toBeNull();
+    expect(wajibGantiDariKlien({})).toBeNull();
   });
 });

@@ -40,3 +40,21 @@ export function versiSesiDariKlien(session: unknown): number | null {
   if (typeof v !== "number" || !Number.isInteger(v) || v < 0) return null;
   return v;
 }
+
+/**
+ * Ambil `mustChangePassword` yang dikirim klien lewat `useSession().update(...)`.
+ *
+ * Dipakai setelah pengguna berhasil mengganti kata sandinya sendiri: klien
+ * mengirim `false` supaya spanduk "wajib ganti" hilang tanpa perlu login ulang.
+ *
+ * Karena datang dari klien, hanya nilai boolean yang diterima; selain itu
+ * `null` (abaikan). Perhatikan arahnya yang AMAN: klien diizinkan menurunkan
+ * flag ini (`true → false`) — itu memang yang diinginkan setelah ganti sandi —
+ * sedangkan sumber kebenaran sesungguhnya tetap DB pada permintaan berikutnya
+ * (callback `jwt` menimpa dari kolom setiap kali token diverifikasi).
+ */
+export function wajibGantiDariKlien(session: unknown): boolean | null {
+  const v = (session as { mustChangePassword?: unknown } | null | undefined)
+    ?.mustChangePassword;
+  return typeof v === "boolean" ? v : null;
+}

@@ -483,10 +483,6 @@ export type AutomationConfigUncheckedUpdateOneWithoutUserNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AutomationConfigUpdateToOneWithWhereWithoutUserInput, Prisma.AutomationConfigUpdateWithoutUserInput>, Prisma.AutomationConfigUncheckedUpdateWithoutUserInput>
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type AutomationConfigCreateWithoutUserInput = {
   id?: string
   isEnabled?: boolean

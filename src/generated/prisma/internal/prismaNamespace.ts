@@ -405,7 +405,8 @@ export const ModelName = {
   Report: 'Report',
   SubmitLog: 'SubmitLog',
   AutomationConfig: 'AutomationConfig',
-  Session: 'Session'
+  Session: 'Session',
+  AdminActionLog: 'AdminActionLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -421,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "verificationToken" | "maganghubCredential" | "reportTemplate" | "report" | "submitLog" | "automationConfig" | "session"
+    modelProps: "user" | "account" | "verificationToken" | "maganghubCredential" | "reportTemplate" | "report" | "submitLog" | "automationConfig" | "session" | "adminActionLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1091,6 +1092,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AdminActionLog: {
+      payload: Prisma.$AdminActionLogPayload<ExtArgs>
+      fields: Prisma.AdminActionLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AdminActionLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AdminActionLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload>
+        }
+        findFirst: {
+          args: Prisma.AdminActionLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AdminActionLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload>
+        }
+        findMany: {
+          args: Prisma.AdminActionLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload>[]
+        }
+        create: {
+          args: Prisma.AdminActionLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload>
+        }
+        createMany: {
+          args: Prisma.AdminActionLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AdminActionLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload>[]
+        }
+        delete: {
+          args: Prisma.AdminActionLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload>
+        }
+        update: {
+          args: Prisma.AdminActionLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.AdminActionLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AdminActionLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AdminActionLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.AdminActionLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminActionLogPayload>
+        }
+        aggregate: {
+          args: Prisma.AdminActionLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAdminActionLog>
+        }
+        groupBy: {
+          args: Prisma.AdminActionLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AdminActionLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AdminActionLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AdminActionLogCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1139,6 +1214,8 @@ export const UserScalarFieldEnum = {
   emailVerified: 'emailVerified',
   image: 'image',
   sessionVersion: 'sessionVersion',
+  deletedAt: 'deletedAt',
+  mustChangePassword: 'mustChangePassword',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1264,6 +1341,18 @@ export const SessionScalarFieldEnum = {
 export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
 
 
+export const AdminActionLogScalarFieldEnum = {
+  id: 'id',
+  action: 'action',
+  actorId: 'actorId',
+  targetId: 'targetId',
+  reason: 'reason',
+  createdAt: 'createdAt'
+} as const
+
+export type AdminActionLogScalarFieldEnum = (typeof AdminActionLogScalarFieldEnum)[keyof typeof AdminActionLogScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1351,6 +1440,13 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'CredentialStatus'
  */
 export type EnumCredentialStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CredentialStatus'>
@@ -1421,9 +1517,16 @@ export type ListEnumTriggerTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$
 
 
 /**
- * Reference to a field of type 'Boolean'
+ * Reference to a field of type 'AdminActionType'
  */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+export type EnumAdminActionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AdminActionType'>
+    
+
+
+/**
+ * Reference to a field of type 'AdminActionType[]'
+ */
+export type ListEnumAdminActionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AdminActionType[]'>
     
 
 
@@ -1600,6 +1703,7 @@ export type GlobalOmitConfig = {
   submitLog?: Prisma.SubmitLogOmit
   automationConfig?: Prisma.AutomationConfigOmit
   session?: Prisma.SessionOmit
+  adminActionLog?: Prisma.AdminActionLogOmit
 }
 
 /* Types for Logging */

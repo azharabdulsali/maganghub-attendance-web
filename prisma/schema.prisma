@@ -54,6 +54,15 @@ enum TriggerType {
 }
 
 // ---------------------------------------------------------------------------
+// Audit aksi admin
+// ---------------------------------------------------------------------------
+
+enum AdminActionType {
+  USER_DELETE
+  USER_RESET_PASSWORD
+}
+
+// ---------------------------------------------------------------------------
 // Model Auth — NextAuth v5 (SPEC.md §7, §9)
 // ---------------------------------------------------------------------------
 
@@ -71,6 +80,14 @@ model User {
   // sesi yang beredar — dipakai saat ganti kata sandi (selain sesi yang
   // sedang dipakai) dan tombol "keluar dari semua perangkat".
   sessionVersion Int      @default(0)
+  // Soft delete: diisi saat admin "menghapus" pengguna. Baris tetap ada supaya
+  // riwayat laporan/audit utuh, tetapi pengguna tidak bisa login dan tidak
+  // muncul lagi di daftar admin. NULL = aktif.
+  deletedAt     DateTime?
+  // Dipaksa ganti kata sandi: diset true oleh admin saat mengatur ulang. Klien
+  // menampilkan spanduk dan mengarahkan ke /settings; direset ke false setiap
+  // kali pengguna berhasil mengganti kata sandinya sendiri.
+  mustChangePassword Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -81,6 +98,8 @@ model User {
   reports      Report[]
   submitLogs   SubmitLog[]
   automation   AutomationConfig?
+  adminActionsPerformed AdminActionLog[] @relation("AdminActor")
+  adminActionsReceived  AdminActionLog[] @relation("AdminTarget")
 
   @@map("users")
 }
@@ -240,5 +259,28 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+/// Audit aksi ADMIN atas pengguna (hapus / atur ulang kata sandi). Dipisah dari
+/// SubmitLog supaya arti tabel audit submit tetap murni: SubmitLog = percobaan
+/// kirim laporan, AdminActionLog = tindakan admin atas akun orang lain
+/// (SPEC.md §4, §10). Tidak pernah menyimpan kata sandi/token, hanya jenis
+/// aksi, hasil, dan id aktor/sasaran.
+model AdminActionLog {
+  id       String          @id @default(cuid())
+  action   AdminActionType
+  actorId  String
+  targetId String
+  /// Alasan penolakan (mis. "SELF") atau catatan singkat. Tidak rahasia.
+  reason   String?
+  /// Muat ulang bila tulisan di atas. Tidak wajib.
+  createdAt DateTime @default(now())
+
+  actor  User @relation("AdminActor", fields: [actorId], references: [id], onDelete: Cascade)
+  target User @relation("AdminTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([targetId, createdAt])
+  @@map("admin_action_logs")
 }
 

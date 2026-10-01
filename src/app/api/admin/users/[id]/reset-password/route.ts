@@ -73,20 +73,20 @@ export async function POST(
   const { id } = await params;
   const target = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, role: true, email: true },
+    select: { id: true, role: true, email: true, deletedAt: true },
   });
 
+  // Sasaran yang sudah dihapus diperlakukan "tidak ada".
   const denial = checkAdminTarget(
     actorId,
-    target ? { id: target.id, role: target.role } : null,
+    target && !target.deletedAt ? { id: target.id, role: target.role } : null,
   );
   if (denial) {
-    logAdminAction("user.resetPassword", {
-      actorId,
-      targetId: id,
-      outcome: "denied",
-      reason: denial,
-    });
+    await logAdminAction(
+      "USER_RESET_PASSWORD",
+      { actorId, targetId: id, reason: denial },
+      "denied",
+    );
     return NextResponse.json(
       { error: describeActionDenial(denial) },
       { status: statusForDenial(denial) },
@@ -96,16 +96,23 @@ export async function POST(
   const kataSandi = generateTemporaryPassword();
   const passwordHash = await bcrypt.hash(kataSandi, BCRYPT_COST);
 
+  // Simpan hash baru, cabut semua sesi (sessionVersion naik), dan set flag
+  // wajib-ganti. Pemilik akun akan diminta mengganti kata sandi saat berikutnya
+  // membuka aplikasi (spanduk + /settings).
   await prisma.user.update({
     where: { id },
-    data: { passwordHash, sessionVersion: { increment: 1 } },
+    data: {
+      passwordHash,
+      mustChangePassword: true,
+      sessionVersion: { increment: 1 },
+    },
   });
 
-  logAdminAction("user.resetPassword", {
-    actorId,
-    targetId: id,
-    outcome: "success",
-  });
+  await logAdminAction(
+    "USER_RESET_PASSWORD",
+    { actorId, targetId: id },
+    "success",
+  );
 
   return NextResponse.json(
     {

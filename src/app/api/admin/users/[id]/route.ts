@@ -2,14 +2,9 @@
 //
 // Kenapa soft, bukan hard: `User` punya relasi cascade ke laporan, template,
 // kredensial, dan audit submit. Menghapus barisnya akan menghapus riwayat yang
-// justru jadi bukti (SPEC.md §10). Karena itu penghapusan hanya menandai
+// justru jadi bukti (SPEC.md §10). Karena itu penghapusan hanya mengisi
 // `deletedAt`; pengguna tak bisa login dan tak muncul lagi di daftar admin,
 // tetapi datanya tetap utuh bila perlu dipulihkan/diaudit.
-//
-// ⚠️ `deletedAt` belum ada di skema saat ini. Menambahkannya butuh migrasi Neon
-// yang di tahap ini BELUM dijalankan (menunggu izin). Sampai migrasi itu ada,
-// route ini menolak dengan 501 supaya tidak diam-diam gagal. Ini disengaja:
-// lebih baik tombol jujur "belum aktif" daripada menghapus data sungguhan.
 
 import { NextResponse } from "next/server";
 
@@ -60,32 +55,40 @@ export async function DELETE(
   const { id } = await params;
   const target = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, role: true, email: true },
+    select: { id: true, role: true, email: true, deletedAt: true },
   });
 
+  // Pengguna yang sudah dihapus dianggap "tidak ada" (idempoten, 404).
   const denial = checkAdminTarget(
     actorId,
-    target ? { id: target.id, role: target.role } : null,
+    target && !target.deletedAt
+      ? { id: target.id, role: target.role }
+      : null,
   );
   if (denial) {
-    logAdminAction("user.delete", {
-      actorId,
-      targetId: id,
-      outcome: "denied",
-      reason: denial,
-    });
+    await logAdminAction(
+      "USER_DELETE",
+      { actorId, targetId: id, reason: denial },
+      "denied",
+    );
     return NextResponse.json(
       { error: describeActionDenial(denial) },
       { status: statusForDenial(denial) },
     );
   }
 
-  // Lihat catatan di atas: sampai kolom `deletedAt` ada, jangan hapus diam-diam.
-  return NextResponse.json(
-    {
-      error:
-        "Fitur hapus pengguna belum aktif: menunggu migrasi kolom deletedAt.",
+  // Soft delete + cabut semua sesi pengguna (naikkan sessionVersion) supaya
+  // JWT yang masih beredar langsung tak sah. Keduanya dalam satu transaksi.
+  await prisma.user.update({
+    where: { id },
+    data: {
+      deletedAt: new Date(),
+      sessionVersion: { increment: 1 },
     },
-    { status: 501 },
-  );
+  });
+
+  await logAdminAction("USER_DELETE", { actorId, targetId: id }, "success");
+
+  return NextResponse.json({ ok: true, email: target!.email });
 }
+
