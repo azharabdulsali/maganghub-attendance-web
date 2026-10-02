@@ -59,6 +59,26 @@ describe("GUIDES, data artikel panduan", () => {
       expect(g.kataKunci.length).toBeGreaterThan(0);
     }
   });
+
+  it("setiap blok gambar punya alt, dimensi positif, dan path /panduan/", () => {
+    let jumlahGambar = 0;
+    for (const g of GUIDES) {
+      for (const s of g.section) {
+        for (const b of s.blok) {
+          if (b.jenis !== "gambar") continue;
+          jumlahGambar += 1;
+          // alt wajib: tanpa itu pembaca layar dan mesin pencari tidak tahu isi.
+          expect(b.alt.trim().length).toBeGreaterThan(0);
+          // Hanya aset lokal di /public; URL luar akan bocor & tak terverifikasi.
+          expect(b.src).toMatch(/^\/panduan\/[a-z0-9-]+\.(?:png|webp)$/);
+          // Dimensi positif menjamin next/image menahan tata letak.
+          expect(b.lebar).toBeGreaterThan(0);
+          expect(b.tinggi).toBeGreaterThan(0);
+        }
+      }
+    }
+    expect(jumlahGambar).toBeGreaterThan(0);
+  });
 });
 
 describe("getGuide / guideLain", () => {

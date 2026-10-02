@@ -23,7 +23,20 @@ export type GuideBlock =
   | { jenis: "daftar"; judul?: string; item: readonly string[] }
   | { jenis: "langkah"; judul: string; item: readonly string[] }
   | { jenis: "catatan"; judul: string; teks: string }
-  | { jenis: "tabel"; kepala: readonly string[]; baris: readonly (readonly string[])[] };
+  | { jenis: "tabel"; kepala: readonly string[]; baris: readonly (readonly string[])[] }
+  | {
+      /** Tangkapan layar langkah, dengan teks alt deskriptif (wajib). */
+      jenis: "gambar";
+      /** Path publik, mis. "/panduan/devtools-1-buka.webp". */
+      src: string;
+      /** Teks alt untuk pembaca layar & cadangan bila gambar gagal dimuat. */
+      alt: string;
+      /** Keterangan singkat di bawah gambar (opsional). */
+      keterangan?: string;
+      /** Dimensi intrinsik agar tata letak tidak melompat saat gambar dimuat. */
+      lebar: number;
+      tinggi: number;
+    };
 
 export type GuideSection = {
   id: string;
@@ -343,6 +356,17 @@ export const GUIDES: readonly Guide[] = [
             ],
           },
           {
+            jenis: "gambar",
+            src: "/panduan/devtools-1-buka.webp",
+            alt: "Panel Application di DevTools Chrome dengan bagian Storage dan Cookies terlihat di bilah kiri.",
+            keterangan:
+              "Tab Application ada di deretan tab atas, di sebelah kanan " +
+              "Console. Setelah tab itu dibuka, Cookies ada di dalam grup " +
+              "Storage pada bilah kiri.",
+            lebar: 1237,
+            tinggi: 932,
+          },
+          {
             jenis: "catatan",
             judul: "Aktifkan tampilan URL-decoded dulu",
             teks:
@@ -352,6 +376,16 @@ export const GUIDES: readonly Guide[] = [
               "kotak pencarian cookie. Tanpa centang itu, yang tersalin adalah " +
               "bentuk ter-encode yang akan ditolak aplikasi karena bukan " +
               "berbentuk tiga bagian dipisah titik.",
+          },
+          {
+            jenis: "gambar",
+            src: "/panduan/devtools-2-buka.webp",
+            alt: "Bilah kiri DevTools dengan bagian Storage dan Cookies terlihat, siap dipilih untuk membuka daftar cookie.",
+            keterangan:
+              "Buka Storage lalu pilih Cookies. Domain portal Monev muncul di " +
+              "bawahnya sebagai sub-bagian yang bisa dibuka.",
+            lebar: 1236,
+            tinggi: 929,
           },
           {
             jenis: "paragraf",
@@ -375,6 +409,16 @@ export const GUIDES: readonly Guide[] = [
               "Pastikan centang Show URL-decoded dari langkah sebelumnya masih " +
               "aktif, lalu periksa hasil salinan: bila masih ada tanda persen " +
               "seperti %2E, ulangi dengan centang itu dinyalakan.",
+          },
+          {
+            jenis: "gambar",
+            src: "/panduan/devtools-3-buka.webp",
+            alt: "Tabel cookie DevTools dengan baris monev_refresh_token terpilih dan nilainya tampil di kolom Value.",
+            keterangan:
+              "Salin hanya isi kolom Value. Jangan ikut menyalin nama cookie " +
+              "atau pasangan cookie lain di baris yang sama.",
+            lebar: 1235,
+            tinggi: 932,
           },
           {
             jenis: "daftar",

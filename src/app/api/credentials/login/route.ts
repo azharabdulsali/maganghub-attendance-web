@@ -116,6 +116,14 @@ export async function POST() {
     // status kredensial, belum tentu kredensialnya salah. `kind` (bila ada)
     // memberitahu UI apakah ini blokir WAF — supaya bisa mengarahkan ke jalur
     // tempel token manual, bukan menyalahkan password.
+    //
+    // Detail teknis (`result.diagnostic`) HANYA dicatat ke log server: berisi
+    // header/kategori/URL, tanpa rahasia, tapi membingungkan bila tampil di UI.
+    if (result.diagnostic) {
+      console.warn(
+        `[credentials/login] langkah ${result.step} gagal (kind=${result.kind ?? "unknown"}): ${result.diagnostic}`,
+      );
+    }
     return NextResponse.json(
       {
         ok: false,

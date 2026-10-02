@@ -9,6 +9,7 @@
 // sama dengan FAQ_ITEMS di site.ts.
 
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, CalendarCheck, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -90,6 +91,27 @@ function Blok({ blok }: { blok: GuideBlock }) {
             </tbody>
           </table>
         </div>
+      );
+    case "gambar":
+      return (
+        <figure className="space-y-2">
+          {/* Gambar statis dari /public: next/image memberi lazy-loading dan
+              menahan tata letak lewat dimensi eksplisit, tanpa perlu
+              konfigurasi loader untuk aset lokal. */}
+          <Image
+            src={blok.src}
+            alt={blok.alt}
+            width={blok.lebar}
+            height={blok.tinggi}
+            sizes="(max-width: 768px) 100vw, 720px"
+            className="w-full rounded-base border-2 border-border bg-secondary-background"
+          />
+          {blok.keterangan ? (
+            <figcaption className="text-xs leading-relaxed text-foreground/60">
+              {blok.keterangan}
+            </figcaption>
+          ) : null}
+        </figure>
       );
   }
 }

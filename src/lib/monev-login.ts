@@ -52,7 +52,14 @@ export type SsoPrimeResult =
   | { status: "OK"; httpCode: number; csrfToken: string; cookies: string }
   | {
       status: "ERROR";
+      /** Pesan ramah untuk pengguna (tanpa istilah teknis). */
       message: string;
+      /**
+       * Detail diagnostik teknis (header respons, kategori halaman, URL).
+       * **Hanya untuk log/audit**, JANGAN dirender ke UI, isinya membingungkan
+       * pengguna non-teknis.
+       */
+      diagnostic?: string;
       /**
        * Kategori penolakan (hanya terisi bila ada sinyal respons). UI memakai
        * ini untuk memberi tindakan: `"waf"` mengarahkan ke tempel token manual.
@@ -260,11 +267,21 @@ export function interpretSsoPrimeResponse(
   },
 ): SsoPrimeResult {
   if (httpCode < 200 || httpCode >= 400) {
+    const kind = classifyPrimeRejection(httpCode, headers.diagnostics);
     return {
       status: "ERROR",
       httpCode,
-      kind: classifyPrimeRejection(httpCode, headers.diagnostics),
-      message:
+      kind,
+      // `message` = versi ramah untuk layar pengguna. `diagnostic` = detail
+      // teknis (server/cf-mitigated/byte/URL) yang HANYA untuk log, tidak
+      // pernah dirender. Tanpa pemisahan ini, istilah seperti "cf-mitigated"
+      // dan 6724 byte muncul di kartu kredensial dan membingungkan pengguna.
+      message: describeLoginErrorForUser({
+        step: "sso-prime",
+        kind,
+        httpCode,
+      }),
+      diagnostic:
         `Priming SSO gagal (HTTP ${httpCode}).` +
         diagnosePrimeRejection(httpCode, headers.diagnostics),
     };
@@ -426,7 +443,15 @@ export type LoginFlowResult =
       httpCode?: number;
       message: string;
     }
-  | { status: "ERROR"; step: LoginStep; message: string; kind?: PrimeRejectionKind };
+  | {
+      status: "ERROR";
+      step: LoginStep;
+      /** Pesan ramah untuk layar pengguna. */
+      message: string;
+      /** Detail teknis untuk log saja (tidak pernah dirender ke UI). */
+      diagnostic?: string;
+      kind?: PrimeRejectionKind;
+    };
 
 /** Nama langkah, dipakai agar UI/audit tahu di mana alur berhenti. */
 export type LoginStep =
@@ -477,6 +502,58 @@ export function summarizeLoginStep(step: LoginStep): string {
     case "code-exchange":
       return "Langkah 4: menukar code menjadi access_token.";
   }
+}
+
+/**
+ * Pesan untuk MATA PENGGUNA, MURNI. Terpisah dari pesan diagnostik
+ * (`diagnosePrimeRejection`) yang penuh istilah teknis (`cf-mitigated`, byte,
+ * URL). Pengguna hanya perlu tahu: apa yang terjadi, apakah salah mereka, dan
+ * langkah berikutnya. Detail teknis tetap tersedia untuk log lewat field lain,
+ * tidak pernah dirender ke layar.
+ *
+ * `kind` menentukan nada kalimat: `waf` menegaskan ini BUKAN soal kredensial
+ * (sesuai SPEC §6/§10: jangan biarkan pengguna menebak password salah).
+ */
+export function describeLoginErrorForUser(input: {
+  step: LoginStep;
+  kind?: PrimeRejectionKind;
+  httpCode?: number;
+}): string {
+  const { step, kind, httpCode } = input;
+
+  if (step === "sso-prime" && (kind === "waf" || httpCode === 403)) {
+    return (
+      "Portal MagangHub menolak permintaan dari server kami karena proteksi " +
+      "anti-bot, bukan karena email & password Anda salah. Gunakan cara " +
+      "tempel token di bawah untuk menghubungkan sesi."
+    );
+  }
+
+  if (step === "sso-prime") {
+    return (
+      "Halaman login portal tidak bisa dibaca saat ini. Coba lagi nanti, atau " +
+      "pakai cara tempel token di bawah."
+    );
+  }
+
+  if (step === "sso-login" && kind === "waf") {
+    return (
+      "Portal menolak permintaan dari server kami karena proteksi anti-bot, " +
+      "bukan karena kredensial Anda. Gunakan cara tempel token di bawah."
+    );
+  }
+
+  if (step === "sso-login") {
+    return (
+      "Login ke portal belum berhasil diselesaikan. Coba lagi sebentar, atau " +
+      "pakai cara tempel token di bawah."
+    );
+  }
+
+  return (
+    "Login otomatis belum berhasil. Coba lagi sebentar, atau pakai cara " +
+    "tempel token di bawah."
+  );
 }
 
 /**
@@ -538,6 +615,7 @@ export async function runLoginFlow(input: {
       status: "ERROR",
       step: "sso-prime",
       message: prime.message,
+      diagnostic: prime.diagnostic,
       kind: prime.kind,
     };
   }

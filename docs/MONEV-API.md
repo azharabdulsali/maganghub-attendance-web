@@ -531,9 +531,8 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > **belum tervalidasi di portal sungguhan** sampai rekaman di atas ada.
 >
 > **🔎 Alat diagnosa 403 (ditambahkan).** Bila langkah (2) menerima non-2xx
-> (mis. `403`), pesan galat **tidak** lagi sekadar "Priming SSO gagal (HTTP
-> 403)". Fungsi murni `diagnosePrimeRejection` (`src/lib/monev-login.ts`)
-> melampirkan **diagnostik non-rahasia** dari respons: header `server`,
+> (mis. `403`), fungsi murni `diagnosePrimeRejection` (`src/lib/monev-login.ts`)
+> menyusun **diagnostik non-rahasia** dari respons: header `server`,
 > `cf-mitigated`, `cf-ray`, `content-type`, `content-length`, dan **kategori
 > halaman** (via `describeHtmlHint`). Ini membedakan:
 > - **challenge Cloudflare/WAF** (ada `cf-mitigated`/`server: cloudflare`) →
@@ -544,6 +543,19 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > Tidak ada nilai token/cookie/password yang masuk ke diagnostik ini.
 > **Catatan penting:** `403` terjadi di langkah (2) **sebelum** password
 > dikirim, jadi `403` **tidak** berarti email/password salah.
+>
+> **👤 Pesan untuk pengguna ≠ diagnostik (pemisahan ditambahkan).** Teks
+> diagnostik di atas penuh istilah teknis (`cf-mitigated`, jumlah byte, URL
+> OAuth) dan **membingungkan** bila tampil apa adanya di layar. Karena itu
+> `interpretSsoPrimeResponse` memisahkan dua hal:
+> - **`message`** — dari `describeLoginErrorForUser` (MURNI). Bahasa awam,
+>   satu–dua kalimat, selalu menyebut langkah berikutnya (mis. "Portal menolak
+>   permintaan dari server kami karena proteksi anti-bot, **bukan** karena
+>   email & password Anda salah. Gunakan cara tempel token di bawah."). Ini
+>   yang dirender di UI.
+> - **`diagnostic`** — teks teknis penuh (`Priming SSO gagal (HTTP 403). …`).
+>   Hanya dicatat ke log server (`console.warn` di `POST
+>   /api/credentials/login`), **tidak pernah** dikirim ke klien.
 >
 > **↩️ Fallback UI (ditambahkan).** Kategori penolakan (`waf`/`page`/`unknown`)
 > kini ikut mengalir server → UI lewat `kind` (`classifyPrimeRejection` MURNI,

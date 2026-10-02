@@ -12,6 +12,7 @@ import {
   classifyPrimeRejection,
   extractCsrfTokenFromHtml,
   summarizeLoginStep,
+  describeLoginErrorForUser,
   mergeCookieHeader,
   runLoginFlow,
   primeSsoSession,
@@ -129,15 +130,21 @@ describe("interpretSsoPrimeResponse (murni)", () => {
     expect(r.status).toBe("ERROR");
   });
 
-  it("403 tanpa diagnostik → pesan lama (tanpa tambahan) tetap utuh", () => {
+  it("403 tanpa diagnostik → pesan ramah + diagnostic teknis terpisah", () => {
     const r = interpretSsoPrimeResponse(403, { setCookies: [] });
     expect(r.status).toBe("ERROR");
     if (r.status === "ERROR") {
-      expect(r.message).toContain("HTTP 403");
+      // Pesan UI ramah: tanpa istilah teknis, tanpa MENYALAHKAN kredensial.
+      expect(r.message).not.toMatch(/HTTP \d{3}/);
+      expect(r.message).not.toMatch(/cf-mitigated|content-type|byte/i);
+      // Kata "password" boleh muncul HANYA dalam penegasan "bukan ... salah".
+      expect(r.message).not.toMatch(/periksa (email|password)|password salah/i);
+      // Detail teknis tetap ada untuk log.
+      expect(r.diagnostic).toContain("HTTP 403");
     }
   });
 
-  it("403 + sinyal Cloudflare → pesan menjelaskan challenge, BUKAN kredensial", () => {
+  it("403 + sinyal Cloudflare → pesan UI ramah, detail teknis hanya di diagnostic", () => {
     const r = interpretSsoPrimeResponse(403, {
       setCookies: [],
       diagnostics: {
@@ -150,22 +157,28 @@ describe("interpretSsoPrimeResponse (murni)", () => {
     });
     expect(r.status).toBe("ERROR");
     if (r.status === "ERROR") {
-      expect(r.message).toContain("HTTP 403");
-      expect(r.message).toMatch(/cloudflare/i);
-      expect(r.message).toContain("cf-mitigated=challenge");
-      // Tidak boleh menuduh kredensial salah.
-      expect(r.message).not.toMatch(/password/i);
+      // UI: bahasa manusia, menegaskan bukan kredensial.
+      expect(r.message).toMatch(/bukan karena/i);
+      expect(r.message).not.toMatch(/HTTP \d{3}/);
+      expect(r.message).not.toMatch(/cloudflare|cf-mitigated/i);
+      expect(r.message).not.toMatch(/periksa (email|password)|password salah/i);
+      // Diagnostic: memuat jejak teknis lengkap.
+      expect(r.diagnostic).toContain("HTTP 403");
+      expect(r.diagnostic).toMatch(/cloudflare/i);
+      expect(r.diagnostic).toContain("cf-mitigated=challenge");
     }
   });
 
-  it("403 tanpa sinyal Cloudflare → pesan menyebut WAF & saran authorizeUrl lengkap", () => {
+  it("403 tanpa sinyal Cloudflare → diagnostic menyebut WAF & authorizeUrl", () => {
     const r = interpretSsoPrimeResponse(403, {
       setCookies: [],
       diagnostics: { server: "openresty", contentType: "text/html" },
     });
     if (r.status === "ERROR") {
-      expect(r.message).toMatch(/WAF/i);
-      expect(r.message).toContain("authorizeUrl");
+      expect(r.diagnostic).toMatch(/WAF/i);
+      expect(r.diagnostic).toContain("authorizeUrl");
+      // Pesan UI tetap bersih dari jargon WAF/authorizeUrl.
+      expect(r.message).not.toMatch(/WAF|authorizeUrl/i);
     }
   });
 
@@ -257,6 +270,51 @@ describe("summarizeLoginStep", () => {
     const steps = ["oauth-start", "sso-prime", "sso-login", "code-exchange"] as const;
     const seen = new Set(steps.map((s) => summarizeLoginStep(s)));
     expect(seen.size).toBe(4);
+  });
+});
+
+describe("describeLoginErrorForUser (murni)", () => {
+  it("sso-prime + waf → menegaskan bukan kredensial, arahkan tempel token", () => {
+    const msg = describeLoginErrorForUser({
+      step: "sso-prime",
+      kind: "waf",
+      httpCode: 403,
+    });
+    expect(msg).toMatch(/bukan karena/i);
+    expect(msg).toMatch(/tempel token/i);
+    // Bahasa awam: tanpa kode HTTP, jargon header, atau nama fungsi internal.
+    expect(msg).not.toMatch(/HTTP \d{3}/);
+    expect(msg).not.toMatch(/cf-mitigated|cloudflare|diagnose|authorizeUrl/i);
+  });
+
+  it("403 di sso-prime diperlakukan sebagai blokir anti-bot walau kind undefined", () => {
+    const msg = describeLoginErrorForUser({ step: "sso-prime", httpCode: 403 });
+    expect(msg).toMatch(/anti-bot|bukan karena/i);
+  });
+
+  it("sso-prime non-waf → ajakan coba lagi, tetap tanpa jargon", () => {
+    const msg = describeLoginErrorForUser({
+      step: "sso-prime",
+      kind: "page",
+      httpCode: 200,
+    });
+    expect(msg).not.toMatch(/HTTP \d{3}|cf-mitigated|byte/i);
+    expect(msg).toMatch(/coba lagi|tempel token/i);
+  });
+
+  it("sso-login + waf → tidak menyalahkan kredensial", () => {
+    const msg = describeLoginErrorForUser({ step: "sso-login", kind: "waf" });
+    expect(msg).toMatch(/bukan karena/i);
+    expect(msg).not.toMatch(/periksa (email|password)|password salah/i);
+  });
+
+  it("selalu mengembalikan kalimat non-kosong untuk tiap langkah", () => {
+    const steps = ["oauth-start", "sso-prime", "sso-login", "code-exchange"] as const;
+    for (const step of steps) {
+      const msg = describeLoginErrorForUser({ step });
+      expect(msg.length).toBeGreaterThan(10);
+      expect(msg).not.toMatch(/undefined|null|\[object/i);
+    }
   });
 });
 
