@@ -119,6 +119,14 @@ export default function RegisterPage() {
                 id="password"
                 required
                 minLength={8}
+                // `new-password` WAJIB ada di KEDUA kolom kata sandi (di sini
+                // dan di kolom konfirmasi di bawah). Kalau hanya kolom
+                // konfirmasi yang menandai diri sebagai "kata sandi baru",
+                // pengelola kata sandi browser menyimpulkan kolom itulah
+                // targetnya, sehingga saran kata sandi muncul di kolom
+                // KONFIRMASI alih-alih di kolom Password utama.
+                // Sejajar dengan src/app/(app)/settings/password-form.tsx.
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimal 8 karakter"
@@ -144,7 +152,8 @@ export default function RegisterPage() {
                 // masalah sebenarnya adalah ketidakcocokan — menyesatkan.
                 //
                 // `new-password` (bukan `off`): pengelola kata sandi akan
-                // menawarkan membuat kata sandi BARU dan mengisi KEDUA kolom,
+                // menawarkan membuat kata sandi BARU dan mengisi KEDUA kolom
+                // (kolom Password utama di atas juga ber-`new-password`),
                 // bukan mengisi kolom ini dengan kata sandi lama.
                 autoComplete="new-password"
                 value={konfirmasi}

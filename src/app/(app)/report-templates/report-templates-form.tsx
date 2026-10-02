@@ -537,7 +537,7 @@ export default function ReportTemplatesForm({
               onChange={(e) => setKeywords(e.target.value)}
               maxLength={300}
               disabled={drafting || saving || deleting}
-              placeholder="mis. perbaikan bug login, rapat tim mingguan"
+              placeholder="mis. rapat tim mingguan, beli dimsum di koperasi"
             />
           </div>
           <div className="flex flex-1 flex-col gap-1.5">
