@@ -125,8 +125,13 @@ export function assessReadiness(input: {
   date: PlainDate;
   hasTemplate: boolean;
   hasToken: boolean;
+  /**
+   * Libur nasional dari tabel admin (opsional). Bila diberikan, `decide()`
+   * memakainya sebagai sumber kebenaran; bila tidak, jatuh ke daftar statis.
+   */
+  holidays?: ReadonlySet<string>;
 }): SubmitReadiness {
-  const decision = decide(input.date);
+  const decision = decide(input.date, input.holidays);
   if (decision === "PROGRAM_ENDED") {
     return { ready: false, reason: "PROGRAM_ENDED", decision, date: input.date };
   }

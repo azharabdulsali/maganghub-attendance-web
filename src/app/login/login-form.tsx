@@ -142,7 +142,7 @@ export default function LoginForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Masuk</CardTitle>
-          <CardDescription>Maganghub Autoabsen</CardDescription>
+          <CardDescription>MagangHub Autoabsen</CardDescription>
         </CardHeader>
 
         <CardContent>

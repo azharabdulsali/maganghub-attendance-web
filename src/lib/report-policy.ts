@@ -31,6 +31,19 @@ export const JADWAL_CADANGAN = ["16:30", "20:00"] as const;
 /** Tanggal polos dalam bentuk `YYYY-MM-DD`. */
 export type PlainDate = string;
 
+/**
+ * Kumpulan libur nasional TAMBAHAN yang dikelola admin (dari tabel `holidays`).
+ *
+ * Modul ini tetap MURNI: ia tidak menyentuh DB, melainkan menerima himpunan
+ * tanggal sebagai argumen. Pemanggil server (route/aksi) mengisinya lewat
+ * `holidays-repo.ts`; pemanggil murni (test, komponen klien) boleh memakai
+ * `LIBUR_NASIONAL` statis sebagai kemiripan.
+ *
+ * `undefined` (parameter tak diberikan) berarti "pakai daftar statis" — itu
+ * jalur kompatibilitas mundur supaya seluruh pemanggil lama tetap benar.
+ */
+export type HolidaySet = ReadonlySet<string>;
+
 /** Hasil keputusan policy, satu kata, dipakai konsisten di audit log §5.7. */
 export type PolicyDecision =
   | "ALLOW" // boleh submit
@@ -62,17 +75,22 @@ export function isAfter(a: PlainDate, b: PlainDate): boolean {
 
 /**
  * Apakah tanggal ini libur (akhir pekan ATAU libur nasional)?
- * Akhir pekan: Sabtu/Minggu. Libur nasional: daftar LIBUR_NASIONAL.
+ * Akhir pekan: Sabtu/Minggu (selalu, tak butuh data). Libur nasional: dari
+ * `holidays` bila diberikan, kalau tidak dari daftar statis `LIBUR_NASIONAL`.
+ *
+ * `holidays` datang dari tabel `holidays` (dikelola admin). Bila ia kosong
+ * (`new Set()`), akhir pekan tetap libur — mengosongkan tabel tidak pernah
+ * membuat Sabtu/Minggu jadi hari kerja.
  */
-export function isHoliday(date: PlainDate): boolean {
+export function isHoliday(date: PlainDate, holidays?: HolidaySet): boolean {
   const wd = weekdayOf(date);
   if (wd === 0 || wd === 6) return true;
-  return isNationalHoliday(date);
+  return isNationalHoliday(date, holidays);
 }
 
 /** Apakah tanggal ini hari kerja (Senin–Jumat, bukan libur nasional)? */
-export function isWorkingDay(date: PlainDate): boolean {
-  return !isHoliday(date);
+export function isWorkingDay(date: PlainDate, holidays?: HolidaySet): boolean {
+  return !isHoliday(date, holidays);
 }
 
 /**
@@ -80,13 +98,15 @@ export function isWorkingDay(date: PlainDate): boolean {
  *
  * Urutan pemeriksaan sengaja: **PROGRAM_ENDED diperiksa lebih dulu**, supaya
  * setelah 2027-02-09 tidak ada alasan lain yang bisa membuka jalan kembali.
+ *
+ * `holidays` diteruskan ke `isHoliday` (libur nasional dari tabel admin).
  */
-export function decide(date: PlainDate): PolicyDecision {
+export function decide(date: PlainDate, holidays?: HolidaySet): PolicyDecision {
   if (!isPlainDate(date)) {
     throw new Error(`Tanggal tidak sah: ${date} (harus YYYY-MM-DD).`);
   }
   if (isAfter(date, LAST_ACTIVE_DATE)) return "PROGRAM_ENDED";
-  if (isHoliday(date)) return "SKIPPED";
+  if (isHoliday(date, holidays)) return "SKIPPED";
   return "ALLOW";
 }
 

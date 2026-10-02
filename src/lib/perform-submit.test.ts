@@ -14,6 +14,7 @@ const exchangeMock = vi.fn();
 const checkDailyLogMock = vi.fn();
 const submitLogCreateMock = vi.fn();
 const credentialUpdateMock = vi.fn();
+const holidayFindManyMock = vi.fn();
 
 vi.mock("@/lib/crypto", () => ({
   decrypt: (...args: unknown[]) => decryptMock(...args),
@@ -35,6 +36,13 @@ vi.mock("@/lib/prisma", () => ({
     },
     maganghubCredential: {
       update: (...args: unknown[]) => credentialUpdateMock(...args),
+    },
+    // Tabel libur admin. Default mock: kosong → `loadHolidaySet()` mengembalikan
+    // `undefined` → performSubmit jatuh ke LIBUR_NASIONAL statis (auto-seed).
+    // Tes yang ingin menguji pengaruh libur admin/himpunan kosong menimpanya
+    // lewat `base({ holidays })`.
+    holiday: {
+      findMany: (...args: unknown[]) => holidayFindManyMock(...args),
     },
   },
 }));
@@ -64,6 +72,10 @@ function base(overrides: Record<string, unknown> = {}) {
     credential: CRED,
     trigger: "MANUAL" as const,
     logOnNotReady: false,
+    // Himpunan libur KOSONG secara default: tes menjadi deterministik (tak
+    // bergantung isi tabel) dan tidak menyentuh DB. Tes yang ingin menguji
+    // pengaruh libur admin menimpanya sendiri.
+    holidays: new Set<string>(),
     ...overrides,
   };
 }
@@ -74,6 +86,8 @@ beforeEach(() => {
   // menguji dekripsi/tukar-token. Blok gerbang menyetelnya sendiri (delete/"0").
   process.env.ALLOW_LIVE_SUBMIT = "1";
   submitLogCreateMock.mockResolvedValue({});
+  // Default: tabel libur kosong (bukan error).
+  holidayFindManyMock.mockResolvedValue([]);
   // Default: portal LAPOR belum ada laporan hari ini → aman lanjut kirim.
   // Tes khusus pra-cek menimpanya sendiri.
   checkDailyLogMock.mockResolvedValue({ status: "ABSENT" });
@@ -124,6 +138,62 @@ describe("performSubmit, gerbang ALLOW_LIVE_SUBMIT", () => {
     expect(submitReportMock).not.toHaveBeenCalled();
     expect(exchangeMock).not.toHaveBeenCalled();
   });
+
+
+describe("performSubmit, daftar libur gagal dimuat (gagal-lunak)", () => {
+  // Pagar PENTING: daftar libur hanya PENYEMPURNAAN. Bila tabel `holidays`
+  // belum ada / DB error, pengiriman JANGAN ikut mati — pakai daftar statis.
+  // Tanpa pagar ini, satu fitur pelengkap bisa mematikan seluruh otomasi.
+  it("DB libur error → tetap kirim (tidak melempar ke pemanggil)", async () => {
+    holidayFindManyMock.mockRejectedValueOnce(
+      new Error("relation \"holidays\" does not exist"),
+    );
+    // Gerbang live dimatikan → cukup sampai keputusan policy (tidak menyentuh
+    // jaringan portal). Yang diuji: error DB libur TIDAK menggagalkan alurnya.
+    delete process.env.ALLOW_LIVE_SUBMIT;
+    const out = await performSubmit({
+      userId: "u1",
+      date: WEEKDAY,
+      template: TEMPLATE,
+      credential: CRED,
+      trigger: "MANUAL",
+      logOnNotReady: false,
+      // holidays SENGAJA tidak diberikan → performSubmit memuat sendiri dari DB.
+    });
+    // Hari kerja biasa → lolos keputusan, bukan melempar.
+    expect(out.kind).toBe("DRY_RUN");
+    expect(submitReportMock).not.toHaveBeenCalled();
+  });
+
+  it("tabel libur KOSONG → auto-seed: 25 Des 2026 (Natal) tetap libur", async () => {
+    // Tanpa auto-seed, tabel kosong = nol libur → cron akan mengirim pada
+    // hari Natal. Test ini mengunci pagar itu.
+    holidayFindManyMock.mockResolvedValueOnce([]); // tabel kosong
+    const out = await performSubmit({
+      userId: "u1",
+      date: "2026-12-25", // Natal, ada di LIBUR_NASIONAL statis
+      template: TEMPLATE,
+      credential: CRED,
+      trigger: "CRON",
+      logOnNotReady: true,
+      // holidays tidak diberikan → performSubmit memuat dari DB (kosong).
+    });
+    expect(out).toMatchObject({ kind: "NOT_READY", reason: "POLICY_SKIPPED" });
+  });
+
+  it("DB libur error → jatuh ke daftar STATIS (Sabtu tetap libur)", async () => {
+    holidayFindManyMock.mockRejectedValueOnce(new Error("DB down"));
+    const out = await performSubmit({
+      userId: "u1",
+      date: "2026-02-07", // Sabtu
+      template: TEMPLATE,
+      credential: CRED,
+      trigger: "CRON",
+      logOnNotReady: true,
+    });
+    expect(out).toMatchObject({ kind: "NOT_READY", reason: "POLICY_SKIPPED" });
+  });
+});
 
   it("gerbang mati + manual → tidak mencatat log", async () => {
     delete process.env.ALLOW_LIVE_SUBMIT;

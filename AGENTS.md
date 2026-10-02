@@ -439,6 +439,49 @@ Prioritas test:
   tanggal dengan penimpa diberi dot hijau + label "Laporan Sudah Ada". Ini murni
   penanda baca; tidak mengubah `decide()` maupun jalur kirim.
 
+#### Hari libur dikelola ADMIN (tabel `Holiday`)
+
+- Sebelumnya daftar libur nasional hidup sebagai **data statis** di
+  `src/lib/holidays.ts`. Kini admin dapat **menambah/mengubah/menghapus** libur
+  lewat halaman `/admin/holidays` (rute admin baru, item sidebar grup
+  `MENU_ADMIN`), dan datanya disimpan di tabel `holidays`
+  (`prisma/schema.prisma`). `holidays.ts` tinggal jadi **nilai awal/seed** +
+  fallback murni untuk pemanggil tanpa DB.
+- **Sumber kebenaran runtime = tabel `holidays`**, diakses HANYA lewat
+  `src/lib/holidays-repo.ts` (`loadHolidaySet()` untuk jalur kirim/kalender,
+  `loadHolidayRows()` untuk tampilan). File itu SERVER-ONLY: jangan impor dari
+  komponen klien (DatePicker dkk menerima daftar libur sebagai prop), karena
+  Prisma tak boleh masuk bundle peramban.
+- **AUTO-SEED & gagal-lunak**: `loadHolidaySet()` mengembalikan `undefined`
+  (bukan himpunan kosong) bila tabel KOSONG; itu membuat `isHoliday` jatuh ke
+  `LIBUR_NASIONAL` statis. Tanpa ini, go-live dengan tabel kosong akan
+  menghilangkan libur nasional yang sudah dikenal (mis. 25 Des 2026) sehingga
+  cron mengirim pada hari Natal. Begitu ada baris pertama, DB jadi kebenaran
+  penuh (menghapus semua baris setelahnya = nol libur, bukan balik ke statis).
+  Sama: `performSubmit()` membungkus pemuatan libur dengan `try/catch` —
+  kegagalan baca DB libur TIDAK boleh mematikan seluruh otomasi; ia jatuh ke
+  daftar statis. Kedua pagar ini diuji (butuh pembuktian test bisa merah).
+- `report-policy.ts` tetap **MURNI**: `isHoliday(date, holidays?)`,
+  `isWorkingDay`, dan `decide(date, holidays?)` menerima himpunan tanggal
+  sebagai argumen opsional. `undefined` = pakai daftar statis (kompatibilitas
+  & test). `holidayKindOf(iso, holidays?)` di `calendar.ts` juga menerima
+  himpunan ini. **Himpunan kosong tidak pernah membuat Sabtu/Minggu jadi hari
+  kerja** — pagar ini diuji.
+- Jalur kirim: `performSubmit()` (dipakai manual, webhook cron, dispatch massal)
+  memuat libur via `loadHolidaySet()` bila pemanggil tidak memberikannya, lalu
+  meneruskannya ke `assessReadiness()` → `decide()`. Jadi **ketiga** jalur kirim
+  memakai libur admin yang sama tanpa perubahan di masing-masing route.
+- Validasi input libur (bentuk tanggal, tolak akhir pekan, tolak > masa
+  program, nama wajib & panjangnya) ada di `src/lib/holiday-admin.ts` (MURNI,
+  teruji di `holiday-admin.test.ts`). Endpoint `/api/admin/holidays`
+  (GET/POST/PUT/DELETE) mengikuti pola admin lain: guard role di SERVER, rate
+  limit `adminUserAction`, tanggal `@db.Date` dibandingkan sebagai string.
+- **Anti-`setState` di efek** (lint `react-hooks/set-state-in-effect`): form
+  libur (`holidays-manager.tsx`) tidak menyelaraskan state lewat `useEffect`.
+  Halaman memberi `key` dari data server; `router.refresh()` yang mengubah
+  `key` memasang ulang komponen dengan daftar segar (pola sama seperti form
+  template).
+
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
 (gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan
 test benar-benar bisa gagal (sengaja rusakkan kode → test harus merah →

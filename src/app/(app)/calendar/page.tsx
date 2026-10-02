@@ -18,6 +18,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toPlainDate } from "@/lib/submit-service";
+import { loadHolidaySet } from "@/lib/holidays-repo";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -95,7 +96,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
   // Ambil paralel: log submit pada bulan ini, report/draft pada bulan ini, dan
   // template khusus tanggal pada bulan ini (untuk penanda hijau di kalender).
-  const [logs, reports, datedTemplates] = await Promise.all([
+  const [logs, reports, datedTemplates, holidays] = await Promise.all([
     prisma.submitLog.findMany({
       where: {
         userId: session.user.id,
@@ -117,6 +118,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       },
       select: { date: true },
     }),
+    // Libur dari tabel admin: dipakai agar penanda "Libur" di kalender sama
+    // dengan yang benar-benar dilewati otomasi (`decide()`).
+    loadHolidaySet(),
   ]);
 
   // Tanggal (YYYY-MM-DD) yang punya template khusus. Dipakai untuk penanda
@@ -222,7 +226,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                     return <div key={`blank-${cellIndex}`} aria-hidden />;
                   }
                   const status = classifyDay(cell.iso, logsByDate, reportDates);
-                  const holiday = holidayKindOf(cell.iso);
+                  const holiday = holidayKindOf(cell.iso, holidays);
                   const hasDatedTemplate = datedReportDates.has(cell.iso);
                   const isToday =
                     isCurrentMonth &&

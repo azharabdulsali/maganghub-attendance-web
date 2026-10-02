@@ -128,4 +128,27 @@ describe("assessReadiness", () => {
       assessReadiness({ date: "2026-3-2", hasTemplate: true, hasToken: true }),
     ).toThrow();
   });
+
+  it("libur admin pada hari kerja → POLICY_SKIPPED", () => {
+    // 2026-03-02 Senin (ALLOW tanpa libur), tapi ditandai libur oleh admin.
+    const holidays = new Set(["2026-03-02"]);
+    const r = assessReadiness({
+      date: "2026-03-02",
+      hasTemplate: true,
+      hasToken: true,
+      holidays,
+    });
+    expect(r.ready).toBe(false);
+    if (!r.ready) expect(r.reason).toBe("POLICY_SKIPPED");
+  });
+
+  it("himpunan libur kosong → hari kerja tetap ALLOW", () => {
+    const r = assessReadiness({
+      date: "2026-03-02",
+      hasTemplate: true,
+      hasToken: true,
+      holidays: new Set(),
+    });
+    expect(r.ready).toBe(true);
+  });
 });

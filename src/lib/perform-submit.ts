@@ -29,6 +29,7 @@ import {
   submitStatusFor,
   type SubmitReadiness,
 } from "@/lib/submit-service";
+import { loadHolidaySet } from "@/lib/holidays-repo";
 
 export type SubmitTrigger = "MANUAL" | "CRON";
 
@@ -227,8 +228,30 @@ export async function performSubmit(opts: {
   credential: SubmitCredential;
   trigger: SubmitTrigger;
   logOnNotReady: boolean;
+  /**
+   * Libur nasional dari tabel admin. Opsional: bila tak diberikan, dimuat dari
+   * DB (`loadHolidaySet()`). Diberikan eksplisit oleh test agar murni, dan oleh
+   * pemanggil yang sudah memuatnya (menghindari query ganda).
+   */
+  holidays?: ReadonlySet<string>;
 }): Promise<SubmitOutcome> {
   const { userId, date, template, credential, trigger, logOnNotReady } = opts;
+
+  // Libur dari tabel admin; bila pemanggil belum menyediakan, muat di sini.
+  //
+  // GAGAL-LUNAK (penting): daftar libur adalah PENYEMPURNAAN kebijakan, bukan
+  // syarat pengiriman. Bila tabel `holidays` belum ada (mis. `db push` belum
+  // dijalankan) atau DB error sesaat, kita JANGAN menggagalkan pengiriman —
+  // itu akan mematikan seluruh otomasi (manual & cron) karena satu fitur
+  // pelengkap. Kembali ke daftar statis (`undefined` → `LIBUR_NASIONAL`) sama
+  // seperti perilaku sebelum fitur ini ada. Jalur DB di `/admin/holidays`
+  // tetap melaporkan error sungguhan bila tabelnya memang bermasalah.
+  let holidays: ReadonlySet<string> | undefined;
+  try {
+    holidays = opts.holidays ?? (await loadHolidaySet());
+  } catch {
+    holidays = undefined;
+  }
 
   const hasRefreshToken = Boolean(
     credential?.tokenCiphertext && credential.tokenIv && credential.tokenAuthTag,
@@ -248,7 +271,12 @@ export async function performSubmit(opts: {
   // --- Kesiapan data & policy ------------------------------------------------
   let readiness: SubmitReadiness;
   try {
-    readiness = assessReadiness({ date, hasTemplate: Boolean(template), hasToken });
+    readiness = assessReadiness({
+      date,
+      hasTemplate: Boolean(template),
+      hasToken,
+      holidays,
+    });
   } catch {
     return { kind: "BAD_DATE", date };
   }

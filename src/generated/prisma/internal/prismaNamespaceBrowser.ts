@@ -60,6 +60,7 @@ export const ModelName = {
   Report: 'Report',
   SubmitLog: 'SubmitLog',
   AutomationConfig: 'AutomationConfig',
+  Holiday: 'Holiday',
   Session: 'Session',
   AdminActionLog: 'AdminActionLog'
 } as const
@@ -218,6 +219,18 @@ export const AutomationConfigScalarFieldEnum = {
 } as const
 
 export type AutomationConfigScalarFieldEnum = (typeof AutomationConfigScalarFieldEnum)[keyof typeof AutomationConfigScalarFieldEnum]
+
+
+export const HolidayScalarFieldEnum = {
+  id: 'id',
+  date: 'date',
+  name: 'name',
+  kind: 'kind',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HolidayScalarFieldEnum = (typeof HolidayScalarFieldEnum)[keyof typeof HolidayScalarFieldEnum]
 
 
 export const SessionScalarFieldEnum = {

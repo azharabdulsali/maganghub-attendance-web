@@ -330,8 +330,11 @@ export function weekdayIndex(year: number, month: number, day: number): number {
  * Jadi Sabtu/Minggu yang kebetulan juga libur nasional dilaporkan sebagai
  * `NATIONAL`, penanda yang lebih informatif. Tanggal tak sah → `null`.
  */
-export function holidayKindOf(iso: string): HolidayKind {
-  if (isNationalHoliday(iso)) return "NATIONAL";
+export function holidayKindOf(
+  iso: string,
+  holidays?: ReadonlySet<string>,
+): HolidayKind {
+  if (isNationalHoliday(iso, holidays)) return "NATIONAL";
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
   if (!match) return null;
   const wd = weekdayIndex(

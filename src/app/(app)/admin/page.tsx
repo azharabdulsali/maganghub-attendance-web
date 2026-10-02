@@ -19,6 +19,7 @@
 // hanya menyembunyikan tautan, lihat catatan di components/app-sidebar.tsx.
 
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -179,7 +180,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           Ringkasan seluruh pengguna, audit lintas pengguna, dan pengiriman
           massal. Tabel & audit bersifat hanya-baca; satu-satunya aksi yang
           mengubah data adalah tombol pengiriman massal di bawah (mengirim
-          laporan atas nama user yang jadwalnya jatuh pada jam ini).
+          laporan atas nama user yang jadwalnya jatuh pada jam ini). Daftar
+          hari libur dikelola terpisah di menu{" "}
+          <Link
+            href="/admin/holidays"
+            className="font-heading underline underline-offset-4"
+          >
+            Hari Libur
+          </Link>
+          .
         </p>
       </header>
 

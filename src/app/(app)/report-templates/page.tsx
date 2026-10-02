@@ -15,12 +15,17 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { todayInJakarta, toPlainDate } from "@/lib/submit-service";
+import { paginate, parsePage } from "@/lib/audit-log";
+import { loadHolidayRows } from "@/lib/holidays-repo";
 import ReportTemplatesForm from "./report-templates-form";
 import DatedTemplatesTable from "./dated-templates-table";
 
+/** Jumlah baris tabel template khusus per halaman. */
+const DATED_PAGE_SIZE = 20;
+
 type ReportTemplatesPageProps = {
   // Di Next.js 16, `searchParams` adalah Promise yang harus di-await.
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; tpage?: string }>;
 };
 
 export default async function ReportTemplatesPage({
@@ -60,6 +65,25 @@ export default async function ReportTemplatesPage({
     obstacles: r.obstacles,
   }));
 
+  // Libur dari tabel admin. Dipakai DUA cara:
+  //  - `Set` untuk komponen SERVER (DatedTemplatesTable) — efisien untuk lookup.
+  //  - `string[]` untuk komponen KLIEN (form/DatePicker) — Set tidak bisa
+  //    melewati batas server→klien (harus serializable).
+  const holidayRows = await loadHolidayRows();
+  const holidaySet = new Set(holidayRows.map((h) => h.date));
+  const holidayDates = holidayRows.map((h) => h.date);
+
+  // Paginasi dilakukan di memori dari daftar yang SAMA dengan form. Form butuh
+  // seluruh tanggal (agar tombol "Buka" selalu menemukan isinya), sedangkan
+  // tabel cukup satu halaman — tujuannya membatasi jumlah baris yang dirender
+  // ke DOM & dikirim ke browser, bukan menghemat query. Karena itu cukup satu
+  // `findMany` (dipakai ulang), bukan query kedua dengan `skip`/`take`.
+  const datedPageInfo = paginate(
+    datedTemplates.length,
+    parsePage(params.tpage),
+    DATED_PAGE_SIZE,
+  );
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
       <div className="mb-8">
@@ -87,11 +111,25 @@ export default async function ReportTemplatesPage({
         today={today}
         initialDated={datedTemplates}
         initialDate={params.date ?? null}
+        holidays={holidayDates}
       />
 
       {/* Daftar template khusus tanggal. Ditaruh SETELAH form karena tombol
-          "Buka" di sini mengisi form di atas. */}
-      <DatedTemplatesTable userId={session.user.id} today={today} />
+          "Buka" di sini mengisi form di atas. Hanya satu halaman (20 baris) yang
+          dirender; sisanya lewat kontrol halaman `?tpage=`. */}
+      <DatedTemplatesTable
+        userId={session.user.id}
+        today={today}
+        holidays={holidaySet}
+        pageInfo={datedPageInfo}
+        buildHref={(page) => {
+          const qs = new URLSearchParams();
+          if (params.date) qs.set("date", params.date);
+          if (page > 1) qs.set("tpage", String(page));
+          const s = qs.toString();
+          return s ? `/report-templates?${s}` : "/report-templates";
+        }}
+      />
     </div>
   );
 }

@@ -77,9 +77,9 @@ export default function RegisterPage() {
     <main className="pt-safe pb-safe pl-safe pr-safe mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 py-16">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Daftar Akun</CardTitle>
+          <CardTitle className="text-2xl">Daftar akun</CardTitle>
           <CardDescription>
-            Maganghub Autoabsen, absensi otomatis dari template laporan Anda.
+            MagangHub Autoabsen, absensi otomatis dari template laporan Anda.
           </CardDescription>
         </CardHeader>
 

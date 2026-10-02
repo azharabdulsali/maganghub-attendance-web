@@ -100,6 +100,19 @@ export default async function DashboardPage({
       checkReportField(template.obstacles) === null,
   );
 
+  // Status template default untuk panel "Status Hari Ini". Dibedakan tiga
+  // keadaan supaya pesannya jujur, bukan sekadar "belum lengkap":
+  //   - belumAdaTemplate: belum pernah disimpan sama sekali.
+  //   - templateLengkap: ketiga kolom terisi & lolos syarat panjang portal.
+  //   - sisanya: sudah ada isinya, tapi masih ada kolom yang kurang/terlalu pendek.
+  const belumAdaTemplate = !template;
+  const templateKurang = !templateLengkap; // mencakup belumAdaTemplate
+  const labelTemplate = belumAdaTemplate
+    ? "Template default belum diisi"
+    : templateLengkap
+      ? "Template default siap"
+      : "Template default belum lengkap";
+
   // Tanggal hari ini di zona Asia/Jakarta (YYYY-MM-DD), dipakai panel
   // "Status Hari Ini". Memakai helper yang sama dengan penghitung tren supaya
   // batas harinya konsisten (bukan tanggal jam perangkat pengguna).
@@ -231,6 +244,10 @@ export default async function DashboardPage({
               <KeyRound className="mr-1 size-3" aria-hidden />
               {adaMasalah ? "Kredensial perlu diatur" : "Kredensial siap"}
             </Badge>
+            <Badge tone={templateLengkap ? "good" : "neutral"}>
+              <FileCheck className="mr-1 size-3" aria-hidden />
+              {labelTemplate}
+            </Badge>
           </div>
           <p className="text-sm text-foreground/70">
             {sudahKirimHariIni
@@ -239,6 +256,19 @@ export default async function DashboardPage({
                 ? "Laporan hari ini belum terkirim, dan masih ada yang perlu diatur sebelum bisa mengirim."
                 : "Belum ada laporan terkirim hari ini. Kredensial siap, kamu bisa langsung mengirim di bawah."}
           </p>
+          {templateKurang && (
+            <p className="text-xs text-foreground/60">
+              {belumAdaTemplate
+                ? "Laporan default belum diisi, jadi tidak ada isi yang dikirim."
+                : "Laporan default masih ada kolom yang kosong atau kurang dari 100 karakter."}{" "}
+              <Link
+                href="/report-templates"
+                className="text-foreground underline underline-offset-4"
+              >
+                Isi template laporan
+              </Link>
+            </p>
+          )}
         </CardContent>
       </Card>
 

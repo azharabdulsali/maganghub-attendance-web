@@ -24,6 +24,7 @@ import {
   BookText,
   CalendarCheck,
   CalendarDays,
+  CalendarOff,
   Clock,
   KeyRound,
   LayoutDashboard,
@@ -75,11 +76,13 @@ const MENU_UMUM: MenuItem[] = [
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ];
 
-// Menu khusus ADMIN. Saat ini alat diagnostik; ruang untuk halaman admin lain
-// (kelola pengguna, audit lintas pengguna) terbuka di sini tanpa mengubah
-// komponen lain.
+// Menu khusus ADMIN. Panel Admin (kelola pengguna + audit) dan Hari Libur
+// (kelola tanggal merah yang dilewati otomasi) adalah fitur nyata; Alat
+// Diagnostik pelengkap. Ruang untuk halaman admin lain terbuka di sini tanpa
+// mengubah komponen lain.
 const MENU_ADMIN: MenuItem[] = [
   { href: "/admin", label: "Panel Admin", icon: Users },
+  { href: "/admin/holidays", label: "Hari Libur", icon: CalendarOff },
   { href: "/dev-tools", label: "Alat Diagnostik", icon: ShieldAlert },
 ];
 

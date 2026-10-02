@@ -62,6 +62,28 @@ describe("isHoliday / isWorkingDay", () => {
     // 2026-09-22 Selasa biasa, dan 2099 jauh di luar daftar.
     expect(isHoliday("2099-09-22")).toBe(false);
   });
+
+  it("memakai himpunan libur dari DB saat diberikan (menggantikan daftar statis)", () => {
+    // Hari kerja yang BUKAN libur statis; daftar DB menandainya libur.
+    const db = new Set(["2026-09-22"]);
+    expect(isHoliday("2026-09-22")).toBe(false); // statis: bukan libur
+    expect(isHoliday("2026-09-22", db)).toBe(true); // DB: libur
+    expect(isWorkingDay("2026-09-22", db)).toBe(false);
+  });
+
+  it("himpunan DB kosong TIDAK membuat akhir pekan jadi hari kerja", () => {
+    // Pagar penting: mengosongkan tabel tak boleh membuka Sabtu/Minggu.
+    const kosong = new Set<string>();
+    expect(isHoliday("2026-09-19", kosong)).toBe(true); // Sabtu
+    expect(isHoliday("2026-09-20", kosong)).toBe(true); // Minggu
+  });
+
+  it("himunan DB menggantikan daftar statis (libur statis hilang bila tak ada di DB)", () => {
+    // 2026-12-25 libur di daftar statis; DB kosong → dianggap BUKAN libur.
+    // Ini disengaja: begitu admin memakai fitur, DB = kebenarannya.
+    const db = new Set<string>();
+    expect(isHoliday("2026-12-25", db)).toBe(false);
+  });
 });
 
 describe("decide, keputusan utama", () => {
@@ -84,6 +106,17 @@ describe("decide, keputusan utama", () => {
   });
   it("melempar pada tanggal tidak sah", () => {
     expect(() => decide("bukan-tanggal")).toThrow();
+  });
+
+  it("SKIPPED bila tanggal ada di himpunan libur admin", () => {
+    const db = new Set(["2026-09-22"]); // Selasa biasa, ditandai libur admin
+    expect(decide("2026-09-22")).toBe("ALLOW");
+    expect(decide("2026-09-22", db)).toBe("SKIPPED");
+  });
+
+  it("PROGRAM_ENDED tetap menang atas libur admin", () => {
+    const db = new Set(["2027-03-01"]); // setelah batas akhir
+    expect(decide("2027-03-01", db)).toBe("PROGRAM_ENDED");
   });
 });
 

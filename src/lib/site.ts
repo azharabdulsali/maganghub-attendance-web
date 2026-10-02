@@ -66,34 +66,34 @@ export function absoluteUrl(path = "/"): string {
  */
 export const FAQ_ITEMS: readonly { q: string; a: string }[] = [
   {
-    q: "Apakah MagangHub mengisi laporan magang saya secara otomatis?",
-    a: "Ya, tapi isinya tetap dari Anda. Anda menyiapkan tiga kolom template " +
-      "(Uraian Aktivitas, Pembelajaran, dan Kendala) sekali, lalu aplikasi " +
-      "mengirimkannya ke portal Monev atas jadwal atau lewat satu klik. " +
-      "MagangHub tidak menulis laporan menggantikan Anda.",
+    q: "Apakah MagangHub mengisi laporan magang saya otomatis?",
+    a: "Iya, tapi isinya tetap dari Anda. Anda menyiapkan tiga kolom template " +
+      "(Uraian Aktivitas, Pembelajaran, dan Kendala) sekali saja, lalu " +
+      "aplikasi yang mengirimkannya ke portal Monev, entah sesuai jadwal atau " +
+      "lewat satu klik. MagangHub tidak menulis laporan menggantikan Anda.",
   },
   {
     q: "Apakah kredensial Monev saya aman?",
-    a: "Email dan password Monev disimpan terenkripsi dengan AES-256-GCM. " +
-      "Kredensial tidak pernah disimpan dalam bentuk teks biasa dan tidak " +
+    a: "Email dan password Monev Anda disimpan terenkripsi dengan AES-256-GCM. " +
+      "Kredensial tidak pernah disimpan dalam bentuk teks biasa, dan tidak " +
       "pernah ikut terkirim di log maupun respons API.",
   },
   {
     q: "Apakah saya perlu memasang ekstensi browser atau aplikasi tambahan?",
-    a: "Tidak. Pengiriman berjalan langsung dari server aplikasi, jadi tidak " +
-      "ada ekstensi browser, bot desktop, atau server tambahan yang perlu " +
-      "dipasang di komputer Anda.",
+    a: "Tidak perlu. Pengiriman berjalan langsung dari server aplikasi, jadi " +
+      "tidak ada ekstensi browser, bot desktop, atau server tambahan yang " +
+      "harus Anda pasang di komputer.",
   },
   {
     q: "Bisakah laporan dikirim otomatis tanpa saya buka aplikasinya?",
     a: "Bisa. Setelah template disiapkan, Anda dapat menyalakan jadwal otomatis " +
-      "sehingga laporan terkirim tiap sore, atau mengirim manual " +
-      "satu klik saat Anda siap. Jadwal bisa dimatikan kapan saja.",
+      "supaya laporan terkirim tiap sore, atau mengirim manual satu klik saat " +
+      "Anda siap. Jadwalnya bisa dimatikan kapan saja.",
   },
   {
     q: "Apakah ada batasan minimum panjang laporan?",
     a: "Ada. Portal Monev menolak laporan yang terlalu singkat, jadi setiap " +
-      "kolom wajib lebih dari 100 karakter. Aturan ini divalidasi di kode " +
+      "kolom wajib lebih dari 100 karakter. Aturan ini diperiksa di kode " +
       "aplikasi, bukan hanya diperingatkan di tampilan.",
   },
   {

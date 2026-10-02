@@ -35,6 +35,8 @@ import { OpenDatedButton } from "./open-dated-button";
 import { toPlainDate } from "@/lib/submit-service";
 import { isHoliday, isAfter, LAST_ACTIVE_DATE } from "@/lib/report-policy";
 import { Message } from "@/components/ui/message";
+import Pagination from "@/components/pagination";
+import type { Pagination as PaginationInfo } from "@/lib/audit-log";
 
 /**
  * Teks isi template dalam sel tabel. Dipangkas agar tabel tidak melebar liar;
@@ -63,9 +65,13 @@ function MobileField({ label, value }: { label: string; value: string }) {
 }
 
 /** Ringkasan status tanggal, sama logikanya dengan form. */
-function statusOf(date: string, today: string): string {
+function statusOf(
+  date: string,
+  today: string,
+  holidays?: ReadonlySet<string>,
+): string {
   if (isAfter(date, LAST_ACTIVE_DATE)) return "Di luar masa program";
-  if (isHoliday(date)) return "Libur, otomasi tidak mengirim";
+  if (isHoliday(date, holidays)) return "Libur, otomasi tidak mengirim";
   if (isAfter(today, date)) return "Sudah lewat";
   return "Siap dipakai";
 }
@@ -77,8 +83,16 @@ function statusOf(date: string, today: string): string {
  * nada `Message`: "Siap dipakai" hijau, sisanya merah agar menandai baris yang
  * perlu ditinjau/dihapus.
  */
-function StatusChip({ date, today }: { date: string; today: string }) {
-  const status = statusOf(date, today);
+function StatusChip({
+  date,
+  today,
+  holidays,
+}: {
+  date: string;
+  today: string;
+  holidays?: ReadonlySet<string>;
+}) {
+  const status = statusOf(date, today, holidays);
   return (
     <Message
       tone={status === "Siap dipakai" ? "good" : "bad"}
@@ -92,10 +106,19 @@ function StatusChip({ date, today }: { date: string; today: string }) {
 export default async function DatedTemplatesTable({
   userId,
   today,
+  holidays,
+  pageInfo,
+  buildHref,
 }: {
   userId: string;
   /** Tanggal hari ini WIB (dihitung server) untuk label status. */
   today: string;
+  /** Libur dari tabel admin untuk label status (opsional; fallback statis). */
+  holidays?: ReadonlySet<string>;
+  /** Halaman yang sedang tampil & batas irisan baris (dihitung di page.tsx). */
+  pageInfo: PaginationInfo;
+  /** Susun URL untuk nomor halaman tertentu (mempertahankan `?date=` aktif). */
+  buildHref: (page: number) => string;
 }) {
   const rows = await prisma.datedReportTemplate.findMany({
     where: { userId },
@@ -108,12 +131,17 @@ export default async function DatedTemplatesTable({
     },
   });
 
-  const items = rows.map((r) => ({
+  const allItems = rows.map((r) => ({
     date: toPlainDate(r.date),
     activity: r.activity,
     learning: r.learning,
     obstacles: r.obstacles,
   }));
+
+  // Hanya satu halaman yang dirender (sesuai `pageInfo`), bukan seluruh daftar.
+  // `start`/`end` dihitung `paginate()` di page.tsx dan sudah dijepit ke rentang
+  // sah, jadi `?tpage=999` tetap menampilkan halaman terakhir, bukan tabel kosong.
+  const items = allItems.slice(pageInfo.start, pageInfo.end);
 
   return (
     <section className="mt-10 border-2 border-border bg-secondary-background p-4 shadow-shadow sm:p-6">
@@ -144,7 +172,7 @@ export default async function DatedTemplatesTable({
                   <span className="font-mono text-xs font-bold tabular-nums">
                     {t.date}
                   </span>
-                  <StatusChip date={t.date} today={today} />
+                  <StatusChip date={t.date} today={today} holidays={holidays} />
                 </div>
 
                 <dl className="space-y-1.5 border-t border-border/40 pt-2">
@@ -192,7 +220,7 @@ export default async function DatedTemplatesTable({
                         {t.date}
                       </span>
                       <span className="mt-1 block">
-                        <StatusChip date={t.date} today={today} />
+                        <StatusChip date={t.date} today={today} holidays={holidays} />
                       </span>
                     </td>
                     <td className="max-w-xs p-3 text-xs text-foreground/80">
@@ -217,6 +245,15 @@ export default async function DatedTemplatesTable({
           </div>
         </>
       )}
+
+      {/* Navigasi halaman: hanya tampil bila lebih dari satu halaman (komponen
+          ini merender null saat `pageCount <= 1`). */}
+      <Pagination
+        page={pageInfo.page}
+        pageCount={pageInfo.pageCount}
+        label="Navigasi halaman template khusus tanggal"
+        buildHref={buildHref}
+      />
     </section>
   );
 }

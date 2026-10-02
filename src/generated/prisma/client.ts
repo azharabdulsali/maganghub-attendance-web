@@ -107,6 +107,23 @@ export type SubmitLog = Prisma.SubmitLogModel
  */
 export type AutomationConfig = Prisma.AutomationConfigModel
 /**
+ * Model Holiday
+ * Libur nasional / tanggal merah yang dikelola ADMIN (SPEC.md §4).
+ * 
+ * Sebelumnya daftar libur hidup sebagai data statis di `src/lib/holidays.ts`.
+ * Kini ia pindah ke tabel ini supaya admin bisa menambah/mengubah/menghapus
+ * tanpa deploy, dan `holidays.ts` hanya menyisakan nilai awal (seed).
+ * 
+ * `date` disimpan `@db.Date` dan dibandingkan sebagai string `YYYY-MM-DD`
+ * (leksikografis = kronologis), sama seperti `DatedReportTemplate` & `Report`,
+ * supaya tidak tergeser zona waktu. Satu tanggal hanya boleh punya satu baris.
+ * 
+ * Yang SENGAJA tidak diwakili di sini: akhir pekan (Sabtu/Minggu). Itu tetap
+ * dihitung otomatis dari tanggal (lihat `isHoliday` di report-policy.ts) dan
+ * tidak perlu baris tabel.
+ */
+export type Holiday = Prisma.HolidayModel
+/**
  * Model Session
  * 
  */

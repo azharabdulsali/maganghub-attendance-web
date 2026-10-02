@@ -44,32 +44,32 @@ const FITUR = [
   {
     icon: KeyRound,
     judul: "Hubungkan akun Monev",
-    isi: "Kredensial MagangHub disimpan terenkripsi AES-256-GCM. Tidak pernah plaintext, tidak pernah ikut terkirim di catatan sistem atau balasan server.",
+    isi: "Kredensial MagangHub Anda disimpan terenkripsi AES-256-GCM. Tidak pernah dalam bentuk teks biasa, tidak pernah ikut terkirim lewat log sistem atau balasan server.",
   },
   {
     icon: BookText,
     judul: "Tiga template tetap",
-    isi: "Uraian Aktivitas, Pembelajaran, dan Kendala, sama seperti proyek lama. Dipakai ulang tiap hari, atau disalin ke editor kalau ingin diubah manual.",
+    isi: "Uraian Aktivitas, Pembelajaran, dan Kendala, sama seperti proyek lama. Pakai berulang tiap hari, atau salin dulu ke editor kalau mau diubah manual.",
   },
   {
     icon: ShieldCheck,
     judul: "Lolos syarat 100 karakter",
-    isi: "Portal menolak laporan terlalu singkat. Setiap kolom divalidasi lebih dari 100 karakter, di kode, bukan hanya di tampilan.",
+    isi: "Portal menolak laporan yang terlalu singkat. Setiap kolom dicek wajib lebih dari 100 karakter langsung di kode, bukan cuma diingatkan di tampilan.",
   },
   {
     icon: Timer,
     judul: "Hemat waktu tiap sore",
-    isi: "Tak perlu lagi buka web lemot dan mengetik ulang laporan. Template sudah siap, tinggal review lalu kirim.",
+    isi: "Tidak perlu lagi buka web lemot dan mengetik ulang laporan. Template sudah siap, Anda tinggal review sebentar lalu kirim.",
   },
   {
     icon: Clock,
     judul: "Manual atau terjadwal",
-    isi: "Kirim 1-klik saat Anda siap, atau serahkan ke jadwal otomatis. Kendali penuh di tangan Anda, bisa dimatikan kapan saja.",
+    isi: "Kirim sekali klik saat Anda siap, atau serahkan ke jadwal otomatis. Kendali penuh di tangan Anda, bisa dimatikan kapan saja.",
   },
   {
     icon: Send,
     judul: "Kirim langsung dari server",
-    isi: "Tanpa browser dan tanpa server tambahan. Laporan terkirim ke portal dalam hitungan detik, jadi tak ada risiko lupa absen.",
+    isi: "Tanpa browser dan tanpa server tambahan. Laporan terkirim ke portal dalam hitungan detik, jadi tidak ada risiko lupa absen.",
   },
 ];
 
@@ -77,17 +77,17 @@ const LANGKAH = [
   {
     nomor: "01",
     judul: "Daftar & simpan kredensial",
-    isi: "Buat akun, lalu simpan email & password Monev. Sekali saja, setelah itu tersimpan aman dan terenkripsi.",
+    isi: "Buat akun, lalu simpan email & password Monev. Cukup sekali, setelah itu tersimpan aman dan terenkripsi.",
   },
   {
     nomor: "02",
     judul: "Isi tiga template",
-    isi: "Tulis Uraian Aktivitas, Pembelajaran, dan Kendala masing-masing lebih dari 100 karakter. Pakai berkali-kali.",
+    isi: "Tulis Uraian Aktivitas, Pembelajaran, dan Kendala, masing-masing lebih dari 100 karakter. Setelah itu tinggal dipakai berulang.",
   },
   {
     nomor: "03",
     judul: "Review & kirim",
-    isi: "Kirim manual 1-klik saat siap, atau nyalakan jadwal otomatis. Laporan masuk ke akun Kemnaker Anda.",
+    isi: "Kirim manual sekali klik saat siap, atau nyalakan jadwal otomatis. Laporan langsung masuk ke akun Kemnaker Anda.",
   },
 ];
 
@@ -125,9 +125,9 @@ const PANDUAN = [
 // dibuat sendiri setidaknya sekali untuk mengisi template.
 const BATASAN = [
   "Tidak menulis laporan atas nama Anda, isi template tetap dari Anda.",
-  "Draf AI bersifat opsional; bila gagal, draf disusun lokal tanpa AI.",
+  "Draf AI opsional; bila gagal, draf disusun lokal tanpa AI.",
   "Tidak ada integrasi GitHub sebagai fitur aplikasi, sesuai cakupan proyek.",
-  "Bergantung pada portal Monev; bila portal berubah, kirim bisa gagal.",
+  "Bergantung pada portal Monev; bila portal berubah, pengiriman bisa gagal.",
 ];
 
 // Data terstruktur schema.org (audit O-5). SoftwareApplication memberi Google
@@ -233,10 +233,10 @@ export default function Home() {
             <span className="text-foreground">MagangHub Kemnaker</span>
           </h1>
           <p className="mx-auto max-w-2xl text-sm text-foreground/80 sm:text-base">
-            Simpan tiga template laporan sekali, lalu kirim presensi dan laporan
-            harian ke portal Monev langsung dari server, manual 1-klik atau
-            terjadwal otomatis, tanpa menyalakan komputer dan tanpa biaya
-            bulanan.
+            Simpan tiga template laporan sekali, lalu biarkan aplikasi mengirim
+            presensi dan laporan harian ke portal Monev dari server. Bisa Anda
+            kirim manual satu klik saat siap, bisa juga terjadwal otomatis tiap
+            sore, tanpa menyalakan komputer dan tanpa biaya bulanan.
           </p>
 
           <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
@@ -275,8 +275,8 @@ export default function Home() {
               Solusi agar absen dan logbook tidak pernah terlewat
             </h2>
             <p className="text-sm text-foreground/80">
-              Bukan sekadar bot, asisten yang menjaga hak dan penilaian magang
-              Anda tetap aman.
+              Bukan sekadar bot. Ini asisten yang membantu menjaga absensi dan
+              penilaian magang Anda tetap aman.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -305,7 +305,7 @@ export default function Home() {
               Alur singkat tiga langkah
             </h2>
             <p className="text-sm text-foreground/80">
-              Dari simpan template sampai laporan masuk ke portal Monev.
+              Dari mengisi template sampai laporan masuk ke portal Monev.
             </p>
           </div>
           <ol className="grid gap-4 sm:grid-cols-3">
@@ -332,9 +332,10 @@ export default function Home() {
             </span>
             <h2 className="mb-2 font-heading">Data Anda terjaga</h2>
             <p className="text-sm text-foreground/80">
-              Kredensial Monev Anda dienkripsi AES-256-GCM sebelum disimpan, dan
-              tidak ada satu pun catatan sistem atau balasan server yang memuat
-              kata sandi. Anda bisa mematikan pengiriman otomatis kapan saja.
+              Password Monev Anda dienkripsi AES-256-GCM sebelum disimpan, dan
+              tidak ada satu pun catatan sistem maupun balasan server yang
+              memuat kata sandi. Pengiriman otomatis juga bisa Anda matikan
+              kapan saja.
             </p>
           </div>
           <div className="rounded-base border-2 border-border bg-background p-5">
@@ -363,7 +364,8 @@ export default function Home() {
               Panduan setup praktis
             </h2>
             <p className="text-sm text-foreground/80">
-              Setelah masuk, atur semuanya dari dashboard dalam beberapa menit.
+              Setelah masuk, semuanya bisa Anda atur dari dashboard dalam
+              beberapa menit.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

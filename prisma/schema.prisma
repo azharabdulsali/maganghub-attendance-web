@@ -284,6 +284,33 @@ model AutomationConfig {
 }
 
 
+/// Libur nasional / tanggal merah yang dikelola ADMIN (SPEC.md §4).
+///
+/// Sebelumnya daftar libur hidup sebagai data statis di `src/lib/holidays.ts`.
+/// Kini ia pindah ke tabel ini supaya admin bisa menambah/mengubah/menghapus
+/// tanpa deploy, dan `holidays.ts` hanya menyisakan nilai awal (seed).
+///
+/// `date` disimpan `@db.Date` dan dibandingkan sebagai string `YYYY-MM-DD`
+/// (leksikografis = kronologis), sama seperti `DatedReportTemplate` & `Report`,
+/// supaya tidak tergeser zona waktu. Satu tanggal hanya boleh punya satu baris.
+///
+/// Yang SENGAJA tidak diwakili di sini: akhir pekan (Sabtu/Minggu). Itu tetap
+/// dihitung otomatis dari tanggal (lihat `isHoliday` di report-policy.ts) dan
+/// tidak perlu baris tabel.
+model Holiday {
+  id        String   @id @default(cuid())
+  date      DateTime @unique @db.Date
+  /// Nama hari libur, mis. "Hari Raya Natal" / "Cuti Bersama Natal".
+  name      String
+  /// Jenis libur, mis. "Nasional" / "Cuti Bersama". Bebas, hanya untuk label.
+  kind      String   @default("Nasional")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@map("holidays")
+}
+
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique

@@ -82,6 +82,12 @@ export interface DatePickerProps {
   placeholder?: string;
   id?: string;
   className?: string;
+  /**
+   * Daftar libur nasional dari tabel admin (`YYYY-MM-DD`). Bila diberikan,
+   * tanggal ini juga dinonaktifkan — sejalan dengan `decide()` di server.
+   * Bila tidak, hanya daftar statis bawaan yang dipakai (pemanggil murni).
+   */
+  holidays?: ReadonlySet<string>;
 }
 
 export function DatePicker({
@@ -91,6 +97,7 @@ export function DatePicker({
   placeholder = "Pilih tanggal",
   id,
   className,
+  holidays,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   // Bulan yang sedang ditampilkan di popup. Ikut nilai terpilih bila ada.
@@ -220,7 +227,7 @@ export function DatePicker({
               sebelum hari ini TIDAK bisa diklik (lihat `lampau`). */}
           <div className="grid grid-cols-7 gap-0.5">
             {weeks.flat().map((cell) => {
-              const libur = isHoliday(cell.iso);
+              const libur = isHoliday(cell.iso, holidays);
               const lampau = isBeforeToday(cell.iso, today);
               const terpilih = cell.iso === value;
               const isToday = cell.iso === today;

@@ -78,6 +78,12 @@ interface Props {
    * (`?date=YYYY-MM-DD`). Bila diisi, form langsung menampilkan tanggal itu.
    */
   initialDate?: string | null;
+  /**
+   * Daftar libur dari tabel admin (`YYYY-MM-DD`) sebagai ARRAY, bukan Set:
+   * prop ini melewati batas server→klien yang menuntut nilai serializable.
+   * Dipakai agar tanggal libur dinonaktifkan di DatePicker & ditandai di sini.
+   */
+  holidays?: string[];
 }
 
 const KOSONG: Record<FieldName, string> = {
@@ -95,7 +101,11 @@ export default function ReportTemplatesForm({
   today,
   initialDated = [],
   initialDate = null,
+  holidays = [],
 }: Props) {
+  // Set libur dibangun sekali (union statis + dari DB) supaya DatePicker &
+  // penanda status memakai sumber yang sama persis.
+  const holidaySet = useMemo(() => new Set(holidays), [holidays]);
   // Template default disimpan terpisah supaya bisa kembali saat picker dikosongkan.
   const [defaultValues, setDefaultValues] = useState<Record<FieldName, string>>({
     activity: initialActivity,
@@ -207,10 +217,10 @@ export default function ReportTemplatesForm({
   const statusTanggal = useMemo(() => {
     if (tanggal === null) return null;
     if (isAfter(tanggal, LAST_ACTIVE_DATE)) return "Di luar masa program";
-    if (isHoliday(tanggal)) return "Libur, otomasi tidak mengirim";
+    if (isHoliday(tanggal, holidaySet)) return "Libur, otomasi tidak mengirim";
     if (isAfter(today, tanggal)) return "Sudah lewat";
     return "Siap dipakai";
-  }, [tanggal, today]);
+  }, [tanggal, today, holidaySet]);
 
   /**
    * Minta server menyusun draf dari kata kunci, lalu isikan hasilnya ke ketiga
@@ -408,6 +418,7 @@ export default function ReportTemplatesForm({
               onChange={(v) => pindah(v)}
               placeholder="Semua tanggal (default)"
               className="w-60"
+              holidays={holidaySet}
             />
           </div>
           {tanggal !== null ? (
@@ -495,12 +506,24 @@ export default function ReportTemplatesForm({
       <div className="rounded-base border-2 border-border bg-secondary-background p-4">
         <div className="flex items-center gap-2">
           <WandSparkles className="size-4 shrink-0" aria-hidden />
-          <h2 className="font-heading text-base">Susun dengan Bantuan</h2>
+          <h2 className="font-heading text-base">
+            Isi otomatis 3 kolom laporan
+          </h2>
         </div>
         <p className="mt-1 text-xs text-foreground/70">
           Tulis singkat apa yang Anda kerjakan hari itu, lalu biarkan sistem
-          mengisi ketiga kolom. Penyusunnya berjalan di server ini (tanpa
-          layanan AI luar, tanpa biaya), dan hasilnya bisa Anda ubah dulu.
+          mengisi ketiga kolom. Hasilnya hanya draf, bisa Anda ubah dulu sebelum
+          disimpan.
+        </p>
+        {/* Pengungkapan lokasi pemrosesan sengaja TIDAK diklaim di sini: server
+            memakai LLM (Gemini) bila `GEMINI_API_KEY` diisi, dan itu mengirim
+            kata kunci ke penyusun luar. Klaim statis "tanpa layanan AI luar"
+            dulu berpotensi bohong. Pengungkapan sebenarnya muncul SETELAH
+            menekan "Susun draf", saat sumbernya benar-benar diketahui. */}
+        <p className="mt-1 text-xs text-foreground/60">
+          Draf disusun oleh server. Bila admin mengaktifkan penyusun AI, kata
+          kunci Anda dikirim ke penyusun luar; keterangannya muncul setelah draf
+          jadi di bawah.
         </p>
 
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -514,7 +537,7 @@ export default function ReportTemplatesForm({
               onChange={(e) => setKeywords(e.target.value)}
               maxLength={300}
               disabled={drafting || saving || deleting}
-              placeholder="mis. rapat mingguan, jajan dimsum di koperasi"
+              placeholder="mis. perbaikan bug login, rapat tim mingguan"
             />
           </div>
           <div className="flex flex-1 flex-col gap-1.5">
@@ -537,7 +560,7 @@ export default function ReportTemplatesForm({
             size="sm"
             className="shrink-0"
           >
-            {drafting ? "Generate..." : "Generate"}
+            {drafting ? "Menyusun..." : "Susun draf"}
           </Button>
         </div>
 
@@ -547,9 +570,22 @@ export default function ReportTemplatesForm({
         </p>
 
         {draftSource ? (
-          <p className="mt-2 text-xs text-foreground/60">
-            Draf terakhir disusun oleh: <span className="font-heading">{draftSource}</span>
-          </p>
+          <div className="mt-2 space-y-1">
+            <p className="text-xs text-foreground/60">
+              Draf terakhir disusun oleh:{" "}
+              <span className="font-heading">{draftSource}</span>
+            </p>
+            {/* Pengungkapan privasi tepat waktu: hanya muncul bila penyusunnya
+                benar-benar berada di luar (label LLM memuat "Gemini"). Penyusun
+                lokal "Lokal 0-Token" tidak pernah memicu ini. */}
+            {/gemini/i.test(draftSource) ? (
+              <p className="text-xs text-foreground/60">
+                Kata kunci tadi dikirim ke penyusun luar (Google) untuk diolah.
+                Jangan cantumkan data rahasia; hindari juga bila hal itu tidak
+                Anda inginkan.
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         {draftError ? (

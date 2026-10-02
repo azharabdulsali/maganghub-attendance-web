@@ -43,8 +43,12 @@ export default function AutomationForm({
   const formRef = useRef<HTMLFormElement>(null);
 
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
-  const [hour, setHour] = useState(String(initialHour));
-  const [minute, setMinute] = useState(String(initialMinute));
+  // Satu nilai waktu "HH:MM" (dari <input type="time">), bukan dua angka
+  // terpisah. `hour`/`minute` diturunkan dari sini saat menghitung dan saat
+  // mengirim, sehingga kontrak PUT /api/automation (hour + minute) tak berubah.
+  const [time, setTime] = useState(
+    `${String(initialHour).padStart(2, "0")}:${String(initialMinute).padStart(2, "0")}`,
+  );
   const [webhookKey, setWebhookKey] = useState<string | null>(
     initialWebhookKey,
   );
@@ -57,6 +61,11 @@ export default function AutomationForm({
   // bisa spesifik — konfirmasi yang generik membuat orang menekan "Ya" tanpa baca.
   const [konfirmasiSimpan, setKonfirmasiSimpan] = useState(false);
   const [konfirmasiRotasi, setKonfirmasiRotasi] = useState(false);
+
+  // Turunkan jam/menit dari "HH:MM". Bila nilai belum lengkap, hasilnya NaN
+  // dan pemakai di bawah menanganinya sebagai "tidak sah".
+  const hour = time.split(":")[0] ?? "";
+  const minute = time.split(":")[1] ?? "";
 
   // Pratinjau "jadwal berikutnya" dihitung klien memakai helper murni yang
   // sama dengan server, hanya untuk tampilan, bukan logika penentu.
@@ -90,6 +99,12 @@ export default function AutomationForm({
     e.preventDefault();
     setError(null);
     setSukses(null);
+    // <input type="time"> bisa dikosongkan; tanpa penjagaan ini "Number("")"
+    // menjadi 0 dan jadwal diam-diam tersimpan sebagai 00:00. Tolak lebih jelas.
+    if (!time) {
+      setError("Jam kirim wajib diisi.");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -247,33 +262,22 @@ export default function AutomationForm({
                 : "Otomasi nonaktif: tidak ada pengiriman otomatis, walau penjadwal tetap memanggil tautan."}
             </p>
 
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="hour">Jam (0–23)</Label>
-                <Input
-                  id="hour"
-                  type="number"
-                  min={0}
-                  max={23}
-                  value={hour}
-                  onChange={(e) => setHour(e.target.value)}
-                  className="w-24"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="minute">Menit (0–59)</Label>
-                <Input
-                  id="minute"
-                  type="number"
-                  min={0}
-                  max={59}
-                  value={minute}
-                  onChange={(e) => setMinute(e.target.value)}
-                  className="w-24"
-                />
-              </div>
-              <p className="text-sm text-foreground/70">
-                {nextRun ? `Berikutnya: ${nextRun}` : "Jam/menit tidak sah."}
+            <div className="space-y-2 sm:max-w-xs">
+              <Label htmlFor="time-picker">Jam kirim (WIB)</Label>
+              <Input
+                id="time-picker"
+                type="time"
+                step="60"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                aria-describedby="jadwal-berikutnya"
+                className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+              />
+              <p
+                id="jadwal-berikutnya"
+                className="text-sm text-foreground/70"
+              >
+                {nextRun ? `Berikutnya: ${nextRun}` : "Jam tidak sah."}
               </p>
             </div>
 
