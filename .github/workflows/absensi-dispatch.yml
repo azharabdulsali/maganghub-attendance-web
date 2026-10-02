@@ -26,15 +26,47 @@ jobs:
       - name: Panggil dispatcher
         run: |
           set -euo pipefail
-          code=$(curl -sS -o response.json -w "%{http_code}" \
+
+          # -L (--location): IKUTI redirect. Tanpa ini, APP_URL yang cocok
+          #   dengan aturan redirect (mis. http→https atau www→non-www) membalas
+          #   3xx dan curl berhenti di situ: kode != 200 → run gagal, padahal
+          #   aplikasinya sehat. Ini pernah terjadi (HTTP 308).
+          #   Catatan: saat redirect LINTAS-HOST, header Authorization bisa
+          #   dibuang di tengah jalan. Karena itu APP_URL tetap harus URL final
+          #   (lihat pesan diagnostik di bawah), -L hanya sabuk pengaman.
+          code=$(curl -sS -L -o response.json -w "%{http_code}" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "${APP_URL}/api/cron/run-all")
           echo "HTTP $code"
           cat response.json
-          if [ "$code" != "200" ]; then
-            echo "Dispatcher tidak membalas 200, gagal."
-            exit 1
+          echo
+
+          if [ "$code" = "200" ]; then
+            exit 0
           fi
+
+          echo "::error::Dispatcher tidak membalas 200 (dapat $code), gagal."
+          case "$code" in
+            308|301|302|303|307)
+              echo "Diagnosis: APP_URL di GitHub Secrets masih kena redirect."
+              echo "  Perbaikan: set APP_URL ke URL FINAL (https, tanpa 'http://',"
+              echo "  tanpa 'www.' bila tak dipakai, TANPA slash di akhir), lalu"
+              echo "  jalankan:  curl -sS -o /dev/null -w \"%{url_effective}\" -L \"\$APP_URL\""
+              echo "  Pakai nilai %{url_effective} itu sebagai APP_URL."
+              ;;
+            401)
+              echo "Diagnosis: CRON_SECRET di GitHub TIDAK sama dengan di Vercel."
+              echo "  Perbaikan: samakan persis (cegah spasi/newline tak sengaja)."
+              ;;
+            503)
+              echo "Diagnosis: CRON_SECRET belum diset di Vercel (atau belum redeploy)."
+              echo "  Perbaikan: set di Vercel lalu REDEPLOY."
+              ;;
+            *)
+              echo "Lihat docs/CRON-BULK.md bagian 'Arti kode respons'."
+              ;;
+          esac
+          exit 1
         env:
           APP_URL: ${{ secrets.APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

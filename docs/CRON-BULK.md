@@ -105,6 +105,7 @@ berjalan otomatis tiap jam (`5 * * * *` UTC = setiap jam pada menit ke-5 WIB).
 | HTTP | Arti | Tindakan |
 | :--- | :--- | :--- |
 | `200` | Diproses (sebagian mungkin `dryRun`) | Periksa `results` |
+| `301`/`302`/`307`/`308` | **`APP_URL` masih kena redirect** (mis. `http→https` atau `www→non-www`) | Set `APP_URL` ke URL **final** (https, tanpa slash di akhir); lihat `curl -L -w "%{url_effective}"` |
 | `401` | `CRON_SECRET` salah/tidak dikirim | Samakan nilai di Vercel & GitHub |
 | `503` | `CRON_SECRET` belum diset di Vercel | Set lalu redeploy |
 | `407`/timeout | Portal Monev menggantung | Normal; `deferred` diproses jam berikutnya |
@@ -143,6 +144,9 @@ berjalan otomatis tiap jam (`5 * * * *` UTC = setiap jam pada menit ke-5 WIB).
 
 | Gejala | Kemungkinan penyebab |
 | :--- | :--- |
+| Actions merah, log `HTTP 308` | `APP_URL` di GitHub Secrets masih kena redirect (http/www). Pakai URL final |
+| Actions merah, log `HTTP 401` | `CRON_SECRET` GitHub ≠ Vercel |
+| Actions merah, log `HTTP 503` | `CRON_SECRET` belum diset di Vercel / belum redeploy |
 | `considered: 0` | Tak ada user dengan otomasi aktif, atau sakelarnya mati |
 | `processed: 0` tapi `considered > 0` | Tak ada user yang jam jadwalnya = jam sekarang, normal, tunggu jam berikutnya |
 | `deferred` tinggi | Terlalu banyak user pada jam sama; mereka diproses jam berikutnya |
