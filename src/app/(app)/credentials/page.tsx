@@ -32,7 +32,10 @@ export default async function CredentialsPage() {
       <div className="mb-8">
         <h1 className="font-heading text-3xl">Kredensial Monev</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Dipakai untuk login ke portal Maganghub saat mengirim laporan absensi.
+          Simpan email &amp; password portal Monev terenkripsi, lalu uji login
+          untuk memastikan kredensial bisa dipakai saat mengirim laporan
+          absensi. Bila portal memblokir login dari server, terbuka jalur
+          cadangan dengan tempel token di bagian bawah.
         </p>
       </div>
 
