@@ -16,6 +16,7 @@ import {
   mergeCookieHeader,
   runLoginFlow,
   primeSsoSession,
+  buildPrimeRejectionInfo,
 } from "./monev-login";
 import { SsoCredentials } from "./kemnaker-sso";
 
@@ -212,6 +213,47 @@ describe("interpretSsoPrimeResponse (murni)", () => {
       expect(r.httpCode).toBe(403);
       expect(r.kind).toBe("waf");
     }
+  });
+
+  it("403 → menyertakan `prime` terstruktur (aman dikirim ke klien)", () => {
+    const r = interpretSsoPrimeResponse(403, {
+      setCookies: [],
+      diagnostics: {
+        server: "cloudflare",
+        cfMitigated: "challenge",
+        contentType: "text/html",
+        finalUrl: "https://account.kemnaker.go.id/auth?client_id=CID",
+      },
+    });
+    expect(r.status).toBe("ERROR");
+    if (r.status === "ERROR") {
+      expect(r.prime).toMatchObject({
+        httpCode: 403,
+        kind: "waf",
+        server: "cloudflare",
+        cfMitigated: "challenge",
+        contentType: "text/html",
+        finalUrl: "https://account.kemnaker.go.id/auth?client_id=CID",
+      });
+      // NON-RAHASIA: `prime` tidak boleh memuat body HTML mentah.
+      expect(JSON.stringify(r.prime)).not.toContain("RAHASIA");
+    }
+  });
+
+  it("buildPrimeRejectionInfo: MURNI, hanya salin field yang berisi", () => {
+    // Tanpa diagnostik → tetap objek valid; kategori "unknown" (tak ada sinyal).
+    expect(buildPrimeRejectionInfo(403)).toEqual({
+      httpCode: 403,
+      kind: "unknown",
+    });
+    // Field kosong tidak ikut (tak ada `server: undefined`).
+    const info = buildPrimeRejectionInfo(403, {
+      server: "",
+      cfMitigated: null,
+      contentType: "text/html",
+    });
+    expect(info).toEqual({ httpCode: 403, kind: "waf", contentType: "text/html" });
+    expect(Object.keys(info)).not.toContain("server");
   });
 
   it("jalur ERROR tanpa diagnostik → kind terisi unknown (bukan kosong)", () => {

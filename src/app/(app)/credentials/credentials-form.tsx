@@ -82,6 +82,16 @@ export default function CredentialsForm({
   const [loginKind, setLoginKind] = useState<"waf" | "page" | "unknown" | null>(
     null,
   );
+  // Fakta non-rahasia dari respons penolakan (HTTP/kategori/server/url final).
+  // Hanya untuk membantu diagnosis; tidak ada token/cookie/password di sini.
+  const [loginPrime, setLoginPrime] = useState<{
+    httpCode?: number;
+    kind?: string;
+    server?: string;
+    cfMitigated?: string;
+    contentType?: string;
+    finalUrl?: string;
+  } | null>(null);
 
   // --- Tempel token manual (Opsi C1, docs/MONEV-API.md §7) ---
   // Ini jalur cadangan resmi saat login otomatis diblokir proteksi portal.
@@ -189,6 +199,7 @@ export default function CredentialsForm({
     setLoginMsg(null);
     setLoginState("idle");
     setLoginKind(null);
+    setLoginPrime(null);
     setLoginLoading(true);
 
     try {
@@ -198,6 +209,14 @@ export default function CredentialsForm({
         message?: string;
         error?: string;
         kind?: "waf" | "page" | "unknown" | null;
+        prime?: {
+          httpCode?: number;
+          kind?: string;
+          server?: string;
+          cfMitigated?: string;
+          contentType?: string;
+          finalUrl?: string;
+        } | null;
       };
 
       if (!res.ok) {
@@ -229,6 +248,7 @@ export default function CredentialsForm({
       } else {
         setLoginState("error");
         setLoginKind(data.kind ?? null);
+        setLoginPrime(data.prime ?? null);
         setLoginMsg(
           data.message ??
             "Login otomatis belum bisa memastikan hasilnya. Coba lagi sebentar.",
@@ -602,6 +622,34 @@ export default function CredentialsForm({
             <Message tone={loginState === "ok" ? "good" : "bad"}>
               {loginMsg}
             </Message>
+          )}
+
+          {/* Fakta non-rahasia dari respons penolakan. Sengaja ditutup bawaan
+              (pengguna awam tak perlu), tapi bisa dibuka & disalin saat perlu
+              melaporkan masalah. Tidak memuat token/cookie/password. */}
+          {loginState === "error" && loginPrime && (
+            <details className="rounded-md border border-border bg-secondary/50 p-3 text-xs text-foreground/80">
+              <summary className="cursor-pointer font-heading text-foreground/90">
+                Detail teknis penolakan (untuk laporan)
+              </summary>
+              <ul className="mt-2 space-y-0.5 font-mono">
+                {loginPrime.httpCode !== undefined && (
+                  <li>http={loginPrime.httpCode}</li>
+                )}
+                {loginPrime.kind && <li>kategori={loginPrime.kind}</li>}
+                {loginPrime.server && <li>server={loginPrime.server}</li>}
+                {loginPrime.cfMitigated && (
+                  <li>cf-mitigated={loginPrime.cfMitigated}</li>
+                )}
+                {loginPrime.contentType && (
+                  <li>content-type={loginPrime.contentType}</li>
+                )}
+                {loginPrime.finalUrl && <li>url={loginPrime.finalUrl}</li>}
+              </ul>
+              <p className="mt-2 text-foreground/60">
+                Ini tidak berisi token, cookie, atau password — aman dibagikan.
+              </p>
+            </details>
           )}
 
       {/* Fallback kontekstual: bila server diblokir WAF (bukan kredensial

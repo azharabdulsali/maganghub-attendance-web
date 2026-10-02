@@ -556,6 +556,16 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > - **`diagnostic`** — teks teknis penuh (`Priming SSO gagal (HTTP 403). …`).
 >   Hanya dicatat ke log server (`console.warn` di `POST
 >   /api/credentials/login`), **tidak pernah** dikirim ke klien.
+> - **`prime`** — ringkasan terstruktur **NON-RAHASIA** (`buildPrimeRejectionInfo`,
+>   MURNI) dari respons yang menolak: `{ httpCode, kind, server?,
+>   cfMitigated?, contentType?, finalUrl? }`. Ini **beda** dari `diagnostic`:
+>   `prime` sengaja **boleh** mengalir server → klien (`POST
+>   /api/credentials/login` menyertakannya di JSON) dan ditampilkan pada
+>   `<details>` \"Detail teknis penolakan\" di `/credentials`, supaya penyebab
+>   `403` bisa didiagnosis dari sisi pengguna tanpa membuka log Vercel.
+>   Aman: **tidak** memuat token, cookie, password, atau isi body HTML (hanya
+>   kategori/header). Body HTML mentah tetap hanya hidup di `diagnostic`
+>   (server-only).
 >
 > **↩️ Fallback UI (ditambahkan).** Kategori penolakan (`waf`/`page`/`unknown`)
 > kini ikut mengalir server → UI lewat `kind` (`classifyPrimeRejection` MURNI,

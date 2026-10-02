@@ -94,6 +94,13 @@ export type SsoPrimeResult =
       kind?: PrimeRejectionKind;
       /** Kode HTTP mentah bila kegagalan datang dari respons (bukan jaringan). */
       httpCode?: number;
+      /**
+       * Ringkasan terstruktur NON-RAHASIA dari respons yang menolak (header
+       * kategori + URL final). Aman diteruskan ke klien untuk diagnosis: tidak
+       * memuat token, cookie, password, maupun body HTML. `diagnostic` (string)
+       * tetap khusus log; `prime` ini yang boleh mengalir ke UI/DevTools.
+       */
+      prime?: PrimeRejectionInfo;
     };
 
 /**
@@ -156,6 +163,55 @@ export type PrimeResponseDiagnostics = {
   /** URL final yang benar-benar dijawab (untuk tahu fallback `/auth` dipakai). */
   finalUrl?: string | null;
 };
+
+/**
+ * Ringkasan NON-RAHASIA & JSON-friendly dari respons yang menolak priming.
+ * Berbeda dari `PrimeResponseDiagnostics` (yang memuat `html` mentah), bentuk
+ * ini sengaja hanya menyimpan **kategori** — aman dikirim ke klien agar
+ * penyebab `403` bisa ditentukan dari DevTools/UI tanpa membuka log server.
+ *
+ * Tidak ada token, cookie, password, atau isi body di sini.
+ */
+export type PrimeRejectionInfo = {
+  /** HTTP status yang menolak (mis. `403`). */
+  httpCode: number;
+  /** Kategori: `waf` | `page` | `unknown`. */
+  kind: PrimeRejectionKind;
+  /** Header `server` yang dilaporkan portal (mis. `cloudflare`), bila ada. */
+  server?: string;
+  /** Header `cf-mitigated` (mis. `challenge`), bila ada — penanda WAF Cloudflare. */
+  cfMitigated?: string;
+  /** Header `content-type`, bila ada. */
+  contentType?: string;
+  /** URL final yang benar-benar dijawab (bukti hop mana yang menolak). */
+  finalUrl?: string;
+};
+
+/**
+ * Bangun ringkasan non-rahasia dari respons penolakan, MURNI tanpa jaringan.
+ * Selalu mengembalikan objek (tak pernah `undefined`) supaya jalur gagal selalu
+ * menyertakan fakta mentah untuk diagnosis lapangan.
+ */
+export function buildPrimeRejectionInfo(
+  httpCode: number,
+  d?: PrimeResponseDiagnostics,
+): PrimeRejectionInfo {
+  const info: PrimeRejectionInfo = {
+    httpCode,
+    kind: classifyPrimeRejection(httpCode, d),
+  };
+  // Hanya salin bila berisi — hindari field kosong yang bising di UI/log.
+  const server = d?.server ?? "";
+  if (server) info.server = server;
+  const cfMitigated = d?.cfMitigated ?? "";
+  if (cfMitigated) info.cfMitigated = cfMitigated;
+  const contentType = d?.contentType ?? "";
+  if (contentType) info.contentType = contentType;
+  const finalUrl = d?.finalUrl ?? "";
+  if (finalUrl) info.finalUrl = finalUrl;
+  return info;
+}
+
 
 /**
  * Susun pesan diagnostik (MURNI, tanpa jaringan) dari kode HTTP non-2xx + sinyal
@@ -311,6 +367,8 @@ export function interpretSsoPrimeResponse(
       diagnostic:
         `Priming SSO gagal (HTTP ${httpCode}).` +
         diagnosePrimeRejection(httpCode, headers.diagnostics),
+      // Versi terstruktur yang AMAN dikirim ke klien (tanpa token/cookie/body).
+      prime: buildPrimeRejectionInfo(httpCode, headers.diagnostics),
     };
   }
 
@@ -454,6 +512,30 @@ export async function primeSsoSession(opts: {
       break;
     }
 
+    // Bila loop habis saat MASIH berada di 3xx, rangkaian redirect tak selesai
+    // (mis. loop tak berujung / `Location` hilang). Jangan salah tafsir sebagai
+    // sukses: laporkan sebagai ERROR dengan fakta URL terakhir.
+    if (res.status >= 300 && res.status < 400) {
+      return {
+        status: "ERROR",
+        httpCode: res.status,
+        kind: "unknown",
+        message: describeLoginErrorForUser({
+          step: "sso-prime",
+          kind: "unknown",
+          httpCode: res.status,
+        }),
+        diagnostic:
+          `Priming SSO berhenti di redirect (HTTP ${res.status}) setelah ` +
+          `${MAX_PRIME_HOPS} hop tanpa halaman final. url=${currentUrl}`,
+        prime: {
+          httpCode: res.status,
+          kind: "unknown",
+          finalUrl: currentUrl,
+        },
+      };
+    }
+
     // Cookie gabungan tiap hop dipindai untuk token CSRF berbasis cookie.
     const setCookies = cookies
       ? cookies.split("; ").map((pair) => `${pair};`)
@@ -520,6 +602,12 @@ export type LoginFlowResult =
       /** Detail teknis untuk log saja (tidak pernah dirender ke UI). */
       diagnostic?: string;
       kind?: PrimeRejectionKind;
+      /**
+       * Fakta non-rahasia dari respons yang menolak priming (HTTP/kategori/URL
+       * final), AMAN dikirim ke klien untuk diagnosis mandiri. Berbeda dari
+       * `diagnostic` yang khusus log server.
+       */
+      prime?: PrimeRejectionInfo;
     };
 
 /** Nama langkah, dipakai agar UI/audit tahu di mana alur berhenti. */
@@ -686,6 +774,7 @@ export async function runLoginFlow(input: {
       message: prime.message,
       diagnostic: prime.diagnostic,
       kind: prime.kind,
+      prime: prime.prime,
     };
   }
 

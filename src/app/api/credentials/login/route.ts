@@ -130,6 +130,10 @@ export async function POST() {
         status: "ERROR",
         step: result.step,
         kind: result.kind ?? null,
+        // Ringkasan NON-RAHASIA (HTTP/kategori/server/cf-mitigated/url final)
+        // agar penyebab penolakan bisa didiagnosis dari sisi klien juga, tanpa
+        // membuka log server. Aman: tanpa token/cookie/password/body.
+        prime: result.prime ?? null,
         message:
           result.message ||
           "Login otomatis gagal dihubungi. Coba lagi atau pakai tempel token.",
