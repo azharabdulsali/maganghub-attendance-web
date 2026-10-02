@@ -188,6 +188,27 @@ export type PrimeRejectionInfo = {
 };
 
 /**
+ * Apakah penolakan ini sebuah **Cloudflare Managed Challenge** yang, secara
+ * prinsip, TIDAK bisa dilewati klien non-browser (MURNI, tanpa jaringan).
+ *
+ * `cf-mitigated: challenge` hanya dikirim Cloudflare saat ia menyajikan
+ * interstitial "Verify you are human": diperlukan eksekusi JS + proof-of-work
+ * lalu cookie `cf_clearance`. Karena server kita tidak menjalankan JS, alur
+ * otomatis (Opsi A) **pasti** gagal di sini — bukan soal header yang kurang.
+ *
+ * Dipakai UI untuk berkata jujur: jangan menyuruh pengguna "coba lagi" pada hal
+ * yang mustahil, arahkan langsung ke jalur tempel token. Sesuai SPEC §5/§6 &
+ * AGENTS.md §73: kita TIDAK mengakali proteksi (headless browser, pinjam
+ * `cf_clearance`, proxy) — cukup melaporkan dan mengalihkan.
+ */
+export function isUnsolvableCloudflareChallenge(
+  info?: PrimeRejectionInfo | null,
+): boolean {
+  if (!info) return false;
+  return (info.cfMitigated ?? "").toLowerCase() === "challenge";
+}
+
+/**
  * Bangun ringkasan non-rahasia dari respons penolakan, MURNI tanpa jaringan.
  * Selalu mengembalikan objek (tak pernah `undefined`) supaya jalur gagal selalu
  * menyertakan fakta mentah untuk diagnosis lapangan.

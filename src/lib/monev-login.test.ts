@@ -17,6 +17,7 @@ import {
   runLoginFlow,
   primeSsoSession,
   buildPrimeRejectionInfo,
+  isUnsolvableCloudflareChallenge,
 } from "./monev-login";
 import { SsoCredentials } from "./kemnaker-sso";
 
@@ -254,6 +255,43 @@ describe("interpretSsoPrimeResponse (murni)", () => {
     });
     expect(info).toEqual({ httpCode: 403, kind: "waf", contentType: "text/html" });
     expect(Object.keys(info)).not.toContain("server");
+  });
+
+  it("isUnsolvableCloudflareChallenge: hanya `challenge` yang mustahil", () => {
+    // Bukti lapangan: cf-mitigated=challenge → Managed Challenge, pasti gagal.
+    expect(
+      isUnsolvableCloudflareChallenge({
+        httpCode: 403,
+        kind: "waf",
+        cfMitigated: "challenge",
+      }),
+    ).toBe(true);
+    // Case-insensitive (portal bisa mengirim "Challenge").
+    expect(
+      isUnsolvableCloudflareChallenge({
+        httpCode: 403,
+        kind: "waf",
+        cfMitigated: "Challenge",
+      }),
+    ).toBe(true);
+    // 403 WAF biasa TANPA challenge → mungkin masih bisa; jangan klaim mustahil.
+    expect(
+      isUnsolvableCloudflareChallenge({
+        httpCode: 403,
+        kind: "waf",
+        server: "cloudflare",
+      }),
+    ).toBe(false);
+    expect(
+      isUnsolvableCloudflareChallenge({
+        httpCode: 403,
+        kind: "waf",
+        cfMitigated: "block",
+      }),
+    ).toBe(false);
+    // Tanpa info → false (jangan menakut-nakuti tanpa bukti).
+    expect(isUnsolvableCloudflareChallenge(undefined)).toBe(false);
+    expect(isUnsolvableCloudflareChallenge(null)).toBe(false);
   });
 
   it("jalur ERROR tanpa diagnostik → kind terisi unknown (bukan kosong)", () => {

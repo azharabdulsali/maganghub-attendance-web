@@ -577,6 +577,42 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > bisa diikuti tanpa jalan buntu. Tautan panduan:
 > `/panduan/ambil-token-monev-devtools`. **Tidak ada** spoofing UA/proxy —
 > hanya pesan, form, & panduan.
+>
+> **🧱 TEMUAN FINAL (bukti lapangan, `cf-mitigated: challenge`).** Pada uji
+> nyata `/credentials`, Langkah 2 dijawab:
+>
+> ```
+> http=403  kategori=waf  server=cloudflare  cf-mitigated=challenge
+> content-type=text/html; charset=UTF-8
+> url=https://account.kemnaker.go.id/auth?client_id=…&redirect_uri=…&response_type=code&scope=…&state=…
+> ```
+>
+> `cf-mitigated: challenge` **hanya** dikirim Cloudflare saat ia menyajikan
+> **Managed Challenge** ("Verify you are human"): halaman menuntut eksekusi
+> **JavaScript + proof-of-work**, lalu menaruh cookie `cf_clearance`. Server
+> Node (undici) **tidak menjalankan JS**, jadi **secara desain** ia tak akan
+> pernah lewat — tidak peduli header `Referer`/UA/`Origin` yang kita set.
+> URL yang ditolak pun **sudah benar** (authorizeUrl lengkap dengan
+> `client_id`/`state`), jadi bukan soal langkah (1). Artinya:
+>
+> - **Login otomatis (Opsi A) TIDAK BISA dihidupkan kembali** selama portal
+>   memakai Managed Challenge. Ini bukan bug yang bisa "diperbaiki lagi".
+> - Jalan keluar yang mungkin (**headless browser** untuk melarutkan
+>   challenge, **pinjam `cf_clearance`**, atau **proxy putar**) semuanya
+>   **terlarang**: itu mengakali proteksi anti-bot pihak ketiga
+>   (`SPEC.md` §5/§6 & `AGENTS.md` §73).
+> - Karena itu **jalur tempel token (Opsi C1) adalah satu-satunya cara sah**,
+>   dan UI kini menyatakannya **jujur**: ketika `cf-mitigated=challenge`,
+>   kartu "Login otomatis" mengganti catatan "coba lagi" menjadi pesan tegas
+>   bahwa cara ini **tidak mungkin** berhasil dari server
+>   (`isUnsolvableCloudflareChallenge`, MURNI), dan mengarahkan ke tempel token.
+>
+> Deteksi ini dipisah sebagai fungsi murni `isUnsolvableCloudflareChallenge`
+> (`src/lib/monev-login.ts`) yang hanya bernilai `true` untuk
+> `cf-mitigated=challenge` — `403` WAF biasa **tanpa** `challenge` sengaja
+> **tidak** diklaim mustahil (masih mungkin ada perbaikan sah). Ini menjaga
+> kejujuran dua arah: tak menyuruh pengguna mencoba hal mustahil, tak pula
+> menyerah pada `403` yang sebenarnya bisa dilewati.
 
 Body (JSON): dua field, **`username`** (email) dan **`password`**. Nilai
 sengaja **TIDAK dicatat** di dokumen ini.

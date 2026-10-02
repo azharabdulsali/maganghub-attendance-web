@@ -26,6 +26,10 @@ import {
   daysUntilRefreshExpiry,
   refreshTokenExpiresAt,
 } from "@/lib/refresh-token-age";
+import {
+  isUnsolvableCloudflareChallenge,
+  type PrimeRejectionInfo,
+} from "@/lib/monev-login";
 
 type Props = {
   hasExisting: boolean;
@@ -84,14 +88,11 @@ export default function CredentialsForm({
   );
   // Fakta non-rahasia dari respons penolakan (HTTP/kategori/server/url final).
   // Hanya untuk membantu diagnosis; tidak ada token/cookie/password di sini.
-  const [loginPrime, setLoginPrime] = useState<{
-    httpCode?: number;
-    kind?: string;
-    server?: string;
-    cfMitigated?: string;
-    contentType?: string;
-    finalUrl?: string;
-  } | null>(null);
+  const [loginPrime, setLoginPrime] = useState<PrimeRejectionInfo | null>(null);
+
+  // Bila buktinya Cloudflare Managed Challenge (`cf-mitigated=challenge`), login
+  // otomatis TIDAK mungkin berhasil dari server. UI harus berkata jujur.
+  const isUnsolvable = isUnsolvableCloudflareChallenge(loginPrime);
 
   // --- Tempel token manual (Opsi C1, docs/MONEV-API.md §7) ---
   // Ini jalur cadangan resmi saat login otomatis diblokir proteksi portal.
@@ -209,14 +210,7 @@ export default function CredentialsForm({
         message?: string;
         error?: string;
         kind?: "waf" | "page" | "unknown" | null;
-        prime?: {
-          httpCode?: number;
-          kind?: string;
-          server?: string;
-          cfMitigated?: string;
-          contentType?: string;
-          finalUrl?: string;
-        } | null;
+        prime?: PrimeRejectionInfo | null;
       };
 
       if (!res.ok) {
@@ -609,14 +603,26 @@ export default function CredentialsForm({
             </p>
           )}
 
-          {/* Ekspektasi jujur: di server, portal sering menolak login otomatis
-              karena proteksi anti-bot. Jangan biarkan pengguna mengira ini
-              jalur andal. */}
-          <p className="text-xs text-foreground/70">
-            Catatan: di server, portal sering menolak cara ini karena proteksi
-            anti-bot. Bila itu terjadi, pakai{" "}
-            <strong>tempel token</strong> di kartu atas, itu yang paling andal.
-          </p>
+          {/* Ekspektasi jujur: di server, portal menolak login otomatis karena
+              proteksi anti-bot Cloudflare. Bila buktinya Managed Challenge
+              (`cf-mitigated=challenge`), katakan TERANG bahwa ini tak bisa
+              diatasi dari sisi kami — jangan menyuruh pengguna "coba lagi". */}
+          {isUnsolvable && loginState === "error" ? (
+            <Message tone="neutral">
+              <strong>Portal memasang Cloudflare Managed Challenge.</strong>{" "}
+              Tantangan ini menuntut browser asli menjalankan JavaScript, jadi
+              login otomatis dari server <strong>tidak mungkin</strong> berhasil
+              — ini bukan kesalahan Anda dan bukan bisa &ldquo;dicoba lagi&rdquo;.
+              Gunakan <strong>tempel token</strong> di kartu atas; itu satu-satunya
+              cara yang sah dan andal.
+            </Message>
+          ) : (
+            <p className="text-xs text-foreground/70">
+              Catatan: di server, portal sering menolak cara ini karena proteksi
+              anti-bot. Bila itu terjadi, pakai{" "}
+              <strong>tempel token</strong> di kartu atas, itu yang paling andal.
+            </p>
+          )}
 
           {loginMsg && (
             <Message tone={loginState === "ok" ? "good" : "bad"}>
