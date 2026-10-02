@@ -113,12 +113,15 @@ export async function POST() {
 
   if (result.status === "ERROR") {
     // Kesalahan jaringan/bentuk respons yang belum terekam. JANGAN ubah
-    // status kredensial, belum tentu kredensialnya salah.
+    // status kredensial, belum tentu kredensialnya salah. `kind` (bila ada)
+    // memberitahu UI apakah ini blokir WAF — supaya bisa mengarahkan ke jalur
+    // tempel token manual, bukan menyalahkan password.
     return NextResponse.json(
       {
         ok: false,
         status: "ERROR",
         step: result.step,
+        kind: result.kind ?? null,
         message:
           result.message ||
           "Login otomatis gagal dihubungi. Coba lagi atau pakai tempel token.",

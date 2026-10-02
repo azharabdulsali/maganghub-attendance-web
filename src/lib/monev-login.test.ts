@@ -8,6 +8,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import {
   interpretSsoPrimeResponse,
+  diagnosePrimeRejection,
+  classifyPrimeRejection,
   extractCsrfTokenFromHtml,
   summarizeLoginStep,
   mergeCookieHeader,
@@ -125,6 +127,128 @@ describe("interpretSsoPrimeResponse (murni)", () => {
   it("HTTP non-2xx/3xx → ERROR", () => {
     const r = interpretSsoPrimeResponse(503, { csrfToken: "t", setCookies: [] });
     expect(r.status).toBe("ERROR");
+  });
+
+  it("403 tanpa diagnostik → pesan lama (tanpa tambahan) tetap utuh", () => {
+    const r = interpretSsoPrimeResponse(403, { setCookies: [] });
+    expect(r.status).toBe("ERROR");
+    if (r.status === "ERROR") {
+      expect(r.message).toContain("HTTP 403");
+    }
+  });
+
+  it("403 + sinyal Cloudflare → pesan menjelaskan challenge, BUKAN kredensial", () => {
+    const r = interpretSsoPrimeResponse(403, {
+      setCookies: [],
+      diagnostics: {
+        contentType: "text/html",
+        server: "cloudflare",
+        cfMitigated: "challenge",
+        cfRay: "8a1b2c3d-FRA",
+        finalUrl: "https://account.kemnaker.go.id/auth",
+      },
+    });
+    expect(r.status).toBe("ERROR");
+    if (r.status === "ERROR") {
+      expect(r.message).toContain("HTTP 403");
+      expect(r.message).toMatch(/cloudflare/i);
+      expect(r.message).toContain("cf-mitigated=challenge");
+      // Tidak boleh menuduh kredensial salah.
+      expect(r.message).not.toMatch(/password/i);
+    }
+  });
+
+  it("403 tanpa sinyal Cloudflare → pesan menyebut WAF & saran authorizeUrl lengkap", () => {
+    const r = interpretSsoPrimeResponse(403, {
+      setCookies: [],
+      diagnostics: { server: "openresty", contentType: "text/html" },
+    });
+    if (r.status === "ERROR") {
+      expect(r.message).toMatch(/WAF/i);
+      expect(r.message).toContain("authorizeUrl");
+    }
+  });
+
+  it("diagnostik memindai HTML jadi kategori, TIDAK membocorkan isi halaman", () => {
+    const html =
+      `<html><body><div id="app"></div><script src="/a.js"></script>` +
+      `RAHASIA-INTERNAL-JANGAN-BOCOR</body></html>`;
+    const msg = diagnosePrimeRejection(403, {
+      contentType: "text/html",
+      html,
+    });
+    expect(msg).toContain("ada-mount-spa");
+    expect(msg).not.toContain("RAHASIA-INTERNAL-JANGAN-BOCOR");
+  });
+
+  it("diagnosePrimeRejection tanpa info → string kosong (tak mengubah pesan lama)", () => {
+    expect(diagnosePrimeRejection(403)).toBe("");
+  });
+
+  it("meneruskan kind + httpCode pada jalur non-2xx supaya UI bisa bertindak", () => {
+    const r = interpretSsoPrimeResponse(403, {
+      setCookies: [],
+      diagnostics: {
+        server: "cloudflare",
+        cfMitigated: "challenge",
+        contentType: "text/html",
+      },
+    });
+    expect(r.status).toBe("ERROR");
+    if (r.status === "ERROR") {
+      expect(r.httpCode).toBe(403);
+      expect(r.kind).toBe("waf");
+    }
+  });
+
+  it("jalur ERROR tanpa diagnostik → kind terisi unknown (bukan kosong)", () => {
+    const r = interpretSsoPrimeResponse(500, { setCookies: [] });
+    if (r.status === "ERROR") {
+      expect(r.kind).toBe("unknown");
+    }
+  });
+});
+
+describe("classifyPrimeRejection (murni)", () => {
+  it("Cloudflare via cf-mitigated → waf", () => {
+    expect(
+      classifyPrimeRejection(403, { cfMitigated: "challenge" }),
+    ).toBe("waf");
+  });
+
+  it("Cloudflare via header server → waf", () => {
+    expect(classifyPrimeRejection(403, { server: "cloudflare" })).toBe("waf");
+  });
+
+  it("cf-ray saja sudah cukup menandai waf", () => {
+    expect(classifyPrimeRejection(403, { cfRay: "8abc-DEF" })).toBe("waf");
+  });
+
+  it("403 tanpa sinyal Cloudflare tetap waf (khas penolakan gate)", () => {
+    expect(
+      classifyPrimeRejection(403, { server: "openresty", contentType: "text/html" }),
+    ).toBe("waf");
+  });
+
+  it("429/503 juga dianggap waf (throttle/gate)", () => {
+    expect(classifyPrimeRejection(429, {})).toBe("waf");
+    expect(classifyPrimeRejection(503, {})).toBe("waf");
+  });
+
+  it("HTML biasa tanpa sinyal WAF → page (bentuk halaman berubah)", () => {
+    expect(classifyPrimeRejection(200, { contentType: "text/html" })).toBe(
+      "page",
+    );
+  });
+
+  it("tanpa diagnostik → unknown", () => {
+    expect(classifyPrimeRejection(403)).toBe("unknown");
+  });
+
+  it("konsisten dengan diagnosePrimeRejection: Cloudflare ⇒ waf", () => {
+    const d = { server: "cloudflare", contentType: "text/html" };
+    expect(classifyPrimeRejection(403, d)).toBe("waf");
+    expect(diagnosePrimeRejection(403, d)).toMatch(/cloudflare/i);
   });
 });
 

@@ -26,6 +26,7 @@ import {
   catchOAuthCode,
   parseOAuthCallbackParams,
   extractCallbackUrl,
+  describeHtmlHint,
   KEMNAKER_SSO_ORIGIN,
   type SsoCredentials,
 } from "./kemnaker-sso";
@@ -49,7 +50,17 @@ const LOGIN_USER_AGENT =
 /** Hasil priming: token CSRF + nilai cookie yang harus diteruskan ke login. */
 export type SsoPrimeResult =
   | { status: "OK"; httpCode: number; csrfToken: string; cookies: string }
-  | { status: "ERROR"; message: string };
+  | {
+      status: "ERROR";
+      message: string;
+      /**
+       * Kategori penolakan (hanya terisi bila ada sinyal respons). UI memakai
+       * ini untuk memberi tindakan: `"waf"` mengarahkan ke tempel token manual.
+       */
+      kind?: PrimeRejectionKind;
+      /** Kode HTTP mentah bila kegagalan datang dari respons (bukan jaringan). */
+      httpCode?: number;
+    };
 
 /**
  * Cari token CSRF di dalam **HTML** halaman login, MURNI, tanpa jaringan.
@@ -92,6 +103,134 @@ export function extractCsrfTokenFromHtml(html: string): string | undefined {
 }
 
 /**
+ * Diagnostik NON-RAHASIA dari respons `GET /auth` (hanya untuk jalur gagal).
+ * Tidak ada token/cookie/password di dalamnya — aman untuk ditampilkan & dicatat.
+ */
+export type PrimeResponseDiagnostics = {
+  /** Header `content-type` (mis. `text/html`, `application/json`). */
+  contentType?: string | null;
+  /** Header `server` (mis. `cloudflare`, `openresty`). */
+  server?: string | null;
+  /** Header `content-length` bila ada (petunjuk ukuran body). */
+  contentLength?: string | null;
+  /** Header `cf-mitigated` — penanda TEGAS bahwa Cloudflare memblokir. */
+  cfMitigated?: string | null;
+  /** Header `cf-ray` — bukti permintaan melewati edge Cloudflare. */
+  cfRay?: string | null;
+  /** Body HTML mentah (hanya dipindai jadi kategori, isinya tak dibocorkan). */
+  html?: string;
+  /** URL final yang benar-benar dijawab (untuk tahu fallback `/auth` dipakai). */
+  finalUrl?: string | null;
+};
+
+/**
+ * Susun pesan diagnostik (MURNI, tanpa jaringan) dari kode HTTP non-2xx + sinyal
+ * respons, supaya penyebab `403` bisa ditentukan tanpa menebak.
+ *
+ * Yang dilaporkan hanya **kategori**, bukan isi: apakah challenge Cloudflare
+ * (`cf-mitigated`/`server: cloudflare`), WAF Alibaba (`acw_tc`), halaman HTML
+ * biasa (via `describeHtmlHint`), atau bentuk tak dikenal. Tidak ada token,
+ * cookie, atau password yang pernah masuk ke sini.
+ */
+export function diagnosePrimeRejection(
+  httpCode: number,
+  d?: PrimeResponseDiagnostics,
+): string {
+  if (!d) return "";
+
+  const parts: string[] = [];
+  const ct = (d.contentType ?? "").toLowerCase();
+  const server = (d.server ?? "").toLowerCase();
+  const mitigated = (d.cfMitigated ?? "").toLowerCase();
+
+  // (a) Sinyal TEGAS Cloudflare: header `cf-mitigated` ada, atau `server`
+  // menyebut cloudflare. Ini menjelaskan 403 sebagai challenge WAF, BUKAN
+  // kredensial salah. Sesuai SPEC §6/§10: jangan diakali, cukup dilaporkan.
+  const cloudflare =
+    mitigated.length > 0 ||
+    server.includes("cloudflare") ||
+    (d.cfRay ?? "").length > 0;
+  if (cloudflare) {
+    parts.push(
+      "Kemungkinan challenge Cloudflare/WAF (bukan kredensial salah). " +
+        "Server kita tidak punya cookie `cf_clearance` & tidak menjalankan JS, " +
+        "jadi permintaan non-browser bisa diblokir.",
+    );
+  }
+
+  // (b) WAF Alibaba (sering muncul di host Kemnaker) menandai lewat cookie `acw_tc`.
+  if (httpCode === 403 && !cloudflare) {
+    parts.push(
+      "Kemungkinan ditolak WAF (mis. Alibaba `acw_tc`/`Server`). " +
+        "Coba pastikan `authorizeUrl` lengkap dipakai, bukan `/auth` polos.",
+    );
+  }
+
+  // (c) Isi respons: kategori halaman, bukan isinya.
+  if (ct.includes("html") && d.html) {
+    parts.push(`Halaman: ${describeHtmlHint(d.html)}.`);
+  } else if (ct) {
+    parts.push(`content-type: ${ct}.`);
+  }
+
+  // (d) Jejak teknis ringkas (aman).
+  const tail: string[] = [];
+  if (server) tail.push(`server=${server}`);
+  if (mitigated) tail.push(`cf-mitigated=${mitigated}`);
+  if (d.contentLength) tail.push(`len=${d.contentLength}`);
+  if (d.finalUrl) tail.push(`url=${d.finalUrl}`);
+
+  const head = parts.length ? ` ${parts.join(" ")}` : "";
+  const tailStr = tail.length ? ` [${tail.join(" ")}]` : "";
+  return `${head}${tailStr}`;
+}
+
+/**
+ * Kategori penolakan priming SSO. MURNI, diturunkan dari sinyal respons yang
+ * sama dengan `diagnosePrimeRejection`, tapi dalam bentuk **kode terstruktur**
+ * supaya UI bisa memberi tindakan yang tepat (bukan sekadar menampilkan pesan).
+ *
+ * - `"waf"`       → server non-browser diblokir proteksi (Cloudflare/Alibaba).
+ *                   **Bukan** kredensial salah; jalur login otomatis memang
+ *                   terhalang. UI harus mengarahkan ke tempel token manual.
+ * - `"page"`      → respons HTML normal tapi tanpa CSRF yang dikenali; bentuk
+ *                   halaman berubah, butuh rekaman ulang (docs §4.0).
+ * - `"unknown"`   → tak ada sinyal yang bisa disimpulkan.
+ */
+export type PrimeRejectionKind = "waf" | "page" | "unknown";
+
+/**
+ * Tentukan kategori penolakan priming, MURNI & teruji, tanpa jaringan.
+ *
+ * Dipisah dari `diagnosePrimeRejection` supaya UI tidak perlu mengurai teks
+ * pesan; ia cukup membaca kategori ini. Keduanya memakai sinyal yang sama, jadi
+ * tidak mungkin bertentangan.
+ */
+export function classifyPrimeRejection(
+  httpCode: number,
+  d?: PrimeResponseDiagnostics,
+): PrimeRejectionKind {
+  if (!d) return "unknown";
+
+  const server = (d.server ?? "").toLowerCase();
+  const mitigated = (d.cfMitigated ?? "").toLowerCase();
+  const cloudflare =
+    mitigated.length > 0 ||
+    server.includes("cloudflare") ||
+    (d.cfRay ?? "").length > 0;
+
+  // Penanda WAF: Cloudflare terdeteksi, atau 403/429/503 tanpa sinyal lain
+  // (khas penolakan gate, bukan halaman aplikasi normal).
+  if (cloudflare) return "waf";
+  if (httpCode === 403 || httpCode === 429 || httpCode === 503) return "waf";
+
+  // Respons HTML sungguhan tapi gagal diekstrak → bentuk halaman berubah.
+  if ((d.contentType ?? "").toLowerCase().includes("html")) return "page";
+
+  return "unknown";
+}
+
+/**
  * Ambil `x-csrf-token` & cookie dari halaman login SSO, MURNI, tanpa jaringan.
  *
  * Sumber token diterima **berurutan** (yang pertama cocok menang):
@@ -102,6 +241,13 @@ export function extractCsrfTokenFromHtml(html: string): string | undefined {
  *
  * Cookie yang digabung HANYA yang relevan untuk login (cf/acw/session/csrf),
  * memakai daftar **awalan nama**, bukan menyalin seluruh header `set-cookie`.
+ *
+ * Bila respons **non-2xx/3xx** (mis. `403` dari WAF), pesan galat TIDAK sekadar
+ * menyebut kode HTTP. Ia memuat **diagnostik non-rahasia** (`diagnosePrime-
+ * Rejection`) supaya penyebabnya bisa ditentukan dari satu kiriman: apakah ini
+ * challenge Cloudflare/WAF, halaman HTML biasa, atau WAF Alibaba (`acw_tc`).
+ * Ini melayani temuan `docs/MONEV-API.md` §4.0 yang menyebut asal/usul `403`
+ * pada `GET /auth` masih TERBUKA dan butuh satu rekaman nyata.
  */
 export function interpretSsoPrimeResponse(
   httpCode: number,
@@ -109,10 +255,19 @@ export function interpretSsoPrimeResponse(
     csrfToken?: string | null;
     setCookies?: string[];
     html?: string;
+    /** Diagnostik non-rahasia untuk jalur non-2xx (opsional, aman). */
+    diagnostics?: PrimeResponseDiagnostics;
   },
 ): SsoPrimeResult {
   if (httpCode < 200 || httpCode >= 400) {
-    return { status: "ERROR", message: `Priming SSO gagal (HTTP ${httpCode}).` };
+    return {
+      status: "ERROR",
+      httpCode,
+      kind: classifyPrimeRejection(httpCode, headers.diagnostics),
+      message:
+        `Priming SSO gagal (HTTP ${httpCode}).` +
+        diagnosePrimeRejection(httpCode, headers.diagnostics),
+    };
   }
 
   const setCookies = headers.setCookies ?? [];
@@ -222,6 +377,17 @@ export async function primeSsoSession(opts: {
       csrfToken: res.headers.get("x-csrf-token"),
       setCookies,
       html,
+      // Diagnostik non-rahasia (tanpa token/cookie). Melayani temuan §4.0:
+      // kenapa `GET /auth` bisa `403` (challenge WAF, HTML biasa, dst).
+      diagnostics: {
+        contentType: res.headers.get("content-type"),
+        server: res.headers.get("server"),
+        contentLength: res.headers.get("content-length"),
+        cfMitigated: res.headers.get("cf-mitigated"),
+        cfRay: res.headers.get("cf-ray"),
+        finalUrl: res.url,
+        html,
+      },
     });
   } catch (err) {
     const message =
@@ -260,7 +426,7 @@ export type LoginFlowResult =
       httpCode?: number;
       message: string;
     }
-  | { status: "ERROR"; step: LoginStep; message: string };
+  | { status: "ERROR"; step: LoginStep; message: string; kind?: PrimeRejectionKind };
 
 /** Nama langkah, dipakai agar UI/audit tahu di mana alur berhenti. */
 export type LoginStep =
@@ -368,7 +534,12 @@ export async function runLoginFlow(input: {
     timeoutMs,
   });
   if (prime.status !== "OK") {
-    return { status: "ERROR", step: "sso-prime", message: prime.message };
+    return {
+      status: "ERROR",
+      step: "sso-prime",
+      message: prime.message,
+      kind: prime.kind,
+    };
   }
 
   // --- Langkah 3: login kredensial → code OAuth ------------------------------

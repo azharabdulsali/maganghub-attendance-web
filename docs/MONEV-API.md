@@ -529,6 +529,30 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > di **tiga sumber berurutan**: header `x-csrf-token` → cookie
 > `csrf_token`/`XSRF-TOKEN`/`_csrf` → **HTML body**. Ini tahan banting, tapi
 > **belum tervalidasi di portal sungguhan** sampai rekaman di atas ada.
+>
+> **🔎 Alat diagnosa 403 (ditambahkan).** Bila langkah (2) menerima non-2xx
+> (mis. `403`), pesan galat **tidak** lagi sekadar "Priming SSO gagal (HTTP
+> 403)". Fungsi murni `diagnosePrimeRejection` (`src/lib/monev-login.ts`)
+> melampirkan **diagnostik non-rahasia** dari respons: header `server`,
+> `cf-mitigated`, `cf-ray`, `content-type`, `content-length`, dan **kategori
+> halaman** (via `describeHtmlHint`). Ini membedakan:
+> - **challenge Cloudflare/WAF** (ada `cf-mitigated`/`server: cloudflare`) →
+>   artinya permintaan non-browser diblokir, **bukan** kredensial salah. Sesuai
+>   `SPEC.md` §6/§10 & `AGENTS.md` §73: **jangan** diakali (spoof UA/proxy).
+> - **halaman HTML biasa** tanpa penanda → kemungkinan `/auth` polos dipakai
+>   (perlu `authorizeUrl` lengkap) atau bentuk halaman berubah → butuh rekaman.
+> Tidak ada nilai token/cookie/password yang masuk ke diagnostik ini.
+> **Catatan penting:** `403` terjadi di langkah (2) **sebelum** password
+> dikirim, jadi `403` **tidak** berarti email/password salah.
+>
+> **↩️ Fallback UI (ditambahkan).** Kategori penolakan (`waf`/`page`/`unknown`)
+> kini ikut mengalir server → UI lewat `kind` (`classifyPrimeRejection` MURNI,
+> dipakai bareng `diagnosePrimeRejection` agar tak mungkin bertentangan). Bila
+> `kind === "waf"`, kartu "Hubungkan sesi Monev" menampilkan panduan kontekstual:
+> **"ini bukan soal kredensial Anda"** + langkah tempel `monev_refresh_token`
+> (Opsi C1) dengan tautan ke `/panduan/ambil-token-monev-devtools`. Tujuannya
+> supaya pengguna tidak menebak-nebak password saat masalahnya sebenarnya
+> blokir anti-bot. **Tidak ada** spoofing UA/proxy — hanya pesan & panduan.
 
 Body (JSON): dua field, **`username`** (email) dan **`password`**. Nilai
 sengaja **TIDAK dicatat** di dokumen ini.

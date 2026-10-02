@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,10 +66,16 @@ export default function CredentialsForm({
     "idle" | "ok" | "rejected" | "error"
   >("idle");
   const [loginLoading, setLoginLoading] = useState(false);
+  // Kategori penolakan dari server ("waf" bila diblokir proteksi). Dipakai
+  // untuk menampilkan panduan tempel token manual, BUKAN menyalahkan password.
+  const [loginKind, setLoginKind] = useState<"waf" | "page" | "unknown" | null>(
+    null,
+  );
 
   async function loginOtomatis() {
     setLoginMsg(null);
     setLoginState("idle");
+    setLoginKind(null);
     setLoginLoading(true);
 
     try {
@@ -77,6 +84,7 @@ export default function CredentialsForm({
         status?: string;
         message?: string;
         error?: string;
+        kind?: "waf" | "page" | "unknown" | null;
       };
 
       if (!res.ok) {
@@ -107,10 +115,23 @@ export default function CredentialsForm({
         router.refresh();
       } else {
         setLoginState("error");
+        setLoginKind(data.kind ?? null);
         setLoginMsg(
           data.message ??
             "Login otomatis belum bisa memastikan hasilnya. Coba lagi sebentar.",
         );
+        // Blokir WAF = bukan soal kredensial; arahkan ke jalur token manual.
+        if (data.kind === "waf") {
+          toast.info(
+            "Login otomatis diblokir portal",
+            "Bukan soal password Anda. Gunakan cara tempel token di bawah.",
+          );
+        } else {
+          toast.error(
+            "Login otomatis belum berhasil",
+            "Coba lagi, atau pakai cara tempel token manual.",
+          );
+        }
       }
     } catch {
       setLoginState("error");
@@ -329,6 +350,38 @@ export default function CredentialsForm({
             <Message tone={loginState === "ok" ? "good" : "bad"}>
               {loginMsg}
             </Message>
+          )}
+
+          {/* Fallback kontekstual: bila server diblokir WAF (bukan kredensial
+              salah), jangan biarkan pengguna menebak. Arahkan jelas ke jalur
+              token manual yang sudah tersedia (§ C1, docs/MONEV-API.md §7). */}
+          {loginState === "error" && loginKind === "waf" && (
+            <div className="space-y-2 rounded-md border-2 border-border bg-secondary p-3 text-sm text-foreground/90">
+              <p className="font-heading text-foreground">
+                Ini bukan soal email &amp; password Anda
+              </p>
+              <p>
+                Portal menolak permintaan dari server kami (proteksi anti-bot),
+                bukan menolak kredensial Anda. Email &amp; password Anda tetap
+                benar. Pakai <strong>cara tempel token</strong> sebagai
+                gantinya:
+              </p>
+              <ol className="list-decimal space-y-1 pl-5">
+                <li>
+                  Buka portal MagangHub di browser Anda, login seperti biasa.
+                </li>
+                <li>
+                  Ambil cookie <code>monev_refresh_token</code> lewat DevTools.
+                </li>
+                <li>Tempel &amp; simpan di menu Kredensial aplikasi ini.</li>
+              </ol>
+              <Link
+                href="/panduan/ambil-token-monev-devtools"
+                className="inline-block font-medium text-foreground underline underline-offset-4 hover:opacity-80"
+              >
+                Lihat panduan ambil token selengkapnya
+              </Link>
+            </div>
           )}
         </CardContent>
       </Card>
