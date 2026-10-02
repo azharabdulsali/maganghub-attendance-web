@@ -17,9 +17,12 @@
 //        (catchOAuthCode). ⚠️  BUKTI FINAL (2026-09-28): rantai `3xx` SELALU
 //        berakhir di `200` pada account.kemnaker.go.id TANPA `code`, halaman
 //        akhir adalah SHELL SPA (3214 byte; hanya `<script src>` + marker
-//        framework, tanpa form/OTP/meta-refresh). `code` dirakit JavaScript,
-//        BUKAN lewat HTTP. Automasi murni-HTTP tak dapat menyelesaikan langkah
-//        ini; butuh eksekusi JS (headless) atau penangkapan manual. Lihat §4.0.
+//        framework, tanpa form/OTP/meta-refresh). `code` TIDAK mengalir lewat
+//        redirect HTTP. ⚠️ KOREKSI (2026): kesimpulan lama "butuh headless/JS"
+//        TERLALU CEPAT. `code` tetap bisa dipanen TANPA JS - setelah login,
+//        panggil `POST https://account.kemnaker.go.id/auth` (body `{}`); SSO
+//        membalas JSON berisi `redirect_uri` yang SUDAH memuat `code=`.
+//        Lihat `fetchAuthorizationRedirect` & `extractCallbackUrlFromAuthJson`.
 //   3. GET  .../api/v1/auth/login/callback?code=&state=  → server set monev_refresh_token
 //
 // ATURAN KEAMANAN (ditegakkan di kode, bukan sekadar janji):
@@ -252,6 +255,73 @@ export function extractCallbackUrlFromHtml(html: string): string | undefined {
 }
 
 /**
+ * Apakah halaman ini adalah **shell otorisasi SSO** (bukan form login)?
+ *
+ * MURNI, tanpa jaringan. Dipakai untuk memutuskan langkah (3b) alternatif:
+ * setelah `POST /auth/login` sukses, halaman `/auth` yang kembali ternyata
+ * bukan redirect, ia hanya shell yang memuat penanda `auth-authorize`. Saat
+ * itu terjadi, `code` TIDAK mengalir lewat HTTP redirect (temuan 4.0), jadi
+ * kita harus memanggil `POST /auth` (lihat `fetchAuthorizationRedirect`),
+ * persis langkah yang dipakai klien yang terbukti berhasil.
+ *
+ * Sengaja longgar: cukup memuat salah satu penanda yang dikenal.
+ */
+export function isSsoAuthAuthorizePage(html: string): boolean {
+  if (!html || html.length === 0) return false;
+  return (
+    html.includes("auth-authorize") ||
+    /data-page=["'][^"']*auth[^"']*["']/i.test(html) ||
+    /<div[^>]+id=["']app["']/i.test(html)
+  );
+}
+
+/**
+ * Ambil URL callback (yang memuat `code=`) dari **body JSON** respons
+ * `POST /auth`. MURNI, tanpa jaringan.
+ *
+ * Bentuk yang diterima (berdasarkan respons SSO yang terverifikasi):
+ *   - `{ data: { redirect_uri: "...code=..." } }`
+ *   - `{ redirect_uri: "...code=..." }`
+ *   - `{ data: { url: "...code=..." } }` (cadangan)
+ *
+ * Mengembalikan `undefined` bila tak ada URL dengan `code=` - jangan menebak,
+ * supaya pemanggil jujur melaporkan gagal alih-alih memakai URL kosong.
+ */
+export function extractCallbackUrlFromAuthJson(bodyText: string): string | undefined {
+  if (!bodyText || bodyText.length === 0) return undefined;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(bodyText);
+  } catch {
+    return undefined;
+  }
+  if (!parsed || typeof parsed !== "object") return undefined;
+
+  const asRecord = (v: unknown): Record<string, unknown> | undefined =>
+    v && typeof v === "object" ? (v as Record<string, unknown>) : undefined;
+
+  const root = asRecord(parsed);
+  if (!root) return undefined;
+  const data = asRecord(root.data);
+
+  const candidates: unknown[] = [
+    data?.redirect_uri,
+    root.redirect_uri,
+    data?.url,
+    root.url,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && /[?&]code=/.test(candidate)) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
+
+/**
  * Petunjuk ringan isi halaman HTML non-redirect, MURNI, aman.
  *
  * Dipakai saat `code` tak ditemukan dan rantai berhenti di halaman `200`.
@@ -423,6 +493,128 @@ export type CatchCodeResult =
 
 /** Batas hop redirect agar tidak pernah terjebak loop tak berujung. */
 const MAX_REDIRECT_HOPS = 8;
+/**
+ * Langkah (3b-alternatif): panggil `POST https://account.kemnaker.go.id/auth`
+ * untuk memanen URL callback yang memuat `code=`. Jaringan,
+ * **DILINDUNGI GERBANG.**
+ *
+ * Mengapa perlu (bukti dari klien yang terbukti berhasil): setelah login
+ * sukses, halaman `/auth` bisa kembali sebagai **shell SPA** (memuat penanda
+ * `auth-authorize`) dan TIDAK mengalirkan `code` lewat redirect HTTP. Dalam
+ * kondisi itu `code` baru terbit bila kita mengirim permintaan otorisasi
+ * eksplisit: `POST /auth` dengan body kosong. SSO membalas JSON berisi
+ * `redirect_uri` yang SUDAH memuat `code=` (lihat `extractCallbackUrlFromAuthJson`).
+ *
+ * Ini murni menyelesaikan alur OAuth yang benar - sama seperti menjalankan
+ * permintaan otorisasi dari browser pada umumnya, bukan menembus proteksi.
+ *
+ * @returns `{ status: "OK", callbackUrl }` bila JSON memuat `code=`;
+ *          `{ status: "ERROR", message }` bila tidak (tanpa menebak).
+ */
+export async function fetchAuthorizationRedirect(
+  opts: {
+    csrfToken: string;
+    cookies?: string;
+    confirmLivePortalRequest: boolean;
+    timeoutMs?: number;
+  },
+): Promise<
+  | { status: "OK"; callbackUrl: string; setCookies?: string[] }
+  | { status: "ERROR"; message: string }
+> {
+  if (!opts.confirmLivePortalRequest) {
+    return {
+      status: "ERROR",
+      message:
+        "Dibatalkan: gerbang 'confirmLivePortalRequest' belum aktif. " +
+        "Permintaan otorisasi SSO tidak boleh menyentuh portal tanpa izin eksplisit.",
+    };
+  }
+  if (!opts.csrfToken) {
+    return { status: "ERROR", message: "Token CSRF kosong; tidak bisa otorisasi." };
+  }
+
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(`${KEMNAKER_SSO_ORIGIN}/auth`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json, text/plain, */*",
+        Origin: KEMNAKER_SSO_ORIGIN,
+        Referer: `${KEMNAKER_SSO_ORIGIN}/auth/login`,
+        "User-Agent": SSO_USER_AGENT,
+        "x-csrf-token": opts.csrfToken,
+        "X-CSRF-TOKEN": opts.csrfToken,
+        "x-requested-with": "XMLHttpRequest",
+        ...(opts.cookies ? { cookie: opts.cookies } : {}),
+      },
+      body: "{}",
+      redirect: "manual",
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    const setCookies = readSetCookies(res.headers);
+
+    // Respons redirect langsung => Location adalah tujuan (periksa `code`).
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location") ?? undefined;
+      if (location) {
+        const absolute = (() => {
+          try {
+            return new URL(location, KEMNAKER_SSO_ORIGIN).toString();
+          } catch {
+            return location;
+          }
+        })();
+        const parsed = parseOAuthCallbackParams(absolute);
+        if (parsed.code) {
+          return { status: "OK", callbackUrl: absolute, setCookies };
+        }
+      }
+    }
+
+    const text = await res.text().catch(() => "");
+    // (a) Body JSON memuat redirect_uri ber-`code`?
+    const fromJson = extractCallbackUrlFromAuthJson(text);
+    if (fromJson) {
+      const absolute = (() => {
+        try {
+          return new URL(fromJson, KEMNAKER_SSO_ORIGIN).toString();
+        } catch {
+          return fromJson;
+        }
+      })();
+      return { status: "OK", callbackUrl: absolute, setCookies };
+    }
+    // (b) Body HTML memuat URL callback (`Location`/meta/script)?
+    const fromHtml = extractCallbackUrlFromHtml(text);
+    if (fromHtml) {
+      return { status: "OK", callbackUrl: fromHtml, setCookies };
+    }
+
+    return {
+      status: "ERROR",
+      message:
+        `POST /auth membalas HTTP ${res.status} tanpa 'code' ` +
+        `(JSON/HTML tidak memuat redirect callback).`,
+    };
+  } catch (err) {
+    const message =
+      err instanceof Error && err.name === "AbortError"
+        ? "Waktu otorisasi SSO habis."
+        : "Tidak dapat menghubungi otorisasi SSO Kemnaker.";
+    return { status: "ERROR", message };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+
 
 /**
  * Ikuti `redirect_uri` (halaman SSO) (**termasuk seluruh rantai redirect**)

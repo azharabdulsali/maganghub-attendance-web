@@ -24,6 +24,7 @@
 import {
   loginToSso,
   catchOAuthCode,
+  fetchAuthorizationRedirect,
   parseOAuthCallbackParams,
   extractCallbackUrl,
   describeHtmlHint,
@@ -689,6 +690,29 @@ export async function runLoginFlow(input: {
       catchDiags.push(`${target.label}: ${caught.message}`);
     }
   }
+  // (c) Cadangan terakhir & TERBUKTI berhasil: bila mengikuti redirect buntu
+  // (halaman SSO adalah shell SPA), panggil `POST /auth` untuk memanen
+  // `redirect_uri` ber-`code`. Lihat `fetchAuthorizationRedirect`.
+  if (!code) {
+    const mergedCookies = mergeCookieHeader(prime.cookies, login.setCookies);
+    const authz = await fetchAuthorizationRedirect({
+      csrfToken: prime.csrfToken,
+      cookies: mergedCookies,
+      confirmLivePortalRequest: true,
+      timeoutMs,
+    });
+    if (authz.status === "OK") {
+      const parsed = parseOAuthCallbackParams(authz.callbackUrl);
+      if (parsed.code) {
+        code = parsed.code;
+        state = parsed.state ?? state;
+      }
+    } else {
+      catchDiags.push(`POST /auth: ${authz.message}`);
+    }
+  }
+
+
 
   if (!code) {
     code = parseOAuthCallbackParams(authorizeUrl).code;

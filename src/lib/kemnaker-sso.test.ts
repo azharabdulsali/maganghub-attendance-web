@@ -16,6 +16,8 @@ import {
   isAllowedSsoHost,
   isAllowedSsoUrl,
   extractCallbackUrlFromHtml,
+  isSsoAuthAuthorizePage,
+  extractCallbackUrlFromAuthJson,
   describeSsoRedirectResponse,
   describeHtmlHint,
   extractCookieNames,
@@ -644,4 +646,50 @@ describe("catchOAuthCode, anti-SSRF (host allowlist)", () => {
     if (r.status === "OK") expect(r.code).toBe("SAFE-1");
   });
 });
+
+describe("isSsoAuthAuthorizePage (murni)", () => {
+  it("mendeteksi shell otorisasi via penanda auth-authorize", () => {
+    expect(isSsoAuthAuthorizePage(`<script>const x="auth-authorize"</script>`)).toBe(
+      true,
+    );
+  });
+  it("mendeteksi via data-page dan #app", () => {
+    expect(isSsoAuthAuthorizePage(`<div data-page="auth/login"></div>`)).toBe(true);
+    expect(isSsoAuthAuthorizePage(`<div id="app"></div>`)).toBe(true);
+  });
+  it("halaman form login biasa → false", () => {
+    expect(isSsoAuthAuthorizePage(`<form action="/auth/login"></form>`)).toBe(false);
+    expect(isSsoAuthAuthorizePage("")).toBe(false);
+  });
+});
+
+describe("extractCallbackUrlFromAuthJson (murni)", () => {
+  it("mengambil redirect_uri ber-code dari data", () => {
+    const body = JSON.stringify({
+      data: { redirect_uri: "https://monev-api.kemnaker.go.id/sso/callback?code=C1&state=S1" },
+    });
+    expect(extractCallbackUrlFromAuthJson(body)).toBe(
+      "https://monev-api.kemnaker.go.id/sso/callback?code=C1&state=S1",
+    );
+  });
+  it("menerima bentuk root redirect_uri dan data.url", () => {
+    expect(
+      extractCallbackUrlFromAuthJson(
+        JSON.stringify({ redirect_uri: "/sso/callback?code=C2&state=S2" }),
+      ),
+    ).toBe("/sso/callback?code=C2&state=S2");
+    expect(
+      extractCallbackUrlFromAuthJson(JSON.stringify({ data: { url: "/cb?code=C3" } })),
+    ).toBe("/cb?code=C3");
+  });
+  it("tanpa code / JSON rusak / bukan objek → undefined", () => {
+    expect(
+      extractCallbackUrlFromAuthJson(JSON.stringify({ data: { redirect_uri: "/no-code" } })),
+    ).toBeUndefined();
+    expect(extractCallbackUrlFromAuthJson("bukan json")).toBeUndefined();
+    expect(extractCallbackUrlFromAuthJson("")).toBeUndefined();
+    expect(extractCallbackUrlFromAuthJson("null")).toBeUndefined();
+  });
+});
+
 
