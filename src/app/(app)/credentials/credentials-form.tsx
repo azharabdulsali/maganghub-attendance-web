@@ -24,6 +24,8 @@ type Props = {
   existingEmail: string | null;
   existingStatus: string | null;
   updatedAt: string | null;
+  /** Apakah sudah ada token (`monev_refresh_token`) tersimpan. */
+  hasToken: boolean;
 };
 
 function formatTanggal(iso: string | null): string {
@@ -43,6 +45,7 @@ export default function CredentialsForm({
   existingEmail,
   existingStatus,
   updatedAt,
+  hasToken,
 }: Props) {
   const router = useRouter();
   const toast = useToast();
@@ -71,6 +74,76 @@ export default function CredentialsForm({
   const [loginKind, setLoginKind] = useState<"waf" | "page" | "unknown" | null>(
     null,
   );
+
+  // --- Tempel token manual (Opsi C1, docs/MONEV-API.md §7) ---
+  // Ini jalur cadangan resmi saat login otomatis diblokir proteksi portal.
+  // Token disimpan terenkripsi dan diuji ke portal; respons tak pernah
+  // memuat token mentah.
+  const [token, setToken] = useState("");
+  const [tokenMsg, setTokenMsg] = useState<string | null>(null);
+  const [tokenState, setTokenState] = useState<
+    "idle" | "ok" | "invalid" | "error"
+  >("idle");
+  const [tokenLoading, setTokenLoading] = useState(false);
+  const [adaToken, setAdaToken] = useState(hasToken);
+
+  async function simpanToken(e: React.FormEvent) {
+    e.preventDefault();
+    setTokenMsg(null);
+    setTokenState("idle");
+    setTokenLoading(true);
+
+    try {
+      const res = await fetch("/api/credentials/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token.trim() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        status?: string;
+        message?: string;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        setTokenState("error");
+        setTokenMsg(data.error ?? "Gagal menyimpan token.");
+        toast.error("Gagal menyimpan token", data.error ?? "Coba lagi.");
+        return;
+      }
+
+      if (data.status === "ACTIVE") {
+        setTokenState("ok");
+        setTokenMsg(data.message ?? "Sesi Monev aktif dan valid.");
+        setToken(""); // jangan biarkan token tertinggal di state
+        setAdaToken(true);
+        toast.success("Token tersimpan", "Sesi Monev aktif.");
+        router.refresh();
+      } else if (data.status === "INVALID") {
+        setTokenState("invalid");
+        setTokenMsg(
+          data.message ??
+            "Token tidak valid. Login ulang di portal lalu tempel token baru.",
+        );
+        toast.error(
+          "Token tidak valid",
+          "Login ulang di portal lalu tempel token baru.",
+        );
+      } else {
+        setTokenState("error");
+        setTokenMsg(
+          data.message ??
+            "Tes koneksi belum bisa memastikan hasilnya. Coba lagi sebentar.",
+        );
+        toast.error("Tes koneksi gagal", "Coba lagi sebentar.");
+      }
+    } catch {
+      setTokenState("error");
+      setTokenMsg("Tidak dapat menghubungi server. Periksa koneksi Anda.");
+    } finally {
+      setTokenLoading(false);
+    }
+  }
 
   async function loginOtomatis() {
     setLoginMsg(null);
@@ -382,6 +455,74 @@ export default function CredentialsForm({
                 Lihat panduan ambil token selengkapnya
               </Link>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Tempel token manual (Opsi C1, docs/MONEV-API.md §7). Jalur resmi &
+          satu-satunya yang tetap jalan saat login otomatis diblokir proteksi
+          portal. Token disimpan terenkripsi dan langsung diuji ke portal. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tempel token manual</CardTitle>
+          <CardDescription>
+            Cara yang pasti jalan: ambil cookie <code>monev_refresh_token</code>{" "}
+            dari browser Anda (setelah login di portal), lalu tempel di sini.
+            Kami uji ke portal dan simpan terenkripsi. Tidak ada laporan yang
+            dikirim.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form onSubmit={simpanToken} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="monevToken">Token Monev</Label>
+              <Input
+                id="monevToken"
+                type="password"
+                autoComplete="off"
+                spellCheck={false}
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="Tempel token (tiga bagian dipisah titik)"
+              />
+              <p className="text-xs text-foreground/70">
+                Belum punya token?{" "}
+                <Link
+                  href="/panduan/ambil-token-monev-devtools"
+                  className="underline underline-offset-4 hover:opacity-80"
+                >
+                  Lihat cara mengambilnya di DevTools
+                </Link>
+                .
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button type="submit" disabled={tokenLoading || token.trim() === ""}>
+                {tokenLoading ? "Menguji..." : "Simpan & uji koneksi"}
+              </Button>
+            </div>
+          </form>
+
+          {adaToken && tokenState === "idle" && (
+            <Message tone="neutral">
+              Token sudah tersimpan. Tempel token baru di atas bila sesi Monev
+              mati (login ulang di portal dulu).
+            </Message>
+          )}
+
+          {tokenMsg && (
+            <Message
+              tone={
+                tokenState === "ok"
+                  ? "good"
+                  : tokenState === "idle"
+                    ? "neutral"
+                    : "bad"
+              }
+            >
+              {tokenMsg}
+            </Message>
           )}
         </CardContent>
       </Card>

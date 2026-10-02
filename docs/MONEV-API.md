@@ -550,9 +550,11 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > dipakai bareng `diagnosePrimeRejection` agar tak mungkin bertentangan). Bila
 > `kind === "waf"`, kartu "Hubungkan sesi Monev" menampilkan panduan kontekstual:
 > **"ini bukan soal kredensial Anda"** + langkah tempel `monev_refresh_token`
-> (Opsi C1) dengan tautan ke `/panduan/ambil-token-monev-devtools`. Tujuannya
-> supaya pengguna tidak menebak-nebak password saat masalahnya sebenarnya
-> blokir anti-bot. **Tidak ada** spoofing UA/proxy — hanya pesan & panduan.
+> (Opsi C1). Halaman `/credentials` kini punya **form "Tempel token manual"**
+> yang memanggil `POST /api/credentials/verify`, jadi instruksi fallback benar
+> bisa diikuti tanpa jalan buntu. Tautan panduan:
+> `/panduan/ambil-token-monev-devtools`. **Tidak ada** spoofing UA/proxy —
+> hanya pesan, form, & panduan.
 
 Body (JSON): dua field, **`username`** (email) dan **`password`**. Nilai
 sengaja **TIDAK dicatat** di dokumen ini.

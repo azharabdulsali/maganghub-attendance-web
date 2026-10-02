@@ -23,6 +23,7 @@ export default async function CredentialsPage() {
       emailMonev: true,
       status: true,
       updatedAt: true,
+      tokenCiphertext: true,
     },
   });
 
@@ -40,6 +41,7 @@ export default async function CredentialsPage() {
         existingEmail={credential?.emailMonev ?? null}
         existingStatus={credential?.status ?? null}
         updatedAt={credential?.updatedAt?.toISOString() ?? null}
+        hasToken={Boolean(credential?.tokenCiphertext)}
       />
     </div>
   );
