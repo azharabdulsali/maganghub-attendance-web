@@ -441,18 +441,81 @@ export default function CredentialsForm({
               </p>
               <ol className="list-decimal space-y-1 pl-5">
                 <li>
-                  Buka portal MagangHub di browser Anda, login seperti biasa.
+                  Buka{" "}
+                  <span className="font-medium">maganghub.kemnaker.go.id</span>{" "}
+                  di browser Anda (Chrome/Edge), lalu login seperti biasa.
                 </li>
                 <li>
-                  Ambil cookie <code>monev_refresh_token</code> lewat DevTools.
+                  Ambil cookie <code>monev_refresh_token</code> lewat DevTools —
+                  rinciannya di bawah.
                 </li>
-                <li>Tempel &amp; simpan di menu Kredensial aplikasi ini.</li>
+                <li>
+                  Tempel &amp; simpan di kartu <strong>Tempel token manual</strong>{" "}
+                  di halaman ini.
+                </li>
               </ol>
+
+              {/* Panduan rinci sengaja ditutup secara bawaan: pengguna awam
+                  cukup ikut 3 langkah di atas, yang butuh detail membuka
+                  DevTools bisa mengeklik. Pola <details>/<summary> native
+                  dipakai agar bisa dibuka-tutup tanpa JS dan tetap ramah
+                  keyboard, sama seperti FAQ di beranda. */}
+              <details className="rounded-base border-2 border-border bg-background p-3">
+                <summary className="cursor-pointer list-none font-medium text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring">
+                  Buka DevTools dan ambil token (langkah rinci)
+                </summary>
+                <ol className="mt-2 list-decimal space-y-2 pl-5">
+                  <li>
+                    Di halaman portal yang sudah login, tekan{" "}
+                    <kbd className="rounded border border-border px-1 font-mono text-xs">
+                      F12
+                    </kbd>{" "}
+                    (atau{" "}
+                    <kbd className="rounded border border-border px-1 font-mono text-xs">
+                      Ctrl+Shift+I
+                    </kbd>
+                    , di Mac{" "}
+                    <kbd className="rounded border border-border px-1 font-mono text-xs">
+                      Cmd+Option+I
+                    </kbd>
+                    ) untuk membuka DevTools. Bisa juga klik kanan &rarr;{" "}
+                    <em>Inspect</em>.
+                  </li>
+                  <li>
+                    Pada deretan tab di atas, pilih{" "}
+                    <strong>Application</strong> (di Safari: <em>Storage</em>).
+                  </li>
+                  <li>
+                    Di panel kiri, buka <strong>Storage</strong> &rarr;{" "}
+                    <strong>Cookies</strong>, lalu klik domain{" "}
+                    <code>monev.maganghub.kemnaker.go.id</code>.
+                  </li>
+                  <li>
+                    Centang <strong>Show URL-decoded</strong> di kotak pencarian
+                    (bila ada) agar nilainya terbaca utuh, bukan bentuk{" "}
+                    <code>%2E</code>.
+                  </li>
+                  <li>
+                    Cari baris bernama <code>monev_refresh_token</code>, lalu{" "}
+                    <strong>salin hanya isi kolom Value-nya</strong> — jangan
+                    ikut nama cookie atau baris lain.
+                  </li>
+                  <li>
+                    Kembali ke halaman ini, tempel di kartu{" "}
+                    <strong>Tempel token manual</strong>, lalu simpan.
+                  </li>
+                </ol>
+                <p className="mt-2 text-xs text-foreground/70">
+                  Token ini setara sesi login Anda (berlaku sekitar 30 hari).
+                  Jangan bagikan ke siapa pun.
+                </p>
+              </details>
+
               <Link
                 href="/panduan/ambil-token-monev-devtools"
                 className="inline-block font-medium text-foreground underline underline-offset-4 hover:opacity-80"
               >
-                Lihat panduan ambil token selengkapnya
+                Panduan bergambar: ambil token dengan DevTools
               </Link>
             </div>
           )}
