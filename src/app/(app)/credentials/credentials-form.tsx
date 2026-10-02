@@ -435,150 +435,29 @@ export default function CredentialsForm({
         </Card>
       )}
 
-      {/* Login otomatis, jalur utama (Opsi A, docs/MONEV-API.md §7). Server
-          yang login ke SSO memakai kredensial tersimpan; pengguna tidak perlu
-          menyentuh DevTools. Hanya menyimpan sesi, tidak mengirim laporan. */}
+      {/* Kartu "Login otomatis (opsional)" DIPINDAH ke bawah kartu token:
+          definisinya ada SETELAH kartu "Hubungkan sesi Monev". */}
+
+      {/* Tempel token manual (Opsi C1, docs/MONEV-API.md §7). JALUR UTAMA:
+          satu-satunya yang tetap andal saat proteksi anti-bot portal menolak
+          login dari server. Token disimpan terenkripsi dan langsung diuji. */}
       <Card>
         <CardHeader>
           <CardTitle>Hubungkan sesi Monev</CardTitle>
           <CardDescription>
-            Cara mudah: cukup klik tombol di bawah. Kami akan login ke portal
-            memakai email &amp; password yang tersimpan, lalu menyimpan sesinya
-            secara terenkripsi. Tidak ada laporan yang dikirim.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button onClick={loginOtomatis} disabled={loginLoading || !hasExisting}>
-            {loginLoading ? "Menghubungkan..." : "Login otomatis"}
-          </Button>
-
-          {!hasExisting && (
-            <p className="text-xs text-foreground/70">
-              Isi email &amp; password Monev terlebih dahulu di kartu atas,
-              lalu kembali ke sini.
-            </p>
-          )}
-
-          {loginMsg && (
-            <Message tone={loginState === "ok" ? "good" : "bad"}>
-              {loginMsg}
-            </Message>
-          )}
-
-          {/* Fallback kontekstual: bila server diblokir WAF (bukan kredensial
-              salah), jangan biarkan pengguna menebak. Arahkan jelas ke jalur
-              token manual yang sudah tersedia (§ C1, docs/MONEV-API.md §7). */}
-          {loginState === "error" && loginKind === "waf" && (
-            <div className="space-y-2 rounded-md border-2 border-border bg-secondary p-3 text-sm text-foreground/90">
-              <p className="font-heading text-foreground">
-                Ini bukan soal email &amp; password Anda
-              </p>
-              <p>
-                Portal menolak permintaan dari server kami (proteksi anti-bot),
-                bukan menolak kredensial Anda. Email &amp; password Anda tetap
-                benar. Pakai <strong>cara tempel token</strong> sebagai
-                gantinya:
-              </p>
-              <ol className="list-decimal space-y-1 pl-5">
-                <li>
-                  Buka{" "}
-                  <span className="font-medium">maganghub.kemnaker.go.id</span>{" "}
-                  di browser Anda (Chrome/Edge), lalu login seperti biasa.
-                </li>
-                <li>
-                  Ambil cookie <code>monev_refresh_token</code> lewat DevTools —
-                  rinciannya di bawah.
-                </li>
-                <li>
-                  Tempel &amp; simpan di kartu <strong>Tempel token manual</strong>{" "}
-                  di halaman ini.
-                </li>
-              </ol>
-
-              {/* Panduan rinci sengaja ditutup secara bawaan: pengguna awam
-                  cukup ikut 3 langkah di atas, yang butuh detail membuka
-                  DevTools bisa mengeklik. Pola <details>/<summary> native
-                  dipakai agar bisa dibuka-tutup tanpa JS dan tetap ramah
-                  keyboard, sama seperti FAQ di beranda. */}
-              <details className="rounded-base border-2 border-border bg-background p-3">
-                <summary className="cursor-pointer list-none font-medium text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring">
-                  Buka DevTools dan ambil token (langkah rinci)
-                </summary>
-                <ol className="mt-2 list-decimal space-y-2 pl-5">
-                  <li>
-                    Di halaman portal yang sudah login, tekan{" "}
-                    <kbd className="rounded border border-border px-1 font-mono text-xs">
-                      F12
-                    </kbd>{" "}
-                    (atau{" "}
-                    <kbd className="rounded border border-border px-1 font-mono text-xs">
-                      Ctrl+Shift+I
-                    </kbd>
-                    , di Mac{" "}
-                    <kbd className="rounded border border-border px-1 font-mono text-xs">
-                      Cmd+Option+I
-                    </kbd>
-                    ) untuk membuka DevTools. Bisa juga klik kanan &rarr;{" "}
-                    <em>Inspect</em>.
-                  </li>
-                  <li>
-                    Pada deretan tab di atas, pilih{" "}
-                    <strong>Application</strong> (di Safari: <em>Storage</em>).
-                  </li>
-                  <li>
-                    Di panel kiri, buka <strong>Storage</strong> &rarr;{" "}
-                    <strong>Cookies</strong>, lalu klik domain{" "}
-                    <code>monev.maganghub.kemnaker.go.id</code>.
-                  </li>
-                  <li>
-                    Centang <strong>Show URL-decoded</strong> di kotak pencarian
-                    (bila ada) agar nilainya terbaca utuh, bukan bentuk{" "}
-                    <code>%2E</code>.
-                  </li>
-                  <li>
-                    Cari baris bernama <code>monev_refresh_token</code>, lalu{" "}
-                    <strong>salin hanya isi kolom Value-nya</strong> — jangan
-                    ikut nama cookie atau baris lain.
-                  </li>
-                  <li>
-                    Kembali ke halaman ini, tempel di kartu{" "}
-                    <strong>Tempel token manual</strong>, lalu simpan.
-                  </li>
-                </ol>
-                <p className="mt-2 text-xs text-foreground/70">
-                  Token ini setara sesi login Anda (berlaku sekitar 30 hari).
-                  Jangan bagikan ke siapa pun.
-                </p>
-              </details>
-
-              <Link
-                href="/panduan/ambil-token-monev-devtools"
-                className="inline-block font-medium text-foreground underline underline-offset-4 hover:opacity-80"
-              >
-                Panduan bergambar: ambil token dengan DevTools
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Tempel token manual (Opsi C1, docs/MONEV-API.md §7). Jalur resmi &
-          satu-satunya yang tetap jalan saat login otomatis diblokir proteksi
-          portal. Token disimpan terenkripsi dan langsung diuji ke portal. */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tempel token manual</CardTitle>
-          <CardDescription>
-            Cara yang pasti jalan: ambil cookie <code>monev_refresh_token</code>{" "}
-            dari browser Anda (setelah login di portal), lalu tempel di sini.
+            <strong>Cara yang pasti jalan.</strong> Login dulu di portal
+            MagangHub lewat browser, lalu salin cookie{" "}
+            <code>monev_refresh_token</code> dari DevTools dan tempel di sini.
             Kami uji ke portal dan simpan terenkripsi. Tidak ada laporan yang
-            dikirim.
+            dikirim. Sesi ini berlaku sekitar 30 hari.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={simpanToken} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="monevToken">Token Monev</Label>
+              <Label htmlFor="monevToken">
+                Token sesi (<code>monev_refresh_token</code>)
+              </Label>
               <div className="flex gap-2">
                 <Input
                   id="monevToken"
@@ -653,8 +532,8 @@ export default function CredentialsForm({
 
           {adaToken && tokenState === "idle" && (
             <Message tone="neutral">
-              Token sudah tersimpan. Tempel token baru di atas bila sesi Monev
-              mati (login ulang di portal dulu).
+              Token sudah tersimpan. Tempel token baru di kolom di atas bila
+              sesi Monev mati (login ulang di portal dulu).
             </Message>
           )}
 
@@ -680,6 +559,144 @@ export default function CredentialsForm({
                 ? `Perkiraan sesi ini berlaku sekitar ${tokenHari} hari lagi.`
                 : "Token ini tampaknya sudah mendekati kedaluwarsa."}
             </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Login otomatis (Opsi A, docs/MONEV-API.md §7), OPSI SEKUNDER.
+          Server yang login ke SSO memakai kredensial tersimpan. Di server,
+          proteksi anti-bot portal sering menolaknya — karena itu cara tempel
+          token di kartu atas adalah jalur utama. Ini hanya praktis bila
+          berhasil. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Login otomatis (opsional)</CardTitle>
+          <CardDescription>
+            Cara instan: cukup klik tombol di bawah, kami login ke portal
+            memakai email &amp; password yang tersimpan. Perlu email &amp;
+            password Monev terisi lebih dulu. Tidak ada laporan yang dikirim.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button onClick={loginOtomatis} disabled={loginLoading || !hasExisting}>
+            {loginLoading ? "Menghubungkan..." : "Login otomatis"}
+          </Button>
+
+          {!hasExisting && (
+            <p className="text-xs text-foreground/70">
+              Isi email &amp; password Monev terlebih dahulu di kartu atas,
+              lalu kembali ke sini.
+            </p>
+          )}
+
+          {/* Ekspektasi jujur: di server, portal sering menolak login otomatis
+              karena proteksi anti-bot. Jangan biarkan pengguna mengira ini
+              jalur andal. */}
+          <p className="text-xs text-foreground/70">
+            Catatan: di server, portal sering menolak cara ini karena proteksi
+            anti-bot. Bila itu terjadi, pakai{" "}
+            <strong>tempel token</strong> di kartu atas, itu yang paling andal.
+          </p>
+
+          {loginMsg && (
+            <Message tone={loginState === "ok" ? "good" : "bad"}>
+              {loginMsg}
+            </Message>
+          )}
+
+      {/* Fallback kontekstual: bila server diblokir WAF (bukan kredensial
+          salah), jangan biarkan pengguna menebak. Arahkan jelas ke jalur
+          token yang sudah tersedia (§ C1, docs/MONEV-API.md §7). */}
+      {loginState === "error" && loginKind === "waf" && (
+        <div className="space-y-2 rounded-md border-2 border-border bg-secondary p-3 text-sm text-foreground/90">
+          <p className="font-heading text-foreground">
+                Ini bukan soal email &amp; password Anda
+              </p>
+              <p>
+                Portal menolak permintaan dari server kami (proteksi anti-bot),
+                bukan menolak kredensial Anda. Email &amp; password Anda tetap
+                benar. Pakai <strong>cara tempel token</strong> sebagai
+                gantinya:
+              </p>
+              <ol className="list-decimal space-y-1 pl-5">
+                <li>
+                  Buka{" "}
+                  <span className="font-medium">maganghub.kemnaker.go.id</span>{" "}
+                  di browser Anda (Chrome/Edge), lalu login seperti biasa.
+                </li>
+                <li>
+                  Ambil cookie <code>monev_refresh_token</code> lewat DevTools —
+                  rinciannya di bawah.
+                </li>
+                <li>
+                  Tempel &amp; simpan di kartu <strong>Hubungkan sesi Monev</strong>{" "}
+                  di halaman ini.
+                </li>
+              </ol>
+
+              {/* Panduan rinci sengaja ditutup secara bawaan: pengguna awam
+                  cukup ikut 3 langkah di atas, yang butuh detail membuka
+                  DevTools bisa mengeklik. Pola <details>/<summary> native
+                  dipakai agar bisa dibuka-tutup tanpa JS dan tetap ramah
+                  keyboard, sama seperti FAQ di beranda. */}
+              <details className="rounded-base border-2 border-border bg-background p-3">
+                <summary className="cursor-pointer list-none font-medium text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring">
+                  Buka DevTools dan ambil token (langkah rinci)
+                </summary>
+                <ol className="mt-2 list-decimal space-y-2 pl-5">
+                  <li>
+                    Di halaman portal yang sudah login, tekan{" "}
+                    <kbd className="rounded border border-border px-1 font-mono text-xs">
+                      F12
+                    </kbd>{" "}
+                    (atau{" "}
+                    <kbd className="rounded border border-border px-1 font-mono text-xs">
+                      Ctrl+Shift+I
+                    </kbd>
+                    , di Mac{" "}
+                    <kbd className="rounded border border-border px-1 font-mono text-xs">
+                      Cmd+Option+I
+                    </kbd>
+                    ) untuk membuka DevTools. Bisa juga klik kanan &rarr;{" "}
+                    <em>Inspect</em>.
+                  </li>
+                  <li>
+                    Pada deretan tab di atas, pilih{" "}
+                    <strong>Application</strong> (di Safari: <em>Storage</em>).
+                  </li>
+                  <li>
+                    Di panel kiri, buka <strong>Storage</strong> &rarr;{" "}
+                    <strong>Cookies</strong>, lalu klik domain{" "}
+                    <code>monev.maganghub.kemnaker.go.id</code>.
+                  </li>
+                  <li>
+                    Centang <strong>Show URL-decoded</strong> di kotak pencarian
+                    (bila ada) agar nilainya terbaca utuh, bukan bentuk{" "}
+                    <code>%2E</code>.
+                  </li>
+                  <li>
+                    Cari baris bernama <code>monev_refresh_token</code>, lalu{" "}
+                    <strong>salin hanya isi kolom Value-nya</strong> — jangan
+                    ikut nama cookie atau baris lain.
+                  </li>
+                  <li>
+                    Kembali ke halaman ini, tempel di kartu{" "}
+                    <strong>Hubungkan sesi Monev</strong>, lalu simpan.
+                  </li>
+                </ol>
+                <p className="mt-2 text-xs text-foreground/70">
+                  Token ini setara sesi login Anda (berlaku sekitar 30 hari).
+                  Jangan bagikan ke siapa pun.
+                </p>
+              </details>
+
+              <Link
+                href="/panduan/ambil-token-monev-devtools"
+                className="inline-block font-medium text-foreground underline underline-offset-4 hover:opacity-80"
+              >
+                Panduan bergambar: ambil token dengan DevTools
+              </Link>
+            </div>
           )}
         </CardContent>
       </Card>
