@@ -259,6 +259,45 @@ export const GUIDES: readonly Guide[] = [
     howTo: "Cara mengambil token Monev dari DevTools",
     section: [
       {
+        id: "jalur-cepat",
+        judul: "Jalur cepat",
+        blok: [
+          {
+            jenis: "paragraf",
+            teks:
+              "Bila Anda sudah paham DevTools, lima langkah ini sudah cukup. " +
+              "Rinciannya ada di bagian berikutnya.",
+          },
+          {
+            jenis: "paragraf",
+            teks:
+              "Alurnya singkat: F12 → tab Application → Cookies → pilih domain " +
+              "monev.maganghub.kemnaker.go.id → centang Show URL-decoded → cari " +
+              "monev_refresh_token → salin kolom Value → tempel di menu " +
+              "Kredensial aplikasi ini.",
+          },
+          {
+            jenis: "daftar",
+            judul: "Ringkas lima langkah",
+            item: [
+              "Login ke portal Monev di browser sampai halaman absensi terbuka.",
+              "Tekan F12 (Windows) atau Cmd+Option+I (macOS) untuk membuka DevTools.",
+              "Klik tab Application, lalu Cookies di panel kiri.",
+              "Pilih domain monev.maganghub.kemnaker.go.id, centang Show URL-decoded, lalu cari baris monev_refresh_token.",
+              "Salin kolom Value-nya, tempel di menu Kredensial aplikasi ini, lalu simpan.",
+            ],
+          },
+          {
+            jenis: "catatan",
+            judul: "Bila ragu di tengah jalan",
+            teks:
+              "Setiap langkah di atas dijelaskan lebih rinci di bagian " +
+              "berikutnya, termasuk kesalahan yang sering terjadi saat " +
+              "menyalin. Bagian ini hanya peta jalannya.",
+          },
+        ],
+      },
+      {
         id: "kenapa-manual",
         judul: "Kapan cara ini diperlukan",
         blok: [
@@ -300,8 +339,19 @@ export const GUIDES: readonly Guide[] = [
               "Login ke portal MagangHub Kemnaker di browser Anda seperti biasa, sampai Anda bisa melihat halaman absensi.",
               "Buka DevTools. Di Windows tekan F12 atau Ctrl+Shift+I; di macOS tekan Cmd+Option+I.",
               "Pindah ke tab Application (Chrome/Edge) atau Storage (Firefox).",
-              "Buka bagian Cookies, lalu pilih domain portal Monev. Pastikan Anda berada di domain yang benar, bukan domain lain.",
+              "Buka bagian Cookies, lalu pilih domain monev.maganghub.kemnaker.go.id. Ini domain halaman portal, tempat cookie sesi disimpan. Jangan pilih monev-api.maganghub.kemnaker.go.id, itu domain API dan tidak memuat cookie ini.",
             ],
+          },
+          {
+            jenis: "catatan",
+            judul: "Aktifkan tampilan URL-decoded dulu",
+            teks:
+              "Nilai cookie portal disimpan dalam bentuk URL-encoded, sehingga " +
+              "di DevTools bisa tampak memuat tanda persen seperti %2E atau " +
+              "%2B. Sebelum menyalin, centang opsi Show URL-decoded di sebelah " +
+              "kotak pencarian cookie. Tanpa centang itu, yang tersalin adalah " +
+              "bentuk ter-encode yang akan ditolak aplikasi karena bukan " +
+              "berbentuk tiga bagian dipisah titik.",
           },
           {
             jenis: "paragraf",
@@ -321,7 +371,10 @@ export const GUIDES: readonly Guide[] = [
             teks:
               "Klik baris monev_refresh_token, lalu salin isi kolom Value-nya " +
               "saja. Jangan menyertakan namanya dan jangan menyalin baris " +
-              "cookie secara utuh, karena yang dibutuhkan hanya nilainya.",
+              "cookie secara utuh, karena yang dibutuhkan hanya nilainya. " +
+              "Pastikan centang Show URL-decoded dari langkah sebelumnya masih " +
+              "aktif, lalu periksa hasil salinan: bila masih ada tanda persen " +
+              "seperti %2E, ulangi dengan centang itu dinyalakan.",
           },
           {
             jenis: "daftar",
@@ -331,6 +384,7 @@ export const GUIDES: readonly Guide[] = [
               "Ikut tersalin titik koma dan pasangan cookie lain yang menempel di ujung.",
               "Tersalin cookie yang salah, misalnya penanda dari Cloudflare. Yang dicari hanya monev_refresh_token.",
               "Tersalin hanya sebagian nilai karena teksnya sangat panjang. Pastikan seluruh isinya ikut.",
+              "Tersalin bentuk yang masih URL-encoded, sehingga memuat tanda persen seperti %2E atau %2B. Nyalakan Show URL-decoded sebelum menyalin.",
             ],
           },
           {
