@@ -71,3 +71,23 @@ dev-log.txt
 dev-err.txt
 vt-full.txt
 vt-*.txt
+
+# ---------------------------------------------------------------------------
+# Tangkapan layar MENTAH sebelum disanitasi (penting, lihat riwayat 0edfdf8).
+#
+# Tiga gambar `public/panduan/devtools-*.webp` JUSTRU memang dilacak git: file
+# itu dipakai `src/lib/guides.ts` dan harus ada agar halaman panduan ter-render
+# di production. Karena itu folder itu TIDAK boleh di-ignore seluruhnya.
+#
+# Bahayanya ada pada gambar MENTAH / hasil ekspor ulang yang belum dibersihkan:
+# bila berisi nilai token sungguhan, meng-commit-nya sama dengan membocorkan
+# sesi (pernah terjadi di repo publik ini). Simpan file kerja seperti itu dengan
+# pola nama di bawah, yang di-ignore, lalu baru salin versi bersih ke nama
+# final `devtools-N-buka.webp`.
+# ---------------------------------------------------------------------------
+public/panduan/mentah/
+public/panduan/*-mentah.*
+public/panduan/*-raw.*
+public/panduan/*-unsanitized.*
+public/panduan/*.psd
+public/panduan/*.xcf
