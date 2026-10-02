@@ -23,6 +23,36 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Diagnostik rahasia (tanpa membocorkan nilai)
+        run: |
+          # Tujuan: membedakan "secret kosong" vs "secret ada spasi/baris baru
+          # tak sengaja" vs "secret beda nilai". AMAN: hanya panjang (jumlah
+          # karakter) dan sifat karakter ujung yang dicetak — NILAI rahasia
+          # tidak pernah ditampilkan.
+          set -u
+
+          echo "APP_URL  : panjang=${#APP_URL} char"
+          echo "CRON_SECRET: panjang=${#CRON_SECRET} char"
+
+          # Deteksi spasi/baris baru di ujung (penyebab 401 paling umum).
+          case "$APP_URL" in
+            *[[:space:]]) echo "  PERINGATAN: APP_URL berakhir dengan spasi/baris baru." ;;
+          esac
+          case "$CRON_SECRET" in
+            *[[:space:]]) echo "  PERINGATAN: CRON_SECRET berakhir dengan spasi/baris baru." ;;
+            "")            echo "  PERINGATAN: CRON_SECRET KOSONG (secret belum diset di GitHub)." ;;
+          esac
+
+          # Panjang lazim CRON_SECRET: 64 (randomBytes(32).toString('hex')).
+          if [ "${#CRON_SECRET}" -ne 64 ] && [ "${#CRON_SECRET}" -ne 0 ]; then
+            echo "  CATATAN: panjang CRON_SECRET bukan 64; pastikan sengaja."
+          fi
+
+          if [ "${#CRON_SECRET}" -eq 0 ] || [ -z "$APP_URL" ]; then
+            echo "::error::Secret GitHub belum lengkap (APP_URL kosong atau CRON_SECRET kosong)."
+            exit 1
+          fi
+
       - name: Panggil dispatcher
         run: |
           set -euo pipefail
@@ -56,7 +86,9 @@ jobs:
               ;;
             401)
               echo "Diagnosis: CRON_SECRET di GitHub TIDAK sama dengan di Vercel."
-              echo "  Perbaikan: samakan persis (cegah spasi/newline tak sengaja)."
+              echo "  Panjang di GitHub: ${#CRON_SECRET} char (cek tahu panjang di Vercel)."
+              echo "  Perbaikan: generate ulang, set di Vercel + GitHub dengan salin-tempel"
+              echo "  dari editor teks (bukan terminal), lalu REDEPLOY Vercel."
               ;;
             503)
               echo "Diagnosis: CRON_SECRET belum diset di Vercel (atau belum redeploy)."
