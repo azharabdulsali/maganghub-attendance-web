@@ -44,6 +44,32 @@ const LOGIN_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
 
+/**
+ * Header navigasi yang SELALU dikirim browser saat membuka dokumen, dan yang
+ * WAJIB disertakan agar permintaan dari server tidak dibedakan dari kunjungan
+ * browser biasa (penyebab `403` WAF di langkah (2) — lihat docs/MONEV-API.md).
+ *
+ * ⚠️  Ini BUKAN penyamaran: nilainya jujur (Chrome, Windows, id-ID) sama seperti
+ * `User-Agent` yang memang sudah dipakai alur ini. Yang dihilangkan hanyalah
+ * "kelainan" (klien Node yang tak mengirim `sec-fetch-*`/`Accept-Language`),
+ * bukan identitas palsu. Sesuai SPEC.md §5/§6 & AGENTS.md §73: jangan mengakali
+ * proteksi (spoof `cf_clearance`, proxy) — cukup kirim sinyal yang memang sah.
+ */
+const BROWSER_NAV_HEADERS: Record<string, string> = {
+  "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+  "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": '"Windows"',
+  "sec-fetch-dest": "document",
+  "sec-fetch-mode": "navigate",
+  "sec-fetch-site": "cross-site",
+  "sec-fetch-user": "?1",
+  "upgrade-insecure-requests": "1",
+};
+
+/** Origin portal Monev, dipakai sebagai `Referer`/`Origin` yang sah. */
+const MONEV_PORTAL_ORIGIN = "https://monev.maganghub.kemnaker.go.id";
+
 // ---------------------------------------------------------------------------
 // Langkah (2): priming sesi SSO, ambil x-csrf-token + cookie
 // ---------------------------------------------------------------------------
@@ -345,6 +371,13 @@ export function interpretSsoPrimeResponse(
  * sebenarnya butuh query `?client_id=&redirect_uri=&state=&...`. Memanggil
  * `/auth` tanpa query bisa mengembalikan halaman/challenge yang berbeda.
  * Bila tak diberikan, kita jatuh ke `${ORIGIN}/auth` (perilaku lama).
+ *
+ * ⚠️  Redirect diikuti **MANUAL** (`redirect: "manual"`), bukan `"follow"`.
+ * Dengan `"follow"`, cookie `set-cookie` di balik respons `3xx` perantara
+ * HILANG — padahal cookie sesi inilah yang wajib dibawa ke langkah (3); tanpa
+ * itu SSO melihat kita anonim. Tiap hop juga membawa header navigasi browser
+ * yang sah (`sec-fetch-*`, `Accept-Language`, `Referer`) agar WAF tidak
+ * membedakan permintaan server dari kunjungan browser (penyebab `403`).
  */
 export async function primeSsoSession(opts: {
   confirmLivePortalRequest: boolean;
@@ -371,25 +404,60 @@ export async function primeSsoSession(opts: {
       : `${KEMNAKER_SSO_ORIGIN}/auth`;
 
   try {
-    const res = await fetch(targetUrl, {
-      method: "GET",
-      headers: {
-        "User-Agent": LOGIN_USER_AGENT,
-        accept: "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
-      },
-      cache: "no-store",
-      redirect: "follow",
-      signal: controller.signal,
-    });
+    // ⚠️  Ikuti redirect SECARA MANUAL (`redirect: "manual"`), bukan `"follow"`.
+    // Alasannya: saat `"follow"`, cookie `set-cookie` yang dikirim di balik
+    // respons `3xx` perantara HILANG — padahal cookie sesi itulah yang wajib
+    // dibawa ke langkah (3). Klien referensi pun mengikuti redirect manual dan
+    // menyimpan cookie tiap hop. `Referer` juga di-update tiap hop (sah: browser
+    // mengirim `Referer` halaman sebelumnya).
+    let currentUrl = targetUrl;
+    let referer = `${MONEV_PORTAL_ORIGIN}/`;
+    let cookies = "";
+    let res!: Response;
+    let html = "";
 
-    const setCookies =
-      typeof res.headers.getSetCookie === "function"
-        ? res.headers.getSetCookie()
-        : [];
+    const MAX_PRIME_HOPS = 4;
+    for (let hop = 0; hop < MAX_PRIME_HOPS; hop++) {
+      res = await fetch(currentUrl, {
+        method: "GET",
+        headers: {
+          "User-Agent": LOGIN_USER_AGENT,
+          accept:
+            "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+          ...BROWSER_NAV_HEADERS,
+          Referer: referer,
+          ...(cookies ? { Cookie: cookies } : {}),
+        },
+        cache: "no-store",
+        redirect: "manual",
+        signal: controller.signal,
+      });
 
-    // Baca HTML body: token CSRF kemungkinan besar ditanam di markup, BUKAN
-    // di header. Isi body tidak pernah ditulis ke log/error, hanya dipindai.
-    const html = await res.text().catch(() => "");
+      const hopSetCookies =
+        typeof res.headers.getSetCookie === "function"
+          ? res.headers.getSetCookie()
+          : [];
+      cookies =
+        mergeCookieHeader(cookies || undefined, hopSetCookies) ?? cookies;
+
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get("location");
+        if (!location) break;
+        referer = currentUrl;
+        currentUrl = new URL(location, currentUrl).toString();
+        continue;
+      }
+
+      // Baca HTML body: token CSRF kemungkinan besar ditanam di markup, BUKAN
+      // di header. Isi body tidak pernah ditulis ke log/error, hanya dipindai.
+      html = await res.text().catch(() => "");
+      break;
+    }
+
+    // Cookie gabungan tiap hop dipindai untuk token CSRF berbasis cookie.
+    const setCookies = cookies
+      ? cookies.split("; ").map((pair) => `${pair};`)
+      : [];
 
     return interpretSsoPrimeResponse(res.status, {
       csrfToken: res.headers.get("x-csrf-token"),

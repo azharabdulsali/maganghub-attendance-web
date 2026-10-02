@@ -386,6 +386,61 @@ describe("primeSsoSession, GERBANG", () => {
     const [url] = fetchSpy.mock.calls[0] as [string];
     expect(url).toBe(authorizeUrl);
   });
+
+  it("prime mengirim header navigasi browser yang sah (sec-fetch/Sec-* /Accept-Language)", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(`<meta name="csrf-token" content="C1">`, { status: 200 }),
+    );
+    await primeSsoSession({
+      confirmLivePortalRequest: true,
+      authorizeUrl: "https://account.kemnaker.go.id/auth?state=S1",
+    });
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const h = init.headers as Record<string, string>;
+    // Sinyal navigasi dokumen yang WAJIB ada agar tak dibedakan dari browser.
+    expect(h["sec-fetch-dest"]).toBe("document");
+    expect(h["sec-fetch-mode"]).toBe("navigate");
+    expect(h["sec-fetch-site"]).toBe("cross-site");
+    expect(h["Accept-Language"]).toMatch(/id-ID/);
+    expect(h["upgrade-insecure-requests"]).toBe("1");
+    // Referer sah dari portal Monev, bukan kosong.
+    expect(h.Referer).toContain("monev.maganghub.kemnaker.go.id");
+    // Redirect manual (bukan follow) supaya Set-Cookie hop 302 tak hilang.
+    expect(init.redirect).toBe("manual");
+  });
+
+  it("prime mengikuti 302 MANUAL dan tetap menyimpan Set-Cookie tiap hop", async () => {
+    fetchSpy
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 302,
+          headers: {
+            location: "https://account.kemnaker.go.id/auth?state=S1&hop=2",
+            "set-cookie": "kemnaker_ri_session=SESI-1; Path=/; HttpOnly",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(`<meta name="csrf-token" content="CSRF-AKHIR">`, { status: 200 }),
+      );
+
+    const r = await primeSsoSession({
+      confirmLivePortalRequest: true,
+      authorizeUrl: "https://account.kemnaker.go.id/auth?state=S1",
+    });
+
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") {
+      expect(r.csrfToken).toBe("CSRF-AKHIR");
+      // Cookie dari hop 302 HILANG bila redirect:"follow" — ini regresi inti.
+      expect(r.cookies).toContain("kemnaker_ri_session=SESI-1");
+    }
+    // Hop kedua membawa Referer = URL hop pertama (perilaku browser).
+    const [, secondInit] = fetchSpy.mock.calls[1] as [string, RequestInit];
+    expect((secondInit.headers as Record<string, string>).Referer).toBe(
+      "https://account.kemnaker.go.id/auth?state=S1",
+    );
+  });
 });
 
 describe("runLoginFlow, alur lengkap (fetch di-mock berdasarkan URL)", () => {
@@ -417,6 +472,9 @@ describe("runLoginFlow, alur lengkap (fetch di-mock berdasarkan URL)", () => {
       const url = String(input);
       const method = (init?.method ?? "GET").toUpperCase();
       const redirect = init?.redirect ?? "follow";
+      const headers = (init?.headers ?? {}) as Record<string, string>;
+      // Prime (langkah 2) datang dari portal Monev; catchOAuthCode (3b) dari SSO.
+      const fromMonev = (headers.Referer ?? "").includes("monev.maganghub");
 
       // (4a) fetchBuildId → version.json
       if (url.includes("version.json")) {
@@ -446,12 +504,13 @@ describe("runLoginFlow, alur lengkap (fetch di-mock berdasarkan URL)", () => {
       if (url.endsWith("/auth/login")) {
         return jsonLogin(ssoPage);
       }
-      // (2) primeSsoSession → GET authorizeUrl dengan redirect:"follow" → HTML csrf
-      if (url.includes("state=STATE-1") && redirect === "follow") {
+      // (2) primeSsoSession → GET authorizeUrl (redirect manual, Referer = Monev)
+      if (url.includes("state=STATE-1") && redirect === "manual" && fromMonev) {
         return new Response(`<meta name="csrf-token" content="CSRF-XYZ">`, { status: 200 });
       }
-      // (3b) catchOAuthCode mengikuti authorizeUrl (redirect:"manual") → 302 ber-code.
-      // Ini jalur UTAMA: permintaan otorisasi itulah yang menerbitkan `code`.
+      // (3b) catchOAuthCode mengikuti authorizeUrl (redirect manual, Referer = SSO)
+      // → 302 ber-code. Ini jalur UTAMA: permintaan otorisasi itulah yang
+      // menerbitkan `code`.
       if (url.includes("state=STATE-1") && redirect === "manual") {
         return new Response(null, {
           status: 302,
@@ -482,6 +541,7 @@ describe("runLoginFlow, alur lengkap (fetch di-mock berdasarkan URL)", () => {
     fetchSpy.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const redirect = init?.redirect ?? "follow";
+      const headers = (init?.headers ?? {}) as Record<string, string>;
 
       // (1) startOAuthFlow → body = URL SSO (STATE-1)
       if (url.endsWith("/api/v1/auth/login")) {
@@ -505,8 +565,12 @@ describe("runLoginFlow, alur lengkap (fetch di-mock berdasarkan URL)", () => {
           { status: 200, headers: { "content-type": "application/json" } },
         );
       }
-      // (2) primeSsoSession → HTML csrf
-      if (url.includes("state=STATE-1") && redirect === "follow") {
+      // (2) primeSsoSession → HTML csrf (Referer = Monev)
+      if (
+        url.includes("state=STATE-1") &&
+        redirect === "manual" &&
+        (headers.Referer ?? "").includes("monev.maganghub")
+      ) {
         return new Response(`<meta name="csrf-token" content="CSRF-XYZ">`, { status: 200 });
       }
       // (3b) authorizeUrl diikuti → 301 TANPA code (persis bukti lapangan), + cookie

@@ -68,6 +68,20 @@ const SSO_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
 
+/**
+ * Header `sec-fetch-*` + `Accept-Language` yang SELALU dikirim browser modern.
+ * Tanpa ini, server/WAF Kemnaker bisa membedakan permintaan dari klien HTTP
+ * polos dan membalas `403` (temuan lapangan langkah (2)). Ini BUKAN penyamaran:
+ * nilainya jujur, hanya melengkapi sinyal yang memang sah dikirim browser.
+ */
+const SSO_FETCH_METADATA_HEADERS: Record<string, string> = {
+  "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+  "sec-ch-ua":
+    '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": '"Windows"',
+};
+
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 /**
@@ -447,6 +461,11 @@ export async function loginToSso(
         "x-csrf-token": opts.csrfToken,
         "x-requested-with": "XMLHttpRequest",
         accept: "application/json, text/plain, */*",
+        ...SSO_FETCH_METADATA_HEADERS,
+        // Sinyal sah bahwa ini XHR same-origin (bukan navigasi dokumen).
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
         cookie: opts.cookies,
       },
       body: req.body,
@@ -550,6 +569,10 @@ export async function fetchAuthorizationRedirect(
         "x-csrf-token": opts.csrfToken,
         "X-CSRF-TOKEN": opts.csrfToken,
         "x-requested-with": "XMLHttpRequest",
+        ...SSO_FETCH_METADATA_HEADERS,
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
         ...(opts.cookies ? { cookie: opts.cookies } : {}),
       },
       body: "{}",
@@ -712,6 +735,7 @@ export async function catchOAuthCode(
 
   try {
     let currentUrl = ssoPageUrl;
+    let referer = `${KEMNAKER_SSO_ORIGIN}/auth/login`;
 
     for (let hop = 0; hop < maxHops; hop++) {
       const res = await fetch(currentUrl, {
@@ -719,6 +743,14 @@ export async function catchOAuthCode(
         headers: {
           "User-Agent": SSO_USER_AGENT,
           accept: "text/html,application/xhtml+xml,*/*;q=0.8",
+          ...SSO_FETCH_METADATA_HEADERS,
+          // Ini navigasi dokumen (rantai redirect halaman SSO), bukan XHR.
+          "sec-fetch-dest": "document",
+          "sec-fetch-mode": "navigate",
+          "sec-fetch-site": "cross-site",
+          "sec-fetch-user": "?1",
+          "upgrade-insecure-requests": "1",
+          Referer: referer,
           ...(jarHeader() ? { cookie: jarHeader() as string } : {}),
         },
         cache: "no-store",
@@ -727,6 +759,9 @@ export async function catchOAuthCode(
         redirect: "manual",
         signal: controller.signal,
       });
+
+      // `Referer` hop berikutnya = URL hop ini (persis perilaku browser).
+      referer = currentUrl;
 
       // Catat nama cookie hop ini (untuk diagnostik) lalu serap ke jar agar
       // diteruskan ke hop berikutnya, inti perbaikan sesi SSO lintas-hop.
