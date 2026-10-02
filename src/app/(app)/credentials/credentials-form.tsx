@@ -18,6 +18,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  cleanPastedToken,
+  describeTokenShapeProblem,
+} from "@/lib/token-input";
+import {
+  daysUntilRefreshExpiry,
+  refreshTokenExpiresAt,
+} from "@/lib/refresh-token-age";
 
 type Props = {
   hasExisting: boolean;
@@ -86,18 +94,47 @@ export default function CredentialsForm({
   >("idle");
   const [tokenLoading, setTokenLoading] = useState(false);
   const [adaToken, setAdaToken] = useState(hasToken);
+  // Pesan saat kami membuang awalan yang ikut tersalin (mis. "Cookie: ...").
+  // Ditampilkan sekali agar pengguna tahu templatannya sudah dibersihkan.
+  const [tokenNotice, setTokenNotice] = useState<string | null>(null);
+  // Sisa hari masa berlaku token yang baru saja berhasil diuji (null = tak
+  // diketahui; kami TIDAK menebak 30 hari, lihat refresh-token-age.ts).
+  const [tokenHari, setTokenHari] = useState<number | null>(null);
 
   async function simpanToken(e: React.FormEvent) {
     e.preventDefault();
     setTokenMsg(null);
     setTokenState("idle");
+    setTokenNotice(null);
+    setTokenHari(null);
+
+    // Bersihkan tempelan (buang "Cookie: ", "monev_refresh_token=", kutip,
+    // spasi ujung) SEBELUM dikirim. Ini kesalahan tempel paling sering.
+    const { value: bersih, cleaned } = cleanPastedToken(token);
+    if (cleaned) {
+      setToken(bersih);
+      setTokenNotice(
+        "Kami membuang bagian nama cookie/header dari tempelan Anda, dan " +
+          "hanya memakai nilai tokennya.",
+      );
+    }
+
+    // Umpan balik instan: bentuk salah tidak perlu memanggil server dulu.
+    const masalah = describeTokenShapeProblem(bersih);
+    if (masalah) {
+      setTokenState("invalid");
+      setTokenMsg(masalah);
+      toast.error("Periksa token", masalah);
+      return;
+    }
+
     setTokenLoading(true);
 
     try {
       const res = await fetch("/api/credentials/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: token.trim() }),
+        body: JSON.stringify({ token: bersih }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         status?: string;
@@ -113,6 +150,9 @@ export default function CredentialsForm({
       }
 
       if (data.status === "ACTIVE") {
+        // Baca masa berlaku dari token yang baru diuji, SEBELUM state direset.
+        // null = tak terbaca → tidak menampilkan apa pun (jangan menebak).
+        setTokenHari(daysUntilRefreshExpiry(refreshTokenExpiresAt(bersih)));
         setTokenState("ok");
         setTokenMsg(data.message ?? "Sesi Monev aktif dan valid.");
         setToken(""); // jangan biarkan token tertinggal di state
@@ -539,15 +579,48 @@ export default function CredentialsForm({
           <form onSubmit={simpanToken} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="monevToken">Token Monev</Label>
-              <Input
-                id="monevToken"
-                type="password"
-                autoComplete="off"
-                spellCheck={false}
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Tempel token (tiga bagian dipisah titik)"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="monevToken"
+                  type="password"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="Tempel token (tiga bagian dipisah titik)"
+                />
+                {/* Tombol tempel: menyelamatkan pengguna ponsel dari
+                    klik-kanan → tempel. Cara sama seperti automation-form. */}
+                <Button
+                  type="button"
+                  variant="neutral"
+                  onClick={async () => {
+                    try {
+                      const teks = await navigator.clipboard.readText();
+                      if (teks.trim() !== "") {
+                        setToken(teks);
+                        toast.info(
+                          "Ditempel",
+                          "Periksa isinya, lalu tekan Simpan & uji koneksi.",
+                        );
+                      } else {
+                        toast.info(
+                          "Papan klip kosong",
+                          "Salin dulu nilai token di DevTools.",
+                        );
+                      }
+                    } catch {
+                      toast.error(
+                        "Tidak bisa membaca papan klip",
+                        "Tempel manual dengan Ctrl+V.",
+                      );
+                    }
+                  }}
+                  disabled={tokenLoading}
+                >
+                  Tempel
+                </Button>
+              </div>
               <p className="text-xs text-foreground/70">
                 Belum punya token?{" "}
                 <Link
@@ -555,8 +628,17 @@ export default function CredentialsForm({
                   className="underline underline-offset-4 hover:opacity-80"
                 >
                   Lihat cara mengambilnya di DevTools
-                </Link>
-                .
+                </Link>{" "}
+                atau{" "}
+                <a
+                  href="https://https://monev.maganghub.kemnaker.go.id"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4 hover:opacity-80"
+                >
+                  buka portal MagangHub
+                </a>{" "}
+                untuk login lebih dulu.
               </p>
             </div>
 
@@ -566,6 +648,8 @@ export default function CredentialsForm({
               </Button>
             </div>
           </form>
+
+          {tokenNotice && <Message tone="neutral">{tokenNotice}</Message>}
 
           {adaToken && tokenState === "idle" && (
             <Message tone="neutral">
@@ -586,6 +670,16 @@ export default function CredentialsForm({
             >
               {tokenMsg}
             </Message>
+          )}
+
+          {/* Masa berlaku hanya bila bisa dibaca dari token (bukan tebakan).
+              Memberi tahu kapan perlu login ulang, tanpa alarm palsu. */}
+          {tokenState === "ok" && tokenHari !== null && (
+            <p className="text-xs text-foreground/70">
+              {tokenHari > 0
+                ? `Perkiraan sesi ini berlaku sekitar ${tokenHari} hari lagi.`
+                : "Token ini tampaknya sudah mendekati kedaluwarsa."}
+            </p>
           )}
         </CardContent>
       </Card>
