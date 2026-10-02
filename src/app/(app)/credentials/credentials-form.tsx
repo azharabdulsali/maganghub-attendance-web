@@ -631,7 +631,7 @@ export default function CredentialsForm({
                 </Link>{" "}
                 atau{" "}
                 <a
-                  href="https://https://monev.maganghub.kemnaker.go.id"
+                  href="https://monev.maganghub.kemnaker.go.id"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline underline-offset-4 hover:opacity-80"
