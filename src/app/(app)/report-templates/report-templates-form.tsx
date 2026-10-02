@@ -519,7 +519,7 @@ export default function ReportTemplatesForm({
             memakai LLM (Gemini) bila `GEMINI_API_KEY` diisi, dan itu mengirim
             kata kunci ke penyusun luar. Klaim statis "tanpa layanan AI luar"
             dulu berpotensi bohong. Pengungkapan sebenarnya muncul SETELAH
-            menekan "Susun draf", saat sumbernya benar-benar diketahui. */}
+            menekan "Generate", saat sumbernya benar-benar diketahui. */}
         <p className="mt-1 text-xs text-foreground/60">
           Draf disusun oleh server. Bila admin mengaktifkan penyusun AI, kata
           kunci Anda dikirim ke penyusun luar; keterangannya muncul setelah draf
@@ -560,7 +560,7 @@ export default function ReportTemplatesForm({
             size="sm"
             className="shrink-0"
           >
-            {drafting ? "Menyusun..." : "Susun draf"}
+            {drafting ? "Generate..." : "Generate"}
           </Button>
         </div>
 
