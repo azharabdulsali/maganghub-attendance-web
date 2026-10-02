@@ -72,16 +72,21 @@ jobs:
           set -euo pipefail
 
           # -L (--location): IKUTI redirect. Tanpa ini, APP_URL yang cocok
-          #   dengan aturan redirect (mis. http→https atau www→non-www) membalas
+          #   dengan aturan redirect (mis. http→https atau non-www→www) membalas
           #   3xx dan curl berhenti di situ: kode != 200 → run gagal, padahal
           #   aplikasinya sehat. Ini pernah terjadi (HTTP 308).
-          #   Catatan: saat redirect LINTAS-HOST, header Authorization bisa
-          #   dibuang di tengah jalan. Karena itu APP_URL tetap harus URL final
-          #   (lihat pesan diagnostik di bawah), -L hanya sabuk pengaman.
+          #   PENTING: saat redirect LINTAS-HOST (mis. non-www → www), header
+          #   Authorization DIBUANG di tengah jalan → server melihat request
+          #   tanpa token → 401 meski CRON_SECRET sudah benar. Karena itu APP_URL
+          #   HARUS host final tanpa redirect; -L hanya sabuk pengaman.
+          # %{url_effective}: host terakhir setelah redirect. Dicetak agar terlihat
+          #   bila host berubah (penyebab 401 yang menyesatkan).
           code=$(curl -sS -L -o response.json -w "%{http_code}" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "${APP_URL}/api/cron/run-all")
+          final_url=$(curl -sS -L -o /dev/null -w "%{url_effective}" "${APP_URL}/api/cron/run-all")
           echo "HTTP $code"
+          echo "URL akhir: $final_url"
           cat response.json
           echo
 
@@ -93,16 +98,20 @@ jobs:
           case "$code" in
             308|301|302|303|307)
               echo "Diagnosis: APP_URL di GitHub Secrets masih kena redirect."
-              echo "  Perbaikan: set APP_URL ke URL FINAL (https, tanpa 'http://',"
-              echo "  tanpa 'www.' bila tak dipakai, TANPA slash di akhir), lalu"
-              echo "  jalankan:  curl -sS -o /dev/null -w \"%{url_effective}\" -L \"\$APP_URL\""
-              echo "  Pakai nilai %{url_effective} itu sebagai APP_URL."
+              echo "  Perbaikan: set APP_URL tepat ke HOST FINAL hasil redirect"
+              echo "  (mis. bila 308 mengarah ke 'www.', pakai 'https://www....'),"
+              echo "  https, TANPA slash di akhir. Bila perlu:"
+              echo "    curl -sS -o /dev/null -w \"%{url_effective}\" -L \"\$APP_URL\""
               ;;
             401)
-              echo "Diagnosis: CRON_SECRET di GitHub TIDAK sama dengan di Vercel."
-              echo "  Panjang di GitHub: ${#CRON_SECRET} char (cek tahu panjang di Vercel)."
-              echo "  Perbaikan: generate ulang, set di Vercel + GitHub dengan salin-tempel"
-              echo "  dari editor teks (bukan terminal), lalu REDEPLOY Vercel."
+              echo "Diagnosis: server menerima request TANPA/menolak token."
+              echo "  Panjang di GitHub: ${#CRON_SECRET} char."
+              echo "  Dua sebab tersering:"
+              echo "   (a) APP_URL di-redirect lintas-host (non-www→www) sehingga header"
+              echo "       Authorization dibuang. URL akhir: $final_url"
+              echo "       → set APP_URL ke host final persis."
+              echo "   (b) CRON_SECRET GitHub ≠ Vercel. Set nilai sama di keduanya,"
+              echo "       lalu REDEPLOY Vercel (nilai baru tak berlaku tanpa redeploy)."
               ;;
             503)
               echo "Diagnosis: CRON_SECRET belum diset di Vercel (atau belum redeploy)."

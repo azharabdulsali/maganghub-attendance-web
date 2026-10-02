@@ -105,8 +105,8 @@ berjalan otomatis tiap jam (`5 * * * *` UTC = setiap jam pada menit ke-5 WIB).
 | HTTP | Arti | Tindakan |
 | :--- | :--- | :--- |
 | `200` | Diproses (sebagian mungkin `dryRun`) | Periksa `results` |
-| `301`/`302`/`307`/`308` | **`APP_URL` masih kena redirect** (mis. `http→https` atau `www→non-www`) | Set `APP_URL` ke URL **final** (https, tanpa slash di akhir); lihat `curl -L -w "%{url_effective}"` |
-| `401` | `CRON_SECRET` salah/tidak dikirim | Samakan nilai di Vercel & GitHub |
+| `301`/`302`/`307`/`308` | **`APP_URL` masih kena redirect** (mis. non-`www`→`www`, atau `http`→`https`) | Set `APP_URL` ke host **final** hasil redirect (mis. `https://www....`), tanpa slash di akhir; lihat `curl -L -w "%{url_effective}"` |
+| `401` | Bisa dua sebab: (a) `APP_URL` di-redirect lintas-host sehingga header `Authorization` dibuang — cek "URL akhir" di log; (b) `CRON_SECRET` GitHub ≠ Vercel | Samakan nilai di Vercel & GitHub **dan** pastikan `APP_URL` = host final |
 | `503` | `CRON_SECRET` belum diset di Vercel | Set lalu redeploy |
 | `407`/timeout | Portal Monev menggantung | Normal; `deferred` diproses jam berikutnya |
 
