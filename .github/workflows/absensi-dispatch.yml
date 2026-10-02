@@ -22,6 +22,12 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # Rahasia dibagikan di level JOB supaya SEMUA langkah (termasuk diagnostik)
+    # menerimanya. Sebelumnya blok env hanya menempel pada langkah terakhir,
+    # sehingga langkah diagnostik melihat variabel yang tidak terdefinisi.
+    env:
+      APP_URL: ${{ secrets.APP_URL }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
       - name: Diagnostik rahasia (tanpa membocorkan nilai)
         run: |
@@ -29,26 +35,34 @@ jobs:
           # tak sengaja" vs "secret beda nilai". AMAN: hanya panjang (jumlah
           # karakter) dan sifat karakter ujung yang dicetak — NILAI rahasia
           # tidak pernah ditampilkan.
-          set -u
+          # (sengaja TIDAK memakai `set -u`: secret yang belum diset di GitHub
+          #  disubstitusi menjadi kosong/hilang, dan `set -u` akan menjatuhkan
+          #  skrip sebelum sempat melaporkan apa pun.)
+          #
+          # Normalisasi: bila secret tidak diset, variabel bisa benar-benar tak
+          # ada. Salin ke variabel lokal dengan default kosong supaya aman.
+          url="${APP_URL:-}"
+          secret="${CRON_SECRET:-}"
 
-          echo "APP_URL  : panjang=${#APP_URL} char"
-          echo "CRON_SECRET: panjang=${#CRON_SECRET} char"
+          echo "APP_URL  : panjang=${#url} char"
+          echo "CRON_SECRET: panjang=${#secret} char"
 
           # Deteksi spasi/baris baru di ujung (penyebab 401 paling umum).
-          case "$APP_URL" in
+          case "$url" in
             *[[:space:]]) echo "  PERINGATAN: APP_URL berakhir dengan spasi/baris baru." ;;
+            "")           echo "  PERINGATAN: APP_URL KOSONG (secret belum diset di GitHub)." ;;
           esac
-          case "$CRON_SECRET" in
+          case "$secret" in
             *[[:space:]]) echo "  PERINGATAN: CRON_SECRET berakhir dengan spasi/baris baru." ;;
-            "")            echo "  PERINGATAN: CRON_SECRET KOSONG (secret belum diset di GitHub)." ;;
+            "")           echo "  PERINGATAN: CRON_SECRET KOSONG (secret belum diset di GitHub)." ;;
           esac
 
           # Panjang lazim CRON_SECRET: 64 (randomBytes(32).toString('hex')).
-          if [ "${#CRON_SECRET}" -ne 64 ] && [ "${#CRON_SECRET}" -ne 0 ]; then
+          if [ "${#secret}" -ne 64 ] && [ "${#secret}" -ne 0 ]; then
             echo "  CATATAN: panjang CRON_SECRET bukan 64; pastikan sengaja."
           fi
 
-          if [ "${#CRON_SECRET}" -eq 0 ] || [ -z "$APP_URL" ]; then
+          if [ "${#secret}" -eq 0 ] || [ -z "$url" ]; then
             echo "::error::Secret GitHub belum lengkap (APP_URL kosong atau CRON_SECRET kosong)."
             exit 1
           fi
@@ -99,6 +113,3 @@ jobs:
               ;;
           esac
           exit 1
-        env:
-          APP_URL: ${{ secrets.APP_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
