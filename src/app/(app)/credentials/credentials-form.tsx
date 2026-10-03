@@ -90,8 +90,9 @@ export default function CredentialsForm({
   // Hanya untuk membantu diagnosis; tidak ada token/cookie/password di sini.
   const [loginPrime, setLoginPrime] = useState<PrimeRejectionInfo | null>(null);
 
-  // Bila buktinya Cloudflare Managed Challenge (`cf-mitigated=challenge`), login
-  // otomatis TIDAK mungkin berhasil dari server. UI harus berkata jujur.
+  // Bila buktinya Cloudflare Managed Challenge (`cf-mitigated=challenge`), langkah
+  // LOGIN otomatis dari server tidak bisa lewat (butuh browser + IP residensial).
+  // Sesi hasil login manual user TETAP bisa dipakai dari server (terbukti ACTIVE).
   const isUnsolvable = isUnsolvableCloudflareChallenge(loginPrime);
 
   // --- Tempel token manual (Opsi C1, docs/MONEV-API.md §7) ---
@@ -403,11 +404,13 @@ export default function CredentialsForm({
               <Message tone="neutral">
                 <strong>Portal memasang Cloudflare Managed Challenge.</strong>{" "}
                 Tantangan ini menuntut browser asli menjalankan JavaScript, jadi
-                login otomatis dari server <strong>tidak mungkin</strong>{" "}
-                berhasil — ini bukan kesalahan Anda dan bukan bisa
-                &ldquo;dicoba lagi&rdquo;. Gunakan{" "}
-                <strong>tempel token</strong> di bagian cadangan bawah; itu
-                satu-satunya cara yang sah dan andal.
+                langkah <strong>login</strong> otomatis dari server{" "}
+                <strong>tidak bisa</strong> lewat. Ini bukan kesalahan Anda dan
+                tidak bisa &ldquo;dicoba lagi&rdquo;. Kabar baiknya: Anda cukup
+                login <strong>sekali</strong> di browser sendiri, lalu
+                menempelkan <strong>token</strong> di bagian cadangan bawah.
+                Setelah itu sesi bertahan sekitar 30 hari dan absensi otomatis
+                berjalan normal.
               </Message>
             ) : (
               loginMsg && (
@@ -478,6 +481,18 @@ export default function CredentialsForm({
                     bawah halaman ini.
                   </li>
                 </ol>
+                <Button
+                  variant="neutral"
+                  onClick={() =>
+                    window.open(
+                      "https://monev.maganghub.kemnaker.go.id",
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
+                  }
+                >
+                  Buka portal Monev di tab baru
+                </Button>
               </div>
             )}
 
@@ -566,6 +581,19 @@ export default function CredentialsForm({
               Kami uji ke portal dan simpan terenkripsi. Tidak ada laporan yang
               dikirim. Sesi ini berlaku sekitar 30 hari.
             </CardDescription>
+            <Button
+              variant="neutral"
+              className="mt-3 w-fit"
+              onClick={() =>
+                window.open(
+                  "https://monev.maganghub.kemnaker.go.id",
+                  "_blank",
+                  "noopener,noreferrer",
+                )
+              }
+            >
+              Buka portal Monev di tab baru
+            </Button>
           </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={simpanToken} className="space-y-4">

@@ -527,9 +527,45 @@ Bentuk sistem:
 - Request dikirim sebagai HTTP client biasa dengan header wajar
   (`Accept`, `Accept-Language`, `Content-Type`).
 - **Tidak** memakai User-Agent palsu yang mengaku Chrome.
-- **Tidak** memakai proxy untuk menembus `403`.
 - Jika `403` muncul, pesannya ditampilkan terus terang ke pengguna dan
   dicatat di audit log, bukan ditutupi dengan penyamaran.
+
+**✅ DIPUTUSKAN & DIUJI (2026-06) — proxy DIBATALKAN, larangan berlaku penuh.**
+
+Diuji langsung ke portal sungguhan: **yang dijaga Cloudflare Managed Challenge
+hanya halaman login SSO (`account.kemnaker.go.id`)**, sedangkan **API Monev
+TIDAK diblokir**. Buktinya: `monev_refresh_token` yang dipanen dari browser
+pengguna (login di IP residensial mereka sendiri) dipakai memanggil
+`POST /auth/refresh` dari IP datacenter Vercel → **status `ACTIVE`**.
+
+Karena itu **proxy residensial tidak diperlukan sama sekali** dan rencana
+memakainya **dibatalkan**. Larangan "*Tidak memakai proxy untuk menembus
+`403`*" **tetap berlaku tanpa pengecualian**. Tidak ada variabel
+`MONEV_PROXY_URL` di aplikasi.
+
+**Solusi sah yang dipakai (Opsi B) — login sekali dari browser pengguna:**
+1. Pengguna membuka portal Monev di browser sendiri dan login normal. Challenge
+   Cloudflare lewat **wajar** karena browser mereka + IP residensial mereka +
+   manusia. **Tidak ada yang diakali.**
+2. Pengguna menyalin cookie `monev_refresh_token` (DevTools → Application →
+   Cookies) dan menempelkannya di halaman `/credentials` aplikasi. Jalur ini
+   **sudah ada** (`POST /api/credentials/verify`) dan panduannya di
+   `src/lib/guides.ts`.
+3. Aplikasi menukar refresh token → access token sesuai kebutuhan submit. Sesi
+   bertahan ±30 hari; banner dashboard mengingatkan sebelum habis.
+
+**Kenapa ini lebih baik daripada proxy (semua terverifikasi, bukan asumsi):**
+- **Tidak ada IP bersama.** Tiap pengguna memakai IP-nya sendiri → tidak ada
+  pola "satu IP melayani banyak akun" yang tampak sebagai penyalahgunaan.
+- **Risiko terisolasi.** Satu pengguna bermasalah tidak menjatuhkan yang lain.
+- **Biaya Rp0** dan **skalabel** untuk berapa pun jumlah pengguna.
+- **Password Kemnaker tidak pernah diserahkan ke server**; server hanya menerima
+  token sesi yang bisa dicabut kapan saja.
+
+Batas yang tetap dipegang: tidak mengakali CAPTCHA/OTP/MFA, tidak menyamar
+sebagai identitas lain, tidak memakai proxy; semua kegagalan dilaporkan terus
+terang ke pengguna + audit log. Lihat juga `AGENTS.md` §73 dan
+`docs/MONEV-API.md` §9.
 
 **Pencegahan kerapuhan:** nilai `buildId`/konstanta portal **tidak di-hardcode
 permanen**; ditaruh di satu tempat berkonfigurasi agar mudah diperbarui,

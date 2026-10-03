@@ -70,8 +70,15 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
   `.env` wajib ada di `.gitignore`.
 - **Jangan log atau tampilkan password** dalam bentuk apa pun, tidak di
   console, tidak di audit log, tidak di pesan error.
-- **Jangan memalsukan User-Agent** atau memakai proxy untuk menembus `403`
-  portal. Batas etika ini ada di `SPEC.md` §6 dan §10.
+- **Jangan memalsukan User-Agent** untuk menembus `403` portal. Batas etika ini
+  ada di `SPEC.md` §6 dan §10.
+  - **✅ Catatan (2026-06):** sempat ada rencana memakai proxy residensial
+    (`MONEV_PROXY_URL`) untuk melewati Cloudflare di jalur login SSO. Rencana
+    itu **DIBATALKAN setelah diuji** — lihat `SPEC.md` §6. Ternyata API Monev
+    tidak diblokir; token hasil panen dari browser pengguna terbukti dipakai
+    dari Vercel (ACTIVE). **Jangan tambahkan proxy.** Larangan tetap berlaku.
+    Solusi yang dipakai: pengguna login sekali di browser sendiri lalu menempel
+    `monev_refresh_token` di `/credentials` (panduan di `src/lib/guides.ts`).
 - **Jangan menambahkan dependensi** tanpa alasan jelas. Setiap paket baru
   memperbesar permukaan serangan untuk aplikasi yang menyimpan password orang
   lain.

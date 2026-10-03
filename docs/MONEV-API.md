@@ -844,15 +844,23 @@ diamati saat uji pertama sebelum `ALLOW_LIVE_SUBMIT=1`.
 
 ## 9. Batas etika (dari `SPEC.md` §10)
 
-- **Jangan** mengakali CAPTCHA, menembus OTP/MFA, memalsukan User-Agent
-  (selain UA resmi pengguna), atau memakai proxy untuk melewati `403`.
+- **Jangan** mengakali CAPTCHA, menembus OTP/MFA, atau memalsukan identitas
+  orang lain.
 - Bila muncul challenge → artinya **butuh intervensi manusia**, bukan diakali.
+  **✅ Catatan (2026-06):** sempat ada rencana memakai proxy residensial
+  (`MONEV_PROXY_URL`) untuk ini, tetapi **DIBATALKAN setelah diuji** (lihat
+  `SPEC.md` §6). Uji live membuktikan API Monev **tidak** diblokir: token hasil
+  panen dari browser pengguna berhasil dipakai dari Vercel (ACTIVE). Karena itu
+  **proxy tidak diperlukan dan tidak boleh ditambahkan**; solusinya adalah
+  pengguna login sekali di browser sendiri lalu menempel `monev_refresh_token`.
 - Klien ini **hanya** melakukan login + submit laporan. Tidak ada aksi lain.
 - **Tidak boleh mengirim apa pun** selama fase uji koneksi.
 
-Catatan penting: karena **API tidak diblokir Cloudflare** (§7), tidak ada
-kebutuhan sama sekali untuk "mengakali" apa pun. Batas etika ini otomatis
-terpenuhi.
+Catatan penting: karena **API tidak diblokir Cloudflare** (§7), jalur data
+(login code-exchange, refresh, submit) **tidak** butuh proxy. Yang butuh
+intervensi manusia hanyalah langkah yang menyentuh `account.kemnaker.go.id`
+(halaman SSO) — dan itu diselesaikan dengan login sekali di browser pengguna,
+bukan dengan proxy.
 
 ---
 
