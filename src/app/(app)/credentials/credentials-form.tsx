@@ -29,7 +29,7 @@ import {
 import {
   isUnsolvableCloudflareChallenge,
   type PrimeRejectionInfo,
-} from "@/lib/monev-login";
+} from "@/lib/sso-prime-response";
 
 type Props = {
   hasExisting: boolean;

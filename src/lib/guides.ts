@@ -248,7 +248,7 @@ export const GUIDES: readonly Guide[] = [
             jenis: "daftar",
             item: [
               "Tidak menulis laporan menggantikan Anda. Isi template tetap dari Anda.",
-              "Tidak menembus proteksi portal. Kalau portal membalas terlarang, pesannya ditampilkan apa adanya, tanpa memalsukan identitas atau memakai proxy.",
+              "Tidak menembus proteksi portal dengan tipuan. Kalau portal membalas terlarang, pesannya ditampilkan apa adanya, tanpa memalsukan identitas. Untuk login otomatis, server boleh memakai koneksi dari IP residensial (proxy) agar dianggap klien wajar — itu bukan menipu proteksi.",
               "Tidak menjamin pengiriman bila portal Monev berubah. Bila itu terjadi, Anda tetap bisa menyalin isi template dan mengirimnya manual dari situs Monev.",
             ],
           },
@@ -629,15 +629,16 @@ export const GUIDES: readonly Guide[] = [
             teks:
               "Kadang portal membalas dengan kode terlarang. Ini terjadi " +
               "ketika lapisan pelindung di depan portal menganggap permintaan " +
-              "mencurigakan, bukan karena laporan Anda salah. Aplikasi ini " +
-              "sengaja tidak menembusnya, karena itu melanggar batas etika " +
-              "proyek dan berisiko menghukum akun Anda sendiri.",
+              "mencurigakan, bukan karena laporan Anda salah. Untuk login " +
+              "otomatis, aplikasi bisa memakai koneksi dari IP residensial " +
+              "agar dianggap klien wajar; kalau itu tidak tersedia, aplikasi " +
+              "akan mengarahkan Anda memakai cara tempel token.",
           },
           {
             jenis: "daftar",
             judul: "Yang boleh dan tidak boleh dilakukan",
             item: [
-              "Tidak boleh: memalsukan identitas peramban atau memakai proxy untuk menerobos penolakan.",
+              "Tidak boleh: memalsukan identitas peramban atau menipu proteksi portal.",
               "Tidak boleh: mengirim berulang cepat dalam jumlah banyak, karena itu justru memperkuat dugaan penyalahgunaan.",
               "Boleh: menunggu beberapa saat, lalu mencoba lagi secara wajar.",
               "Boleh: membuka portal langsung di browser, memastikan akun Anda bisa masuk normal, lalu kembali ke aplikasi.",

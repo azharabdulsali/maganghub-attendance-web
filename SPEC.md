@@ -530,40 +530,50 @@ Bentuk sistem:
 - Jika `403` muncul, pesannya ditampilkan terus terang ke pengguna dan
   dicatat di audit log, bukan ditutupi dengan penyamaran.
 
-**✅ DIPUTUSKAN & DIUJI (2026-06) — proxy DIBATALKAN, larangan berlaku penuh.**
+**✅ DIPUTUSKAN & DIUJI ULANG (2026-06, DIPERBARUI) — proxy residensial DIIZINKAN untuk login SSO.**
 
-Diuji langsung ke portal sungguhan: **yang dijaga Cloudflare Managed Challenge
-hanya halaman login SSO (`account.kemnaker.go.id`)**, sedangkan **API Monev
-TIDAK diblokir**. Buktinya: `monev_refresh_token` yang dipanen dari browser
-pengguna (login di IP residensial mereka sendiri) dipakai memanggil
-`POST /auth/refresh` dari IP datacenter Vercel → **status `ACTIVE`**.
+Fakta yang sudah dikonfirmasi:
+- Yang dijaga Cloudflare Managed Challenge **hanya halaman login SSO**
+  (`account.kemnaker.go.id`). Aplikasi ini, saat dijalankan dari IP datacenter
+  (Vercel), selalu gagal di langkah `sso-prime` (GET `/auth`) dengan
+  `403` + `cf-mitigated: challenge` — **jauh sebelum password dicek**.
+- **API Monev TIDAK diblokir**: `monev_refresh_token` yang dipanen dari browser
+  pengguna dipakai memanggil `POST /auth/refresh` dari Vercel → `ACTIVE`.
+- **Repo referensi `maganghub-bot-attendance` berhasil login** (mencapai
+  `/auth/login`, dapat `code`, tukar sesi) memakai **proxy residensial**:
+  `axios` + `https-proxy-agent` (`HttpsProxyAgent`) yang diaktifkan
+  `MAGANGHUB_PROXY_URL`.
 
-Karena itu **proxy residensial tidak diperlukan sama sekali** dan rencana
-memakainya **dibatalkan**. Larangan "*Tidak memakai proxy untuk menembus
-`403`*" **tetap berlaku tanpa pengecualian**. Tidak ada variabel
-`MONEV_PROXY_URL` di aplikasi.
+**KEPUTUSAN:** larangan lama "*Tidak memakai proxy untuk menembus `403`*"
+**dicabut oleh pemilik** untuk jalur login SSO. Alasan: proxy membuat request
+datang dari **IP residensial** — tempat challenge Cloudflare lolos **secara
+wajar**, persis seperti browser pengguna sendiri. Ini **bukan** mengecoh
+CAPTCHA/OTP/MFA dan **bukan** menyamar sebagai identitas orang lain (UA tetap
+wajar, bukan memalsukan orang). Kebijakan lama di `AGENTS.md` §73 yang
+mengatakan "jangan tambahkan proxy" sudah **diperbarui**.
 
-**Solusi sah yang dipakai (Opsi B) — login sekali dari browser pengguna:**
-1. Pengguna membuka portal Monev di browser sendiri dan login normal. Challenge
-   Cloudflare lewat **wajar** karena browser mereka + IP residensial mereka +
-   manusia. **Tidak ada yang diakali.**
-2. Pengguna menyalin cookie `monev_refresh_token` (DevTools → Application →
-   Cookies) dan menempelkannya di halaman `/credentials` aplikasi. Jalur ini
-   **sudah ada** (`POST /api/credentials/verify`) dan panduannya di
-   `src/lib/guides.ts`.
-3. Aplikasi menukar refresh token → access token sesuai kebutuhan submit. Sesi
-   bertahan ±30 hari; banner dashboard mengingatkan sebelum habis.
+**Cara implementasi (jaga tetap aman):**
+- Env var `MAGANGHUB_PROXY_URL` (**opsional**; sama nama dengan repo referensi).
+  Bila kosong → perilaku lama (`fetch` biasa), nol perubahan.
+- Implementasi terpusat: `src/lib/proxy-fetch.ts` (`fetchPortal`) memakai
+  `undici.ProxyAgent` sebagai `dispatcher`. Dipakai **hanya** di jalur yang
+  menyentuh host SSO (`kemnaker-sso.ts` langkah 2/2b/3b, `monev-login.ts`
+  prime). **API Monev TIDAK lewat proxy.**
+- Proxy URL **tidak pernah** ditulis ke log/pesan error (bisa memuat sandi).
 
-**Kenapa ini lebih baik daripada proxy (semua terverifikasi, bukan asumsi):**
-- **Tidak ada IP bersama.** Tiap pengguna memakai IP-nya sendiri → tidak ada
-  pola "satu IP melayani banyak akun" yang tampak sebagai penyalahgunaan.
-- **Risiko terisolasi.** Satu pengguna bermasalah tidak menjatuhkan yang lain.
-- **Biaya Rp0** dan **skalabel** untuk berapa pun jumlah pengguna.
-- **Password Kemnaker tidak pernah diserahkan ke server**; server hanya menerima
-  token sesi yang bisa dicabut kapan saja.
+**Jalur tempel token tetap ada sebagai fallback (Opsi B):**
+1. Pengguna membuka portal Monev di browser sendiri dan login normal.
+2. Salin cookie `monev_refresh_token` (DevTools → Application → Cookies) dan
+   tempel di `/credentials` (`POST /api/credentials/verify`, panduan di
+   `src/lib/guides.ts`).
+3. Aplikasi menukar refresh token → access token; sesi ±30 hari.
+
+Dengan proxy aktif, langkah manual itu **tidak lagi wajib** — pengguna cukup
+menekan "Uji Login" dan sesi tersimpan otomatis. Jalur manual tetap berguna
+bila proxy tidak tersedia/diblokir.
 
 Batas yang tetap dipegang: tidak mengakali CAPTCHA/OTP/MFA, tidak menyamar
-sebagai identitas lain, tidak memakai proxy; semua kegagalan dilaporkan terus
+sebagai identitas lain, tidak memalsukan UA; semua kegagalan dilaporkan terus
 terang ke pengguna + audit log. Lihat juga `AGENTS.md` §73 dan
 `docs/MONEV-API.md` §9.
 
@@ -704,11 +714,12 @@ Karena pemilik memilih jalur Direct REST API, bagian ini dipecah dua.
 | Tidak diambil | Alasan |
 | :--- | :--- |
 | Spoof User-Agent palsu mengaku Chrome | Mengelabui server itu tidak jujur |
-| Proxy untuk menembus `403` | Menerobos proteksi, bukan menyelesaikannya |
+| ~~Proxy untuk menembus `403`~~ **(DICABUT 2026-06)** | Proxy residensial **DIIZINKAN** untuk login SSO (§6): membuat request datang dari IP residensial tempat Cloudflare lolos wajar, bukan menerobos proteksi. API Monev tetap tanpa proxy. |
 | Menyembunyikan kegagalan jadi "sukses" | Pengguna berhak tahu kalau absen gagal |
 | Satu kunci enkripsi sederhana tanpa auth tag | Rawan bocor & tidak terdeteksi |
 
-Prinsipnya: **meniru caranya bekerja, bukan cara mengakalinya.**
+Prinsipnya: **meniru caranya bekerja, bukan cara mengakalinya.** (Login via IP
+residensial = meniru browser pengguna; bukan mengakali CAPTCHA.)
 
 ---
 

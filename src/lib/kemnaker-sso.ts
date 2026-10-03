@@ -32,6 +32,18 @@
 //     `JSON.stringify` yang tidak sengaja tidak membocorkannya.
 //   - Tidak ada `console.log` di berkas ini, dan tidak boleh ditambahkan.
 
+// `fetchPortal` = `fetch` yang otomatis lewat `MAGANGHUB_PROXY_URL` (proxy
+// residensial) bila di-set. Host SSO dijaga Cloudflare Managed Challenge;
+// dari IP datacenter (Vercel) challenge itu tak terselesaikan → `403` sebelum
+// password dicek. Proxy membuat request datang dari IP residensial, tempat
+// challenge lolos wajar. Bila env kosong, perilaku = `fetch` biasa.
+import { fetchPortal } from "./proxy-fetch";
+// `describeHtmlHint` MURNI tinggal di berkas tanpa jaringan, dan di-`export ... from`
+// ulang agar pemanggil lama (mis. `kemnaker-sso.test.ts`) tetap bisa meng-import
+// dari sini. Lihat catatan di `sso-prime-response.ts`.
+export { describeHtmlHint } from "./sso-prime-response";
+import { describeHtmlHint } from "./sso-prime-response";
+
 export const KEMNAKER_SSO_ORIGIN = "https://account.kemnaker.go.id";
 
 /**
@@ -336,33 +348,6 @@ export function extractCallbackUrlFromAuthJson(bodyText: string): string | undef
 
 
 /**
- * Petunjuk ringan isi halaman HTML non-redirect, MURNI, aman.
- *
- * Dipakai saat `code` tak ditemukan dan rantai berhenti di halaman `200`.
- * Hanya mengembalikan **kategori** berdasarkan kata kunci umum (mis. "form
- * login", "otp", "dashboard") + panjang body, **tidak pernah** isi/teks asli,
- * sehingga tak ada rahasia yang bocor ke log.
- */
-export function describeHtmlHint(html: string): string {
-  const len = html.length;
-  const has = (re: RegExp) => re.test(html);
-  const tags: string[] = [];
-  if (has(/<input[^>]*type=["']?password/i) || has(/name=["']?(password|passwd)/i))
-    tags.push("ada-form-password");
-  if (has(/type=["']?email/i) || has(/name=["']?(username|email|user)/i))
-    tags.push("ada-field-user");
-  if (has(/\b(otp|verifikasi|verification|kode-?verifikasi)\b/i)) tags.push("ada-otp");
-  if (has(/\b(dashboard|beranda|selamat-datang|welcome)\b/i)) tags.push("nuansa-dashboard");
-  if (has(/<form[^>]*>/i)) tags.push("ada-<form>");
-  // Deteksi shell SPA (kode OAuth biasanya dirakit oleh JS, bukan redirect HTTP).
-  if (has(/<script[^>]*src=/i)) tags.push("ada-<script src>");
-  if (has(/id=["']?(app|root|__next|__nuxt)["']?/i)) tags.push("ada-mount-spa");
-  if (has(/window\.__|\bVue\b|\breact\b|\bnext\.js\b/i)) tags.push("marker-framework");
-  const label = tags.length > 0 ? tags.join(",") : "tanpa-penanda-khusus";
-  return `body ${len} byte (${label})`;
-}
-
-/**
  * Ringkasan diagnostik AMAN dari respons halaman SSO, MURNI.
  *
  * ⚠️  Hanya mengungkap **metadata** (status, keberadaan/host `Location`, nama
@@ -451,7 +436,7 @@ export async function loginToSso(
 
   try {
     const req = buildSsoLoginRequest(creds);
-    const res = await fetch(req.url, {
+    const res = await fetchPortal(req.url, {
       method: req.method,
       headers: {
         "content-type": req.contentType,
@@ -558,7 +543,7 @@ export async function fetchAuthorizationRedirect(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(`${KEMNAKER_SSO_ORIGIN}/auth`, {
+    const res = await fetchPortal(`${KEMNAKER_SSO_ORIGIN}/auth`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -738,7 +723,7 @@ export async function catchOAuthCode(
     let referer = `${KEMNAKER_SSO_ORIGIN}/auth/login`;
 
     for (let hop = 0; hop < maxHops; hop++) {
-      const res = await fetch(currentUrl, {
+      const res = await fetchPortal(currentUrl, {
         method: "GET",
         headers: {
           "User-Agent": SSO_USER_AGENT,

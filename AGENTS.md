@@ -72,13 +72,26 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
   console, tidak di audit log, tidak di pesan error.
 - **Jangan memalsukan User-Agent** untuk menembus `403` portal. Batas etika ini
   ada di `SPEC.md` §6 dan §10.
-  - **✅ Catatan (2026-06):** sempat ada rencana memakai proxy residensial
-    (`MONEV_PROXY_URL`) untuk melewati Cloudflare di jalur login SSO. Rencana
-    itu **DIBATALKAN setelah diuji** — lihat `SPEC.md` §6. Ternyata API Monev
-    tidak diblokir; token hasil panen dari browser pengguna terbukti dipakai
-    dari Vercel (ACTIVE). **Jangan tambahkan proxy.** Larangan tetap berlaku.
-    Solusi yang dipakai: pengguna login sekali di browser sendiri lalu menempel
-    `monev_refresh_token` di `/credentials` (panduan di `src/lib/guides.ts`).
+  - **✅ KEPUTUSAN BARU (2026-06, DIPERBARUI) — proxy residensial DIIZINKAN
+    untuk jalur login SSO.** Aturan lama ("jangan tambahkan proxy")
+    **dicabut pemilik** setelah terbukti: repo referensi
+    `maganghub-bot-attendance` berhasil login lewat proxy residensial
+    (`HttpsProxyAgent` + `MAGANGHUB_PROXY_URL`). Yang dijaga Cloudflare Managed
+    Challenge hanya **halaman login SSO** (`account.kemnaker.go.id`), dan proxy
+    membuat request datang dari IP residensial — tempat challenge lolos
+    **secara wajar** (sama seperti browser pengguna). Ini **bukan** mengecoh
+    CAPTCHA/OTP/MFA dan **bukan** menyamar sebagai identitas orang lain.
+  - **Cara pakai (opsional, tetap terjaga):** set `MAGANGHUB_PROXY_URL` (mis.
+    `http://user:pass@host:port`) di `.env`. Bila kosong → perilaku lama
+    (`fetch` biasa). Implementasi terpusat di `src/lib/proxy-fetch.ts`
+    (`fetchPortal`) dan **hanya** dipakai di jalur yang menyentuh host SSO
+    (`kemnaker-sso.ts`, `monev-login.ts` prime). **API Monev TIDAK lewat proxy**
+    (tidak diblokir). Proxy URL **tidak pernah** ditulis ke log/pesan error.
+    Di Vercel env var ini **WAJIB** diisi (IP datacenter diblokir CF); panduan
+    langkah-demi-langkah di `docs/PROXY-SETUP.md`, uji cepat dengan
+    `npx tsx scripts/uji-proxy.ts`.
+  - **Batas yang TETAP berlaku:** jangan memalsukan UA, jangan mengakali
+    CAPTCHA/OTP/MFA, jangan menyembunyikan kegagalan.
 - **Jangan menambahkan dependensi** tanpa alasan jelas. Setiap paket baru
   memperbesar permukaan serangan untuk aplikasi yang menyimpan password orang
   lain.
@@ -589,7 +602,7 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 | Butuh nilai rahasia untuk test       | Buat kunci acak sementara; jangan pakai nilai nyata |
 | Ragu soal arsitektur                 | Baca `SPEC.md`; kalau menyimpang, catat di sana     |
 | Diminta menyentuh folder Python lama | **Tolak**, kecuali pemilik memerintahkan eksplisit  |
-| Kena `403` dari portal               | Tampilkan pesannya; jangan spoof UA / proxy         |
+| Kena `403` dari portal               | Tampilkan pesannya; jangan spoof UA. Untuk host SSO boleh lewat `MAGANGHUB_PROXY_URL` |
 | Input dari pengguna                  | Validasi dengan Zod dulu, di server                 |
 | Menyimpan kredensial                 | Enkripsi AES-256-GCM dulu, baru masuk DB            |
 | Gagal submit                         | Catat gagal apa adanya; jangan tandai sukses        |

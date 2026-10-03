@@ -536,8 +536,11 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > `cf-mitigated`, `cf-ray`, `content-type`, `content-length`, dan **kategori
 > halaman** (via `describeHtmlHint`). Ini membedakan:
 > - **challenge Cloudflare/WAF** (ada `cf-mitigated`/`server: cloudflare`) →
->   artinya permintaan non-browser diblokir, **bukan** kredensial salah. Sesuai
->   `SPEC.md` §6/§10 & `AGENTS.md` §73: **jangan** diakali (spoof UA/proxy).
+>   artinya permintaan non-browser diblokir, **bukan** kredensial salah.
+>   Penanganannya: lewatkan jalur SSO ini via proxy residensial
+>   (`MAGANGHUB_PROXY_URL`, lihat §9 & `SPEC.md` §6) supaya request datang dari
+>   IP residensial tempat challenge lolos wajar. UA tetap jujur, **bukan**
+>   di-spoof.
 > - **halaman HTML biasa** tanpa penanda → kemungkinan `/auth` polos dipakai
 >   (perlu `authorizeUrl` lengkap) atau bentuk halaman berubah → butuh rekaman.
 > Tidak ada nilai token/cookie/password yang masuk ke diagnostik ini.
@@ -575,8 +578,8 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > (Opsi C1). Halaman `/credentials` kini punya **form "Tempel token manual"**
 > yang memanggil `POST /api/credentials/verify`, jadi instruksi fallback benar
 > bisa diikuti tanpa jalan buntu. Tautan panduan:
-> `/panduan/ambil-token-monev-devtools`. **Tidak ada** spoofing UA/proxy —
-> hanya pesan, form, & panduan.
+> `/panduan/ambil-token-monev-devtools`. Tidak ada spoofing UA — proxy
+> residensial (opsional) memakai `MAGANGHUB_PROXY_URL` (§9).
 >
 > **🧱 TEMUAN FINAL (bukti lapangan, `cf-mitigated: challenge`).** Pada uji
 > nyata `/credentials`, Langkah 2 dijawab:
@@ -595,17 +598,24 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > URL yang ditolak pun **sudah benar** (authorizeUrl lengkap dengan
 > `client_id`/`state`), jadi bukan soal langkah (1). Artinya:
 >
-> - **Login otomatis (Opsi A) TIDAK BISA dihidupkan kembali** selama portal
->   memakai Managed Challenge. Ini bukan bug yang bisa "diperbaiki lagi".
-> - Jalan keluar yang mungkin (**headless browser** untuk melarutkan
->   challenge, **pinjam `cf_clearance`**, atau **proxy putar**) semuanya
->   **terlarang**: itu mengakali proteksi anti-bot pihak ketiga
->   (`SPEC.md` §5/§6 & `AGENTS.md` §73).
-> - Karena itu **jalur tempel token (Opsi C1) adalah satu-satunya cara sah**,
->   dan UI kini menyatakannya **jujur**: ketika `cf-mitigated=challenge`,
->   kartu "Login otomatis" mengganti catatan "coba lagi" menjadi pesan tegas
->   bahwa cara ini **tidak mungkin** berhasil dari server
->   (`isUnsolvableCloudflareChallenge`, MURNI), dan mengarahkan ke tempel token.
+> - **Login otomatis (Opsi A) dari IP datacenter TIDAK BISA** selama portal
+>   memakai Managed Challenge dan **tanpa proxy**. Ini bukan bug yang bisa
+>   "diperbaiki dengan header".
+> - Jalan keluar yang tersedia:
+>   - **Proxy residensial (DIIZINKAN, 2026-06).** `MAGANGHUB_PROXY_URL` membuat
+>     request login SSO datang dari IP residensial tempat challenge lolos wajar
+>     — sama seperti browser pengguna. Ini **bukan** mengakali proteksi
+>     (`SPEC.md` §6 diperbarui; `AGENTS.md` §73 diperbarui). Terbukti dipakai
+>     repo referensi `maganghub-bot-attendance`.
+>   - **Headless browser** untuk "melarutkan" challenge (memecahkan JS/PoW)
+>     tetap **terlarang** — itu mengakali anti-bot, bukan meniru klien wajar.
+>   - **Pinjam `cf_clearance`** orang lain tetap **terlarang** (terikat IP +
+>     sidik jari, dan itu menyamar sebagai sesi orang lain).
+>   - **Tempel token (Opsi C1)** tetap ada sebagai fallback bila proxy tidak
+>     tersedia/diblokir, dan UI tetap menyatakannya **jujur**. Ketika
+>     `cf-mitigated=challenge`, kartu "Login otomatis" menyebut bahwa cara ini
+>     butuh proxy (`isUnsolvableCloudflareChallenge`, MURNI) dan mengarahkan ke
+>     tempel token. **Dengan proxy aktif, langkah tempel token tidak lagi wajib.**
 >
 > Deteksi ini dipisah sebagai fungsi murni `isUnsolvableCloudflareChallenge`
 > (`src/lib/monev-login.ts`) yang hanya bernilai `true` untuk
@@ -847,20 +857,27 @@ diamati saat uji pertama sebelum `ALLOW_LIVE_SUBMIT=1`.
 - **Jangan** mengakali CAPTCHA, menembus OTP/MFA, atau memalsukan identitas
   orang lain.
 - Bila muncul challenge → artinya **butuh intervensi manusia**, bukan diakali.
-  **✅ Catatan (2026-06):** sempat ada rencana memakai proxy residensial
-  (`MONEV_PROXY_URL`) untuk ini, tetapi **DIBATALKAN setelah diuji** (lihat
-  `SPEC.md` §6). Uji live membuktikan API Monev **tidak** diblokir: token hasil
-  panen dari browser pengguna berhasil dipakai dari Vercel (ACTIVE). Karena itu
-  **proxy tidak diperlukan dan tidak boleh ditambahkan**; solusinya adalah
-  pengguna login sekali di browser sendiri lalu menempel `monev_refresh_token`.
+  **✅ KEPUTUSAN BARU (2026-06, DIPERBARUI): proxy residensial DIIZINKAN untuk
+  jalur login SSO.** Larangan lama ("proxy dibatalkan") **dicabut pemilik**
+  setelah terbukti repo referensi `maganghub-bot-attendance` berhasil login
+  lewat proxy residensial (`HttpsProxyAgent` + `MAGANGHUB_PROXY_URL`). Yang
+  dijaga Cloudflare Managed Challenge **hanya** halaman login SSO
+  (`account.kemnaker.go.id`); proxy membuat request datang dari IP residensial
+  — tempat challenge lolos **secara wajar**, sama seperti browser pengguna.
+  Ini bukan "menerobos proteksi", melainkan tampil sebagai klien yang wajar.
+  Lihat `SPEC.md` §6, `AGENTS.md` §73.
+- **Cara pakai:** set `MAGANGHUB_PROXY_URL` di `.env` (opsional). Implementasi
+  terpusat di `src/lib/proxy-fetch.ts` (`fetchPortal`, memakai
+  `undici.ProxyAgent`). Bila env kosong → `fetch` biasa, perilaku lama utuh.
 - Klien ini **hanya** melakukan login + submit laporan. Tidak ada aksi lain.
 - **Tidak boleh mengirim apa pun** selama fase uji koneksi.
 
-Catatan penting: karena **API tidak diblokir Cloudflare** (§7), jalur data
-(login code-exchange, refresh, submit) **tidak** butuh proxy. Yang butuh
-intervensi manusia hanyalah langkah yang menyentuh `account.kemnaker.go.id`
-(halaman SSO) — dan itu diselesaikan dengan login sekali di browser pengguna,
-bukan dengan proxy.
+Catatan penting: karena **API Monev tidak diblokir Cloudflare** (§7), jalur data
+(code-exchange, `refresh`, submit) **tidak** lewat proxy — hanya jalur yang
+menyentuh `account.kemnaker.go.id` (SSO) yang lewat proxy, dan itu diatur
+otomatis oleh `fetchPortal` (proxy hanya aktif di pemanggil yang memakainya).
+Jalur "tempel token" di `/credentials` tetap ada sebagai fallback bila proxy
+tidak tersedia/diblokir.
 
 ---
 
