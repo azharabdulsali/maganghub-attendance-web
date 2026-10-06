@@ -196,6 +196,40 @@ Output ada di `graphify-out/` (dilacak git kecuali `cache/`):
 6. **Biarkan `ALLOW_LIVE_SUBMIT` kosong** sampai Anda benar-benar siap mengirim
    laporan sungguhan. Selama kosong, semua pengiriman berjalan mode latihan.
 
+7. **Aktifkan Web Analytics** (opsional). Di dashboard Vercel: buka proyek →
+   tab **Analytics** → **Enable**. Paket `@vercel/analytics` sudah terpasang di
+   repo, jadi tidak ada langkah build tambahan. Data mulai muncul setelah deploy
+   berikutnya. Lihat bagian "Analytics" di bawah.
+
+## Analytics
+
+Aplikasi memakai **Vercel Web Analytics** (`@vercel/analytics`, dipasang di
+`src/providers.tsx`) untuk melacak halaman yang dikunjungi. Ada tiga hal yang
+harus dipahami sebelum mengubah/menghapusnya:
+
+1. **Butuh CSP khusus.** CSP aplikasi (SPEC §9) memakai `connect-src 'self'`.
+   Skrip Analytics mengirim data ke `vitals.vercel-insights.com`, jadi domain
+   itu ditambahkan lewat konstanta `VERCEL_ANALYTICS_CONNECT_SRC` di
+   `src/lib/security-headers.ts`. **Jangan hapus** — tanpanya skrip tetap
+   termuat tapi semua data diblokir browser (dasbor kosong). Ada tes penjaga di
+   `src/lib/security-headers.test.ts`.
+
+2. **Rute sensitif diredaksi.** `beforeSend` di `src/providers.tsx` membatalkan
+   pelaporan untuk `/credentials`, `/admin`, `/profile`, dan `/dev-tools`
+   (termasuk sub-path-nya). Tambahkan rute sensitif baru ke `PATH_SENSITIF` di
+   file itu, bukan ke halaman Analytics.
+
+3. **Hanya berfungsi di Vercel.** Di localhost dan di hosting non-Vercel, paket
+   ini tidak mengirim apa pun (di dev ia hanya mencetak event ke konsol). Bila
+   suatu saat pindah dari Vercel, fitur ini jadi no-op — hapus `<Analytics />`,
+   konstanta CSP, dan bagian "Statistik kunjungan" di
+   `src/app/privacy/page.tsx`.
+
+> **Privasi:** Vercel Analytics tidak memakai cookie atau fingerprint peramban,
+> tetapi ia tetap layanan pihak ketiga. Karena itu halaman `/privacy` (bagian 4)
+> menyebutkannya secara eksplisit. Bila Anda mengaktifkan/mematikan Analytics,
+> perbarui bagian itu agar klaim privasi tetap benar.
+
 ## Catatan sebelum dipakai sungguhan
 
 ### Rate limit lintas instance
