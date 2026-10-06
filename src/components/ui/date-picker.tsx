@@ -1,75 +1,70 @@
 "use client";
 
-// src/components/ui/date-picker.tsx: pemilih tanggal satu-nilai (popup kalender).
+// src/components/ui/date-picker.tsx: pemilih tanggal satu-nilai.
 //
-// Kenapa dibuat sendiri, bukan `<input type="date">`: peramban tidak mengizinkan
-// kita menonaktifkan tanggal tertentu pada input bawaan, sedangkan di sini
-// tanggal LIBUR (Sabtu/Minggu + libur nasional) dan tanggal LAMPAU (sebelum hari
-// ini) memang tidak boleh dipilih.
-// Popup ini memakai perhitungan kalender yang SAMA dengan halaman /calendar
-// (`MONTH_LABELS`, `WEEKDAY_LABELS`) dan aturan libur yang SAMA dengan jalur
-// kirim (`isHoliday`), jadi tanggal yang dinonaktifkan di sini pasti tanggal
-// yang memang dilewati otomasi, tidak ada dua daftar yang bisa berbeda.
+// Kini dibangun dari komponen RESMI registry neobrutalism:
+//   - <Popover> (src/components/ui/popover.tsx) sebagai cangkang popup,
+//   - <Calendar> (src/components/ui/calendar.tsx, react-day-picker) sebagai kisi.
 //
-// Berbeda dari /calendar, kisi di sini TIDAK mengosongkan sel padding: hari
-// dari bulan sebelah tetap ditampilkan (redup) supaya kisi terlihat utuh.
+// Kenapa dulu ditulis tangan, dan apa yang tetap dipertahankan: peramban tidak
+// mengizinkan menonaktifkan tanggal tertentu pada `<input type="date">`,
+// sedangkan di sini tanggal LIBUR (Sabtu/Minggu + libur nasional) dan tanggal
+// LAMPAU (sebelum hari ini) memang tidak boleh dipilih. Aturan itu diteruskan
+// lewat matcher `disabled` react-day-picker, jadi perilakunya sama persis
+// dengan sebelumnya — hanya kulitnya yang sekarang memakai komponen resmi.
+//
+// Aturan libur memakai `isHoliday` yang SAMA dengan jalur kirim, dan hari ini
+// dihitung dari jam perangkat, jadi tidak ada dua daftar yang bisa berbeda.
 //
 // BATAS TANGGAL: pemilih ini hanya boleh memilih HARI INI atau tanggal yang
-// akan datang. Tanggal sebelum hari ini diredupkan dan TIDAK bisa diklik sama
-// sekali (lihat `lampau` di bawah), dan panah "bulan sebelumnya" dimatikan
-// begitu sudah di bulan berjalan supaya pengguna tidak bisa menggulir ke masa
-// lalu lewat navigasi bulan. Aturan ini cermin dari aturan server: laporan
-// hanya sah untuk hari ini (lihat report-policy.ts).
+// akan datang (lihat `disabledMatchers`), dan tombol "bulan sebelumnya" mati
+// begitu berada di bulan berjalan. Ini cermin dari aturan server: laporan hanya
+// sah untuk hari ini (lihat report-policy.ts).
 //
-// Batas tanggung jawab: komponen ini murni UI + perhitungan tanggal murni. Ia
-// TIDAK tahu soal server, tidak memvalidasi, dan tidak menyimpan apa pun.
+// PENGECUALIAN: halaman yang SEDANG mengelola daftar libur (/admin/holidays)
+// justru perlu memilih tanggal lampau/Sabtu/Minggu, jadi di sana dioper
+// `unrestricted` — semua pembatas dilepas. Halaman lain tetap memakai default
+// (terbatas) supaya perilakunya tidak berubah.
 
-import { useEffect, useRef, useState } from "react";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calendar as CalendarIcon } from "lucide-react";
+import type { Matcher } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
 import {
-  buildMonthGridWithAdjacent,
-  MONTH_LABELS,
-  WEEKDAY_LABELS,
-  type YearMonth,
-} from "@/lib/calendar";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { MONTH_LABELS } from "@/lib/calendar";
 import { isHoliday, isPlainDate } from "@/lib/report-policy";
 
-/** Rombak `YYYY-MM-DD` menjadi YearMonth, atau null bila tidak sah. */
-function toYearMonth(iso: string): YearMonth | null {
-  if (!isPlainDate(iso)) return null;
-  const [y, m] = iso.split("-").map(Number);
-  return { year: y, month: m };
+/** `YYYY-MM-DD` → Date lokal (tanpa pergeseran zona waktu). */
+function toDate(iso: string | null): Date | undefined {
+  if (!iso || !isPlainDate(iso)) return undefined;
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 
-/** Bulan berjalan menurut jam perangkat (kisi baru butuh bulan awal). */
-function todayYearMonth(): YearMonth {
-  const now = new Date();
-  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+/** Date lokal → `YYYY-MM-DD`. */
+function toIso(date: Date): string {
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${m}-${d}`;
 }
 
-/** Tanggal hari ini sebagai `YYYY-MM-DD` lokal perangkat. */
-function todayIso(): string {
+/** Hari ini sebagai Date lokal tengah malam. */
+function today(): Date {
   const now = new Date();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${m}-${d}`;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
 /** Format tampilan: "2 Oktober 2026" (bahasa Indonesia, tanpa zona waktu). */
 function formatDisplay(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   return `${d} ${MONTH_LABELS[m]} ${y}`;
-}
-
-/**
- * `true` bila `iso` jatuh SEBELUM hari ini. Keduanya `YYYY-MM-DD`, jadi
- * perbandingan leksikografis sama dengan perbandingan kronologis.
- */
-function isBeforeToday(iso: string, today: string): boolean {
-  return iso < today;
 }
 
 export interface DatePickerProps {
@@ -84,189 +79,93 @@ export interface DatePickerProps {
   className?: string;
   /**
    * Daftar libur nasional dari tabel admin (`YYYY-MM-DD`). Bila diberikan,
-   * tanggal ini juga dinonaktifkan — sejalan dengan `decide()` di server.
-   * Bila tidak, hanya daftar statis bawaan yang dipakai (pemanggil murni).
+   * tanggal ini juga dinonaktifkan.
    */
-  holidays?: ReadonlySet<string>;
+  holidays?: string[];
+  /**
+   * Bila `true`, semua pembatas tanggal dilepas: tanggal LAMPAU, Sabtu/Minggu,
+   * dan libur semuanya bisa dipilih, dan pengguna bisa berpindah ke bulan mana
+   * pun (termasuk ke belakang). Dipakai pada halaman yang justru DAFTAR
+   * tanggalnya sedang dikelola (mis. `/admin/holidays`), sehingga menonaktifkan
+   * hari libur di sana akan kontraproduktif. Default `false`.
+   */
+  unrestricted?: boolean;
 }
 
 export function DatePicker({
   value,
   onChange,
-  disabled = false,
+  disabled,
   placeholder = "Pilih tanggal",
   id,
   className,
   holidays,
+  unrestricted = false,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
-  // Bulan yang sedang ditampilkan di popup. Ikut nilai terpilih bila ada.
-  const [view, setView] = useState<YearMonth>(
-    () => (value ? toYearMonth(value) : null) ?? todayYearMonth(),
-  );
-  const wrapRef = useRef<HTMLDivElement>(null);
+  const selected = toDate(value);
 
-  // Buka popup → hitung bulan yang ditampilkan di handler (bukan di efek),
-  // agar tidak memicu cascading render.
-  function toggleOpen() {
-    if (!open) {
-      setView((value ? toYearMonth(value) : null) ?? todayYearMonth());
-    }
-    setOpen((v) => !v);
-  }
+  // Matcher `disabled` react-day-picker: setiap tanggal lampau DAN setiap
+  // tanggal libur (Sabtu/Minggu + libur dari admin) tidak bisa diklik. Ini
+  // pengganti langsung dari pengecekan `libur`/`lampau` versi lama.
+  //
+  // Bila `unrestricted` (halaman kelola libur), tak satu pun dipasang: di sana
+  // justru Sabtu/Minggu & tanggal lampau yang mau didaftarkan sebagai libur.
+  //
+  // `isHoliday` menuntut Set (ReadonlySet) untuk lookup O(1), jadi array
+  // serializable dari server dibungkus sekali di sini.
+  const disabledMatchers = useMemo<Matcher[]>(() => {
+    if (unrestricted) return [];
+    const batas = today();
+    const libur = new Set(holidays ?? []);
+    return [
+      { before: batas },
+      (date) => date.getDay() === 0 || date.getDay() === 6,
+      (date) => isHoliday(toIso(date), libur),
+    ];
+  }, [holidays, unrestricted]);
 
-  // Tutup saat klik di luar atau tekan Escape.
-  useEffect(() => {
-    if (!open) return;
-    function onDocDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onDocDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDocDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  const weeks = buildMonthGridWithAdjacent(view);
-  const today = todayIso();
-
-  function pilih(iso: string) {
-    // Pagar kedua: walau tombolnya sudah `disabled`, jangan pernah mengirim
-    // tanggal lampau ke induk. Aturan ini cermin dari validasi server.
-    if (isBeforeToday(iso, today)) return;
-    onChange(iso);
-    setOpen(false);
-  }
-
-  function geser(delta: number) {
-    setView((prev) => {
-      const bulan = prev.month + delta;
-      if (bulan < 1) return { year: prev.year - 1, month: 12 };
-      if (bulan > 12) return { year: prev.year + 1, month: 1 };
-      return { year: prev.year, month: bulan };
-    });
-  }
-
-  // Panah "bulan sebelumnya" dimatikan begitu sudah di bulan berjalan, supaya
-  // pengguna tidak bisa menggulir ke masa lalu lewat navigasi bulan.
-  const bulanIni = todayYearMonth();
-  const bolehMundur = view.year > bulanIni.year || (view.year === bulanIni.year && view.month > bulanIni.month);
+  const bolehMundur = useMemo(() => {
+    if (unrestricted) return undefined;
+    const sekarang = today();
+    const bulanAwal = new Date(sekarang.getFullYear(), sekarang.getMonth(), 1);
+    return bulanAwal;
+  }, [unrestricted]);
 
   return (
-    <div ref={wrapRef} className={cn("relative", className)}>
-      <Button
-        id={id}
-        type="button"
-        variant="neutral"
-        disabled={disabled}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={toggleOpen}
-        className="w-full justify-start text-left font-normal"
-      >
-        <Calendar className="mr-2 size-4" aria-hidden />
-        <span className={cn("truncate", !value && "text-foreground/50")}>
-          {value ? formatDisplay(value) : placeholder}
-        </span>
-      </Button>
-
-
-
-      {open ? (
-        <div
-          role="dialog"
-          aria-label="Pilih tanggal"
-          className="absolute z-50 mt-2 w-[280px] rounded-base border-2 border-border bg-background p-3 shadow-shadow"
-        >
-          {/* Navigasi bulan. */}
-          <div className="mb-2 flex items-center justify-between">
+    <div className={cn("relative", className)}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          id={id}
+          render={
             <Button
               type="button"
-              variant="noShadow"
-              size="icon-sm"
-              title="Bulan sebelumnya"
-              aria-label="Bulan sebelumnya"
-              disabled={!bolehMundur}
-              onClick={() => geser(-1)}
+              variant="neutral"
+              disabled={disabled}
+              className="w-full justify-start text-left font-normal"
             >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="font-heading text-sm">
-              {MONTH_LABELS[view.month]} {view.year}
-            </span>
-            <Button
-              type="button"
-              variant="noShadow"
-              size="icon-sm"
-              title="Bulan berikutnya"
-              aria-label="Bulan berikutnya"
-              onClick={() => geser(1)}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-
-          {/* Nama hari. */}
-          <div className="grid grid-cols-7 gap-0.5">
-            {WEEKDAY_LABELS.map((label) => (
-              <span
-                key={label}
-                className="py-1 text-center text-[10px] font-heading text-foreground/50"
-              >
-                {label}
+              <CalendarIcon className="mr-2 size-4" aria-hidden />
+              <span className={cn("truncate", !value && "text-foreground/50")}>
+                {value ? formatDisplay(value) : placeholder}
               </span>
-            ))}
-          </div>
-
-          {/* Kisi tanggal. Hari dari bulan sebelah ditampilkan redup; tanggal
-              sebelum hari ini TIDAK bisa diklik (lihat `lampau`). */}
-          <div className="grid grid-cols-7 gap-0.5">
-            {weeks.flat().map((cell) => {
-              const libur = isHoliday(cell.iso, holidays);
-              const lampau = isBeforeToday(cell.iso, today);
-              const terpilih = cell.iso === value;
-              const isToday = cell.iso === today;
-              const nonaktif = libur || lampau;
-              const [cellYear, cellMonth] = cell.iso.split("-").map(Number);
-              return (
-                <button
-                  key={cell.iso}
-                  type="button"
-                  disabled={nonaktif}
-                  aria-label={`${cell.day} ${MONTH_LABELS[cellMonth]} ${cellYear}${
-                    libur ? ", libur" : lampau ? ", sudah lewat" : ""
-                  }`}
-                  aria-pressed={terpilih}
-                  aria-current={isToday ? "date" : undefined}
-                  onClick={() => pilih(cell.iso)}
-                  className={cn(
-                    "flex size-9 items-center justify-center rounded-sm text-xs tabular-nums transition-colors",
-                    libur
-                      ? "cursor-not-allowed text-foreground/25 line-through"
-                      : lampau
-                        ? "cursor-not-allowed text-foreground/25"
-                        : "cursor-pointer hover:bg-muted",
-                    // Bulan sebelah: tetap ditampilkan, hanya dibedakan warnanya.
-                    !nonaktif && (cell.outside ? "text-foreground/40" : "text-foreground/80"),
-                    isToday && !terpilih && "font-heading underline underline-offset-2",
-                    terpilih && "bg-main text-main-foreground hover:bg-main",
-                  )}
-                >
-                  {cell.day}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Aksi cepat. */}
-          <div className="mt-2 flex items-center justify-between border-t-2 border-border pt-2">
+            </Button>
+          }
+        />
+        <PopoverContent align="start" className="w-auto p-0">
+          <Calendar
+            mode="single"
+            selected={selected}
+            defaultMonth={selected ?? today()}
+            startMonth={bolehMundur}
+            disabled={disabledMatchers}
+            onSelect={(date) => {
+              // Pagar kedua: jangan pernah mengirim tanggal kosong ke induk.
+              if (!date) return;
+              onChange(toIso(date));
+              setOpen(false);
+            }}
+          />
+          <div className="mt-2 flex items-center justify-between border-t-2 border-border px-3 pb-3 pt-2">
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -285,8 +184,8 @@ export function DatePicker({
               Kosongkan
             </button>
           </div>
-        </div>
-      ) : null}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

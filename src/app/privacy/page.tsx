@@ -12,6 +12,12 @@
 // bisa didekripsi untuk dipakai login ke portal, jadi pengelola SECARA TEKNIS
 // mampu membukanya. Menyembunyikan fakta ini akan menyesatkan, dan itu
 // bertentangan dengan prinsip keterbukaan yang dipakai di seluruh proyek.
+//
+// Ini juga sebabnya bagian "Statistik kunjungan (Vercel Analytics)" ada: app ini
+// memakai @vercel/analytics (dipasang di src/providers.tsx). Sebelumnya halaman
+// ini mengklaim "tidak memakai layanan analitik" — klaim itu kini DIPERBARUI
+// agar tetap benar, bukan dibiarkan basi. Jangan hapus bagian itu selama
+// <Analytics /> masih terpasang.
 
 import type { Metadata } from "next";
 import { LastUpdated, LegalPage, Section, ContactBlock } from "@/components/legal-page";
@@ -45,7 +51,7 @@ export default function PrivacyPage() {
         "bagaimana data itu dilindungi, dan hak Anda atasnya."
       }
     >
-      <LastUpdated date="5 Februari 2026" />
+      <LastUpdated date="6 Oktober 2026" />
 
       <Section nomor="1" judul="Data yang kami kumpulkan">
         <p>Kami hanya menyimpan data yang dibutuhkan agar aplikasi berfungsi:</p>
@@ -96,8 +102,8 @@ export default function PrivacyPage() {
             Kami tidak menjual atau menyewakan data Anda kepada pihak ketiga.
           </li>
           <li>
-            Kami tidak memakai layanan analitik maupun iklan pelacak di halaman
-            publik aplikasi ini.
+            Kami tidak memakai iklan pelacak, cookie iklan, maupun pembuat
+            sidik jari peramban (browser fingerprinting).
           </li>
           <li>
             Kami tidak menulis kata sandi ke dalam log, pesan galat, atau
@@ -106,16 +112,50 @@ export default function PrivacyPage() {
         </ul>
       </Section>
 
-      <Section nomor="4" judul="Penyimpanan dan penghapusan">
+      <Section nomor="4" judul="Statistik kunjungan (Vercel Analytics)">
+        <p>
+          Aplikasi memakai <strong>Vercel Web Analytics</strong> untuk mengetahui
+          halaman mana yang sering dibuka, sehingga kami bisa memperbaiki bagian
+          yang paling sering dipakai. Layanan ini memang{' '}
+          <em>layanan analitik pihak ketiga</em> — kami menyebutnya terbuka di
+          sini, bukan menyembunyikannya.
+        </p>
+        <p>Yang perlu Anda ketahui tentang layanan ini:</p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            <strong>Tidak memakai cookie</strong> dan tidak membuat sidik jari
+            peramban; Anda juga tidak dilacak di situs lain.
+          </li>
+          <li>
+            Yang dicatat bersifat agregat: halaman yang dikunjungi, rujukan
+            (referrer), jenis perangkat, dan negara. <strong>Tidak ada</strong>{' '}
+            isi laporan, kredensial Monev, atau identitas akun yang dikirim.
+          </li>
+          <li>
+            Halaman yang bersifat pribadi/sensitif —{' '}
+            <code>/credentials</code>, <code>/admin</code>, <code>/profile</code>,
+            dan <code>/dev-tools</code> — <strong>sengaja dikecualikan</strong>{' '}
+            dari pelaporan (lihat <code>beforeSend</code> di{' '}
+            <code>src/providers.tsx</code>), jadi kunjungan ke sana tidak
+            tercatat.
+          </li>
+          <li>
+            Data kunjungan disimpan di infrastruktur Vercel. Bila aplikasi
+            dijalankan di luar Vercel, fitur ini tidak mengirim data apa pun.
+          </li>
+        </ul>
+      </Section>
+
+      <Section nomor="5" judul="Penyimpanan dan penghapusan">
         <p>
           Data disimpan selama akun Anda aktif. Anda dapat menghapus draf
           laporan dan memutus koneksi kredensial Monev dari dashboard kapan
           saja. Untuk menghapus seluruh akun beserta datanya, hubungi pengelola
-          melalui kontak di bagian 6.
+          melalui kontak di bagian 7.
         </p>
       </Section>
 
-      <Section nomor="5" judul="Perubahan kebijakan">
+      <Section nomor="6" judul="Perubahan kebijakan">
         <p>
           Bila kebijakan ini berubah, tanggal &quot;Terakhir diperbarui&quot; di
           atas akan ikut berubah. Perubahan besar akan ditandai dengan jelas di
@@ -123,7 +163,7 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <Section nomor="6" judul="Hubungi kami">
+      <Section nomor="7" judul="Hubungi kami">
         <ContactBlock />
       </Section>
     </LegalPage>

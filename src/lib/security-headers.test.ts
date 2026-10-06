@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   HSTS_HEADER_VALUE,
   SECURITY_HEADERS,
+  VERCEL_ANALYTICS_CONNECT_SRC,
   buildContentSecurityPolicy,
   securityHeaders,
 } from "./security-headers";
@@ -30,6 +31,15 @@ describe("buildContentSecurityPolicy", () => {
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'self'");
     expect(csp).toContain("form-action 'self'");
+  });
+
+  it("mengizinkan endpoint Vercel Analytics di connect-src (kedua mode)", () => {
+    // Tanpa ini, skrip Analytics terpasang tapi datanya diblokir CSP.
+    for (const isDev of [true, false]) {
+      const csp = buildContentSecurityPolicy(isDev);
+      expect(csp).toContain(`connect-src 'self' ${VERCEL_ANALYTICS_CONNECT_SRC}`);
+      expect(csp).toContain("vitals.vercel-insights.com");
+    }
   });
 
   it("produksi memuat upgrade-insecure-requests, dev tidak", () => {

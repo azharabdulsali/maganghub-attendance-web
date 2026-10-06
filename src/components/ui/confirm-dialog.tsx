@@ -1,10 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /**
  * Dialog konfirmasi untuk aksi yang tidak bisa dibatalkan.
@@ -78,56 +85,40 @@ function ConfirmDialog({
   onConfirm,
 }: ConfirmDialogProps) {
   return (
-    <AlertDialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
-      <AlertDialogPrimitive.Portal>
-        <AlertDialogPrimitive.Backdrop
-          data-slot="confirm-dialog-backdrop"
-          className="fixed inset-0 z-50 bg-overlay/60 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0"
-        />
-        <AlertDialogPrimitive.Popup
-          data-slot="confirm-dialog-popup"
-          className={cn(
-            "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2",
-            "rounded-base border-2 border-border bg-background p-5 shadow-shadow",
-            "transition-all data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95",
-          )}
-        >
-          <AlertDialogPrimitive.Title className="font-heading text-lg">
-            {title}
-          </AlertDialogPrimitive.Title>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
           {description ? (
-            <AlertDialogPrimitive.Description
-              render={<p />}
-              className="mt-2 text-sm text-foreground/80"
-            >
+            // `render={<div />}` (bukan `<p>`): beberapa pemanggil menaruh
+            // konten berblok (kode, tombol, label) di dalam `description`, dan
+            // `<div>` di dalam `<p>` melanggar HTML → memicu hydration error.
+            <AlertDialogDescription render={<div />}>
               {description}
-            </AlertDialogPrimitive.Description>
+            </AlertDialogDescription>
           ) : null}
+        </AlertDialogHeader>
 
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
-            <AlertDialogPrimitive.Close
-              render={
-                <Button variant="neutral" type="button">
-                  {cancelLabel}
-                </Button>
-              }
-            />
-            {hideConfirm ? null : (
-              <Button
+        <AlertDialogFooter>
+          {hideConfirm ? (
+            // Dialog hasil/informasi: satu tombol tutup. Tetap `Close`, jadi
+            // `onOpenChange` dihormati (pemanggil bisa menolak penutupan).
+            <AlertDialogCancel type="button">{cancelLabel}</AlertDialogCancel>
+          ) : (
+            <>
+              <AlertDialogCancel type="button">{cancelLabel}</AlertDialogCancel>
+              <AlertDialogAction
                 type="button"
                 variant={confirmVariant}
-                onClick={() => {
-                  onConfirm?.();
-                  onOpenChange(false);
-                }}
+                onClick={onConfirm}
               >
                 {confirmLabel}
-              </Button>
-            )}
-          </div>
-        </AlertDialogPrimitive.Popup>
-      </AlertDialogPrimitive.Portal>
-    </AlertDialogPrimitive.Root>
+              </AlertDialogAction>
+            </>
+          )}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

@@ -1,7 +1,7 @@
-@AGENTS.md
+# Panduan agen — MagangHub Attendance Web
 
-> Bagian `graphify` di bawah **ditulis otomatis oleh graphify** — jangan diubah
-> manual, ia akan ditimpa saat `graphify claude install` dijalankan ulang.
+> Berkas ini dibaca otomatis oleh agen AI. Bagian di bawah **ditulis oleh
+> graphify** (jangan diubah manual) dan berisi aturan pemakaian peta kode.
 
 ## graphify
 

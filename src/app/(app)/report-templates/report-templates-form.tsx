@@ -426,7 +426,7 @@ export default function ReportTemplatesForm({
               onChange={(v) => pindah(v)}
               placeholder="Semua tanggal (default)"
               className="w-60"
-              holidays={holidaySet}
+              holidays={holidays}
             />
           </div>
           {tanggal !== null ? (

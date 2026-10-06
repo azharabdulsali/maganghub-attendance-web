@@ -20,9 +20,10 @@ import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Message } from "@/components/ui/message";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -74,10 +75,21 @@ export function HolidaysManager({ initialRows, today }: Props) {
 
   async function simpan(event: React.FormEvent) {
     event.preventDefault();
-    setWorking(true);
     setError(null);
 
-    const payload = { date: tanggal.trim(), name: nama.trim(), kind: jenis };
+    // <DatePicker> bukan kontrol form asli, jadi atribut `required` bawaan
+    // peramban tak lagi berlaku. Kami ulangi pemeriksaan wajibnya di sini agar
+    // umpan balik cepat tetap ada (server tetap memvalidasi ini sebagai pagar
+    // sesungguhnya di /api/admin/holidays).
+    const date = tanggal.trim();
+    if (!date) {
+      setError("Tanggal wajib dipilih.");
+      return;
+    }
+
+    setWorking(true);
+
+    const payload = { date, name: nama.trim(), kind: jenis };
     try {
       const res = await fetch("/api/admin/holidays", {
         method: editingId ? "PUT" : "POST",
@@ -143,12 +155,14 @@ export function HolidaysManager({ initialRows, today }: Props) {
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="holiday-date">Tanggal</Label>
-                <Input
+                <DatePicker
                   id="holiday-date"
-                  type="date"
-                  value={tanggal}
-                  onChange={(e) => setTanggal(e.target.value)}
-                  required
+                  value={tanggal || null}
+                  onChange={(v) => setTanggal(v ?? "")}
+                  // Halaman ini justru MENGELOLA daftar libur, jadi pembatas
+                  // "hari libur & tanggal lampau" dimatikan: admin harus bisa
+                  // memilih Sabtu/Minggu atau tanggal mundur untuk didaftarkan.
+                  unrestricted
                 />
                 <span className="text-xs text-foreground/60">
                   Pilih hari kerja (Sabtu/Minggu sudah otomatis libur).
@@ -167,7 +181,7 @@ export function HolidaysManager({ initialRows, today }: Props) {
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="holiday-kind">Jenis</Label>
-                <Select
+                <NativeSelect
                   id="holiday-kind"
                   value={jenis}
                   onChange={(e) => setJenis(e.target.value)}
@@ -177,7 +191,7 @@ export function HolidaysManager({ initialRows, today }: Props) {
                       {k}
                     </option>
                   ))}
-                </Select>
+                </NativeSelect>
               </div>
             </div>
 

@@ -73,6 +73,16 @@ vt-full.txt
 vt-*.txt
 
 # ---------------------------------------------------------------------------
+# Graphify (peta kode / knowledge graph - lihat CLAUDE.md & CODEBUDDY.md)
+#
+# Output graphify DILACAK supaya agent (dan manusia) punya peta kode yang sama.
+# Yang diabaikan hanya cache SHA256 + penanda internal: sifatnya lokal, besar,
+# dan berubah tiap run tanpa nilai bila di-commit.
+# ---------------------------------------------------------------------------
+graphify-out/cache/
+graphify-out/.graphify_root
+
+# ---------------------------------------------------------------------------
 # Tangkapan layar MENTAH sebelum disanitasi (penting, lihat riwayat 0edfdf8).
 #
 # Tiga gambar `public/panduan/devtools-*.webp` JUSTRU memang dilacak git: file

@@ -33,6 +33,22 @@ export const HSTS_HEADER_VALUE =
   "max-age=63072000; includeSubDomains; preload";
 
 /**
+ * Domain intake Vercel Web Analytics (`<Analytics />`).
+ *
+ * Kenapa ada: saat di-deploy ke Vercel, skrip `/_vercel/insights/script.js`
+ * (same-origin, jadi sudah tercakup `'self'`) MENGIRIM data ke endpoint
+ * `vitals.vercel-insights.com`. Tanpa menambahkannya ke `connect-src`, browser
+ * memblokir pengiriman dan dasbor Analytics tetap kosong meski skrip terpasang.
+ *
+ * Kalau nanti beralih ke Vercel Speed Insights, domain tambahannya
+ * `vitals.vercel-insights.com` (sama) — cukup pakai konstanta ini.
+ *
+ * Catatan privasi: ini satu-satunya koneksi keluar yang kita izinkan, dan itu
+ * keputusan sadar (lihat README → "Analytics").
+ */
+export const VERCEL_ANALYTICS_CONNECT_SRC = "https://vitals.vercel-insights.com";
+
+/**
  * Content-Security-Policy.
  *
  * Ini CSP yang "ketat tapi masih bisa jalan" untuk Next.js:
@@ -41,6 +57,9 @@ export const HSTS_HEADER_VALUE =
  *                                  bootstrap; tanpa itu app tidak render.
  *                                  'unsafe-eval' hanya di dev (react-refresh).
  *   - `style-src 'unsafe-inline'` → Tailwind/style dinamis Next.
+ *   - `connect-src`              → 'self' + endpoint Vercel Analytics
+ *                                  (`VERCEL_ANALYTICS_CONNECT_SRC`). Satu-satunya
+ *                                  koneksi keluar yang diizinkan aplikasi.
  *   - `frame-ancestors 'none'`   → pengganti modern X-Frame-Options.
  *   - `object-src 'none'`        → larang plugin.
  *   - `base-uri 'self'`          → cegah pembajakan <base>.
@@ -60,7 +79,7 @@ export function buildContentSecurityPolicy(isDev: boolean): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    "connect-src 'self'",
+    `connect-src 'self' ${VERCEL_ANALYTICS_CONNECT_SRC}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",

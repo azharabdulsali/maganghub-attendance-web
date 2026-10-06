@@ -1,90 +1,50 @@
-import * as React from "react";
+"use client"
 
-import { cn } from "@/lib/utils";
+import { Switch as SwitchPrimitive } from "@base-ui/react/switch"
 
-// Sakelar on/off berbasis <button> native dengan `role="switch"`.
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+// Sakelar on/off resmi dari registry neobrutalism-components (Base UI Switch).
 //
-// Kenapa bukan input checkbox yang distyling, dan bukan Radix Switch:
-//  - `role="switch"` + `aria-checked` memberi screen reader status on/off
-//    secara eksplisit (lebih tepat daripada checkbox untuk pengaturan langsung
-//    berlaku seperti "aktifkan otomasi"). Spasi/Enter tetap bekerja karena ini
-//    <button> asli, jadi tidak ada handler tombol yang perlu ditulis manual.
-//  - Tanpa dependensi baru: `@radix-ui/react-switch` ada di node_modules
-//    hanya sebagai dependensi transitif paket `radix-ui` (bukan di
-//    package.json), memakainya langsung = phantom dependency yang bisa pecah
-//    saat versi `radix-ui` naik. Proyek ini juga memakai elemen native +
-//    token untuk komponen dasar (lihat input.tsx, select.tsx).
-//
-// Warna memakai token tema dan sengaja mengikuti komposisi yang SUDAH terbukti
-// kontras di proyek ini:
-//  - lintasan mati  : `bg-input` (terang abu, gelap putih 40%)
-//  - lintasan hidup : `bg-main` (aksen biru)
-//  - kenop          : `bg-background` (terang: biru pucat; gelap: kanvas)
-//  - kenop saat hidup: `bg-main-foreground` — token ini MEMANG disetel untuk
-//    teks/glyph di atas `bg-main` (di mode gelap nyaris hitam) dan sudah
-//    terbukti kontras 7:1, jadi kenop tetap terlihat di kedua tema.
+// Sebelumnya komponen ini ditulis tangan dengan `<button role="switch">`.
+// Kini memakai primitif Base UI supaya perilaku papan ketik, ARIA, dan
+// `data-checked`/`data-unchecked` gratis dari pustaka, sementara gaya tetap
+// memakai token tema proyek (`bg-main`, `border-border`, `ring-ring`).
 //
 // Catatan: ini HANYA untuk sakelar yang dikontrol state React. Bila JS mati,
 // sakelar tidak bisa diubah — karena itu formnya tetap punya tombol submit
-// biasa dan status awal tetap dibaca dari server. Jangan pakai komponen ini
-// sebagai satu-satunya cara input pada form yang harus jalan tanpa JS.
-type SwitchProps = Omit<
-  React.ComponentProps<"button">,
-  "role" | "onChange" | "children"
-> & {
-  /** Status aktif. Dikontrol penuh oleh pemanggil (controlled). */
-  checked?: boolean;
-  /** Dipanggil dengan status BARU (bukan event), seperti konvensi Radix. */
-  onCheckedChange?: (checked: boolean) => void;
-};
-
+// biasa dan status awal tetap dibaca dari server (lihat automation-form.tsx).
 function Switch({
   className,
-  checked = false,
-  onCheckedChange,
-  onClick,
+  size = "default",
   ...props
-}: SwitchProps) {
+}: React.ComponentProps<typeof SwitchPrimitive.Root> & {
+  size?: "sm" | "default"
+}) {
   return (
-    <button
-      type="button"
-      role="switch"
+    <SwitchPrimitive.Root
       data-slot="switch"
-      // `data-state` + `aria-checked` WAJIB diturunkan dari `checked`: itulah
-      // yang membuat CSS varian (`data-[state=checked]:…`) dan screen reader
-      // tahu statusnya. Tanpa ini sakelar tampak tidak berfungsi.
-      data-state={checked ? "checked" : "unchecked"}
-      aria-checked={checked}
-      onClick={(e) => {
-        onClick?.(e);
-        if (e.defaultPrevented) return;
-        onCheckedChange?.(!checked);
-      }}
+      data-size={size}
       className={cn(
-        // Lintasan sakelar. `h-6 w-11` = ukuran sasaran sentuh yang nyaman.
-        "group peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-border p-0.5 transition-colors",
-        "bg-input",
-        "data-[state=checked]:bg-main",
-        "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        "group/switch peer inline-flex shrink-0 cursor-pointer items-center rounded-full border-2 border-border bg-secondary-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-disabled:cursor-not-allowed data-disabled:opacity-50 data-checked:bg-main data-unchecked:bg-input",
+        size === "default" && "h-6 w-12",
+        size === "sm" && "h-5 w-9",
         className,
       )}
       {...props}
     >
-      {/* Kenop. Bergeser lewat `translate` saat aktif — dianimasikan agar
-          perubahan status terasa, bukan melompat. */}
-      <span
-        aria-hidden="true"
+      <SwitchPrimitive.Thumb
+        data-slot="switch-thumb"
         className={cn(
-          "pointer-events-none block size-4 rounded-full bg-background shadow-sm transition-transform",
-          "group-data-[state=checked]:bg-main-foreground",
-          // `group-data-[...]`: `data-state` ada di tombol INDUK, jadi varian
-          // harus di-scope ke grup (`group` sudah dipasang di tombol).
-          "translate-x-0 group-data-[state=checked]:translate-x-5",
+          "pointer-events-none block rounded-full border-2 border-border bg-background ring-0 transition-transform data-unchecked:translate-x-1 data-checked:bg-main-foreground",
+          size === "default" && "h-4 w-4 data-checked:translate-x-6",
+          size === "sm" && "h-3 w-3 data-checked:translate-x-4",
         )}
       />
-    </button>
-  );
+    </SwitchPrimitive.Root>
+  )
 }
 
-export { Switch };
+export { Switch }

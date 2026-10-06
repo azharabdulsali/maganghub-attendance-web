@@ -10,8 +10,11 @@
 //   - Menu BERSIFAT DATA (`MENU_*`), dipisah antara USER dan ADMIN. Peran
 //     ditentukan di layout (server) lalu diturunkan sebagai prop `isAdmin`,
 //     sehingga logika "siapa boleh melihat apa" tidak diduplikasi di klien.
-//   - Penyorotan menu aktif memakai usePathname. Halaman root `/` dicocokkan
-//     persis supaya tidak selalu ikut menyala saat berada di halaman lain.
+//   - Penyorotan menu aktif memakai usePathname, tapi ATURANNYA tinggal di
+//     src/lib/nav.ts (activeHref): hanya SATU menu menyala, yaitu href yang
+//     paling spesifik cocok. Ini mencegah induk & anak (mis. "/admin" dan
+//     "/admin/holidays") menyala bersamaan. Rute root "/" tidak ikut menyala
+//     di halaman lain karena hanya dicocokkan persis.
 //
 // Catatan keamanan: sidebar ini HANYA menyembunyikan tautan. Penjagaan
 // sesungguhnya tetap di server (layout + halaman masing-masing). Lihat
@@ -37,6 +40,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { activeHref } from "@/lib/nav";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -86,11 +90,6 @@ const MENU_ADMIN: MenuItem[] = [
   { href: "/dev-tools", label: "Alat Diagnostik", icon: ShieldAlert },
 ];
 
-function isActive(pathname: string, href: string) {
-  if (href === "/dashboard") return pathname === "/dashboard";
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
 function SidebarContent({
   user,
   onNavigate,
@@ -100,6 +99,10 @@ function SidebarContent({
 }) {
   const pathname = usePathname();
   const items = user.isAdmin ? [...MENU_UMUM, ...MENU_ADMIN] : MENU_UMUM;
+  // Hanya SATU menu yang menyala, yaitu yang href-nya paling spesifik cocok
+  // dengan rute saat ini (lihat activeHref). Tanpa ini "Panel Admin" ikut
+  // menyala saat kita berada di "/admin/holidays".
+  const current = activeHref(pathname, items);
 
   return (
     <div className="flex h-full flex-col gap-6 p-4">
@@ -119,7 +122,7 @@ function SidebarContent({
 
       <nav className="flex flex-1 flex-col gap-1.5" aria-label="Navigasi utama">
         {items.map((item) => {
-          const active = isActive(pathname, item.href);
+          const active = item.href === current;
           const Icon = item.icon;
           return (
             <Link

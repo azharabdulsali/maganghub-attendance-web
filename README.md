@@ -13,6 +13,7 @@ desain dan aturan teknis, lihat:
 | [`DESIGN.md`](./DESIGN.md) | Panduan visual & komponen UI |
 | [`AGENTS.md`](./AGENTS.md) | Panduan untuk agen/AI yang bekerja di repo ini |
 | [`docs/UI-LAYOUT.md`](./docs/UI-LAYOUT.md) | Aturan tata letak halaman |
+| [`graphify-out/GRAPH_REPORT.md`](./graphify-out/GRAPH_REPORT.md) | Peta kode (god nodes, komunitas, koneksi antar berkas) |
 | [`docs/CRON-SETUP.md`](./docs/CRON-SETUP.md) | Menyiapkan cron per pengguna |
 | [`docs/CRON-BULK.md`](./docs/CRON-BULK.md) | Dispatcher massal (satu cron untuk semua) |
 | [`docs/MONEV-API.md`](./docs/MONEV-API.md) | Catatan integrasi API Monev |
@@ -112,6 +113,50 @@ Sebelum mengirim perubahan, pastikan **keempatnya** lulus:
 npm run typecheck && npm run lint && npm test && npm run build
 ```
 
+## Peta kode (graphify)
+
+Repo ini memakai [graphify](https://github.com/Graphify-Labs/graphify) — sebuah
+*skill* untuk agen AI (bukan dependensi aplikasi) — yang mengindeks seluruh
+codebase menjadi **knowledge graph lokal**. Tujuannya: saat bertanya soal kode,
+agen membaca peta ini dulu alih-alih menyisir seluruh berkas.
+
+Ekstraksi kode murni **AST (tree-sitter), deterministik, tanpa LLM, tanpa API
+key** — berjalan sepenuhnya offline.
+
+### Prasyarat
+
+Python 3.10+ dan paket `graphifyy` (nama PyPI sementara; CLI tetap `graphify`):
+
+```bash
+pip install graphifyy
+```
+
+### Perintah yang sering dipakai
+
+| Perintah | Kegunaan |
+| --- | --- |
+| `graphify update .` | Bangun ulang graph dari kode (gratis, tanpa API key) |
+| `graphify explain "nama"` | Peran sebuah simbol/nodes & tetangganya |
+| `graphify path "A" "B"` | Jalur terpendek antara dua nodes |
+| `graphify query "..."` | Cari subgraph yang relevan dengan pertanyaan |
+
+`graphify query`/`explain`/`path` membutuhkan `GEMINI_API_KEY` (atau
+`GOOGLE_API_KEY`) untuk pertanyaan semantik; `update` tidak butuh apa pun.
+
+### Hasil
+
+Output ada di `graphify-out/` (dilacak git kecuali `cache/`):
+
+| Berkas | Isi |
+| --- | --- |
+| `graph.json` | Graph persisten — untuk `query`/`path`/`explain` |
+| `GRAPH_REPORT.md` | Ringkasan manusia: god nodes, koneksi mengejutkan |
+| `graph.html` | Viewer interaktif (klik, cari, filter per komunitas) |
+| `manifest.json` | Metadata graf |
+
+> Jalankan `graphify update .` setelah mengubah kode agar graph tidak basi.
+> Bandingkan **Built from commit** di `GRAPH_REPORT.md` dengan `git rev-parse HEAD`.
+
 ## Deploy ke Vercel
 
 1. **Import repo** di [vercel.com/new](https://vercel.com/new). Vercel mengenali
@@ -150,6 +195,40 @@ npm run typecheck && npm run lint && npm test && npm run build
 
 6. **Biarkan `ALLOW_LIVE_SUBMIT` kosong** sampai Anda benar-benar siap mengirim
    laporan sungguhan. Selama kosong, semua pengiriman berjalan mode latihan.
+
+7. **Aktifkan Web Analytics** (opsional). Di dashboard Vercel: buka proyek →
+   tab **Analytics** → **Enable**. Paket `@vercel/analytics` sudah terpasang di
+   repo, jadi tidak ada langkah build tambahan. Data mulai muncul setelah deploy
+   berikutnya. Lihat bagian "Analytics" di bawah.
+
+## Analytics
+
+Aplikasi memakai **Vercel Web Analytics** (`@vercel/analytics`, dipasang di
+`src/providers.tsx`) untuk melacak halaman yang dikunjungi. Ada tiga hal yang
+harus dipahami sebelum mengubah/menghapusnya:
+
+1. **Butuh CSP khusus.** CSP aplikasi (SPEC §9) memakai `connect-src 'self'`.
+   Skrip Analytics mengirim data ke `vitals.vercel-insights.com`, jadi domain
+   itu ditambahkan lewat konstanta `VERCEL_ANALYTICS_CONNECT_SRC` di
+   `src/lib/security-headers.ts`. **Jangan hapus** — tanpanya skrip tetap
+   termuat tapi semua data diblokir browser (dasbor kosong). Ada tes penjaga di
+   `src/lib/security-headers.test.ts`.
+
+2. **Rute sensitif diredaksi.** `beforeSend` di `src/providers.tsx` membatalkan
+   pelaporan untuk `/credentials`, `/admin`, `/profile`, dan `/dev-tools`
+   (termasuk sub-path-nya). Tambahkan rute sensitif baru ke `PATH_SENSITIF` di
+   file itu, bukan ke halaman Analytics.
+
+3. **Hanya berfungsi di Vercel.** Di localhost dan di hosting non-Vercel, paket
+   ini tidak mengirim apa pun (di dev ia hanya mencetak event ke konsol). Bila
+   suatu saat pindah dari Vercel, fitur ini jadi no-op — hapus `<Analytics />`,
+   konstanta CSP, dan bagian "Statistik kunjungan" di
+   `src/app/privacy/page.tsx`.
+
+> **Privasi:** Vercel Analytics tidak memakai cookie atau fingerprint peramban,
+> tetapi ia tetap layanan pihak ketiga. Karena itu halaman `/privacy` (bagian 4)
+> menyebutkannya secara eksplisit. Bila Anda mengaktifkan/mematikan Analytics,
+> perbarui bagian itu agar klaim privasi tetap benar.
 
 ## Catatan sebelum dipakai sungguhan
 
