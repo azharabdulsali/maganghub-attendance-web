@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-import { Select } from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Label } from "@/components/ui/label";
 
 // Sekumpulan filter dropdown yang dikirim sebagai SATU form GET.
@@ -52,7 +52,7 @@ export default function FilterBar({ fields }: { fields: FilterFieldDef[] }) {
             >
               {field.label}
             </Label>
-            <Select
+            <NativeSelect
               id={id}
               name={field.name}
               defaultValue={field.value}
@@ -65,7 +65,7 @@ export default function FilterBar({ fields }: { fields: FilterFieldDef[] }) {
                   {o.label}
                 </option>
               ))}
-            </Select>
+            </NativeSelect>
           </div>
         );
       })}

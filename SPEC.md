@@ -450,20 +450,33 @@ sekali di `src/lib/admin.ts` dan dipakai oleh `<Badge>`, `<Message>`, dan
 
 ### 5.12 Umpan balik aksi: dialog konfirmasi & toast
 
-Dua mekanisme untuk menjawab "apakah klik saya berhasil?", keduanya sengaja
-dibangun di atas **Base UI** (sudah jadi dependensi), bukan ditulis dari nol:
-fokus, tombol Esc, dan atribut ARIA jangan dibuat sendiri kalau sudah ada.
+Dua mekanisme untuk menjawab "apakah klik saya berhasil?", keduanya **memakai
+komponen resmi dari registry neobrutalism** (Base UI di baliknya), bukan ditulis
+dari nol: fokus, tombol Esc, dan atribut ARIA jangan dibuat sendiri kalau sudah
+ada. Seluruh komponen `src/components/ui/**` sekarang berasal dari registry
+(`npx shadcn@latest add <url-neobrutalism>`) dan **tidak ditulis tangan lagi**;
+yang menyusun/menyetelnya hanya berkas komposisi (mis. `date-picker.tsx`,
+`confirm-dialog.tsx`).
 
 - **`src/components/ui/confirm-dialog.tsx`, `<ConfirmDialog>`.** Pengganti
   `window.confirm` untuk aksi yang tidak bisa dibatalkan. Dialog bawaan browser
   memblokir tab, tampil beda tiap OS, dan tidak bisa memuat konteks. Yang ini
-  memakai Base UI `AlertDialog` sehingga dapat focus trap, Esc, `role="alertdialog"`,
-  dan fokus awal pada tombol batal, gratis. Dipakai di halaman template laporan
-  saat menekan **Hapus**.
-- **`src/components/ui/toast.tsx`, `<ToastProvider>` + `useToast()`.** Notifikasi
-  sudut layar. Muncul karena **banyak form menaruh tombol di bawah sementara
-  pesan suksesnya di atas**, pengguna yang harus menggulir tidak melihatnya.
-  Toast selalu di posisi sama. Provider dipasang sekali di `src/app/providers.tsx`.
+  **menyusun** komponen resmi `alert-dialog.tsx` (`AlertDialog`/`Content`/
+  `Header`/`Title`/`Description`/`Footer`/`Action`/`Cancel`) sehingga dapat focus
+  trap, Esc, `role="alertdialog"`, dan fokus awal pada tombol batal, gratis. API
+  luar tetap sama (`title`, `description`, `confirmLabel`, `cancelLabel`,
+  `confirmVariant`, `hideConfirm`, `onConfirm`), dan `Action`/`Cancel` adalah
+  primitif Close resmi sehingga `onOpenChange(false)` tetap terpanggil. Dipakai
+  di halaman template laporan saat menekan **Hapus**, dan di tengah menu lain
+  (kredensial, keluar).
+- **`src/components/ui/toast.tsx`, `<Toaster>` + `useToast()`.** Notifikasi sudut
+  layar, memakai komponen resmi Base UI `Toast` (`createToastManager`). Muncul
+  karena **banyak form menaruh tombol di bawah sementara pesan suksesnya di
+  atas**, pengguna yang harus menggulir tidak melihatnya. Toast selalu di posisi
+  sama. Provider dipasang sekali di `src/app/providers.tsx`. Registry memakai
+  API manager (`toast.add({ title, description, type })`); proyek menambahkan
+  lapisan kompatibilitas tipis (`toast.success/error/...`) di berkas yang sama
+  agar ~15 pemanggil lama tidak perlu diubah dan gayanya tetap satu jalur.
 
 > **Batasan penting, toast ≠ `<Message>`.** Pesan yang perlu dibaca sambil
 > memperbaiki isian (mis. "nama minimal 3 karakter") tetap **inline** memakai
@@ -475,7 +488,9 @@ fokus, tombol Esc, dan atribut ARIA jangan dibuat sendiri kalau sudah ada.
 > halaman, sehingga toast akan buyar sebelum terbaca.
 
 > **Nada tetap satu sumber.** Toast, Badge, dan Message memakai peta warna dan
-> `Tone` yang sama. `src/components/ui/toast.test.ts` mengunci agar `good`
+> `Tone` yang sama. `src/components/ui/badge.test.ts` mengunci pemetaan nada
+> badge; lapisan kompatibilitas toast (`toast.success/error/...`) memetakannya ke
+> tipe Base UI (`success`/`error`/`info`/`warning`/`loading`) sehingga warnanya
 > tidak pernah berbeda dari badge.
 
 **Cakupan.** Dialog & toast dipakai di **seluruh menu**, bukan satu halaman:

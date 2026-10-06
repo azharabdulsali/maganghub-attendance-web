@@ -3,11 +3,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Textarea bergaya neobrutalism, senada dengan `input.tsx` (border-2, shadow).
+ * Textarea resmi dari registry neobrutalism-components (`textarea`).
  *
- * Ditulis sendiri karena template shadcn yang dipakai proyek ini belum
- * menyertakan textarea. Memakai `React.ComponentProps<"textarea">` supaya semua
- * atribut HTML asli (termasuk `rows` dan `maxLength`) terus bekerja apa adanya.
+ * Disalin lewat `npx shadcn@latest add <url-neobrutalism>`, lalu hanya token
+ * warna fokusnya diselaraskan dengan tema proyek (`ring-ring`/`ring-offset-2`
+ * alih-alih `ring-black`) agar gelap/terang tetap konsisten (DESIGN.md).
+ * Memakai `React.ComponentProps<"textarea">` supaya semua atribut HTML asli
+ * (termasuk `rows` dan `maxLength`) terus bekerja apa adanya.
  */
 function Textarea({
   className,

@@ -174,12 +174,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-      <header className="mb-8">
+      <div className="mb-8">
         <span className="inline-flex items-center rounded-base border-2 border-border bg-main px-3 py-1 text-xs font-heading text-main-foreground">
           ADMIN
         </span>
         <h1 className="mt-3 font-heading text-3xl">Panel Admin</h1>
-        <p className="mt-1 max-w-2xl text-sm text-foreground/70">
+        <p className="mt-1 text-sm text-foreground/70">
           Ringkasan seluruh pengguna, audit lintas pengguna, dan pengiriman
           massal. Tabel & audit bersifat hanya-baca; satu-satunya aksi yang
           mengubah data adalah tombol pengiriman massal di bawah (mengirim
@@ -193,7 +193,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </Link>
           .
         </p>
-      </header>
+      </div>
 
       <DispatchPanel />
 

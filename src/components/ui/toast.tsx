@@ -1,121 +1,293 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import { Toast as ToastPrimitive } from "@base-ui/react/toast";
+import { Toast as ToastPrimitive } from "@base-ui/react/toast"
+import {
+  CircleCheckIcon,
+  InfoIcon,
+  Loader2Icon,
+  OctagonXIcon,
+  TriangleAlertIcon,
+  XIcon,
+} from "lucide-react"
 
-import { cn } from "@/lib/utils";
-import type { Tone } from "@/lib/admin";
+import * as React from "react"
 
-/**
- * Notifikasi singkat di sudut layar untuk mengumumkan hasil sebuah aksi
- * ("Template tersimpan", "Template dihapus", "Gagal menghapus").
- *
- * Kenapa perlu: banyak form berisi tombol di bagian bawah, sementara pesan
- * suksesnya muncul di atas, pengguna yang sudah menggulir ke bawah tidak
- * melihatnya. Toast selalu muncul di tempat yang sama, jadi hasil aksi tidak
- * pernah "hilang".
- *
- * Toast TIDAK menggantikan `<Message>` inline: pesan yang perlu dibaca sambil
- * memperbaiki isian (mis. "nama minimal 3 karakter") tetap inline. Toast untuk
- * hasil akhir yang tidak perlu ditindaklanjuti.
- *
- * Semua nada memakai kunci `Tone` yang sama dengan `<Badge>`/`<Message>`.
- */
+import { Button } from "@/components/ui/button"
 
-const TONE_CLASS: Record<Tone, string> = {
-  good: "bg-success text-success-foreground",
-  bad: "bg-background text-foreground border-destructive",
-  neutral: "bg-background text-foreground",
-};
+import { cn } from "@/lib/utils"
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+// Toast resmi dari registry neobrutalism-components (Base UI Toast).
+//
+// API berubah: dulu `toast.success(title, description)`, kini manager Base UI
+// `toast.add({ title, description, type })`. Alias `toast.success/error/...`
+// tetap disediakan di akhir berkas agar pemanggil lama tidak perlu diubah dan
+// gaya tetap satu jalur.
+const toast = ToastPrimitive.createToastManager()
+
+function ToastProvider({ ...props }: ToastPrimitive.Provider.Props) {
+  return <ToastPrimitive.Provider {...props} />
+}
+
+function ToastPortal({ ...props }: ToastPrimitive.Portal.Props) {
+  return <ToastPrimitive.Portal data-slot="toast-portal" {...props} />
+}
+
+function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
   return (
-    <ToastPrimitive.Provider>
-      {children}
-      <ToastPrimitive.Portal>
-        <ToastPrimitive.Viewport
-          data-slot="toast-viewport"
-          className="pb-safe pr-safe fixed bottom-4 right-4 z-[60] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-2"
-        >
-          <ToastList />
-        </ToastPrimitive.Viewport>
-      </ToastPrimitive.Portal>
-    </ToastPrimitive.Provider>
-  );
+    <ToastPrimitive.Viewport
+      data-slot="toast-viewport"
+      className={cn(
+        "pointer-events-none fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-sm outline-none sm:right-4 sm:left-auto sm:mx-0 sm:w-full",
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+function ToastContent({
+  className,
+  ...props
+}: ToastPrimitive.Content.Props) {
+  return (
+    <ToastPrimitive.Content
+      data-slot="toast-content"
+      className={cn(
+        "flex items-start gap-3 overflow-hidden px-4 py-3 transition-opacity duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] data-behind:opacity-0 data-expanded:opacity-100",
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+function ToastTitle({ className, ...props }: ToastPrimitive.Title.Props) {
+  return (
+    <ToastPrimitive.Title
+      data-slot="toast-title"
+      className={cn("text-sm font-heading", className)}
+      {...props}
+    />
+  )
+}
+
+function ToastDescription({
+  className,
+  ...props
+}: ToastPrimitive.Description.Props) {
+  return (
+    <ToastPrimitive.Description
+      data-slot="toast-description"
+      className={cn("text-sm font-base text-foreground", className)}
+      {...props}
+    />
+  )
+}
+
+function ToastAction({
+  className,
+  render = (
+    <Button
+      variant="noShadow"
+      size="sm"
+      className="bg-secondary-background text-foreground"
+    />
+  ),
+  ...props
+}: ToastPrimitive.Action.Props) {
+  return (
+    <ToastPrimitive.Action
+      data-slot="toast-action"
+      render={render}
+      className={cn("shrink-0", className)}
+      {...props}
+    />
+  )
+}
+
+function ToastClose({
+  className,
+  children,
+  render = (
+    <Button
+      variant="neutral"
+      size="icon"
+      className="size-7 border-0 bg-transparent shadow-none! hover:translate-x-0! hover:translate-y-0!"
+    />
+  ),
+  ...props
+}: ToastPrimitive.Close.Props) {
+  return (
+    <ToastPrimitive.Close
+      data-slot="toast-close"
+      aria-label="Tutup notifikasi"
+      render={render}
+      className={cn(
+        "relative shrink-0 text-foreground after:absolute after:-inset-2 after:content-[''] hover:opacity-70",
+        className,
+      )}
+      {...props}
+    >
+      {children ?? <XIcon aria-hidden="true" />}
+    </ToastPrimitive.Close>
+  )
+}
+
+function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
+  return (
+    <ToastPrimitive.Root
+      data-slot="toast"
+      className={cn(
+        "group/toast pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom rounded-base border-2 border-border bg-background text-foreground will-change-transform outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "[--gap:0.75rem] [--height:var(--toast-frontmost-height,var(--toast-height))] [--offset-y:calc(var(--toast-offset-y)*-1+calc(var(--toast-index)*var(--gap)*-1)+var(--toast-swipe-movement-y))] [--peek:0.75rem] [--scale:calc(max(0,1-(var(--toast-index)*0.1)))] [--shrink:calc(1-var(--scale))]",
+        "h-(--height) [transform:translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)-(var(--toast-index)*var(--peek))-(var(--shrink)*var(--height))))_scale(var(--scale))] [transition:transform_500ms_cubic-bezier(0.22,1,0.36,1),opacity_500ms,height_150ms]",
+        "after:absolute after:top-full after:left-0 after:h-[calc(var(--gap)+1px)] after:w-full after:content-['']",
+        "data-expanded:h-(--toast-height) data-expanded:[transform:translateX(var(--toast-swipe-movement-x))_translateY(var(--offset-y))]",
+        "data-limited:opacity-0 data-starting-style:[transform:translateY(150%)]",
+        "[&[data-ending-style]:not([data-limited]):not([data-swipe-direction])]:[transform:translateY(150%)]",
+        "data-ending-style:data-[swipe-direction=down]:[transform:translateY(calc(var(--toast-swipe-movement-y)+150%))]",
+        "data-ending-style:data-[swipe-direction=left]:[transform:translateX(calc(var(--toast-swipe-movement-x)-150%))_translateY(var(--offset-y))]",
+        "data-ending-style:data-[swipe-direction=right]:[transform:translateX(calc(var(--toast-swipe-movement-x)+150%))_translateY(var(--offset-y))]",
+        "data-ending-style:data-[swipe-direction=up]:[transform:translateY(calc(var(--toast-swipe-movement-y)-150%))]",
+        "data-expanded:data-ending-style:data-[swipe-direction=down]:[transform:translateY(calc(var(--toast-swipe-movement-y)+150%))]",
+        "data-expanded:data-ending-style:data-[swipe-direction=left]:[transform:translateX(calc(var(--toast-swipe-movement-x)-150%))_translateY(var(--offset-y))]",
+        "data-expanded:data-ending-style:data-[swipe-direction=right]:[transform:translateX(calc(var(--toast-swipe-movement-x)+150%))_translateY(var(--offset-y))]",
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+function ToastIcon({ type }: { type: string | undefined }) {
+  let icon: React.ReactNode = null
+
+  if (type === "success") {
+    icon = <CircleCheckIcon aria-hidden="true" />
+  }
+
+  if (type === "info") {
+    icon = <InfoIcon aria-hidden="true" />
+  }
+
+  if (type === "warning") {
+    icon = <TriangleAlertIcon aria-hidden="true" />
+  }
+
+  if (type === "error") {
+    icon = <OctagonXIcon className="text-black" aria-hidden="true" />
+  }
+
+  if (type === "loading") {
+    icon = <Loader2Icon className="animate-spin" aria-hidden="true" />
+  }
+
+  if (!icon) {
+    return null
+  }
+
+  return (
+    <span
+      data-slot="toast-icon"
+      className="shrink-0 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4"
+    >
+      {icon}
+    </span>
+  )
 }
 
 function ToastList() {
-  const { toasts } = ToastPrimitive.useToastManager();
-  return (
-    <>
-      {toasts.map((toast) => {
-        const tone = (toast.data as { tone?: Tone } | undefined)?.tone ?? "neutral";
-        return (
-          <ToastPrimitive.Root
-            key={toast.id}
-            toast={toast}
-            className={cn(
-              "rounded-base border-2 border-border px-4 py-3 text-sm shadow-shadow",
-              // Badge/Message memakai peta yang sama; kelasnya sengaja identik
-              // supaya warna toast tidak pernah berbeda dari kotak pesan.
-              TONE_CLASS[tone],
-            )}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <ToastPrimitive.Title className="font-heading">
-                  {toast.title}
-                </ToastPrimitive.Title>
-                {toast.description ? (
-                  <ToastPrimitive.Description className="mt-0.5 text-foreground/80">
-                    {toast.description}
-                  </ToastPrimitive.Description>
-                ) : null}
-              </div>
-              <ToastPrimitive.Close
-                aria-label="Tutup notifikasi"
-                className="shrink-0 font-heading underline underline-offset-2"
-              >
-                Tutup
-              </ToastPrimitive.Close>
-            </div>
-          </ToastPrimitive.Root>
-        );
-      })}
-    </>
-  );
+  const { toasts } = ToastPrimitive.useToastManager()
+
+  return toasts.map((toastItem) => (
+    <Toast key={toastItem.id} toast={toastItem}>
+      <ToastContent>
+        <ToastIcon type={toastItem.type} />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <ToastTitle />
+          <ToastDescription />
+        </div>
+        <ToastAction />
+        <ToastClose />
+      </ToastContent>
+    </Toast>
+  ))
 }
+
+function Toaster({
+  children,
+  toastManager = toast,
+  ...props
+}: ToastPrimitive.Provider.Props) {
+  return (
+    <ToastProvider toastManager={toastManager} {...props}>
+      {children}
+      <ToastPortal>
+        <ToastViewport>
+          <ToastList />
+        </ToastViewport>
+      </ToastPortal>
+    </ToastProvider>
+  )
+}
+
+
+
+// Alias kompatibilitas: `toast.success("Judul", "Keterangan")` dsb. Dipetakan
+// ke `toast.add` Base UI agar seluruh pemanggil lama tetap berjalan tanpa
+// diubah.
+type ToastAliasFn = (title: string, description?: string) => string
+
+type ToastManagerApi = {
+  add: (options: {
+    title?: React.ReactNode
+    description?: React.ReactNode
+    type?: string
+    timeout?: number
+  }) => string
+}
+
+const toastCompat = toast as unknown as ToastManagerApi
+
+function alias(type: string): ToastAliasFn {
+  return (title, description) => toastCompat.add({ title, description, type })
+}
+
+const toastApi = Object.assign(toast, {
+  success: alias("success"),
+  error: alias("error"),
+  info: alias("info"),
+  warning: alias("warning"),
+  loading: alias("loading"),
+  message: alias("info"),
+})
 
 /**
- * Pintasan untuk memunculkan toast dari komponen mana pun di dalam provider.
- *
- *   const toast = useToast();
- *   toast.success("Template tersimpan");
- *   toast.error("Gagal menghapus", "Coba lagi sebentar.");
+ * `useToast()` — pengganti hook lama. Mengembalikan manager toast yang sama
+ * (satu instance global), sehingga `useToast().success("Judul", "Keterangan")`
+ * dari berkas-berkas lama tetap bekerja apa adanya.
  */
-export function useToast() {
-  const manager = ToastPrimitive.useToastManager();
-  return React.useMemo(
-    () => ({
-      show: (
-        tone: Tone,
-        title: string,
-        description?: string,
-      ) =>
-        manager.add({
-          title,
-          description,
-          data: { tone },
-        }),
-      success: (title: string, description?: string) =>
-        manager.add({ title, description, data: { tone: "good" satisfies Tone } }),
-      error: (title: string, description?: string) =>
-        manager.add({ title, description, data: { tone: "bad" satisfies Tone } }),
-      info: (title: string, description?: string) =>
-        manager.add({ title, description, data: { tone: "neutral" satisfies Tone } }),
-    }),
-    [manager],
-  );
+function useToast(): typeof toastApi {
+  return toastApi
 }
 
-export { TONE_CLASS as TOAST_TONE_CLASS };
+const createToastManager = ToastPrimitive.createToastManager
+const useToastManager = ToastPrimitive.useToastManager
+
+export {
+  Toaster,
+  Toast,
+  ToastAction,
+  ToastClose,
+  ToastContent,
+  ToastDescription,
+  ToastPortal,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+  createToastManager,
+  toastApi as toast,
+  useToast,
+  useToastManager,
+}
+

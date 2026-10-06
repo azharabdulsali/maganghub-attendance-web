@@ -169,6 +169,17 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
 
 - Komponen ada di `src/components/ui/`, **jangan diedit gayanya sembarangan**;
   tambah komponen baru lewat `npx shadcn@latest add <url-neobrutalism>`.
+  **Semua primitif di sana sekarang berasal dari registry** (`alert-dialog`,
+  `button`, `calendar`, `card`, `checkbox`, `input`, `label`,
+  `native-select`, `pagination`, `popover`, `select`, `switch`, `textarea`,
+  `toast`). Yang ditulis tangan hanya **komposisi** di atasnya:
+  `date-picker.tsx` (Popover + Calendar), `confirm-dialog.tsx` (alert-dialog
+  resmi + API tetap), plus komponen domain yang tidak punya padanan registry:
+  `badge.tsx` (peta `Tone`), `message.tsx`, `field-error.tsx`,
+  `password-input.tsx`, `password-strength.tsx`.
+  **Jangan menjalankan ulang CLI `add` untuk komponen yang sudah ada tanpa
+  meninjau diff-nya** — `button.tsx` pernah tertimpa dan kehilangan kustomisasi
+  proyek. Jangan menulis ulang primitif dari nol; susun dari registry.
 - Komponen neobrutalism dibangun di atas **Base UI**, **bukan Radix**. Karena itu
   prop `asChild` **tidak ada**. Untuk merender `Button` sebagai link, pakai
   prop `render`:
@@ -501,12 +512,17 @@ Prioritas test:
 - **Date picker tanggal khusus = `DatePicker` sendiri** (`src/components/ui/date-picker.tsx`),
   bukan `<input type="date">` bawaan peramban: input bawaan tidak mengizinkan
   menonaktifkan tanggal tertentu, sedangkan tanggal LIBUR (Sabtu/Minggu + libur
-  nasional) **dan tanggal LAMPAU** (sebelum hari ini) tidak boleh dipilih. Popup
-  memakai perhitungan yang SAMA dengan `/calendar` (`MONTH_LABELS`,
-  `WEEKDAY_LABELS`) dan aturan yang SAMA dengan jalur kirim (`isHoliday`), jadi
-  tanggal yang dinonaktifkan tidak mungkin berbeda dari yang benar-benar
-  dilewati otomasi. Tidak ada dependensi baru (bukan react-day-picker /radix);
-  klik-luar + Escape menutup popup.
+  nasional) **dan tanggal LAMPAU** (sebelum hari ini) tidak boleh dipilih. Kini
+  ia **menyusun** komponen resmi registry: `<Popover>` (`popover.tsx`) sebagai
+  cangkang + `<Calendar>` (`calendar.tsx`, react-day-picker) sebagai kisi; aturan
+  libur tetap memakai `isHoliday` yang SAMA dengan jalur kirim, jadi tanggal yang
+  dinonaktifkan tidak mungkin berbeda dari yang benar-benar dilewati otomasi.
+  **Pengecualian:** halaman `/admin/holidays` (yang justru MENGELOLA daftar
+  libur) memakai `<DatePicker unrestricted>` — semua pembatas dilepas (tanggal
+  lampau, Sabtu/Minggu, libur, dan batas bulan), karena di sana justru tanggal
+  itulah yang mau didaftarkan. Karena `<DatePicker>` bukan kontrol form asli,
+  `required` bawaan peramban tak berlaku; form di sana memeriksa "tanggal wajib
+  dipilih" sendiri di `simpan()`.
 - **Kisi picker TIDAK mengosongkan sel padding** (berbeda dari `/calendar`):
   hari dari bulan sebelah tetap ditampilkan redup agar kisi utuh (tak berlubang).
   Sumbernya `buildMonthGridWithAdjacent` (`src/lib/calendar.ts`), bukan

@@ -101,6 +101,14 @@ const MENU_UMUM: MenuItem[] = [
 
 Ikon diambil dari `lucide-react` (sudah terpasang).
 
+**Penyorotan menu aktif.** Logikanya murni di `src/lib/nav.ts` (diuji di
+`nav.test.ts`), bukan di dalam komponen. Aturannya: **hanya SATU menu menyala,
+yaitu yang href-nya paling spesifik cocok** dengan rute saat ini. Ini penting
+karena `/admin` adalah induk dari `/admin/holidays`; kalau tiap item diuji
+sendiri-sendiri, membuka Hari Libur akan menyalakan Panel Admin sekaligus.
+`activeHref` memilih href terpanjang yang cocok, jadi induk & anak tidak pernah
+menyala bersamaan.
+
 ---
 
 ## 3b. Jam dinding "dynamic island" (`JamIsland`)
