@@ -1,3 +1,8 @@
+# Panduan agen — MagangHub Attendance Web
+
+> Berkas ini dibaca otomatis oleh agen AI. Bagian di bawah **ditulis oleh
+> graphify** (jangan diubah manual) dan berisi aturan pemakaian peta kode.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
