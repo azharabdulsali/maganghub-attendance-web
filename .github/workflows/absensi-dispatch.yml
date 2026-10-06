@@ -6,10 +6,22 @@ name: Absensi Monev (dispatcher massal)
 # User TIDAK perlu memasang apa pun, cukup menyalakan sakelar Otomasi di dashboard.
 on:
   schedule:
-    # Tiap jam, tepat 5 menit lewat. Jam Jakarta = UTC+7, jadi ini memicu pada
-    # xx:05 WIB untuk setiap jam. Server sendiri yang menyaring user mana yang
-    # jadwalnya (!) jatuh pada jam tersebut.
-    - cron: "5 * * * *"
+    # Empat kali tiap jam: xx:00, xx:15, xx:30, xx:45 WIB (Jam Jakarta = UTC+7).
+    # Server sendiri yang menyaring user mana yang jadwalnya jatuh pada jam
+    # tersebut.
+    #
+    # KENAPA 4x, BUKAN 1x: penjadwal GitHub Actions TIDAK tepat waktu. Ia bisa
+    # telat 10-30 menit saat runner sedang ramai, dan pada jam sibuk run bisa
+    # di-skip sepenuhnya. Dengan pemicu sekali per jam, user yang jam
+    # jadwalnya 07:xx hanya punya SATU kesempatan; bila pemicu itu telat ke
+    # 07:45 atau hilang, absensinya baru terkirim pukul 08:xx — di luar jam
+    # jadwalnya, sehingga server tidak memprosesnya sama sekali pada hari itu.
+    # Dengan 4x per jam, jendela itu jadi <=15 menit.
+    #
+    # Aman dipanggil berlebih: user yang jam jadwalnya tidak cocok hanya
+    # dilewati (tidak ada laporan terkirim), dan performSubmit punya penjaga
+    # anti-duplikat, jadi panggilan tambahan tidak mengirim laporan ganda.
+    - cron: "*/15 * * * *"
   # Memungkinkan memicu manual dari tab Actions untuk menguji.
   workflow_dispatch:
 
