@@ -183,3 +183,22 @@ describe("pesan yang dilihat pengguna bebas jargon", () => {
     expect(pelanggaran).toEqual([]);
   });
 });
+
+describe("halaman /automation menjelaskan waktu kirim bisa meleset", () => {
+  // Keluhan nyata: pengguna mengira otomasi GAGAL hanya karena absensi terkirim
+  // pukul 13.25 padahal dijadwalkan 13.00. Penjelasan ini harus tetap ada di UI.
+  it("menyebut jadwal adalah perkiraan & bisa lebih lambat/awal", () => {
+    const berkas = path.join(
+      AKAR,
+      "app",
+      "(app)",
+      "automation",
+      "automation-form.tsx",
+    );
+    const isi = readFileSync(berkas, "utf8");
+    expect(isi).toMatch(/Waktu kirim bisa meleset/);
+    expect(isi).toMatch(/13\.00/);
+    expect(isi).toMatch(/13\.25/);
+    expect(isi).toMatch(/lebih awal/);
+  });
+});
