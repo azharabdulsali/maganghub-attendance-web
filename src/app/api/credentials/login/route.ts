@@ -73,7 +73,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error:
-          "Password tersimpan tidak dapat dibaca (kunci enkripsi berubah?). Isi ulang kredensial.",
+          "Kredensial tersimpan tidak dapat dibaca. Isi ulang email & password Monev Anda.",
       },
       { status: 500 },
     );
@@ -153,8 +153,8 @@ export async function POST() {
         ok: true,
         status: "ACTIVE",
         message: save.hasRefreshToken
-          ? "Login otomatis berhasil. Sesi tersimpan (access token ±6 jam + refresh token ±30 hari)."
-          : "Login otomatis berhasil. Sesi tersimpan sebagai access token (±6 jam). Portal tidak mengirim refresh token, jadi Anda perlu menekan ini lagi setelah 6 jam.",
+          ? "Login otomatis berhasil. Sesi tersimpan dan berlaku sekitar 30 hari."
+          : "Login otomatis berhasil. Sesi tersimpan dan berlaku sekitar 6 jam; setelah itu, tekan tombol ini lagi.",
         hasRefreshToken: save.hasRefreshToken,
         accessExpiresAt: save.accessExpiresAt.toISOString(),
         name: result.name ?? null,

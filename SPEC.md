@@ -402,6 +402,20 @@ kredensial, `summarizeUsers`, `formatJoinDate`, `initialsFor`,
 `labelForAuditUserOption`) dan diuji tanpa DB di `src/lib/admin.test.ts`. Query DB
 dipisah di `admin-query.ts` (pola sama seperti `stats-query.ts`).
 
+**Pemantauan otomasi & jalankan per-user.** Tabel pengguna juga menunjukkan
+**jadwal** tiap user (`AutomationConfig.hour/minute`, mis. `07:30 WIB`) dan
+**status hari ini** ("Belum jalan" / "Sudah jalan" / "Gagal" + jam percobaan
+terakhir). Aturan murninya ada di `src/lib/admin-automation.ts` (teruji):
+`jakartaDayRange(now)` menentukan batas hari WIB, `scheduleLabel` memformat jam,
+dan `assessTodayRun(logs, now)` menilai status — "sudah jalan" = ada `SubmitLog`
+apa pun hari ini; status log terakhir menang (FAILED → "Gagal"). Setiap baris
+punya tombol **Jalankan** yang memanggil `POST /api/admin/dispatch/user` untuk
+**memaksa** jalankan otomasi user itu, mengabaikan jam jadwalnya (untuk mengejar
+yang terlewat). Eksekusinya memakai `performSubmit` yang SAMA dengan dispatcher
+massal, jadi kebijakan laporan (libur/akhir pekan/akhir program, pra-cek duplikat,
+gerbang `ALLOW_LIVE_SUBMIT`) tetap berlaku — "paksa" = abaikan jam, bukan abaikan
+kebijakan. Pemicunya tercatat `CRON` di audit log.
+
 > **⚠️ Sama seperti riwayat:** jangan kirim `take: 0` ke Prisma, halaman audit
 > yang tersaring kosong tetap memakai `take` minimal 1.
 
@@ -616,6 +630,7 @@ Batasan: `Report` unik per `(userId, date)`, mencegah draf ganda.
 | `GET` | `/api/cron/submit` | Memicu submit otomatis (dipanggil cron eksternal) | Header `Authorization: Bearer` (dianjurkan) **atau** query `key` | 30/5 menit per IP |
 | `GET` | `/api/cron/run-all` | Dispatcher massal: proses semua user yang jadwalnya jatuh di jam ini | `Authorization: Bearer <CRON_SECRET>` | - (rahasia) |
 | `POST` | `/api/admin/dispatch` | Pemicu manual dispatcher massal dari Panel Admin | Cookie sesi + role **ADMIN** | - (hanya admin) |
+| `POST` | `/api/admin/dispatch/user` | Admin memaksa jalankan otomasi SATU user terpilih (abaikan jam jadwal) | Cookie sesi + role **ADMIN** | **20/10 menit per admin** (`adminUserAction`) |
 | `GET/PUT` | `/api/automation` | Baca/simpan jadwal otomasi + webhook key | Cookie sesi | 20/menit |
 | `GET/POST` | `/api/auth/[...nextauth]` | Autentikasi (login/logout) | Publik / callback | **10/15 menit per IP** (login) |
 | `GET/PUT` | `/api/template` | Baca & simpan 3 template pengguna | Cookie sesi | 20/menit |
@@ -1014,6 +1029,11 @@ mengabsen **semua** user yang jadwalnya jatuh pada jam itu.
   sekarang** di Panel Admin → `POST /api/admin/dispatch` (sesi + role ADMIN,
   memakai `runDispatch` yang sama). Tidak butuh `CRON_SECRET`, jadi bisa dipakai
   untuk menguji sebelum GitHub Secrets diisi.
+- **Jalankan satu user terpilih:** tombol **Jalankan** pada baris user di Panel
+  Admin → `POST /api/admin/dispatch/user` (`runOne`), memaksa jalankan otomasi
+  user itu tanpa memandang jam jadwalnya. Tetap lewat `performSubmit` yang sama,
+  jadi kebijakan laporan tidak dilanggar. Tabel admin juga menampilkan jadwal
+  (HH:MM WIB) dan status "hari ini" tiap user (lihat §4).
 - Panduan: `docs/CRON-BULK.md`. Model per-user lama tetap ada
   (`docs/CRON-SETUP.md`) bagi yang ingin ketepatan menit (cron-job.org).
 

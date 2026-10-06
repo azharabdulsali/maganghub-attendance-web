@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Check, Copy, Loader2, Plus, RefreshCw, Save } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -286,9 +286,25 @@ export default function AutomationForm({
                 jalur submit tetap jalur bawaan form (bukan fetch manual). */}
             <Button
               type="button"
+              variant="success"
               onClick={() => setKonfirmasiSimpan(true)}
               disabled={loading}
+              title={
+                loading
+                  ? "Menyimpan…"
+                  : hasExisting
+                    ? "Simpan perubahan"
+                    : "Aktifkan"
+              }
+              aria-label={
+                loading
+                  ? "Menyimpan"
+                  : hasExisting
+                    ? "Simpan perubahan"
+                    : "Aktifkan"
+              }
             >
+              {loading ? <Loader2 className="animate-spin" aria-hidden /> : <Save aria-hidden />}
               {loading
                 ? "Menyimpan..."
                 : hasExisting
@@ -366,7 +382,10 @@ export default function AutomationForm({
                     size="sm"
                     type="button"
                     onClick={() => salinTeks(curlSnippet, "Perintah")}
+                    title="Salin perintah"
+                    aria-label="Salin perintah"
                   >
+                    <Copy aria-hidden />
                     Salin perintah
                   </Button>
                 </>
@@ -385,8 +404,24 @@ export default function AutomationForm({
                 {webhookUrl}
               </code>
               <div className="flex flex-wrap gap-3">
-                <Button variant="neutral" size="sm" onClick={salinUrl}>
-                  {tersalin ? "Tersalin!" : "Salin tautan lama"}
+                <Button
+                  variant={tersalin ? "success" : "neutral"}
+                  size="sm"
+                  onClick={salinUrl}
+                  title={tersalin ? "Tersalin" : "Salin tautan lama"}
+                  aria-label={tersalin ? "Tersalin" : "Salin tautan lama"}
+                >
+                  {tersalin ? (
+                    <>
+                      <Check aria-hidden />
+                      Tersalin!
+                    </>
+                  ) : (
+                    <>
+                      <Copy aria-hidden />
+                      Salin tautan lama
+                    </>
+                  )}
                 </Button>
                 <Button
                   variant="neutral"
@@ -394,7 +429,14 @@ export default function AutomationForm({
                   type="button"
                   onClick={rotasiKunci}
                   disabled={loading}
+                  title={loading ? "Memproses…" : "Ganti kunci"}
+                  aria-label={loading ? "Memproses" : "Ganti kunci"}
                 >
+                  {loading ? (
+                    <Loader2 className="animate-spin" aria-hidden />
+                  ) : (
+                    <RefreshCw aria-hidden />
+                  )}
                   {loading ? "Memproses..." : "Ganti kunci"}
                 </Button>
               </div>
@@ -461,6 +503,7 @@ export default function AutomationForm({
         }
         confirmLabel="Ya, ganti kunci"
         cancelLabel="Batal"
+        confirmVariant="danger"
         onConfirm={() => void eksekusiRotasiKunci()}
       />
     </div>

@@ -11,6 +11,7 @@
 // menampilkan ringkasan. Tidak ada rahasia yang berpindah ke peramban.
 
 import * as React from "react";
+import { Loader2, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,8 +89,24 @@ export function DispatchPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Button onClick={run} disabled={busy} variant="neutral">
-          {busy ? "Menjalankan…" : "Jalankan sekarang"}
+        <Button
+          onClick={run}
+          disabled={busy}
+          variant="success"
+          title="Jalankan sekarang"
+          aria-label="Jalankan sekarang"
+        >
+          {busy ? (
+            <>
+              <Loader2 className="animate-spin" aria-hidden />
+              Menjalankan…
+            </>
+          ) : (
+            <>
+              <Play aria-hidden />
+              Jalankan sekarang
+            </>
+          )}
         </Button>
 
         {summary ? (

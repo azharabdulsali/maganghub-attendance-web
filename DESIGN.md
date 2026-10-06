@@ -45,6 +45,40 @@ radius kecil (`--radius-base: 5px`), dan satu warna aksen biru terang.
   hanya untuk avatar dan indikator status titik.
 - Maksimum 3 warna inti + 1 aksen di satu halaman.
 
+## Warna & tombol
+
+- **Semantik warna lewat variant, bukan kelas mentah.** Aksi merusak (hapus,
+  keluar semua perangkat, rotasi kunci) memakai variant tombol `danger`
+  (`--destructive`, merah). Aksi "menjalankan/aktifkan/simpan" memakai `success`
+  (`--success`, hijau). Token didefinisikan di `globals.css` untuk mode terang
+  dan gelap (di mode gelap foreground-nya jadi gelap agar kontras). Dilarang
+  `bg-red-500`/`text-green-600`.
+- **Latar berwarna selalu berpasangan dengan `*-foreground`.** `bg-success`
+  ditulis dengan `text-success-foreground`; `bg-destructive` dengan
+  `text-destructive-foreground`; `bg-warning` dengan `text-warning-foreground`;
+  `bg-main` dengan `text-main-foreground`. **Jangan** `text-white`, `text-black`,
+  atau `text-foreground` di atas latar berwarna (biru/hijau/merah/kuning), dan
+  jangan `text-main-foreground` di atas hijau/merah. Aturan ini berlaku di
+  `<Badge>`, `<Message>`, toast, sel kalender, badge role profil, chip terpilih,
+  dan kotak ikon beraksen: satu status = satu pasangan warna yang sama di mana
+  pun.
+- **Latar yang berubah saat interaksi ikut mengubah foreground.** Bila kelas
+  `hover:bg-main`/`open:bg-main`/`data-[state=checked]:bg-main` dipakai, tulis
+  juga pasangannya (`hover:text-main-foreground`, dst.). Untuk anak yang
+  diwarnai eksplisit, pakai varian grup (`group-hover:`/`group-open:`). Kasus
+  paling mudah luput: bagian CTA berlatar `bg-main` yang berisi tombol varian
+  `default` (juga `bg-main`) — tombolnya jadi tak terlihat; solusinya jangan
+  susun elemen `bg-main` di dalam `bg-main`.
+- **Tiga makna, tiga token:** `success` (berhasil), `destructive` (gagal/merusak),
+  `warning` (perlu tindakan tapi tidak merusak). Jangan pakai kuning untuk hal
+  yang sebenarnya gagal, atau merah untuk yang hanya butuh perhatian.
+- **Ikon menjelaskan aksi.** Tombol aksi berulang (dalam tabel/daftar) memakai
+  `size="icon-sm"` + ikon + `title` + `aria-label`. Konvensi: `Play` jalankan,
+  `Trash2` hapus, `Pencil` ubah, `Copy`/`Check` salin/tersalin, `Save`/`Plus`
+  simpan/tambah, `X` batal, `LogIn` masuk, `UserPlus` daftar, `LogOut` keluar.
+- **Tombol destruktif tetap jelas** sebelum dijalankan: konfirmasi selalu lewat
+  `<ConfirmDialog>` dengan teks label utuh, bukan ikon saja.
+
 ## Suara (voice)
 
 Tulis sebagai rekan kerja yang menjelaskan alat, bukan pemasar. Kalimat pendek,

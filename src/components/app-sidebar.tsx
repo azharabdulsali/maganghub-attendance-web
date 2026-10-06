@@ -224,6 +224,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
           variant="neutral"
           size="icon-sm"
           className="shrink-0"
+          title="Buka menu navigasi"
           aria-label="Buka menu navigasi"
           aria-expanded={open}
           onClick={() => setOpen(true)}
@@ -248,11 +249,12 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
             className="absolute inset-0 bg-overlay/60"
             onClick={() => setOpen(false)}
           />
-          <div className="pt-safe pb-safe pl-safe pr-safe absolute inset-y-0 right-0 w-72 max-w-[85%] animate-slide-in-right overflow-y-auto border-l-2 border-border bg-background shadow-xl">
+          <div className="pt-safe pb-safe pl-safe pr-safe absolute inset-y-0 right-0 w-72 max-w-[85%] animate-slide-in-right overflow-y-auto border-l-2 border-border bg-background">
             <div className="flex justify-end p-2">
               <Button
                 variant="neutral"
                 size="icon-sm"
+                title="Tutup menu"
                 aria-label="Tutup menu"
                 onClick={() => setOpen(false)}
               >

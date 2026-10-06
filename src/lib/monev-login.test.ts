@@ -687,15 +687,17 @@ describe("runLoginFlow, alur lengkap (fetch di-mock berdasarkan URL)", () => {
 
     expect(r.status).toBe("ERROR");
     if (r.status === "ERROR") {
+      // Pesan ramah untuk pengguna; jejak hop (teknis) ada di `diagnostic`.
+      expect(r.message).not.toMatch(/authorizeUrl|redirect_uri|302|200@|HTTP/i);
       // Kedua target harus dilaporkan, dengan jejak hop asli, tanpa nilai rahasia.
-      expect(r.message).toContain("authorizeUrl(langkah 1)");
-      expect(r.message).toContain("redirect_uri(langkah 3)");
+      expect(r.diagnostic).toContain("authorizeUrl(langkah 1)");
+      expect(r.diagnostic).toContain("redirect_uri(langkah 3)");
       // Jejak kini menyertakan host tujuan (`→host`) pada tiap redirect.
-      expect(r.message).toContain("302@account.kemnaker.go.id→");
-      expect(r.message).toContain("200@account.kemnaker.go.id");
+      expect(r.diagnostic).toContain("302@account.kemnaker.go.id→");
+      expect(r.diagnostic).toContain("200@account.kemnaker.go.id");
       // Nilai cookie (meski ada di hop 1) TIDAK boleh bocor.
-      expect(r.message).not.toContain("RAHASIA-SESI");
-      expect(r.message).not.toContain("RAHASIA-PW");
+      expect(r.diagnostic).not.toContain("RAHASIA-SESI");
+      expect(r.diagnostic).not.toContain("RAHASIA-PW");
     }
   });
 });

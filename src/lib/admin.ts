@@ -12,6 +12,7 @@
 // Tidak ada rahasia di sini: hanya email, nama, role, status, dan hitungan.
 
 import type { CredentialStatus } from "@/generated/prisma/enums";
+import type { TodayRunStatus } from "@/lib/admin-automation";
 
 /** Apakah sebuah peran berhak membuka halaman admin. Selalu peka huruf besar-kecil. */
 export function isAdminRole(role: string | null | undefined): boolean {
@@ -63,10 +64,18 @@ export interface AdminUserRow {
   credentialStatus: CredentialStatus | null;
   hasTemplate: boolean;
   automationEnabled: boolean;
+  /** Jam jadwal otomasi (0–23 WIB), atau null bila belum diatur. */
+  automationHour: number | null;
+  /** Menit jadwal otomasi (0–59), atau null bila belum diatur. */
+  automationMinute: number | null;
   reportCount: number;
   submitCount: number;
   /** Waktu submit terakhir (ms), atau null bila belum pernah submit. */
   lastSubmitAt: Date | null;
+  /** Apakah otomasi sudah dijalankan HARI INI (WIB). Lihat admin-automation.ts. */
+  todayRunStatus: TodayRunStatus;
+  /** Waktu percobaan terakhir hari ini, atau null bila belum ada. */
+  todayRunAt: Date | null;
 }
 
 export interface AdminSummary {

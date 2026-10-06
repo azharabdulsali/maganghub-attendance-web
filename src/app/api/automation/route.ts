@@ -1,4 +1,4 @@
-// src/app/api/automation/route.ts: pengaturan otomasi (SPEC.md §7).
+﻿// src/app/api/automation/route.ts: pengaturan otomasi (SPEC.md Â§7).
 //
 // Satu pengguna punya satu AutomationConfig (userId @unique). `webhookKey`
 // dibuat sekali secara acak dan TIDAK diganti otomatis, kalau berubah, cron
@@ -70,7 +70,7 @@ export async function PUT(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Format permintaan salah" }, { status: 400 });
+    return NextResponse.json({ error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." }, { status: 400 });
   }
 
   const parsed = automationSchema.safeParse(body);

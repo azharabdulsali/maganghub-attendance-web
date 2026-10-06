@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -184,7 +185,19 @@ export default function RegisterPage() {
               </Message>
             )}
 
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+              variant="success"
+              title={loading ? "Memproses…" : "Daftar"}
+              aria-label={loading ? "Memproses pendaftaran" : "Daftar"}
+            >
+              {loading ? (
+                <Loader2 className="animate-spin" aria-hidden />
+              ) : (
+                <UserPlus aria-hidden />
+              )}
               {loading ? "Memproses..." : "Daftar"}
             </Button>
           </form>

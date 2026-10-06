@@ -1,4 +1,4 @@
-// src/app/api/credentials/route.ts: simpan & baca status kredensial Monev.
+﻿// src/app/api/credentials/route.ts: simpan & baca status kredensial Monev.
 //
 // Prinsip keamanan yang dipegang di sini:
 //   - Password Monev TIDAK PERNAH dikembalikan ke klien (bahkan ke pemiliknya).
@@ -6,7 +6,7 @@
 //     ia hanya bisa menggantinya. Ini menutup celah XSS/CSRF membaca password.
 //   - Hanya pemilik sesi yang boleh menyentuh kredensialnya sendiri.
 //   - Email Monev disimpan apa adanya (bukan rahasia), password disandikan
-//     AES-256-GCM (SPEC.md §5.1).
+//     AES-256-GCM (SPEC.md Â§5.1).
 
 import { NextResponse } from "next/server";
 
@@ -63,7 +63,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
   }
 
-  // Menulis rahasia = operasi sensitif → batasi agar tidak dibrute-ubah.
+  // Menulis rahasia = operasi sensitif â†’ batasi agar tidak dibrute-ubah.
   const gate = await enforceRateLimit(
     "credentials",
     rateLimitKey("credentials", userId),
@@ -79,7 +79,7 @@ export async function PUT(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Format permintaan salah" }, { status: 400 });
+    return NextResponse.json({ error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." }, { status: 400 });
   }
 
   const parsed = credentialsSchema.safeParse(body);

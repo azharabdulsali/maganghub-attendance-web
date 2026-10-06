@@ -5,6 +5,7 @@ import {
   CircleCheck,
   FileCheck,
   KeyRound,
+  RefreshCw,
   Square,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
@@ -173,7 +174,17 @@ export default async function DashboardPage({
                 </p>
               </div>
             </div>
-            <Button className="shrink-0" render={<Link href="/credentials" />}>
+            <Button
+              className="shrink-0"
+              render={<Link href="/credentials" />}
+              title={perluPerhatian ? "Perbarui token" : "Atur kredensial"}
+              aria-label={perluPerhatian ? "Perbarui token" : "Atur kredensial"}
+            >
+              {perluPerhatian ? (
+                <RefreshCw aria-hidden />
+              ) : (
+                <KeyRound aria-hidden />
+              )}
               {perluPerhatian ? "Perbarui token" : "Atur kredensial"}
             </Button>
           </div>
@@ -196,7 +207,13 @@ export default async function DashboardPage({
                 </p>
               </div>
             </div>
-            <Button className="shrink-0" render={<Link href="/credentials" />}>
+            <Button
+              className="shrink-0"
+              render={<Link href="/credentials" />}
+              title="Perbarui sesi Monev"
+              aria-label="Perbarui sesi Monev"
+            >
+              <RefreshCw aria-hidden />
               Perbarui sesi
             </Button>
           </div>

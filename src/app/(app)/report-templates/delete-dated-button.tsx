@@ -64,14 +64,14 @@ export function DeleteDatedButton({ date }: { date: string }) {
     <>
       <Button
         type="button"
-        variant="neutral"
-        size="sm"
+        variant="danger"
+        size="icon-sm"
         disabled={working}
         onClick={() => setOpen(true)}
+        title={`Hapus template tanggal ${date}`}
         aria-label={`Hapus template tanggal ${date}`}
       >
-        <Trash2 className="size-3.5" aria-hidden />
-        Hapus
+        <Trash2 aria-hidden />
       </Button>
 
       <ConfirmDialog
@@ -87,6 +87,7 @@ export function DeleteDatedButton({ date }: { date: string }) {
         }
         confirmLabel="Ya, hapus"
         cancelLabel="Batal"
+        confirmVariant="danger"
         onConfirm={() => void hapus()}
       />
     </>

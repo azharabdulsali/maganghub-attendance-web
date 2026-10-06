@@ -191,6 +191,7 @@ export function DatePicker({
               type="button"
               variant="noShadow"
               size="icon-sm"
+              title="Bulan sebelumnya"
               aria-label="Bulan sebelumnya"
               disabled={!bolehMundur}
               onClick={() => geser(-1)}
@@ -204,6 +205,7 @@ export function DatePicker({
               type="button"
               variant="noShadow"
               size="icon-sm"
+              title="Bulan berikutnya"
               aria-label="Bulan berikutnya"
               onClick={() => geser(1)}
             >

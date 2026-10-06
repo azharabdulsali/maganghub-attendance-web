@@ -469,10 +469,11 @@ describe("catchOAuthCode, GERBANG & penangkapan code (fetch di-mock)", () => {
     });
     expect(r.status).toBe("ERROR");
     if (r.status === "ERROR") {
-      // Diagnostic memuat jejak dengan host tujuan + petunjuk halaman akhir.
-      expect(r.message).toContain("302@account.kemnaker.go.id→account.kemnaker.go.id");
-      expect(r.message).toContain("halaman akhir: body");
-      expect(r.message).not.toContain("SESI-ABC");
+      // Pesan ramah untuk pengguna; jejak teknis dipindah ke `diagnostic`.
+      expect(r.message).not.toMatch(/HTTP|hop|Location|res\.url/i);
+      expect(r.diagnostic).toContain("302@account.kemnaker.go.id→account.kemnaker.go.id");
+      expect(r.diagnostic).toContain("halaman akhir: body");
+      expect(r.diagnostic).not.toContain("SESI-ABC");
     }
   });
 });

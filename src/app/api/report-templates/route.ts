@@ -1,9 +1,9 @@
-// src/app/api/report-templates/route.ts: simpan & baca 3 template laporan.
+﻿// src/app/api/report-templates/route.ts: simpan & baca 3 template laporan.
 //
 // Berbeda dari kredensial, isi template BUKAN rahasia: boleh dikembalikan penuh
 // ke klien supaya pengguna bisa melihat dan mengeditnya. Yang dijaga di sini:
 //   - Hanya pemilik sesi yang boleh menyentuh template-nya sendiri.
-//   - Teks diseragamkan (spasi tepi dipangkas, CRLF → LF) sebelum disimpan,
+//   - Teks diseragamkan (spasi tepi dipangkas, CRLF â†’ LF) sebelum disimpan,
 //     supaya yang dihitung sama dengan yang ditampilkan portal.
 //   - Penolakan di sini mencegah satu percobaan submit yang sia-sia: portal
 //     menuntut minimal 100 karakter per field.
@@ -57,7 +57,7 @@ export async function PUT(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Format permintaan salah" }, { status: 400 });
+    return NextResponse.json({ error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." }, { status: 400 });
   }
 
   const parsed = reportTemplatesSchema.safeParse(body);

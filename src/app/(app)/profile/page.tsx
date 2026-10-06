@@ -86,7 +86,7 @@ export default async function ProfilePage() {
             <span
               className={`inline-flex w-fit items-center rounded-base border-2 border-border px-3 py-1 text-xs font-heading ${
                 user.role === "ADMIN"
-                  ? "bg-success text-main-foreground"
+                  ? "bg-success text-success-foreground"
                   : "bg-secondary-background text-foreground"
               }`}
             >

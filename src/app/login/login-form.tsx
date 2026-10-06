@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -59,10 +60,10 @@ export default function LoginForm() {
     try {
       const token = await getCsrfToken();
       if (!token) {
-        setError("Server tidak memberi CSRF token. Muat ulang halaman ini.");
+        setError("Halaman tidak siap menerima login. Muat ulang halaman ini.");
         toast.error(
-          "Server tidak siap",
-          "CSRF token tidak diterima. Muat ulang halaman lalu coba lagi.",
+          "Halaman perlu dimuat ulang",
+          "Muat ulang halaman ini, lalu coba masuk lagi.",
         );
         return;
       }
@@ -184,7 +185,19 @@ export default function LoginForm() {
               </Message>
             )}
 
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+              variant="success"
+              title={loading ? "Memproses…" : "Masuk"}
+              aria-label={loading ? "Memproses masuk" : "Masuk"}
+            >
+              {loading ? (
+                <Loader2 className="animate-spin" aria-hidden />
+              ) : (
+                <LogIn aria-hidden />
+              )}
               {loading ? "Memproses..." : "Masuk"}
             </Button>
           </form>

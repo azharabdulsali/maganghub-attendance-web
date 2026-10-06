@@ -8,6 +8,7 @@ import {
   CalendarCheck,
   Clock,
   KeyRound,
+  LogIn,
   Send,
   ShieldCheck,
   Trash2,
@@ -109,7 +110,7 @@ export default function DocsContent() {
           tertutup poni di iPhone landscape. */}
       <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main">
+          <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
             <CalendarCheck className="size-4" />
           </span>
           <span className="flex flex-col">
@@ -127,7 +128,14 @@ export default function DocsContent() {
             <ArrowLeft />
             Beranda
           </Button>
-          <Button size="sm" render={<Link href="/login" />}>
+          <Button
+            size="sm"
+            variant="success"
+            render={<Link href="/login" />}
+            title="Masuk"
+            aria-label="Masuk"
+          >
+            <LogIn aria-hidden />
             Masuk
           </Button>
         </nav>
@@ -170,7 +178,7 @@ export default function DocsContent() {
                     aria-current={dipilih ? "true" : undefined}
                     className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-base border-2 px-3 py-2.5 text-left text-xs transition-colors ${
                       dipilih
-                        ? "border-border bg-main font-heading"
+                        ? "border-border bg-main font-heading text-main-foreground"
                         : "border-transparent text-foreground/70 hover:bg-background hover:text-foreground"
                     }`}
                   >
@@ -198,7 +206,7 @@ export default function DocsContent() {
                     aria-current={dipilih ? "true" : undefined}
                     className={`flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-2 px-3 py-2 text-xs transition-colors ${
                       dipilih
-                        ? "border-border bg-main font-heading"
+                        ? "border-border bg-main font-heading text-main-foreground"
                         : "border-border text-foreground/70 hover:bg-background"
                     }`}
                   >

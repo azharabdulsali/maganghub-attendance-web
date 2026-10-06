@@ -22,9 +22,13 @@ function row(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
     credentialStatus: null,
     hasTemplate: false,
     automationEnabled: false,
+    automationHour: null,
+    automationMinute: null,
     reportCount: 0,
     submitCount: 0,
     lastSubmitAt: null,
+    todayRunStatus: "BELUM",
+    todayRunAt: null,
     ...overrides,
   };
 }

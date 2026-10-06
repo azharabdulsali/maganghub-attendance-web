@@ -3,12 +3,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  ClipboardPaste,
+  ExternalLink,
+  Loader2,
+  Pencil,
+  Save,
+  ShieldCheck,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
+import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -364,9 +375,9 @@ export default function CredentialsForm({
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
                 <dt className="font-heading sm:w-40">Status</dt>
                 <dd>
-                  <span className="inline-flex items-center rounded-base border-2 border-border bg-secondary-background px-3 py-1 text-xs font-heading">
+                  <Badge className="px-3 py-1">
                     {existingStatus ?? "-"}
-                  </span>
+                  </Badge>
                 </dd>
               </div>
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
@@ -376,21 +387,38 @@ export default function CredentialsForm({
             </dl>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button onClick={loginOtomatis} disabled={loginLoading || loading}>
+              <Button
+                onClick={loginOtomatis}
+                disabled={loginLoading || loading}
+                variant="success"
+                title={loginLoading ? "Menguji…" : "Uji login"}
+                aria-label={loginLoading ? "Menguji login" : "Uji login"}
+              >
+                {loginLoading ? (
+                  <Loader2 className="animate-spin" aria-hidden />
+                ) : (
+                  <ShieldCheck aria-hidden />
+                )}
                 {loginLoading ? "Menguji..." : "Uji login"}
               </Button>
               <Button
                 variant="neutral"
                 onClick={() => setMode("isi")}
                 disabled={loading || loginLoading}
+                title="Ganti kredensial"
+                aria-label="Ganti kredensial"
               >
+                <Pencil aria-hidden />
                 Ganti kredensial
               </Button>
               <Button
-                variant="neutral"
+                variant="danger"
                 onClick={() => setConfirmHapusOpen(true)}
                 disabled={loading || loginLoading}
+                title="Hapus kredensial"
+                aria-label="Hapus kredensial"
               >
+                <Trash2 aria-hidden />
                 Hapus
               </Button>
             </div>
@@ -425,7 +453,7 @@ export default function CredentialsForm({
                 saat perlu melaporkan masalah. Tidak memuat token/cookie/
                 password. */}
             {loginState === "error" && loginPrime && (
-              <details className="rounded-md border border-border bg-secondary/50 p-3 text-xs text-foreground/80">
+              <details className="rounded-base border-2 border-border bg-background p-3 text-xs text-foreground/80">
                 <summary className="cursor-pointer font-heading text-foreground/90">
                   Detail teknis penolakan (untuk laporan)
                 </summary>
@@ -455,7 +483,7 @@ export default function CredentialsForm({
                 cadangan (tempel token) di bagian bawah halaman
                 (§ C1, docs/MONEV-API.md §7). */}
             {loginState === "error" && loginKind === "waf" && (
-              <div className="space-y-2 rounded-md border-2 border-border bg-secondary p-3 text-sm text-foreground/90">
+              <div className="space-y-2 rounded-base border-2 border-border bg-background p-3 text-sm text-foreground/90">
                 <p className="font-heading text-foreground">
                   Ini bukan soal email &amp; password Anda
                 </p>
@@ -490,7 +518,10 @@ export default function CredentialsForm({
                       "noopener,noreferrer",
                     )
                   }
+                  title="Buka portal Monev di tab baru"
+                  aria-label="Buka portal Monev di tab baru"
                 >
+                  <ExternalLink aria-hidden />
                   Buka portal Monev di tab baru
                 </Button>
               </div>
@@ -539,7 +570,18 @@ export default function CredentialsForm({
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button type="submit" disabled={loading}>
+                <Button
+                  type="submit"
+                  variant="success"
+                  disabled={loading}
+                  title={loading ? "Menyimpan…" : "Simpan"}
+                  aria-label="Simpan"
+                >
+                  {loading ? (
+                    <Loader2 className="animate-spin" aria-hidden />
+                  ) : (
+                    <Save aria-hidden />
+                  )}
                   {loading ? "Menyimpan..." : "Simpan"}
                 </Button>
                 {hasExisting && (
@@ -552,7 +594,10 @@ export default function CredentialsForm({
                       setError(null);
                     }}
                     disabled={loading}
+                    title="Batal"
+                    aria-label="Batal"
                   >
+                    <X aria-hidden />
                     Batal
                   </Button>
                 )}
@@ -591,7 +636,10 @@ export default function CredentialsForm({
                   "noopener,noreferrer",
                 )
               }
+              title="Buka portal Monev di tab baru"
+              aria-label="Buka portal Monev di tab baru"
             >
+              <ExternalLink aria-hidden />
               Buka portal Monev di tab baru
             </Button>
           </CardHeader>
@@ -639,7 +687,10 @@ export default function CredentialsForm({
                     }
                   }}
                   disabled={tokenLoading}
+                  title="Tempel token dari papan klip"
+                  aria-label="Tempel token dari papan klip"
                 >
+                  <ClipboardPaste aria-hidden />
                   Tempel
                 </Button>
               </div>
@@ -665,7 +716,18 @@ export default function CredentialsForm({
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button type="submit" disabled={tokenLoading || token.trim() === ""}>
+              <Button
+                type="submit"
+                variant="success"
+                disabled={tokenLoading || token.trim() === ""}
+                title="Simpan & uji koneksi"
+                aria-label="Simpan dan uji koneksi"
+              >
+                {tokenLoading ? (
+                  <Loader2 className="animate-spin" aria-hidden />
+                ) : (
+                  <Save aria-hidden />
+                )}
                 {tokenLoading ? "Menguji..." : "Simpan & uji koneksi"}
               </Button>
             </div>
@@ -715,15 +777,15 @@ export default function CredentialsForm({
             <ol className="mt-2 list-decimal space-y-2 pl-5">
               <li>
                 Di halaman portal yang sudah login, tekan{" "}
-                <kbd className="rounded border border-border px-1 font-mono text-xs">
+                <kbd className="rounded-base border-2 border-border bg-secondary-background px-1 font-mono text-xs">
                   F12
                 </kbd>{" "}
                 (atau{" "}
-                <kbd className="rounded border border-border px-1 font-mono text-xs">
+                <kbd className="rounded-base border-2 border-border bg-secondary-background px-1 font-mono text-xs">
                   Ctrl+Shift+I
                 </kbd>
                 , di Mac{" "}
-                <kbd className="rounded border border-border px-1 font-mono text-xs">
+                <kbd className="rounded-base border-2 border-border bg-secondary-background px-1 font-mono text-xs">
                   Cmd+Option+I
                 </kbd>
                 ) untuk membuka DevTools. Bisa juga klik kanan &rarr;{" "}
@@ -777,6 +839,7 @@ export default function CredentialsForm({
         title="Hapus kredensial Monev?"
         description="Email & password Monev yang tersimpan akan dihapus, dan sesi Monev ikut terputus. Absensi otomatis tidak bisa jalan sampai Anda mengisinya kembali."
         confirmLabel="Hapus kredensial"
+        confirmVariant="danger"
         onConfirm={() => void hapus()}
       />
     </div>

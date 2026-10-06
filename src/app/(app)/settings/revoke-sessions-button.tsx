@@ -12,6 +12,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { Loader2, LogOut, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Message } from "@/components/ui/message";
 import { useToast } from "@/components/ui/toast";
@@ -76,10 +77,19 @@ export default function RevokeSessionsButton() {
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
-            variant="noShadow"
+            variant="danger"
             disabled={working}
             onClick={() => void jalankan()}
+            title={working ? "Mengeluarkan…" : "Ya, keluarkan semua"}
+            aria-label={
+              working ? "Mengeluarkan perangkat lain" : "Ya, keluarkan semua"
+            }
           >
+            {working ? (
+              <Loader2 className="animate-spin" aria-hidden />
+            ) : (
+              <LogOut aria-hidden />
+            )}
             {working ? "Mengeluarkan..." : "Ya, keluarkan semua"}
           </Button>
           <Button
@@ -87,7 +97,10 @@ export default function RevokeSessionsButton() {
             variant="neutral"
             disabled={working}
             onClick={() => setTahap("idle")}
+            title="Batal"
+            aria-label="Batal"
           >
+            <X aria-hidden />
             Batal
           </Button>
         </div>
@@ -98,9 +111,12 @@ export default function RevokeSessionsButton() {
   return (
     <Button
       type="button"
-      variant="neutral"
+      variant="danger"
       onClick={() => setTahap("konfirmasi")}
+      title="Keluar dari semua perangkat lain"
+      aria-label="Keluar dari semua perangkat lain"
     >
+      <LogOut aria-hidden />
       Keluar dari semua perangkat lain
     </Button>
   );

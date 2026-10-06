@@ -8,16 +8,11 @@
 
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
-
 export function MustChangePasswordBanner() {
   return (
     <div
       role="status"
-      className={cn(
-        "border-b-2 border-border bg-yellow-100 px-4 py-3 text-sm text-black",
-        "dark:bg-yellow-900/40 dark:text-yellow-50",
-      )}
+      className="border-b-2 border-border bg-warning px-4 py-3 text-sm text-warning-foreground"
     >
       <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-2">
         <span className="font-heading font-bold">

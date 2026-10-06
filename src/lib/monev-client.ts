@@ -41,7 +41,13 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 export type SessionCheckResult =
   | { status: "ACTIVE"; raw?: unknown }
   | { status: "INVALID"; httpCode: number; errorCode?: string; message?: string }
-  | { status: "ERROR"; message: string };
+  | {
+      status: "ERROR";
+      /** Pesan ramah untuk layar pengguna (bebas jargon). */
+      message: string;
+      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      diagnostic?: string;
+    };
 
 // ---------------------------------------------------------------------------
 // Internal
@@ -123,7 +129,11 @@ export async function verifySession(
   options?: { buildId?: string; timeoutMs?: number },
 ): Promise<SessionCheckResult> {
   if (!refreshToken || refreshToken.trim().length === 0) {
-    return { status: "INVALID", httpCode: 0, message: "Token kosong." };
+    return {
+      status: "INVALID",
+      httpCode: 0,
+      message: "Belum ada sesi tersimpan. Tempel token terlebih dahulu.",
+    };
   }
 
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -172,7 +182,10 @@ export async function verifySession(
     // yang sebenarnya masih bagus.
     return {
       status: "ERROR",
-      message: `Respons tak terduga dari portal (HTTP ${res.status}).`,
+      message:
+        "Portal tidak merespons seperti biasanya. Coba lagi sebentar, atau " +
+        "pakai cara tempel token di bawah.",
+      diagnostic: `Respons tak terduga dari portal (HTTP ${res.status}).`,
     };
   } catch (err) {
     const message =
@@ -231,8 +244,19 @@ export type CodeExchangeResult =
        */
       refreshToken?: string;
     }
-  | { status: "REJECTED"; httpCode: number; message: string }
-  | { status: "ERROR"; message: string };
+  | {
+      status: "REJECTED";
+      httpCode: number;
+      message: string;
+      diagnostic?: string;
+    }
+  | {
+      status: "ERROR";
+      /** Pesan ramah untuk layar pengguna (bebas jargon). */
+      message: string;
+      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      diagnostic?: string;
+    };
 
 /**
  * Tafsirkan respons `GET /api/v1/auth/login/callback`, MURNI, tanpa jaringan.
@@ -252,7 +276,10 @@ export function interpretCallbackResponse(
     return {
       status: "REJECTED",
       httpCode,
-      message: `Portal menolak penukaran code dengan HTTP ${httpCode}.`,
+      message:
+        "Portal tidak menerima lanjutan login. Coba lagi; bila tetap gagal, " +
+        "gunakan cara tempel token di bawah.",
+      diagnostic: `Portal menolak penukaran code dengan HTTP ${httpCode}.`,
     };
   }
   let parsed: unknown;
@@ -271,6 +298,9 @@ export function interpretCallbackResponse(
     return {
       status: "ERROR",
       message:
+        "Portal tidak mengirim sesi yang bisa dipakai. Coba lagi; bila tetap " +
+        "gagal, gunakan cara tempel token di bawah.",
+      diagnostic:
         `Respons HTTP ${httpCode} tetapi tanpa 'access_token'. Bentuk respons ` +
         "perlu direkam ulang (docs/MONEV-API.md §4.0 langkah 4).",
     };
@@ -308,7 +338,13 @@ export function extractRefreshTokenFromSetCookies(
 /** Hasil mulai OAuth (langkah 1). */
 export type OAuthStartResult =
   | { status: "OK"; httpCode: number; state?: string; authorizeUrl?: string }
-  | { status: "ERROR"; message: string };
+  | {
+      status: "ERROR";
+      /** Pesan ramah untuk layar pengguna (bebas jargon). */
+      message: string;
+      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      diagnostic?: string;
+    };
 
 /** Parameter OAuth yang terverifikasi di §4.0 (nilai publik, bukan rahasia). */
 export const KEMNAKER_OAUTH = {
@@ -337,6 +373,9 @@ export async function startOAuthFlow(opts: {
     return {
       status: "ERROR",
       message:
+        "Login otomatis tidak dijalankan karena izin ke portal belum " +
+        "diberikan. Muat ulang halaman ini lalu coba lagi.",
+      diagnostic:
         "Dibatalkan: gerbang 'confirmLivePortalRequest' belum aktif. " +
         "Alur OAuth tidak boleh menyentuh portal tanpa izin eksplisit.",
     };
@@ -360,7 +399,13 @@ export async function startOAuthFlow(opts: {
     );
 
     if (res.status < 200 || res.status >= 400) {
-      return { status: "ERROR", message: `Memulai OAuth gagal (HTTP ${res.status}).` };
+      return {
+        status: "ERROR",
+        message:
+          "Portal tidak merespons seperti biasanya. Coba lagi sebentar, atau " +
+          "pakai cara tempel token di bawah.",
+        diagnostic: `Memulai OAuth gagal (HTTP ${res.status}).`,
+      };
     }
 
     // Ambil `state` dari Set-Cookie bila ada.
@@ -433,12 +478,21 @@ export async function exchangeCodeForSession(
     return {
       status: "ERROR",
       message:
+        "Login otomatis tidak dijalankan karena izin ke portal belum " +
+        "diberikan. Muat ulang halaman ini lalu coba lagi.",
+      diagnostic:
         "Dibatalkan: gerbang 'confirmLivePortalRequest' belum aktif. " +
         "Penukaran code tidak boleh menyentuh portal tanpa izin eksplisit.",
     };
   }
   if (!code || !state) {
-    return { status: "ERROR", message: "code/state kosong." };
+    return {
+      status: "ERROR",
+      message:
+        "Data lanjutan login tidak lengkap. Coba login otomatis lagi, atau " +
+        "pakai cara tempel token di bawah.",
+      diagnostic: "code/state kosong.",
+    };
   }
 
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;

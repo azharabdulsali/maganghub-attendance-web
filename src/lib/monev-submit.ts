@@ -87,7 +87,7 @@ export type ReportPayload = {
 export type SubmitResult =
   | { status: "SUCCESS"; httpCode: number; raw?: unknown }
   | { status: "ALREADY_SUBMITTED"; httpCode: number; message?: string }
-  | { status: "ERROR"; httpCode?: number; message: string };
+  | { status: "ERROR"; httpCode?: number; message: string; diagnostic?: string };
 
 const MONEV_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
@@ -203,7 +203,9 @@ export function interpretSubmitResponse(
   return {
     status: "ERROR",
     httpCode,
-    message: `Portal menolak dengan HTTP ${httpCode}.`,
+    message:
+      "Portal menolak laporan ini. Periksa isi laporan, lalu coba kirim lagi.",
+    diagnostic: `Portal menolak dengan HTTP ${httpCode}.`,
   };
 }
 
@@ -296,7 +298,7 @@ export type DailyLogPresence =
    * Tidak bisa dipastikan (jaringan mati, 401/403, bentuk respons tak dikenal).
    * Pemanggil MEMUTUSKAN: default aman = batalkan. Lihat `duplicateGuardAllows`.
    */
-  | { status: "UNKNOWN"; message: string };
+  | { status: "UNKNOWN"; message: string; diagnostic?: string };
 
 /** Ambil array item dari beragam bentuk amplop respons portal. MURNI. */
 function extractList(parsed: unknown): unknown[] | null {
@@ -334,13 +336,15 @@ export function interpretDailyLogs(
   if (httpCode === 401 || httpCode === 403) {
     return {
       status: "UNKNOWN",
-      message: "Sesi Monev tidak berwenang untuk cek laporan.",
+      message:
+        "Sesi Monev tidak berwenang memeriksa laporan. Masuk ulang ke portal " +
+        "lalu tempel token baru.",
     };
   }
   if (httpCode < 200 || httpCode >= 300) {
     return {
       status: "UNKNOWN",
-      message: `Portal membalas HTTP ${httpCode} saat cek laporan.`,
+      message: "Portal menolak permintaan cek laporan. Dibatalkan demi aman.",
     };
   }
 
@@ -348,12 +352,15 @@ export function interpretDailyLogs(
   try {
     parsed = JSON.parse(bodyText);
   } catch {
-    return { status: "UNKNOWN", message: "Respons cek laporan bukan JSON." };
+    return { status: "UNKNOWN", message: "Balasan portal tidak dapat dibaca." };
   }
 
   const list = extractList(parsed);
   if (list === null) {
-    return { status: "UNKNOWN", message: "Bentuk respons cek laporan tidak dikenal." };
+    return {
+      status: "UNKNOWN",
+      message: "Balasan cek laporan dari portal tidak dikenali.",
+    };
   }
 
   for (const item of list) {
@@ -441,7 +448,7 @@ export async function checkDailyLogExists(
 export type TokenExchangeResult =
   | { status: "OK"; accessToken: string; httpCode: number }
   | { status: "SESSION_DEAD"; httpCode: number; message: string }
-  | { status: "ERROR"; httpCode?: number; message: string };
+  | { status: "ERROR"; httpCode?: number; message: string; diagnostic?: string };
 
 /**
  * Tafsirkan respons `POST /api/v1/auth/refresh`, MURNI, tanpa jaringan.
@@ -472,7 +479,10 @@ export function interpretRefreshResponse(
     return {
       status: "ERROR",
       httpCode,
-      message: `Penukaran token ditolak dengan HTTP ${httpCode}.`,
+      message:
+        "Sesi Monev tidak dapat diperbarui. Masuk ulang ke portal lalu tempel " +
+        "token baru.",
+      diagnostic: `Penukaran token ditolak dengan HTTP ${httpCode}.`,
     };
   }
 
@@ -526,6 +536,9 @@ export function interpretRefreshResponse(
     status: "ERROR",
     httpCode,
     message:
+      "Portal tidak mengirim sesi baru. Coba lagi; bila tetap gagal, masuk " +
+      "ulang ke portal lalu tempel token baru.",
+    diagnostic:
       "Respons 200 diterima, tapi access token tidak ditemukan di bentuk yang " +
       "dikenal. Bentuk respons perlu direkam ulang (docs/MONEV-API.md §4.4).",
   };

@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { KeyRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
@@ -181,7 +182,18 @@ export default function PasswordForm() {
       </Message>
 
       <div>
-        <Button type="submit" disabled={saving || !lengkap || samaDenganLama}>
+        <Button
+          type="submit"
+          variant="success"
+          disabled={saving || !lengkap || samaDenganLama}
+          title={saving ? "Menyimpan…" : "Ubah kata sandi"}
+          aria-label={saving ? "Menyimpan kata sandi" : "Ubah kata sandi"}
+        >
+          {saving ? (
+            <Loader2 className="animate-spin" aria-hidden />
+          ) : (
+            <KeyRound aria-hidden />
+          )}
           {saving ? "Menyimpan..." : "Ubah kata sandi"}
         </Button>
       </div>

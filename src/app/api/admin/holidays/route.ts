@@ -1,6 +1,6 @@
-// src/app/api/admin/holidays/route.ts: kelola daftar libur (KHUSUS ADMIN).
+﻿// src/app/api/admin/holidays/route.ts: kelola daftar libur (KHUSUS ADMIN).
 //
-// SPEC.md §4 memberi admin kendali lintas pengguna; salah satu wujudnya adalah
+// SPEC.md Â§4 memberi admin kendali lintas pengguna; salah satu wujudnya adalah
 // daftar libur nasional yang menentukan KAPAN otomasi melewati sebuah tanggal
 // (`decide()` di report-policy.ts). Sebelumnya daftar ini data statis di kode;
 // kini disimpan di tabel `holidays` dan dikelola dari sini.
@@ -10,10 +10,10 @@
 //   - Rate limit scope `adminUserAction` (sama kelas: aksi admin ke DB).
 //   - Validasi lewat `validateHolidayInput` (murni, teruji).
 //
-// GET  /api/admin/holidays        → daftar semua libur (terurut).
-// POST /api/admin/holidays        → tambah libur baru (body: date, name, kind).
-// PUT  /api/admin/holidays        → ubah libur berdasarkan `id` di body.
-// DELETE /api/admin/holidays?id=  → hapus libur (id di query, bukan body).
+// GET  /api/admin/holidays        â†’ daftar semua libur (terurut).
+// POST /api/admin/holidays        â†’ tambah libur baru (body: date, name, kind).
+// PUT  /api/admin/holidays        â†’ ubah libur berdasarkan `id` di body.
+// DELETE /api/admin/holidays?id=  â†’ hapus libur (id di query, bukan body).
 
 import { NextResponse } from "next/server";
 
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Format permintaan salah" }, { status: 400 });
+    return NextResponse.json({ error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." }, { status: 400 });
   }
 
   const raw = (body ?? {}) as { date?: unknown; name?: unknown; kind?: unknown };
@@ -134,7 +134,7 @@ export async function PUT(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Format permintaan salah" }, { status: 400 });
+    return NextResponse.json({ error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." }, { status: 400 });
   }
 
   const raw = (body ?? {}) as {
@@ -146,7 +146,7 @@ export async function PUT(request: Request) {
   const id = typeof raw.id === "string" ? raw.id.trim() : "";
   if (!id) {
     return NextResponse.json(
-      { error: "Parameter 'id' wajib diisi.", field: "id" },
+      { error: "Data libur tidak lengkap. Muat ulang halaman lalu coba lagi.", field: "id" },
       { status: 400 },
     );
   }
@@ -204,7 +204,7 @@ export async function DELETE(request: Request) {
   const id = new URL(request.url).searchParams.get("id")?.trim() ?? "";
   if (!id) {
     return NextResponse.json(
-      { error: "Parameter 'id' wajib diisi." },
+      { error: "Data libur tidak lengkap. Muat ulang halaman lalu coba lagi." },
       { status: 400 },
     );
   }

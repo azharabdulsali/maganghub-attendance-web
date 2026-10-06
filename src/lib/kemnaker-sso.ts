@@ -145,7 +145,17 @@ export type SsoLoginResult =
       setCookies?: string[];
     }
   | { status: "REJECTED"; httpCode: number; message?: string }
-  | { status: "ERROR"; message: string };
+  | {
+      status: "ERROR";
+      /** Pesan ramah untuk layar pengguna (bebas jargon). */
+      message: string;
+      /**
+       * Detail teknis untuk log server saja — TIDAK pernah dirender ke UI.
+       * Memuat jejak hop, kode HTTP, kategori halaman, dsb. agar bisa direkam
+       * saat melaporkan masalah (docs/MONEV-API.md §4.0/§7).
+       */
+      diagnostic?: string;
+    };
 
 /**
  * Tafsirkan respons `POST /auth/login` SSO, MURNI, tanpa jaringan.
@@ -166,7 +176,12 @@ export function interpretSsoLoginResponse(
     return {
       status: "REJECTED",
       httpCode,
-      message: `SSO menolak dengan HTTP ${httpCode}.`,
+      // `message` ini bisa sampai ke layar (lewat `monev-login` → route login).
+      // Jangan sebut "HTTP 403"; detail kode tetap tersedia di field `httpCode`.
+      message:
+        httpCode === 403
+          ? "Portal menolak permintaan dari server kami karena proteksi anti-bot, bukan karena kredensial Anda."
+          : "Portal menolak login. Periksa email & password Monev Anda.",
     };
   }
 
@@ -193,7 +208,7 @@ export function interpretSsoLoginResponse(
     status: "REJECTED",
     httpCode,
     message:
-      "Kredensial ditolak atau respons tak terduga (tidak ada 'authenticated: true').",
+      "Email atau password Monev ditolak portal. Periksa keduanya, lalu coba lagi.",
   };
 }
 
@@ -422,12 +437,15 @@ export async function loginToSso(
     return {
       status: "ERROR",
       message:
-        "Dibatalkan: gerbang 'confirmLivePortalRequest' belum aktif. " +
-        "Fungsi ini tidak boleh menembak portal sungguhan tanpa izin eksplisit.",
+        "Login otomatis tidak dijalankan karena izin ke portal belum " +
+        "diberikan. Muat ulang halaman ini lalu coba lagi.",
     };
   }
   if (!creds.username || !creds.password) {
-    return { status: "ERROR", message: "Username/password kosong." };
+    return {
+      status: "ERROR",
+      message: "Email & password Monev belum diisi. Isi dulu di halaman ini.",
+    };
   }
 
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -493,7 +511,13 @@ export async function loginToSso(
 /** Hasil menangkap `code` setelah mengikuti halaman SSO. */
 export type CatchCodeResult =
   | { status: "OK"; code: string; state?: string; callbackUrl: string }
-  | { status: "ERROR"; message: string };
+  | {
+      status: "ERROR";
+      /** Pesan ramah untuk layar pengguna (bebas jargon). */
+      message: string;
+      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      diagnostic?: string;
+    };
 
 /** Batas hop redirect agar tidak pernah terjebak loop tak berujung. */
 const MAX_REDIRECT_HOPS = 8;
@@ -524,18 +548,29 @@ export async function fetchAuthorizationRedirect(
   },
 ): Promise<
   | { status: "OK"; callbackUrl: string; setCookies?: string[] }
-  | { status: "ERROR"; message: string }
+  | {
+      status: "ERROR";
+      /** Pesan ramah untuk layar pengguna (bebas jargon). */
+      message: string;
+      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      diagnostic?: string;
+    }
 > {
   if (!opts.confirmLivePortalRequest) {
     return {
       status: "ERROR",
       message:
-        "Dibatalkan: gerbang 'confirmLivePortalRequest' belum aktif. " +
-        "Permintaan otorisasi SSO tidak boleh menyentuh portal tanpa izin eksplisit.",
+        "Permintaan otorisasi ke portal tidak dijalankan karena izin belum " +
+        "diberikan. Muat ulang halaman ini lalu coba lagi.",
     };
   }
   if (!opts.csrfToken) {
-    return { status: "ERROR", message: "Token CSRF kosong; tidak bisa otorisasi." };
+    return {
+      status: "ERROR",
+      message:
+        "Halaman login portal tidak siap. Coba lagi sebentar, atau pakai " +
+        "cara tempel token di bawah.",
+    };
   }
 
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -608,6 +643,9 @@ export async function fetchAuthorizationRedirect(
     return {
       status: "ERROR",
       message:
+        "Portal tidak mengirim tautan lanjutan setelah login. Coba lagi " +
+        "sebentar, atau pakai cara tempel token di bawah.",
+      diagnostic:
         `POST /auth membalas HTTP ${res.status} tanpa 'code' ` +
         `(JSON/HTML tidak memuat redirect callback).`,
     };
@@ -655,12 +693,12 @@ export async function catchOAuthCode(
     return {
       status: "ERROR",
       message:
-        "Dibatalkan: gerbang 'confirmLivePortalRequest' belum aktif. " +
-        "Menangkap code OAuth tidak boleh menyentuh portal tanpa izin eksplisit.",
+        "Menangkap tautan login portal tidak dijalankan karena izin belum " +
+        "diberikan. Muat ulang halaman ini lalu coba lagi.",
     };
   }
   if (!ssoPageUrl) {
-    return { status: "ERROR", message: "URL halaman SSO kosong." };
+    return { status: "ERROR", message: "Tautan halaman login portal kosong." };
   }
   // Anti-SSRF: halaman awal pun harus berada di domain Kemnaker. `ssoPageUrl`
   // datang dari respons server (authorizeUrl/redirect_uri), tetapi tetap
@@ -668,7 +706,7 @@ export async function catchOAuthCode(
   if (!isAllowedSsoUrl(ssoPageUrl)) {
     return {
       status: "ERROR",
-      message: "URL halaman SSO bukan host Kemnaker yang diizinkan.",
+      message: "Tautan halaman login bukan alamat portal Kemnaker yang dikenali.",
     };
   }
 
@@ -851,6 +889,9 @@ export async function catchOAuthCode(
     return {
       status: "ERROR",
       message:
+        "Portal tidak memberikan kode lanjutan setelah login. Coba lagi; bila " +
+        "tetap gagal, gunakan cara tempel token di bawah.",
+      diagnostic:
         `Mengikuti halaman SSO (${trail.length} hop) tidak menghasilkan 'code' ` +
         `(dicari di: Location, res.url, dan body HTML tiap hop). ${diag} ` +
         "Kirim ringkasan ini untuk memastikan bentuk langkah (3b) " +

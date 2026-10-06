@@ -77,6 +77,30 @@ export function formatJakartaTimestamp(date: Date): string | null {
   return `${day} ${month} ${year}, ${hour}:${minute} WIB`;
 }
 
+/**
+ * Format HANYA jam:menit ke zona Asia/Jakarta, mis. "14:05". Dipakai kolom
+ * ringkas (jam otomasi berjalan hari ini) di mana tanggal sudah tersirat dari
+ * konteks. Mengembalikan `null` bila `Date` tidak sah, sama seperti
+ * `formatJakartaTimestamp`.
+ */
+export function formatJakartaTimeOnly(date: Date): string | null {
+  if (Number.isNaN(date.getTime())) return null;
+
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    // `h23` memastikan tengah malam "00:00", bukan "24:00" (sebagian ICU).
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  const hour = String(Number(get("hour")) % 24).padStart(2, "0");
+  return `${hour}:${get("minute")}`;
+}
+
 // ---------------------------------------------------------------------------
 // Ringkasan daftar (untuk kartu statistik di halaman)
 // ---------------------------------------------------------------------------

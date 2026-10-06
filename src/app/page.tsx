@@ -7,10 +7,12 @@ import {
   Clock,
   KeyRound,
   Lock,
+  LogIn,
   Plus,
   Send,
   ShieldCheck,
   Timer,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -184,7 +186,7 @@ export default function Home() {
           `pt-safe pl-safe pr-safe`: hindari poni di iPhone landscape. */}
       <header className="pt-safe pl-safe pr-safe sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main">
+          <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
             <CalendarCheck className="size-4" />
           </span>
           <span className="flex flex-col">
@@ -207,10 +209,24 @@ export default function Home() {
             <BookOpen />
             Dokumentasi
           </Button>
-          <Button variant="neutral" size="sm" render={<Link href="/login" />}>
+          <Button
+            variant="neutral"
+            size="sm"
+            render={<Link href="/login" />}
+            title="Masuk"
+            aria-label="Masuk"
+          >
+            <LogIn aria-hidden />
             Masuk
           </Button>
-          <Button size="sm" render={<Link href="/register" />}>
+          <Button
+            size="sm"
+            variant="success"
+            render={<Link href="/register" />}
+            title="Daftar"
+            aria-label="Daftar"
+          >
+            <UserPlus aria-hidden />
             Daftar
           </Button>
         </nav>
@@ -219,8 +235,8 @@ export default function Home() {
       {/* Pahlawan (hero) + statistik. */}
       <section className="relative overflow-hidden border-b-2 border-border px-4 pt-10 pb-12 sm:px-6 sm:pt-16 sm:pb-20 lg:px-8">
         <div className="mx-auto max-w-4xl space-y-6 text-center">
-          <p className="inline-flex items-center gap-2 rounded-full border-2 border-border bg-main px-3 py-1 text-xs font-heading uppercase tracking-wider">
-            <span className="size-1.5 rounded-full bg-foreground" />
+          <p className="inline-flex items-center gap-2 rounded-full border-2 border-border bg-main px-3 py-1 text-xs font-heading uppercase tracking-wider text-main-foreground">
+            <span className="size-1.5 rounded-full bg-main-foreground" />
             Asisten logbook magang • tanpa browser
           </p>
           <h1 className="text-3xl leading-tight font-heading sm:text-4xl md:text-5xl">
@@ -244,7 +260,14 @@ export default function Home() {
               <span>Mulai gratis</span>
               <ArrowRight className="size-4" />
             </Button>
-            <Button size="lg" variant="neutral" render={<Link href="/login" />}>
+            <Button
+              size="lg"
+              variant="neutral"
+              render={<Link href="/login" />}
+              title="Saya sudah punya akun"
+              aria-label="Saya sudah punya akun"
+            >
+              <LogIn aria-hidden />
               Saya sudah punya akun
             </Button>
           </div>
@@ -285,7 +308,7 @@ export default function Home() {
                 key={item.judul}
                 className="rounded-base border-2 border-border bg-secondary-background p-5 shadow-shadow transition-transform hover:-translate-y-0.5"
               >
-                <span className="mb-3 inline-flex size-9 items-center justify-center rounded-base border-2 border-border bg-main">
+                <span className="mb-3 inline-flex size-9 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
                   <item.icon className="size-4" />
                 </span>
                 <h3 className="mb-2 font-heading">{item.judul}</h3>
@@ -327,7 +350,7 @@ export default function Home() {
         {/* Keamanan & batasan, dua kolom: janji di kiri, kejujuran di kanan. */}
         <section className="mb-14 grid gap-4 rounded-base border-2 border-border bg-secondary-background p-6 shadow-shadow sm:mb-20 sm:grid-cols-2 sm:gap-6 sm:p-8">
           <div>
-            <span className="mb-3 inline-flex size-10 items-center justify-center rounded-base border-2 border-border bg-main">
+            <span className="mb-3 inline-flex size-10 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
               <Lock className="size-5" />
             </span>
             <h2 className="mb-2 font-heading">Data Anda terjaga</h2>
@@ -373,13 +396,13 @@ export default function Home() {
               <Link
                 key={item.judul}
                 href={item.href}
-                className="group rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow transition-colors hover:bg-main"
+                className="group rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow transition-colors hover:bg-main hover:text-main-foreground"
               >
                 <div className="mb-1.5 flex items-center gap-2 font-heading text-sm">
                   <item.icon className="size-4" />
                   {item.judul}
                 </div>
-                <p className="text-sm text-foreground/80">{item.isi}</p>
+                <p className="text-sm text-foreground/80 group-hover:text-main-foreground/80">{item.isi}</p>
               </Link>
             ))}
           </div>
@@ -408,7 +431,7 @@ export default function Home() {
             {FAQ_ITEMS.map((item, index) => (
               <details
                 key={item.q}
-                className="group ring-offset-background animate-in fade-in slide-in-from-bottom-4 fill-mode-both rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow transition-colors duration-700 open:bg-main"
+                className="group ring-offset-background animate-in fade-in slide-in-from-bottom-4 fill-mode-both rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow transition-colors duration-700 open:bg-main open:text-main-foreground"
                 // Jeda bertingkat: tiap kartu masuk sedikit setelah kartu di
                 // atasnya. Kelas delay-* ditulis eksplisit (bukan interpolasi)
                 // karena Tailwind hanya menyertakan kelas yang benar-benar
@@ -430,7 +453,7 @@ export default function Home() {
                     tanpa JS. Isi tetap ada di DOM saat tertutup. */}
                 <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 group-open:grid-rows-[1fr]">
                   <div className="overflow-hidden">
-                    <p className="pt-2 text-sm text-foreground/80">{item.a}</p>
+                    <p className="pt-2 text-sm text-foreground/80 group-open:text-main-foreground/80">{item.a}</p>
                   </div>
                 </div>
               </details>
@@ -439,7 +462,7 @@ export default function Home() {
         </section>
 
         {/* Ajakan akhir. */}
-        <section className="rounded-base border-2 border-border bg-main p-6 text-center shadow-shadow sm:p-10">
+        <section className="rounded-base border-2 border-border bg-secondary-background p-6 text-center shadow-shadow sm:p-10">
           <h2 className="mb-2 text-2xl font-heading sm:text-3xl">
             Jalani magang lebih tenang mulai hari ini
           </h2>
@@ -452,7 +475,14 @@ export default function Home() {
               <CalendarCheck className="size-5" />
               Daftar gratis
             </Button>
-            <Button size="lg" variant="neutral" render={<Link href="/login" />}>
+            <Button
+              size="lg"
+              variant="neutral"
+              render={<Link href="/login" />}
+              title="Masuk ke dashboard"
+              aria-label="Masuk ke dashboard"
+            >
+              <LogIn aria-hidden />
               Masuk ke dashboard
             </Button>
           </div>

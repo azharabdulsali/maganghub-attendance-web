@@ -8,6 +8,7 @@
 // memvalidasi ulang dengan skema yang sama (AGENTS.md §2, §9 poin 5).
 
 import { useState } from "react";
+import { Loader2, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,7 +96,18 @@ export default function ProfileForm({ initialName }: { initialName: string }) {
       {saved && <Message tone="good">Profil tersimpan.</Message>}
 
       <div>
-        <Button type="submit" disabled={saving || terlaluPanjang || !berubah}>
+        <Button
+          type="submit"
+          variant="success"
+          disabled={saving || terlaluPanjang || !berubah}
+          title={saving ? "Menyimpan…" : "Simpan nama"}
+          aria-label={saving ? "Menyimpan nama" : "Simpan nama"}
+        >
+          {saving ? (
+            <Loader2 className="animate-spin" aria-hidden />
+          ) : (
+            <UserRound aria-hidden />
+          )}
           {saving ? "Menyimpan..." : "Simpan nama"}
         </Button>
       </div>

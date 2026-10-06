@@ -28,6 +28,7 @@ import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
 import { getAdminUsers, getAuditUserOptions } from "./admin-query";
 import { DispatchPanel } from "./dispatch-panel";
 import { UserRowActions } from "./user-actions";
+import { RunUserButton } from "./run-user-button";
 import FilterBar from "@/components/filter-bar";
 import Pagination from "@/components/pagination";
 import {
@@ -38,11 +39,13 @@ import {
   labelForAuditUserOption,
   summarizeUsers,
 } from "@/lib/admin";
+import { describeTodayRun, scheduleLabel, type TodayRunStatus } from "@/lib/admin-automation";
 import {
   ALL_USERS,
   badgeVariant,
   describeSubmitStatus,
   describeTrigger,
+  formatJakartaTimeOnly,
   formatJakartaTimestamp,
   paginate,
   parsePage,
@@ -218,13 +221,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               aria-label="Tabel daftar pengguna (dapat digulir)"
               tabIndex={0}
             >
-              <table className="w-full min-w-[52rem] border-collapse text-left">
+              <table className="w-full min-w-[60rem] border-collapse text-left">
                 <thead>
                   <tr className="border-b border-border/60">
                     <th className="p-3 font-heading">Pengguna</th>
                     <th className="p-3 font-heading">Peran</th>
                     <th className="p-3 font-heading">Kredensial</th>
                     <th className="p-3 font-heading">Otomasi</th>
+                    <th className="p-3 font-heading">Jadwal</th>
+                    <th className="p-3 font-heading">Hari ini</th>
                     <th className="p-3 font-heading">Laporan</th>
                     <th className="p-3 font-heading">Submit</th>
                     <th className="p-3 font-heading">Terakhir kirim</th>
@@ -268,6 +273,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       <td className="p-3 text-xs text-foreground/70">
                         {u.automationEnabled ? "Aktif" : "Mati"}
                       </td>
+                      <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
+                        {u.automationHour !== null && u.automationMinute !== null
+                          ? scheduleLabel(u.automationHour, u.automationMinute)
+                          : ","}
+                      </td>
+                      <td className="p-3">
+                        <Badge tone={todayRunTone(u.todayRunStatus)}>
+                          {describeTodayRun(u.todayRunStatus)}
+                        </Badge>
+                        {u.todayRunAt ? (
+                          <span className="mt-1 block whitespace-nowrap text-[11px] text-foreground/60">
+                            {formatJakartaTimeOnly(u.todayRunAt) ?? ""}
+                          </span>
+                        ) : null}
+                      </td>
                       <td className="p-3 text-xs text-foreground/70">
                         {u.reportCount}
                       </td>
@@ -280,12 +300,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           : "Belum pernah"}
                       </td>
                       <td className="p-3">
-                        <UserRowActions
-                          userId={u.id}
-                          userEmail={u.email}
-                          isSelf={u.id === actorId}
-                          isAdmin={isAdminRole(u.role)}
-                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <UserRowActions
+                            userId={u.id}
+                            userEmail={u.email}
+                            isSelf={u.id === actorId}
+                            isAdmin={isAdminRole(u.role)}
+                          />
+                          <RunUserButton
+                            userId={u.id}
+                            name={u.name?.trim() || u.email}
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -451,6 +477,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       </Card>
     </div>
   );
+}
+
+/** Nada warna untuk badge "Hari ini": sudah hijau, gagal merah, belum netral. */
+function todayRunTone(status: TodayRunStatus): "good" | "bad" | "neutral" {
+  if (status === "SELESAI") return "good";
+  if (status === "GAGAL") return "bad";
+  return "neutral";
 }
 
 /** Kartu angka kecil untuk ringkasan admin. */

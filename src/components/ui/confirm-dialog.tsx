@@ -30,8 +30,8 @@ interface ConfirmDialogBaseProps {
   description?: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  /** Gaya tombol konfirmasi. Pakai "neutral" untuk aksi yang tidak merusak. */
-  confirmVariant?: "default" | "neutral" | "reverse" | "noShadow";
+  /** Gaya tombol konfirmasi. Pakai "danger" untuk aksi merusak (hapus), "neutral" untuk aksi biasa. */
+  confirmVariant?: "default" | "neutral" | "reverse" | "noShadow" | "danger" | "success";
 }
 
 /**
@@ -82,7 +82,7 @@ function ConfirmDialog({
       <AlertDialogPrimitive.Portal>
         <AlertDialogPrimitive.Backdrop
           data-slot="confirm-dialog-backdrop"
-          className="fixed inset-0 z-50 bg-black/50 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0"
+          className="fixed inset-0 z-50 bg-overlay/60 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0"
         />
         <AlertDialogPrimitive.Popup
           data-slot="confirm-dialog-popup"

@@ -35,6 +35,18 @@ GET /api/cron/run-all
   yang sama (`POST /api/admin/dispatch`, dijaga sesi + role ADMIN). Berguna untuk
   menguji atau mengejar ketertinggalan tanpa membuka GitHub. Seleksi user tetap
   di server: hanya yang jam jadwalnya = jam sekarang yang diproses.
+- **Jalankan SATU user terpilih.** Bila hanya satu orang yang terlewat, admin
+  tak perlu menunggu jam berikutnya: di tabel pengguna, tombol **Jalankan** pada
+  baris user tertentu memanggil `POST /api/admin/dispatch/user` (body
+  `{ userId }`, sesi + role ADMIN, rate limit `adminUserAction`). Aksi ini
+  **memaksa** jalankan otomasi user itu apa pun jam jadwalnya, tetapi TETAP
+  memakai `performSubmit` yang sama — jadi libur/akhir pekan/akhir program,
+  pra-cek duplikat, dan gerbang `ALLOW_LIVE_SUBMIT` tetap berlaku. Pemicunya
+  tercatat `CRON` di audit log.
+- **Pemantauan per-user.** Tabel pengguna juga menampilkan **jadwal**
+  (`HH:MM WIB`) dan **status hari ini** ("Belum jalan"/"Sudah jalan"/"Gagal")
+  tiap user, sehingga admin bisa melihat siapa yang belum jalan hari itu
+  sebelum memutuskan menekan **Jalankan**.
 
 ---
 

@@ -18,6 +18,7 @@
 // JS mati, tombolnya tetap berfungsi seperti semula.
 
 import { useRef, useState } from "react";
+import { LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -36,7 +37,10 @@ function SignOutButton() {
           size="sm"
           className="w-full justify-center"
           onClick={() => setOpen(true)}
+          title="Keluar"
+          aria-label="Keluar dari akun"
         >
+          <LogOut aria-hidden />
           Keluar
         </Button>
       </form>
@@ -48,6 +52,7 @@ function SignOutButton() {
         description="Anda perlu memasukkan email dan sandi lagi untuk masuk. Absensi yang belum terkirim tidak akan hilang."
         confirmLabel="Ya, keluar"
         cancelLabel="Tetap di sini"
+        confirmVariant="danger"
         onConfirm={() => formRef.current?.requestSubmit()}
       />
     </>

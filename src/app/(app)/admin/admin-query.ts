@@ -14,6 +14,8 @@ import {
   type AdminUserRow,
   type AuditUserOption,
 } from "@/lib/admin";
+import { assessTodayRun, jakartaDayRange } from "@/lib/admin-automation";
+import type { SubmitStatus } from "@/generated/prisma/enums";
 
 /**
  * Ambil daftar pengguna yang BERMAKNA untuk filter audit: hanya yang punya
@@ -72,7 +74,12 @@ export async function getAuditUserOptions(): Promise<AuditUserOption[]> {
  * agregat di database dan paginasi tabel via `skip`/`take`; tapi jangan
  * sekarang — itu menambah jalur query kedua yang harus dijaga tetap sinkron.
  */
-export async function getAdminUsers(): Promise<AdminUserRow[]> {
+export async function getAdminUsers(now: Date = new Date()): Promise<AdminUserRow[]> {
+  // Batas hari WIB untuk menentukan "sudah jalan hari ini". Bila `now` tak sah
+  // (tidak seharusnya), jatuh ke null → log hari ini tidak diambil, status
+  // ditampilkan "Belum" ketimbang salah menandai.
+  const dayRange = jakartaDayRange(now);
+
   const users = await prisma.user.findMany({
     // Pengguna yang di-soft-delete tidak ditampilkan lagi.
     where: { deletedAt: null },
@@ -84,7 +91,7 @@ export async function getAdminUsers(): Promise<AdminUserRow[]> {
       role: true,
       credential: { select: { status: true } },
       template: { select: { id: true } },
-      automation: { select: { isEnabled: true } },
+      automation: { select: { isEnabled: true, hour: true, minute: true } },
       _count: { select: { reports: true, submitLogs: true } },
       submitLogs: {
         select: { createdAt: true },
@@ -94,16 +101,48 @@ export async function getAdminUsers(): Promise<AdminUserRow[]> {
     },
   });
 
-  return users.map((u) => ({
-    id: u.id,
-    email: u.email,
-    name: u.name,
-    role: u.role,
-    credentialStatus: u.credential?.status ?? null,
-    hasTemplate: u.template !== null,
-    automationEnabled: u.automation?.isEnabled ?? false,
-    reportCount: u._count.reports,
-    submitCount: u._count.submitLogs,
-    lastSubmitAt: u.submitLogs[0]?.createdAt ?? null,
-  }));
+  // Log HARI INI (semua status) untuk menilai "sudah dijalankan atau belum".
+  //
+  // Kenapa query TERPISAH, bukan nested select pada User: Prisma tidak
+  // mengizinkan satu relasi (`submitLogs`) muncul dua kali dalam satu `select`,
+  // jadi kita tidak bisa sekaligus "ambil 1 log terbaru" (untuk `lastSubmitAt`)
+  // dan "ambil semua log hari ini". Satu query `submitLog` untuk semua user di
+  // halaman ini jauh lebih murah daripada query per-user, dan hasilnya
+  // dikelompokkan di memori. Bila rentang hari tak sah, lewati (semua "Belum").
+  const todayByUser = new Map<string, { status: SubmitStatus; createdAt: Date }[]>();
+  if (dayRange && users.length > 0) {
+    const todayLogs = await prisma.submitLog.findMany({
+      where: {
+        userId: { in: users.map((u) => u.id) },
+        createdAt: { gte: dayRange.start, lt: dayRange.end },
+      },
+      select: { userId: true, status: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
+    });
+    for (const log of todayLogs) {
+      const list = todayByUser.get(log.userId);
+      if (list) list.push(log);
+      else todayByUser.set(log.userId, [log]);
+    }
+  }
+
+  return users.map((u) => {
+    const verdict = assessTodayRun(todayByUser.get(u.id) ?? [], now);
+    return {
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role,
+      credentialStatus: u.credential?.status ?? null,
+      hasTemplate: u.template !== null,
+      automationEnabled: u.automation?.isEnabled ?? false,
+      automationHour: u.automation?.hour ?? null,
+      automationMinute: u.automation?.minute ?? null,
+      reportCount: u._count.reports,
+      submitCount: u._count.submitLogs,
+      lastSubmitAt: u.submitLogs[0]?.createdAt ?? null,
+      todayRunStatus: verdict.status,
+      todayRunAt: verdict.lastAt,
+    };
+  });
 }

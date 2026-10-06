@@ -1,14 +1,14 @@
-// src/app/api/credentials/verify/route.ts: "Tes Koneksi" ke portal Monev.
+﻿// src/app/api/credentials/verify/route.ts: "Tes Koneksi" ke portal Monev.
 //
-// Alur (docs/MONEV-API.md §6, Opsi C1 §7):
+// Alur (docs/MONEV-API.md Â§6, Opsi C1 Â§7):
 //   1. Pengguna menempel `monev_refresh_token` dari DevTools.
 //   2. Kita simpan terenkripsi (AES-256-GCM), sama seperti password.
 //   3. Kita panggil `POST /auth/refresh` dengan token itu.
-//        - 200  → ACTIVE  (sesi hidup)
-//        - 401  → INVALID (sesi mati, pengguna harus login ulang)
-//        - lain → jangan ubah apa pun, laporkan ERROR apa adanya
+//        - 200  â†’ ACTIVE  (sesi hidup)
+//        - 401  â†’ INVALID (sesi mati, pengguna harus login ulang)
+//        - lain â†’ jangan ubah apa pun, laporkan ERROR apa adanya
 //
-// PENTING (SPEC.md §10): route ini TIDAK PERNAH mengirim laporan apa pun.
+// PENTING (SPEC.md Â§10): route ini TIDAK PERNAH mengirim laporan apa pun.
 // Hanya memperbarui/ memeriksa sesi. Fase uji koneksi berhenti di sini.
 
 import { NextResponse } from "next/server";
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Format permintaan salah" }, { status: 400 });
+    return NextResponse.json({ error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." }, { status: 400 });
   }
 
   const { token } = (body ?? {}) as { token?: unknown };
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         authTag: saved.tokenAuthTag,
       });
     } catch {
-      // Data rusak/kunci berubah → jangan diamkan; minta pengguna menempel ulang.
+      // Data rusak/kunci berubah â†’ jangan diamkan; minta pengguna menempel ulang.
       return NextResponse.json(
         {
           error:

@@ -15,6 +15,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -187,17 +188,31 @@ export function HolidaysManager({ initialRows, today }: Props) {
             ) : null}
 
             <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={working}>
-                {editingId ? "Simpan perubahan" : "Tambah libur"}
+              <Button
+                type="submit"
+                variant="success"
+                size="icon-sm"
+                disabled={working}
+                title={editingId ? "Simpan perubahan" : "Tambah libur"}
+                aria-label={editingId ? "Simpan perubahan" : "Tambah libur"}
+              >
+                {editingId ? (
+                  <Save aria-hidden />
+                ) : (
+                  <Plus aria-hidden />
+                )}
               </Button>
               {editingId ? (
                 <Button
                   type="button"
                   variant="neutral"
+                  size="icon-sm"
                   onClick={reset}
                   disabled={working}
+                  title="Batal ubah"
+                  aria-label="Batal ubah"
                 >
-                  Batal ubah
+                  <X aria-hidden />
                 </Button>
               ) : null}
             </div>
@@ -274,20 +289,24 @@ export function HolidaysManager({ initialRows, today }: Props) {
                               <Button
                                 type="button"
                                 variant="neutral"
-                                size="sm"
+                                size="icon-sm"
                                 onClick={() => mulaiUbah(row)}
                                 disabled={working}
+                                title="Ubah"
+                                aria-label="Ubah"
                               >
-                                Ubah
+                                <Pencil aria-hidden />
                               </Button>
                               <Button
                                 type="button"
-                                variant="neutral"
-                                size="sm"
+                                variant="danger"
+                                size="icon-sm"
                                 onClick={() => setHapus(row)}
                                 disabled={working}
+                                title="Hapus"
+                                aria-label="Hapus"
                               >
-                                Hapus
+                                <Trash2 aria-hidden />
                               </Button>
                             </div>
                           )}
@@ -312,7 +331,7 @@ export function HolidaysManager({ initialRows, today }: Props) {
             : ""
         }
         confirmLabel="Ya, hapus"
-        confirmVariant="noShadow"
+        confirmVariant="danger"
         onConfirm={jalankanHapus}
       />
     </div>

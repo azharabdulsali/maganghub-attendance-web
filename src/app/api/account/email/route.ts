@@ -1,4 +1,4 @@
-// src/app/api/account/email/route.ts: ubah email akun sendiri.
+﻿// src/app/api/account/email/route.ts: ubah email akun sendiri.
 //
 // Ini endpoint paling sensitif di aplikasi: email adalah identitas login DAN
 // penentu peran admin (`isAdminEmail`). Karena tidak ada verifikasi email,
@@ -13,7 +13,7 @@
 //     mengganti emailnya (termasuk ke ADMIN_EMAIL yang sama).
 //   - Email dinormalisasi (trim + lowercase) sebelum dibandingkan & disimpan,
 //     konsisten dengan jalur login/daftar.
-//   - `sessionVersion` dinaikkan → semua sesi lain dicabut (identitas berubah,
+//   - `sessionVersion` dinaikkan â†’ semua sesi lain dicabut (identitas berubah,
 //     jadi sesi lama tidak boleh tetap sah). Nilai baru dikembalikan agar klien
 //     memperbarui sesinya sendiri supaya tidak ikut ter-logout.
 //   - Respons tidak pernah membocorkan hash atau detail internal.
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { error: "Format permintaan salah" },
+      { error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." },
       { status: 400 },
     );
   }
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // Tidak ada perubahan nyata → tidak perlu cabut sesi atau tulis DB.
+  // Tidak ada perubahan nyata â†’ tidak perlu cabut sesi atau tulis DB.
   // Kedua sisi dinormalisasi: baris lama bisa saja tersimpan sebelum aturan
   // normalisasi berlaku, jadi jangan mengandalkan `user.email` sudah lowercase.
   if (newEmail === normalisasiEmail(user.email)) {

@@ -67,8 +67,8 @@ const STATUS_TEXT: Record<DayStatus, string> = {
 
 /** Kelas Tailwind per status, SATU-satunya peta warna kalender. */
 const STATUS_CELL_CLASS: Record<DayStatus, string> = {
-  SUBMITTED: "bg-success text-main-foreground border-border",
-  FAILED: "bg-destructive text-white border-border",
+  SUBMITTED: "bg-success text-success-foreground border-border",
+  FAILED: "bg-destructive text-destructive-foreground border-border",
   DRAFT: "border-border bg-background",
   NONE: "border-border/40 bg-background",
 };
@@ -178,6 +178,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             <Button
               variant="neutral"
               size="icon-sm"
+              title="Bulan sebelumnya"
               aria-label="Bulan sebelumnya"
               render={<Link href={calendarUrl(prevMonth(month))} />}
             >
@@ -186,6 +187,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             <Button
               variant="neutral"
               size="icon-sm"
+              title="Bulan berikutnya"
               aria-label="Bulan berikutnya"
               render={<Link href={calendarUrl(nextMonth(month))} />}
             >
@@ -249,9 +251,11 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                         <span
                           className={cn(
                             "font-mono text-[10px] sm:text-[11px]",
-                            status === "SUBMITTED"
-                              ? "text-main-foreground"
-                              : "text-foreground/70",
+                            status === "SUBMITTED" && "text-success-foreground",
+                            status === "FAILED" && "text-destructive-foreground",
+                            status !== "SUBMITTED" &&
+                              status !== "FAILED" &&
+                              "text-foreground/70",
                           )}
                         >
                           {cell.day}
@@ -280,10 +284,13 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                         )}
                       >
                         {/* Penanda hijau: tanggal ini sudah punya laporan
-                            sendiri (template khusus), isinya beda dari default. */}
+                            sendiri (template khusus), isinya beda dari default.
+                            `border-border` membuatnya tetap terlihat baik di
+                            sel putih (DRAFT/NONE) maupun di sel hijau
+                            (SUBMITTED) — warna saja tidak cukup jadi penanda. */}
                         {hasDatedTemplate ? (
                           <span
-                            className="size-1.5 shrink-0 rounded-full bg-green-600"
+                            className="size-2 shrink-0 rounded-full border-2 border-border bg-success"
                             aria-hidden
                           />
                         ) : null}
@@ -324,7 +331,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             </span>
             <span className="inline-flex items-center gap-2">
               <span
-                className="size-1.5 shrink-0 rounded-full bg-green-600"
+                className="size-2 shrink-0 rounded-full border-2 border-border bg-success"
                 aria-hidden
               />
               <span className="text-foreground/70">Laporan Sudah Ada</span>

@@ -8,6 +8,7 @@ import {
   describeSubmitStatus,
   describeTrigger,
   formatJakartaTimestamp,
+  formatJakartaTimeOnly,
   paginate,
   parsePage,
   parseRangeFilter,
@@ -55,6 +56,22 @@ describe("formatJakartaTimestamp", () => {
 
   it("tanggal tidak sah → null (bukan 'Invalid Date')", () => {
     expect(formatJakartaTimestamp(new Date("bukan-tanggal"))).toBeNull();
+  });
+});
+
+describe("formatJakartaTimeOnly", () => {
+  it("hanya jam:menit di zona Asia/Jakarta", () => {
+    // 2026-01-02T17:30:00Z = 2026-01-03 00:30 WIB.
+    expect(formatJakartaTimeOnly(new Date("2026-01-02T17:30:00Z"))).toBe("00:30");
+  });
+
+  it("tengah malam WIB → 00:00, bukan 24:00", () => {
+    // 2026-01-02T17:00:00Z = 2026-01-03 00:00 WIB.
+    expect(formatJakartaTimeOnly(new Date("2026-01-02T17:00:00Z"))).toBe("00:00");
+  });
+
+  it("tanggal tidak sah → null", () => {
+    expect(formatJakartaTimeOnly(new Date("bukan-tanggal"))).toBeNull();
   });
 });
 

@@ -1,4 +1,4 @@
-// src/app/api/profile/route.ts: ubah nama profil pengguna sendiri.
+﻿// src/app/api/profile/route.ts: ubah nama profil pengguna sendiri.
 //
 // Kenapa terpisah dari /api/credentials: kredensial berisi rahasia portal Monev
 // dan penanganannya ketat (rate limit, dekripsi). Profil hanyalah data biasa
@@ -8,8 +8,8 @@
 //   - Hanya pemilik sesi yang boleh mengubah profilnya sendiri (userId dari
 //     sesi, BUKAN dari body, supaya tidak bisa mengubah milik orang lain).
 //   - Email & peran TIDAK diterima dari klien. Email adalah identitas login;
-//     peran hanya boleh diubah lewat jalur admin/ADMIN_EMAIL (§13 baris 8).
-//   - Input divalidasi Zod di server sebelum menyentuh DB (AGENTS.md §2).
+//     peran hanya boleh diubah lewat jalur admin/ADMIN_EMAIL (Â§13 baris 8).
+//   - Input divalidasi Zod di server sebelum menyentuh DB (AGENTS.md Â§2).
 
 import { NextResponse } from "next/server";
 
@@ -30,7 +30,7 @@ export async function PATCH(request: Request) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { error: "Format permintaan salah" },
+      { error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." },
       { status: 400 },
     );
   }

@@ -1,4 +1,4 @@
-// src/app/api/report-templates/dated/route.ts: template laporan per-tanggal.
+﻿// src/app/api/report-templates/dated/route.ts: template laporan per-tanggal.
 //
 // Ini "penimpa" template harian (lihat src/lib/template-selection.ts): saat
 // mengirim laporan untuk tanggal X, isi di sini dipakai BILA ADA; kalau tidak
@@ -75,7 +75,7 @@ export async function PUT(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Format permintaan salah" }, { status: 400 });
+    return NextResponse.json({ error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." }, { status: 400 });
   }
 
   const parsed = datedReportTemplateSchema.safeParse(body);
@@ -135,7 +135,7 @@ export async function DELETE(request: Request) {
   const dateValue = plainDateToUtcDate(dateParam);
   if (!dateValue) {
     return NextResponse.json(
-      { error: "Parameter 'date' wajib berformat YYYY-MM-DD." },
+      { error: "Tanggal tidak terbaca. Buka ulang halaman lalu coba lagi." },
       { status: 400 },
     );
   }

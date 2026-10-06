@@ -43,12 +43,12 @@ export function OpenDatedButton({ date }: { date: string }) {
     <Button
       type="button"
       variant="neutral"
-      size="sm"
+      size="icon-sm"
       onClick={buka}
+      title={`Buka template tanggal ${date}`}
       aria-label={`Buka template tanggal ${date}`}
     >
-      <Pencil className="size-3.5" aria-hidden />
-      Buka
+      <Pencil aria-hidden />
     </Button>
   );
 }

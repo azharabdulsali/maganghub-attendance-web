@@ -14,6 +14,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -190,7 +191,18 @@ export default function EmailForm({ currentEmail }: { currentEmail: string }) {
       </Message>
 
       <div>
-        <Button type="submit" disabled={saving || !lengkap}>
+        <Button
+          type="submit"
+          variant="success"
+          disabled={saving || !lengkap}
+          title={saving ? "Menyimpan…" : "Ubah email"}
+          aria-label={saving ? "Menyimpan email" : "Ubah email"}
+        >
+          {saving ? (
+            <Loader2 className="animate-spin" aria-hidden />
+          ) : (
+            <Mail aria-hidden />
+          )}
           {saving ? "Menyimpan..." : "Ubah email"}
         </Button>
       </div>

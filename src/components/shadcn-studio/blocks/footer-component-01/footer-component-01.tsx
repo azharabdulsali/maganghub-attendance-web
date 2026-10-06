@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogIn, UserPlus } from "lucide-react";
 
 import Logo from "@/components/shadcn-studio/logo";
 import { Button } from "@/components/ui/button";
@@ -85,10 +86,24 @@ const FooterComponent01 = () => {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button size="sm" variant="neutral" render={<Link href="/login" />}>
+          <Button
+            size="sm"
+            variant="neutral"
+            render={<Link href="/login" />}
+            title="Masuk"
+            aria-label="Masuk"
+          >
+            <LogIn aria-hidden />
             Masuk
           </Button>
-          <Button size="sm" render={<Link href="/register" />}>
+          <Button
+            size="sm"
+            variant="success"
+            render={<Link href="/register" />}
+            title="Daftar gratis"
+            aria-label="Daftar gratis"
+          >
+            <UserPlus aria-hidden />
             Daftar gratis
           </Button>
         </div>

@@ -214,6 +214,9 @@ export function interpretSsoPrimeResponse(
     return {
       status: "ERROR",
       message:
+        "Halaman login portal tidak siap menerima login otomatis. Muat ulang " +
+        "halaman ini, lalu gunakan cara tempel token di bawah.",
+      diagnostic:
         "Token CSRF tidak ditemukan pada respons GET /auth SSO (dicari di " +
         "header, cookie, dan HTML). Bentuk halaman login perlu direkam ulang " +
         "(docs/MONEV-API.md §7).",
@@ -255,6 +258,9 @@ export async function primeSsoSession(opts: {
     return {
       status: "ERROR",
       message:
+        "Login otomatis tidak dijalankan karena izin ke portal belum " +
+        "diberikan. Muat ulang halaman ini lalu coba lagi.",
+      diagnostic:
         "Dibatalkan: gerbang 'confirmLivePortalRequest' belum aktif. " +
         "Priming SSO tidak boleh menyentuh portal tanpa izin eksplisit.",
     };
@@ -544,8 +550,9 @@ export async function runLoginFlow(input: {
       status: "ERROR",
       step: "oauth-start",
       message:
-        "Dibatalkan: gerbang 'confirmLivePortalRequest' belum aktif. " +
-        "Alur login penuh tidak boleh menyentuh portal tanpa izin eksplisit.",
+        "Login otomatis tidak dijalankan karena izin ke portal belum " +
+        "diberikan. Muat ulang halaman ini lalu tekan tombol login otomatis " +
+        "sekali lagi.",
     };
   }
 
@@ -564,8 +571,8 @@ export async function runLoginFlow(input: {
       status: "ERROR",
       step: "oauth-start",
       message:
-        "Respons /auth/login tidak memuat 'state' atau URL SSO yang bisa " +
-        "diikuti. Bentuk respons perlu dicek ulang (docs/MONEV-API.md §4.0).",
+        "Portal tidak memberi tautan login yang bisa diikuti. Coba lagi " +
+        "sebentar, atau pakai cara tempel token di bawah.",
     };
   }
   const { state: stateFromStep1, authorizeUrl } = start;
@@ -595,14 +602,20 @@ export async function runLoginFlow(input: {
     timeoutMs,
   });
   if (login.status === "ERROR") {
-    return { status: "ERROR", step: "sso-login", message: login.message };
+    return {
+      status: "ERROR",
+      step: "sso-login",
+      message: login.message,
+      diagnostic: login.diagnostic,
+    };
   }
   if (login.status === "REJECTED") {
     return {
       status: "REJECTED",
       step: "sso-login",
       httpCode: login.httpCode,
-      message: login.message ?? "SSO menolak kredensial.",
+      message:
+        login.message ?? "Portal menolak login. Periksa email & password Anda.",
     };
   }
 
@@ -653,7 +666,10 @@ export async function runLoginFlow(input: {
       code = caught.code;
       state = caught.state ?? state;
     } else {
-      catchDiags.push(`${target.label}: ${caught.message}`);
+      // `diagnostic` memuat jejak hop teknis; `message` hanya pesan awam.
+      catchDiags.push(
+        `${target.label}: ${caught.diagnostic ?? caught.message}`,
+      );
     }
   }
   // (c) Cadangan terakhir & TERBUKTI berhasil: bila mengikuti redirect buntu
@@ -674,7 +690,7 @@ export async function runLoginFlow(input: {
         state = parsed.state ?? state;
       }
     } else {
-      catchDiags.push(`POST /auth: ${authz.message}`);
+      catchDiags.push(`POST /auth: ${authz.diagnostic ?? authz.message}`);
     }
   }
 
@@ -694,6 +710,9 @@ export async function runLoginFlow(input: {
       status: "ERROR",
       step: "sso-login",
       message:
+        "Portal menyetujui login, tetapi kode lanjutan tidak diterima. Coba " +
+        "lagi; bila tetap gagal, gunakan cara tempel token di bawah.",
+      diagnostic:
         "Login SSO diterima (authenticated: true) tetapi 'code' OAuth tidak " +
         "berhasil ditangkap. Kirim detail ini untuk memastikan bentuk langkah " +
         "(3b) (docs/MONEV-API.md §4.0/§7)." +
@@ -724,5 +743,10 @@ export async function runLoginFlow(input: {
       message: exchanged.message,
     };
   }
-  return { status: "ERROR", step: "code-exchange", message: exchanged.message };
+  return {
+    status: "ERROR",
+    step: "code-exchange",
+    message: exchanged.message,
+    diagnostic: exchanged.diagnostic,
+  };
 }

@@ -1,4 +1,4 @@
-// src/app/api/report-templates/generate/route.ts: susun draf 3 kolom laporan.
+﻿// src/app/api/report-templates/generate/route.ts: susun draf 3 kolom laporan.
 //
 // Kenapa rute terpisah, bukan menumpang PUT /api/report-templates: menyusun
 // draf TIDAK menyimpan apa pun. Pengguna harus bisa meninjau & mengedit hasil
@@ -6,7 +6,7 @@
 // "Generate" diam-diam menimpa template tersimpan, itu berbahaya.
 //
 // Penyusunnya sendiri murni (lihat src/lib/report-draft.ts), jadi rute ini
-// hanya: periksa sesi → batasi laju → validasi input → panggil drafter.
+// hanya: periksa sesi â†’ batasi laju â†’ validasi input â†’ panggil drafter.
 // Bila kelak drafter LLM diaktifkan, bentuk rute ini tidak perlu berubah.
 
 import { NextResponse } from "next/server";
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Format permintaan salah" }, { status: 400 });
+    return NextResponse.json({ error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." }, { status: 400 });
   }
 
   const parsed = reportDraftSchema.safeParse(body);

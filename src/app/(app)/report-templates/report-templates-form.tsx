@@ -13,7 +13,15 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CircleCheck, TriangleAlert, WandSparkles } from "lucide-react";
+import {
+  CircleCheck,
+  Loader2,
+  Save,
+  Trash2,
+  TriangleAlert,
+  Undo2,
+  WandSparkles,
+} from "lucide-react";
 import { FORM_ANCHOR_ID } from "./open-dated-button";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -429,7 +437,10 @@ export default function ReportTemplatesForm({
               variant="neutral"
               disabled={saving || deleting}
               onClick={() => pindah(null)}
+              title="Kembali ke default"
+              aria-label="Kembali ke template default"
             >
+              <Undo2 aria-hidden />
               Kembali ke default
             </Button>
           ) : null}
@@ -559,7 +570,14 @@ export default function ReportTemplatesForm({
             variant="neutral"
             size="sm"
             className="shrink-0"
+            title={drafting ? "Menyusun…" : "Generate draf"}
+            aria-label={drafting ? "Menyusun draf" : "Generate draf"}
           >
+            {drafting ? (
+              <Loader2 className="animate-spin" aria-hidden />
+            ) : (
+              <WandSparkles aria-hidden />
+            )}
             {drafting ? "Generate..." : "Generate"}
           </Button>
         </div>
@@ -662,7 +680,27 @@ export default function ReportTemplatesForm({
           onClick={simpan}
           disabled={!semuaValid || saving || deleting}
           size="sm"
+          variant="success"
+          title={
+            saving
+              ? "Menyimpan…"
+              : konteksAda
+                ? "Perbarui template"
+                : "Simpan template"
+          }
+          aria-label={
+            saving
+              ? "Menyimpan"
+              : konteksAda
+                ? "Perbarui template"
+                : "Simpan template"
+          }
         >
+          {saving ? (
+            <Loader2 className="animate-spin" aria-hidden />
+          ) : (
+            <Save aria-hidden />
+          )}
           {saving
             ? "Menyimpan..."
             : konteksAda
@@ -674,9 +712,16 @@ export default function ReportTemplatesForm({
           <Button
             onClick={() => setConfirmHapusOpen(true)}
             disabled={saving || deleting}
-            variant="neutral"
+            variant="danger"
             size="sm"
+            title={deleting ? "Menghapus…" : "Hapus template"}
+            aria-label={deleting ? "Menghapus template" : "Hapus template"}
           >
+            {deleting ? (
+              <Loader2 className="animate-spin" aria-hidden />
+            ) : (
+              <Trash2 aria-hidden />
+            )}
             {deleting ? "Menghapus..." : "Hapus"}
           </Button>
         ) : null}
@@ -699,6 +744,7 @@ export default function ReportTemplatesForm({
             : "Tanggal ini akan kembali memakai template default. Template default tidak terhapus."
         }
         confirmLabel="Hapus template"
+        confirmVariant="danger"
         onConfirm={() => void hapus()}
       />
 

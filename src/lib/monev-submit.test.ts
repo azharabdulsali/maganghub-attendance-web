@@ -244,7 +244,10 @@ describe("interpretRefreshResponse (murni), §4.4", () => {
   it("200 tanpa token di bentuk apa pun → ERROR jujur (bukan menebak)", () => {
     const r = interpretRefreshResponse(200, JSON.stringify({ ok: true }));
     expect(r.status).toBe("ERROR");
-    if (r.status === "ERROR") expect(r.message).toContain("§4.4");
+    if (r.status === "ERROR") {
+      expect(r.message).not.toMatch(/§4\\.4|HTTP|access token/i);
+      expect(r.diagnostic).toContain("§4.4");
+    }
   });
 
   it("kode lain (500) → ERROR", () => {

@@ -48,8 +48,12 @@
   --radius-4xl: calc(var(--radius) * 2.6);
   --color-main: var(--main);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-secondary-background: var(--secondary-background);
   --color-main-foreground: var(--main-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-overlay: var(--overlay);
   --spacing-boxShadowX: 4px;
   --spacing-boxShadowY: 4px;
@@ -129,6 +133,16 @@
   /* Hijau "berhasil", dipakai di grafik tren & status. Dipisah sebagai token
      (bukan kelas warna mentah) supaya tema bisa menggantinya nanti. */
   --success: #059669;
+  /* Teks di atas latar --success / --destructive: putih di kedua mode supaya
+     kontras tetap tinggi (hijau & merah keduanya gelap-cukup di light, dan
+     tetap pekat di dark). Dipisah sebagai token agar bukan warna mentah. */
+  --success-foreground: oklch(100% 0 0);
+  --destructive-foreground: oklch(100% 0 0);
+  /* Kuning "peringatan": butuh perhatian, tapi TIDAK merusak/gagal (mis.
+     spanduk wajib ganti kata sandi). Dibedakan dari --success/--destructive
+     agar tiga makna (berhasil / gagal / perlu tindakan) tidak tercampur. */
+  --warning: #f5c518;
+  --warning-foreground: oklch(0% 0 0);
   --overlay: oklch(0% 0 0 / 0.8);
   --shadow: 4px 4px 0px 0px var(--border);
   --chart-active-dot: #000;
@@ -209,6 +223,14 @@
   --shadow: 4px 4px 0px 0px oklch(1 0 0 / 90%);
   /* Hijau sedikit lebih terang agar tetap terbaca di latar gelap. */
   --success: #34d399;
+  /* Di mode gelap, hijau/merah jadi lebih terang → teks harus GELAP agar
+     kontras (putih di atas #34d399 hanya ~1.6:1). */
+  --success-foreground: oklch(0.16 0 0);
+  --destructive-foreground: oklch(0.16 0 0);
+  /* Di mode gelap, #f5c518 sudah terang → teks GELAP agar kontras (putih di
+     atasnya hanya ~1.7:1). Tambah sedikit kecerahan agar tidak tenggelam. */
+  --warning: #facc15;
+  --warning-foreground: oklch(0.16 0 0);
 }
 
 @layer base {

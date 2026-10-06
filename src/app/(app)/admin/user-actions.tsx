@@ -14,6 +14,7 @@
 "use client";
 
 import * as React from "react";
+import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -118,22 +119,24 @@ export function UserRowActions({
         <Button
           type="button"
           variant="neutral"
-          size="sm"
+          size="icon-sm"
           disabled={terkunci || working}
-          title={terkunci ? alasanKunci : undefined}
+          title={terkunci ? alasanKunci : `Atur ulang kata sandi ${userEmail}`}
+          aria-label={`Atur ulang kata sandi ${userEmail}`}
           onClick={() => setKonfirmasi("reset")}
         >
-          Atur ulang kata sandi
+          <KeyRound aria-hidden />
         </Button>
         <Button
           type="button"
           variant="neutral"
-          size="sm"
+          size="icon-sm"
           disabled={terkunci || working}
-          title={terkunci ? alasanKunci : undefined}
+          title={terkunci ? alasanKunci : `Hapus ${userEmail}`}
+          aria-label={`Hapus ${userEmail}`}
           onClick={() => setKonfirmasi("hapus")}
         >
-          Hapus
+          <Trash2 aria-hidden />
         </Button>
       </div>
 
@@ -157,7 +160,7 @@ export function UserRowActions({
         title="Hapus pengguna ini?"
         description={`${userEmail} tidak akan bisa masuk lagi dan hilang dari daftar. Data lama tetap tersimpan untuk audit.`}
         confirmLabel="Ya, hapus"
-        confirmVariant="noShadow"
+        confirmVariant="danger"
         onConfirm={() => {
           setKonfirmasi(null);
           void jalankanHapus();
@@ -189,11 +192,23 @@ export function UserRowActions({
               </code>
               <Button
                 type="button"
-                variant="noShadow"
+                variant={sudahSalin ? "success" : "noShadow"}
                 size="sm"
                 onClick={() => void salin()}
+                title={sudahSalin ? "Tersalin" : "Salin kata sandi"}
+                aria-label={sudahSalin ? "Tersalin" : "Salin kata sandi"}
               >
-                {sudahSalin ? "Tersalin ✓" : "Salin"}
+                {sudahSalin ? (
+                  <>
+                    <Check aria-hidden />
+                    Tersalin ✓
+                  </>
+                ) : (
+                  <>
+                    <Copy aria-hidden />
+                    Salin
+                  </>
+                )}
               </Button>
               <label className="flex items-center gap-2 text-sm">
                 <input

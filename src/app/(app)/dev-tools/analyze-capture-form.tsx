@@ -4,6 +4,7 @@
 // Tidak menyimpan apa pun ke database; hasilnya hanya ditampilkan di layar.
 
 import { useState } from "react";
+import { Loader2, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -128,7 +129,17 @@ export default function AnalyzeCaptureForm() {
               placeholder="curl 'https://monev-api.maganghub.kemnaker.go.id/api/v1/...' -H 'Content-Type: application/json' --data-raw '{...}'"
             />
           </div>
-          <Button onClick={analisis} disabled={loading || raw.trim().length === 0}>
+          <Button
+            onClick={analisis}
+            disabled={loading || raw.trim().length === 0}
+            title={loading ? "Menganalisis…" : "Analisis"}
+            aria-label={loading ? "Menganalisis rekaman" : "Analisis rekaman"}
+          >
+            {loading ? (
+              <Loader2 className="animate-spin" aria-hidden />
+            ) : (
+              <Search aria-hidden />
+            )}
             {loading ? "Menganalisis..." : "Analisis"}
           </Button>
 

@@ -95,6 +95,11 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
 - **Jangan menambahkan dependensi** tanpa alasan jelas. Setiap paket baru
   memperbesar permukaan serangan untuk aplikasi yang menyimpan password orang
   lain.
+- **Jangan mengganti bahasa balasan.** Seluruh balasan ke pemilik proyek
+  **HARUS dalam Bahasa Indonesia** — termasuk saat menjalankan perintah
+  terminal, membaca kode, atau berpikir. Jangan beralih ke Inggris, Mandarin,
+  atau bahasa lain di tengah percakapan. Ini berlaku untuk pesan, ringkasan,
+  komentar penjelasan, dan usulan.
 
 ### Selalu
 
@@ -106,6 +111,9 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
   ingin menyimpang, tulis alasannya di `SPEC.md`, jangan diam-diam.
 - **Jalankan `npm run lint`, `npm run typecheck`, dan `npm run build`** sebelum
   menyatakan selesai. (`npm test` belum terpasang, lihat §7.)
+- **Balas dalam Bahasa Indonesia.** Seluruh komunikasi ke pemilik proyek
+  memakai Bahasa Indonesia, konsisten sampai akhir — jangan berganti bahasa di
+  tengah jalan. Lihat juga larangan di bagian "Jangan pernah" di atas.
 
 ---
 
@@ -171,6 +179,63 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
   `text-main-foreground`, `bg-secondary-background`, `text-foreground`,
   `border-border`, `rounded-base`, `shadow-shadow`, `font-heading`, `font-base`.
   Hindari `slate-*`/`gray-*`/`rounded-md`, tidak mengenal tema neobrutalism.
+  Untuk warna semantik ada variant tombol **`danger`** (aksi merusak: hapus) dan
+  **`success`** (aksi "menjalankan/aktifkan"). Keduanya memakai token
+  `--destructive`/`--success` + `--destructive-foreground`/`--success-foreground`
+  (didefinisikan di `globals.css` untuk mode terang & gelap), **bukan**
+  `bg-red-500`. Jalankan `npx shadcn` untuk menambah komponen, bukan menambah
+  kelas warna mentah.
+- **Warna latar WAJIB berpasangan dengan foreground-nya.** Latar `bg-success`,
+  `bg-destructive`, atau `bg-warning` selalu ditulis dengan
+  `text-success-foreground` / `text-destructive-foreground` /
+  `text-warning-foreground`; latar `bg-main` (aksen biru) selalu dengan
+  `text-main-foreground`. **Jangan** `text-main-foreground` di atas hijau/merah/
+  kuning, dan **jangan** `text-foreground`/`text-white`/`text-black` di atas
+  `bg-main` — nilainya berbeda (di mode gelap `--main-foreground` gelap)
+  sehingga teks jadi tidak terbaca. Bila latar berubah karena interaksi
+  (`hover:`/`open:`/`data-[state=...]:`), perubahan foreground-nya WAJIB
+  ditulis juga (`hover:text-main-foreground`, dst.), termasuk untuk anak
+  ber-`group` (`group-hover:`/`group-open:`). Token `--warning`/
+  `--warning-foreground` (kuning) ada untuk "perlu perhatian, tapi bukan
+  gagal atau merusak" (mis. spanduk wajib ganti sandi).
+- **Tombol aksi berulang pakai IKON + tooltip, bukan teks.** Tombol di dalam
+  tabel/daftar (Ubah, Hapus, Salin, Jalankan, Buka) memakai `size="icon-sm"` +
+  ikon `lucide-react` + `title` DAN `aria-label` (wajib; tanpa itu tombol ikon
+  tak terbaca pembaca layar). Tombol aksi utama/form boleh ikon **plus** teks
+  bila kejelasan lebih penting, tetapi tetap beri `title`/`aria-label`. Konvensi
+  ikon: `Play` = jalankan (spinner `Loader2` saat proses), `Trash2` = hapus
+  (variant `danger`), `Pencil` = ubah, `Copy`/`Check` = salin/tersalin,
+  `Save`/`Plus` = simpan/tambah (variant `success`), `X` = batal/tutup.
+  Teks label tetap di **dialog konfirmasi**, jadi aksi berbahaya tetap jelas
+  sebelum dijalankan.
+- **Semua teks yang dilihat pengguna wajib dimengerti orang awam.** Ini berlaku
+  untuk pesan error API (`{ error: "..." }`), `message` hasil aksi, judul &
+  isi toast, label tombol/badge, dan helper text. Pesan boleh bocor ke layar
+  lewat `setError(data.error)` / `toast.error(judul, data.error)`, jadi **tulis
+  seolah setiap pesan akan tampil di layar** — bahkan yang terasa "internal".
+  Larangan keras: **jangan** tampilkan jargon ke pengguna — `HTTP 403`,
+  `cf-mitigated`, `content-type`, `OAuth`, `csrf`, `access_token`, `state`,
+  `JSON`, `body`, `payload`, nama field (`userId`), nama env (`CRON_SECRET`),
+  atau potongan path (`/auth/login`). Sebut hal itu hanya di **log server**
+  (`diagnostic`) dan `console.warn`, atau di dalam `<details>` "Detail teknis"
+  yang sengaja dilipat untuk keperluan laporan.
+  Pola pesan yang benar: **(a) apa yang terjadi → (b) apakah salah pengguna →
+  (c) satu tindakan berikutnya**. Contoh: bukan `"Body bukan JSON."` tetapi
+  `"Data permintaan tidak terbaca. Muat ulang halaman lalu coba lagi."`; bukan
+  `"SSO menolak dengan HTTP 403."` tetapi `"Portal MagangHub menolak permintaan
+  dari server kami karena proteksi anti-bot, bukan karena email & password
+  Anda."`; bukan `"Respons /auth/login tidak memuat state."` tetapi
+  `"Portal tidak memberi tautan login yang bisa diikuti. Coba lagi sebentar."`
+  Sebutkan istilah teknis (mis. `monev_refresh_token`) **hanya** bila pengguna
+  memang harus mencarinya sendiri di DevTools, dan selalu dengan langkah konkret.
+  **Pisahkan pesan ramah dari detail teknis**: objek hasil internal membawa
+  `message` (tampil ke pengguna) **dan** `diagnostic` (jejak hop/HTTP/kategori
+  halaman, HANYA untuk log server). Jangan pernah menaruh jejak diagnostik di
+  `message` — nilai itu bocor ke UI lewat `setError`/`toast`. Penjaga otomatis:
+  `src/lib/user-facing-messages.test.ts` memindai literal setelah `message:`/
+  `error:`/`toast.*(`/`setError(` dan menggagalkan build bila menemukan jargon
+  (termasuk `HTTP`, `hop`, `gerbang '...'`, `redirect_uri`, `refresh_token`,
+  rujukan `§`/`docs/MONEV-API`).
 - **Responsif wajib** untuk tablet & HP (aplikasi ini web, tapi tetap dipakai di
   layar kecil). Uji di `sm:`, `md:`, `lg:`. Jangan buat layout yang hanya rapi
   di desktop.
@@ -215,7 +280,7 @@ maganghub-attendance-web/
   `validate.ts` (+test), `utils.ts`
 - `src/app/api/`, `auth/[...nextauth]`, `register`, `credentials`,
   `profile`, `account/password`, `automation`, `cron/submit`, `cron/run-all`,
-  `admin/dispatch`, `reports/submit`
+  `admin/dispatch`, `admin/dispatch/user`, `reports/submit`
 - `src/app/(app)/`, rute terlindungi: `dashboard/` (beranda), `calendar/`,
   `credentials/`, `report-templates/`, `history/`, `automation/`, `admin/`,
   `dev-tools/`, `profile/`. Sidebar & cek sesi dipasang sekali di
@@ -502,6 +567,49 @@ Prioritas test:
   `key` memasang ulang komponen dengan daftar segar (pola sama seperti form
   template).
 
+#### Panel Admin: pantau jadwal & jalankan otomasi per-user
+
+- **Kolom baru di tabel pengguna `/admin`**: `Jadwal` (jam:menit WIB dari
+  `AutomationConfig.hour/minute`) dan `Hari ini` (badge apakah otomasi sudah
+  dicoba hari itu). Tombol **Jalankan** per-baris memaksa jalankan otomasi
+  seorang pengguna tanpa menunggu jam jadwalnya.
+- **Aturan murni & teruji di `src/lib/admin-automation.ts`**:
+  `jakartaDayRange(now)` (batas hari WIB sebagai `Date` UTC, offset dihitung
+  dari `now` lewat `Intl` — bukan asumsi `+07:00` tetap),
+  `scheduleLabel(hour, minute)`, dan `assessTodayRun(logs, now)`. "Sudah jalan
+  hari ini" = ada `SubmitLog` APA PUN hari ini (SUCCESS/DUPLICATE/FAILED);
+  bila ada, status log TERAKHIR yang menang (FAILED → `GAGAL`, selain itu
+  `SELESAI`). Fungsi ini MURNI terhadap `now` (bisa diuji tanggal tetap).
+- **Data**: `getAdminUsers(now?)` (`admin-query.ts`) kini juga menarik
+  `automation.hour/minute` dan log hari ini (query bersyarat: hanya bila rentang
+  hari sah). `AdminUserRow` (`src/lib/admin.ts`) bertambah `automationHour`,
+  `automationMinute`, `todayRunStatus`, `todayRunAt`.
+- **Eksekusi 1 user = `src/lib/admin-run-one.ts` (`runOne`)**, memakai
+  `performSubmit` yang SAMA dengan dispatcher massal & webhook. Jadi **"paksa"
+  berarti abaikan JAM jadwal, BUKAN abaikan kebijakan laporan** — libur/akhir
+  pekan/akhir program, pra-cek duplikat (RB-03), dan gerbang `ALLOW_LIVE_SUBMIT`
+  tetap berlaku. Pemicu dicatat sebagai `CRON` (tindakan sistem atas nama user,
+  keputusan pemilik), `logOnNotReady: true` (konsisten dengan cron). Sasaran
+  tak-ada / ter-soft-delete → `NOT_FOUND`/`DELETED` (route memetakan ke 404).
+- **Endpoint `POST /api/admin/dispatch/user`** (`src/app/api/admin/dispatch/user/route.ts`):
+  guard sesi + role ADMIN di SERVER, rate limit scope `adminUserAction`
+  (20/10 menit per admin, sama kelas dengan aksi admin lain), body `{ userId }`
+  divalidasi. Balasan TIDAK memuat rahasia — hanya `kind`, `label`,
+  `succeeded`, `message` (lewat `summarizeRunOne`).
+- **UI klien `src/app/(app)/admin/run-user-button.tsx`**: `useRouter` statis
+  (BUKAN hook di dalam `useEffect`/`import()` dinamis — itu melanggar
+  `react-hooks`), kirim `{ userId }`, tampilkan toast, lalu `router.refresh()`
+  agar kolom "Hari ini" langsung memperbarui.
+- **Kolom "Aksi" = tombol IKON, bukan teks.** Ketiga aksi baris memakai
+  `lucide-react` + size `icon-sm`, dengan `title` DAN `aria-label` (wajib, kalau
+  tidak tombol ikon jadi tak terbaca pembaca layar): `Play` = jalankan otomasi
+  (spinner `Loader2` saat proses), `KeyRound` = atur ulang kata sandi,
+  `Trash2` = hapus. Ikon diimpor langsung dari `lucide-react` (sudah jadi
+  dependensi, dipakai `date-picker`/`password-input`). Teks label tetap di
+  dalam dialog konfirmasi, jadi aksi berbahaya tetap jelas sebelum dijalankan.
+- **`formatJakartaTimeOnly`** ditambahkan di `src/lib/audit-log.ts` (jam:menit
+  WIB, `hourCycle: "h23"` supaya tengah malam `00:00` bukan `24:00`), teruji.
+
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
 (gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan
 test benar-benar bisa gagal (sengaja rusakkan kode → test harus merah →
@@ -567,8 +675,14 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 
 ## 9. Konvensi Perubahan
 
-- Bahasa komentar & dokumen: **Indonesia**, sederhana.
+- Bahasa komentar, dokumen, **dan balasan ke pemilik**: **Indonesia**,
+  sederhana. Balasan agent tidak boleh berganti ke Inggris/Mandarin/bahasa lain
+  di tengah percakapan (lihat §2).
 - Bahasa kode (nama variabel/fungsi): Inggris, konsisten.
+- **Bahasa pesan pengguna: Indonesia, sederhana, tanpa jargon teknis.** Setiap
+  teks yang bisa muncul di layar (error API, `message`, toast, label) harus
+  dimengerti orang awam dan memberi satu tindakan berikutnya — lihat §3
+  "Semua teks yang dilihat pengguna wajib dimengerti orang awam".
 - TypeScript **strict**, hindari `any`. Kalau terpaksa, beri komentar alasannya.
 - Satu perubahan = satu tujuan.
 - Pesan commit (dibuat pemilik): `feat:`, `fix:`, `docs:`, `refactor:`,
@@ -608,3 +722,4 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 | Gagal submit                         | Catat gagal apa adanya; jangan tandai sukses        |
 | Portal balas `409`                   | Sudah ada presensi hari itu, catat, jangan ulangi   |
 | Ragu perubahan aman                  | `npm test` + `npm run typecheck` + `npm run build`  |
+| Membalas ke pemilik                  | **Bahasa Indonesia saja**, jangan ganti bahasa di tengah percakapan |

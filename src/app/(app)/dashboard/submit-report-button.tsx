@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { KeyRound, Loader2, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Message } from "@/components/ui/message";
@@ -58,7 +59,18 @@ export default function SubmitReportButton() {
 
   return (
     <div className="space-y-3">
-      <Button onClick={kirim} disabled={loading}>
+      <Button
+        onClick={kirim}
+        disabled={loading}
+        variant="success"
+        title={loading ? "Mengirim…" : "Kirim Absen Hari Ini"}
+        aria-label={loading ? "Mengirim absen" : "Kirim Absen Hari Ini"}
+      >
+        {loading ? (
+          <Loader2 className="animate-spin" aria-hidden />
+        ) : (
+          <Send aria-hidden />
+        )}
         {loading ? "Mengirim..." : "Kirim Absen Hari Ini"}
       </Button>
 
@@ -78,7 +90,10 @@ export default function SubmitReportButton() {
             <Button
               className="mt-3"
               render={<Link href="/credentials" />}
+              title="Buka halaman kredensial"
+              aria-label="Buka halaman kredensial"
             >
+              <KeyRound aria-hidden />
               Buka halaman kredensial
             </Button>
           )}

@@ -1,4 +1,4 @@
-// src/app/api/account/password/route.ts: ubah kata sandi akun sendiri (C-13).
+﻿// src/app/api/account/password/route.ts: ubah kata sandi akun sendiri (C-13).
 //
 // Diubah **dalam sesi** (pengguna sudah login), tanpa email/token reset. Karena
 // tidak ada verifikasi email, keamanannya bersandar pada dua hal: sesi yang sah
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { error: "Format permintaan salah" },
+      { error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." },
       { status: 400 },
     );
   }
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
 
   const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST);
   // Menaikkan `sessionVersion` mencabut SEMUA sesi lain yang beredar (token
-  // lama tak lagi cocok dengan DB → callback `jwt` mengembalikan null).
+  // lama tak lagi cocok dengan DB â†’ callback `jwt` mengembalikan null).
   // `mustChangePassword` direset ke false: bila pengguna tadi dipaksa ganti
   // kata sandi oleh admin, kewajiban itu gugur begitu ia menggantinya sendiri.
   // Versi baru dikembalikan supaya klien bisa memperbarui sesinya sendiri
