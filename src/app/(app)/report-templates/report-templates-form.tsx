@@ -674,8 +674,9 @@ export default function ReportTemplatesForm({
           Sebelumnya "Perbarui template" memakai `sm:flex-1` sehingga melebar
           penuh dan terlihat jauh lebih besar dari "Hapus" di sebelahnya,
           padahal keduanya sederajat. Sisi utama tetap dibedakan lewat
-          variant (bukan ukuran). */}
-      <div className="flex flex-wrap items-center gap-3">
+          variant (bukan ukuran). Aksi rata kanan (lihat catatan di
+          settings/profile-form.tsx). */}
+      <div className="flex flex-row flex-wrap items-center justify-end gap-3">
         <Button
           onClick={simpan}
           disabled={!semuaValid || saving || deleting}

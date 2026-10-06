@@ -307,33 +307,35 @@ export default function AutomationForm({
             {/* Tombol ini TIDAK type="submit": ia membuka dialog dulu. Setelah
                 dikonfirmasi, dialog memanggil formRef.requestSubmit() sehingga
                 jalur submit tetap jalur bawaan form (bukan fetch manual). */}
-            <Button
-              type="button"
-              variant="success"
-              onClick={() => setKonfirmasiSimpan(true)}
-              disabled={loading}
-              title={
-                loading
-                  ? "Menyimpan…"
+            <div className="flex flex-row items-center justify-end gap-3">
+              <Button
+                type="button"
+                variant="success"
+                onClick={() => setKonfirmasiSimpan(true)}
+                disabled={loading}
+                title={
+                  loading
+                    ? "Menyimpan…"
+                    : hasExisting
+                      ? "Simpan perubahan"
+                      : "Aktifkan"
+                }
+                aria-label={
+                  loading
+                    ? "Menyimpan"
+                    : hasExisting
+                      ? "Simpan perubahan"
+                      : "Aktifkan"
+                }
+              >
+                {loading ? <Loader2 className="animate-spin" aria-hidden /> : <Save aria-hidden />}
+                {loading
+                  ? "Menyimpan..."
                   : hasExisting
                     ? "Simpan perubahan"
-                    : "Aktifkan"
-              }
-              aria-label={
-                loading
-                  ? "Menyimpan"
-                  : hasExisting
-                    ? "Simpan perubahan"
-                    : "Aktifkan"
-              }
-            >
-              {loading ? <Loader2 className="animate-spin" aria-hidden /> : <Save aria-hidden />}
-              {loading
-                ? "Menyimpan..."
-                : hasExisting
-                  ? "Simpan perubahan"
-                  : "Aktifkan"}
-            </Button>
+                    : "Aktifkan"}
+              </Button>
+            </div>
 
             {error && <Message tone="bad">{error}</Message>}
             {sukses && <Message tone="good">{sukses}</Message>}

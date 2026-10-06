@@ -386,7 +386,7 @@ export default function CredentialsForm({
               </div>
             </dl>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-row flex-wrap items-center justify-end gap-3">
               <Button
                 onClick={loginOtomatis}
                 disabled={loginLoading || loading}
@@ -569,7 +569,7 @@ export default function CredentialsForm({
                 />
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-row flex-wrap items-center justify-end gap-3">
                 <Button
                   type="submit"
                   variant="success"
@@ -715,7 +715,7 @@ export default function CredentialsForm({
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-row flex-wrap items-center justify-end gap-3">
               <Button
                 type="submit"
                 variant="success"

@@ -95,7 +95,9 @@ export default function ProfileForm({ initialName }: { initialName: string }) {
       {error && <Message tone="bad">{error}</Message>}
       {saved && <Message tone="good">Profil tersimpan.</Message>}
 
-      <div>
+      {/* Tombol aksi rata kanan, sebaris dengan tombol lain di form (pola
+          konsisten; footer konten konvensional menaruh aksi utama di kanan). */}
+      <div className="flex flex-row items-center justify-end gap-3">
         <Button
           type="submit"
           variant="success"

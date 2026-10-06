@@ -181,7 +181,8 @@ export default function PasswordForm() {
         perlu login ulang di sini.
       </Message>
 
-      <div>
+      {/* Tombol aksi rata kanan (lihat catatan di profile-form.tsx). */}
+      <div className="flex flex-row items-center justify-end gap-3">
         <Button
           type="submit"
           variant="success"
