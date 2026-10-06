@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Loader2, Plus, RefreshCw, Save } from "lucide-react";
+import { Check, Copy, Info, Loader2, Plus, RefreshCw, Save } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -240,7 +240,8 @@ export default function AutomationForm({
           <CardTitle>Jadwal harian</CardTitle>
           <CardDescription>
             Layanan penjadwal akan memanggil tautan otomatis pada jam ini setiap
-            hari.
+            hari. Waktu kirim bisa <strong>meleset sedikit</strong> — lihat
+            catatan di bawah jam.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -278,6 +279,28 @@ export default function AutomationForm({
                 className="text-sm text-foreground/70"
               >
                 {nextRun ? `Berikutnya: ${nextRun}` : "Jam tidak sah."}
+              </p>
+            </div>
+
+            {/* PENTING: jam yang dipilih hanyalah PERKIRAAN. Penjadwal (cron-job.org
+                / GitHub Actions) dan antrean di sisi portal sering memproses
+                beberapa menit lebih lambat, jadi absensi bisa terkirim di menit
+                ke-20-an, bukan tepat di detik jam yang diset. Ini disebut di UI
+                (bukan disembunyikan) supaya pengguna tidak mengira otomasi
+                gagal hanya karena jamnya "telat". */}
+            <div className="flex gap-2 rounded-base border-2 border-border bg-secondary-background p-3 text-xs text-foreground/70">
+              <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <p>
+                <strong>Waktu kirim bisa meleset.</strong> Jam ini adalah
+                perkiraan, bukan patokan detik. Penjadwal dan antrean portal
+                sering memproses beberapa menit lebih lambat — misalnya Anda
+                set <strong>13.00</strong>, absensi bisa baru terkirim sekitar{" "}
+                <strong>13.25</strong>. Sebaliknya, pengiriman juga bisa maju
+                beberapa menit lebih awal. Selama pengiriman masih di sekitar
+                jam ini hari itu, otomasi Anda{" "}
+                <strong>berjalan normal</strong>, bukan gagal. Untuk memastikan
+                hari ini sudah terkirim, lihat status di{" "}
+                <strong>dasbor</strong>.
               </p>
             </div>
 
@@ -471,7 +494,8 @@ export default function AutomationForm({
                 <strong>
                   {formatSchedule(Number(hour) || 0, Number(minute) || 0)} WIB
                 </strong>
-                .
+                . Waktu kirim bisa meleset beberapa menit (bisa lebih lambat,
+                bisa lebih awal) — itu normal.
               </>
             ) : (
               <>
