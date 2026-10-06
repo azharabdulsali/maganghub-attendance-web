@@ -123,8 +123,8 @@ describe("assessTodayRun", () => {
 
 describe("describeTodayRun", () => {
   it("memberi label Indonesia untuk tiap status", () => {
-    expect(describeTodayRun("SELESAI")).toBe("Sudah jalan");
+    expect(describeTodayRun("SELESAI")).toBe("Sudah");
     expect(describeTodayRun("GAGAL")).toBe("Gagal");
-    expect(describeTodayRun("BELUM")).toBe("Belum jalan");
+    expect(describeTodayRun("BELUM")).toBe("Belum");
   });
 });

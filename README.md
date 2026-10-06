@@ -191,7 +191,9 @@ Output ada di `graphify-out/` (dilacak git kecuali `cache/`):
    (`/api/cron/run-all`), set `CRON_SECRET` di Vercel, lalu set **secrets repo**
    di GitHub (Settings → Secrets → Actions): `APP_URL` (URL Vercel tanpa slash)
    dan `CRON_SECRET` (harus **sama persis** dengan yang di Vercel). Workflow
-   `.github/workflows/absensi-dispatch.yml` memanggil dispatcher tiap jam.
+   `.github/workflows/absensi-dispatch.yml` memanggil dispatcher 4x tiap jam
+   (`*/15`), sehingga keterlambatan penjadwal GitHub tidak membuat absensi
+   terlewat hari itu.
 
 6. **Biarkan `ALLOW_LIVE_SUBMIT` kosong** sampai Anda benar-benar siap mengirim
    laporan sungguhan. Selama kosong, semua pengiriman berjalan mode latihan.

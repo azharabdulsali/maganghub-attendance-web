@@ -193,6 +193,39 @@ export function HolidaysManager({ initialRows, today }: Props) {
                   ))}
                 </NativeSelect>
               </div>
+
+              {/* Tombol aksi menyatu di baris field yang sama dan sejajar
+                  dengan garis input (self-end) — jadi "+" tampak sejajar
+                  Tanggal/Nama libur/Jenis, bukan menggantung di bawahnya. */}
+              <div className="flex flex-row flex-wrap items-center gap-2 self-end sm:col-start-1">
+                <Button
+                  type="submit"
+                  variant="success"
+                  size="icon-sm"
+                  disabled={working}
+                  title={editingId ? "Simpan perubahan" : "Tambah libur"}
+                  aria-label={editingId ? "Simpan perubahan" : "Tambah libur"}
+                >
+                  {editingId ? (
+                    <Save aria-hidden />
+                  ) : (
+                    <Plus aria-hidden />
+                  )}
+                </Button>
+                {editingId ? (
+                  <Button
+                    type="button"
+                    variant="neutral"
+                    size="icon-sm"
+                    onClick={reset}
+                    disabled={working}
+                    title="Batal ubah"
+                    aria-label="Batal ubah"
+                  >
+                    <X aria-hidden />
+                  </Button>
+                ) : null}
+              </div>
             </div>
 
             {error ? (
@@ -200,36 +233,6 @@ export function HolidaysManager({ initialRows, today }: Props) {
                 {error}
               </Message>
             ) : null}
-
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="submit"
-                variant="success"
-                size="icon-sm"
-                disabled={working}
-                title={editingId ? "Simpan perubahan" : "Tambah libur"}
-                aria-label={editingId ? "Simpan perubahan" : "Tambah libur"}
-              >
-                {editingId ? (
-                  <Save aria-hidden />
-                ) : (
-                  <Plus aria-hidden />
-                )}
-              </Button>
-              {editingId ? (
-                <Button
-                  type="button"
-                  variant="neutral"
-                  size="icon-sm"
-                  onClick={reset}
-                  disabled={working}
-                  title="Batal ubah"
-                  aria-label="Batal ubah"
-                >
-                  <X aria-hidden />
-                </Button>
-              ) : null}
-            </div>
           </form>
         </CardContent>
       </Card>

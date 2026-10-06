@@ -1024,8 +1024,11 @@ mengabsen **semua** user yang jadwalnya jatuh pada jam itu.
 - **Dijaga `CRON_SECRET`** (header `Authorization: Bearer ...`, dibanding
   *timing-safe*). Kosong → `503`; salah → `401`.
 - **Pemicu:** GitHub Actions (`.github/workflows/absensi-dispatch.yml`,
-  `5 * * * *`) memanggil endpoint. Rahasia (`APP_URL`, `CRON_SECRET`) di
-  GitHub Secrets, aman meski repo publik.
+  `*/15 * * * *`) memanggil endpoint. Rahasia (`APP_URL`, `CRON_SECRET`) di
+  GitHub Secrets, aman meski repo publik. Frekuensi 4x/jam (bukan 1x) dipilih
+  karena penjadwal GitHub tidak tepat waktu dan bisa telat/menghilang; dengan
+  satu pemicu per jam, keterlambatan melewati batas jam membuat absensi hari itu
+  tak terkirim.
 - **Jadwal per-user tetap dihormati:** disaring lewat `cron-dispatch.ts`
   (murni, teruji). **Menit diabaikan**, cron per jam, jadi jadwal `07:30`
   diproses kapan saja dalam 07:00–07:59 WIB.

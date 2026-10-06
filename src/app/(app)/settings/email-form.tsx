@@ -190,7 +190,8 @@ export default function EmailForm({ currentEmail }: { currentEmail: string }) {
         tidak ada pemulihan akun. Pastikan alamatnya benar sebelum menyimpan.
       </Message>
 
-      <div>
+      {/* Tombol aksi rata kanan (lihat catatan di profile-form.tsx). */}
+      <div className="flex flex-row items-center justify-end gap-3">
         <Button
           type="submit"
           variant="success"

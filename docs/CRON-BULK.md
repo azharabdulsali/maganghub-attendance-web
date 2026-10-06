@@ -12,7 +12,7 @@ sendiri. Cukup nyalakan sakelar Otomasi di dashboard.
 ## 1. Cara kerjanya (singkat)
 
 ```
-GitHub Actions (1 workflow, tiap jam)
+GitHub Actions (1 workflow, 4x tiap jam)
         │  Authorization: Bearer <CRON_SECRET>
         ▼
 GET /api/cron/run-all
@@ -23,8 +23,8 @@ GET /api/cron/run-all
         └─ balas ringkasan: { considered, processed, deferred, results }
 ```
 
-- **Jadwal per-user tetap dihormati.** Cron berjalan tiap jam; server hanya
-  memproses user yang jam jadwalnya sama dengan jam sekarang.
+- **Jadwal per-user tetap dihormati.** Dispatcher dipanggil 4x tiap jam; server
+  hanya memproses user yang jam jadwalnya sama dengan jam sekarang.
 - **Menit diabaikan.** Jadwal `07:30` diproses kapan saja antara 07:00–07:59 WIB.
   Absensi harian tidak butuh ketepatan menit, dan menuntutnya membuat jadwal
   `07:30` tak pernah kena pada cron per jam.
@@ -83,10 +83,36 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 | `CRON_SECRET` | sama persis dengan langkah 2 |
 
 Workflow `.github/workflows/absensi-dispatch.yml` sudah ada di repo ini dan
-berjalan otomatis tiap jam (`5 * * * *` UTC = setiap jam pada menit ke-5 WIB).
+berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
 
-> Repo **publik**: menit Actions tak terbatas. Repo **privat**: 2.000 menit/bulan
-> (satu run ini hanya ~beberapa detik, jadi sangat hemat).
+> **Kenapa 4x, bukan 1x.** Penjadwal GitHub Actions tidak tepat waktu — ia bisa
+> telat 10–30 menit saat runner ramai, dan kadang run di-skip. Dengan pemicu
+> sekali per jam, user berjadwal `07:xx` hanya punya satu kesempatan; kalau
+> pemicunya telat ke `08:xx`, server tak lagi mencocokkan jamnya dan absensi hari
+> itu tidak terkirim (harus dikejar manual lewat tombol di Panel Admin). Empat
+> pemicu per jam menyusutkan jendela itu jadi ≤15 menit. Panggilan berlebih aman:
+> user yang jam jadwalnya tidak cocok hanya dilewati, dan `performSubmit` punya
+> penjaga anti-duplikat.
+
+> Menit Actions **nol rupiah, berapa pun frekuensinya**, bila repo ini
+> **publik** — dan repo ini memang publik
+> (`github.com/azharabdulsali/maganghub-attendance-web`). Jadi jadwal `*/15` di
+> atas sepenuhnya gratis; bagian di bawah ini hanya relevan **bila suatu saat
+> repo diprivatkan**.
+
+> Repo **publik**: menit Actions tak terbatas. Repo **privat**: kuota gratis
+> 2.000 menit/bulan, dan GitHub **membulatkan tiap run ke atas** — jadi satu run
+> beberapa detik tetap dihitung **1 menit**.
+>
+> Karena itu frekuensi pemicu penting:
+> - `5 * * * *` (1x/jam) → 24 run/hari ≈ **720 menit/bulan** → masih di bawah kuota.
+> - `*/15 * * * *` (4x/jam) → 96 run/hari ≈ **2.880 menit/bulan** → **melebihi**
+>   kuota gratis; sisa menit ditagihkan.
+>
+> Jadwal `*/15` dipilih demi keandalan (lihat catatan di atas). Bila repo Anda
+> **privat** dan ingin tetap gratis, pilih salah satu: jadikan repo publik,
+> turunkan ke `*/30` (≈1.440 menit/bulan, aman), atau terima biaya tambahan
+> (kelebihannya kecil, ~880 menit ≈ beberapa dolar per bulan).
 
 ---
 
