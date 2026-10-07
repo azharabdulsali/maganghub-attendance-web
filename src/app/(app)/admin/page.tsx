@@ -15,6 +15,10 @@
 // (diri sendiri & admin lain ditolak), tombolnya di ./user-actions.tsx, dan
 // endpoint di /api/admin/users/[id]. Audit log SubmitLog tetap hanya-baca.
 //
+// Admin juga BISA mengatur jam pengingat "belum absen" (ReminderPanel di bawah);
+// popup-nya dipasang di src/app/(app)/attendance-reminder.tsx dan hanya muncul
+// untuk pengguna non-admin.
+//
 // ⚠️ Penjagaan sesungguhnya ada di sini (server) lewat pemeriksaan role. Sidebar
 // hanya menyembunyikan tautan, lihat catatan di components/app-sidebar.tsx.
 
@@ -27,6 +31,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
 import { getAdminUsers, getAuditUserOptions } from "./admin-query";
 import { DispatchPanel } from "./dispatch-panel";
+import { ReminderPanel } from "./reminder-panel";
+import { loadReminderSetting } from "@/lib/reminder-setting-repo";
 import { UserRowActions } from "./user-actions";
 import { RunUserButton } from "./run-user-button";
 import FilterBar from "@/components/filter-bar";
@@ -146,6 +152,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     getAuditUserOptions(),
   ]);
 
+  // Setelan pengingat absen (singleton). Dibaca terpisah dari blok di atas
+  // supaya tetap terbaca walau salah satu query lain gagal (masing-masing
+  // Promise.all mengurus kegagalannya sendiri).
+  const reminderSetting = await loadReminderSetting();
+
   // Ringkasan & tabel pengguna berasal dari daftar yang SAMA (semua pengguna):
   // ringkasan menghitung seluruhnya, tabel menampilkan satu halaman saja.
   const summary = summarizeUsers(users);
@@ -196,6 +207,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       </div>
 
       <DispatchPanel />
+
+      <ReminderPanel initial={reminderSetting} />
 
       <section aria-label="Ringkasan" className="mb-10">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -299,8 +312,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           ? (formatJakartaTimestamp(u.lastSubmitAt) ?? ",")
                           : "Belum pernah"}
                       </td>
-                      <td className="p-3">
-                        <div className="flex flex-wrap items-center gap-2">
+                      <td className="whitespace-nowrap p-3">
+                        <div className="flex flex-nowrap items-center gap-2">
                           <UserRowActions
                             userId={u.id}
                             userEmail={u.email}

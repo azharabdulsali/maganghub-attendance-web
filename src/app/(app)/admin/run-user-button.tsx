@@ -69,7 +69,9 @@ export function RunUserButton({
   return (
     <Button
       type="button"
-      variant="neutral"
+      // Hijau (success) menandai aksi "jalankan/aktifkan" — beda dari
+      // Atur ulang (netral) dan Hapus (merah) di kolom Aksi yang sama.
+      variant="success"
       size="icon-sm"
       onClick={run}
       disabled={busy}

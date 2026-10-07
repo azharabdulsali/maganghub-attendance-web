@@ -83,6 +83,26 @@ export type SubmitLog = Prisma.SubmitLogModel
  */
 export type AutomationConfig = Prisma.AutomationConfigModel
 /**
+ * Model ReminderSetting
+ * Setelan pengingat absen (SATU baris, singleton) yang dikelola ADMIN.
+ * 
+ * Latar: admin ingin memunculkan popup peringatan ke semua pengguna yang
+ * BELUM absen pada jam:menit tertentu (WIB). Popup hanya tampil di dalam
+ * aplikasi (saat halaman terbuka) — tidak ada email/WA/push.
+ * 
+ * Kenapa SATU baris (bukan satu baris per pengguna): setelannya bersifat
+ * GLOBAL untuk seluruh aplikasi, diatur sekali oleh admin. Kita memakai
+ * `id = "default"` sebagai baris tunggal, pola umum untuk tabel pengaturan
+ * global. Tidak ada rahasia di sini: hanya jam, menit, dan saklar on/off.
+ * 
+ * `timezone` disimpan (walau saat ini selalu Asia/Jakarta) supaya konsisten
+ * dengan AutomationConfig dan supaya aturan zona tidak diam-diam diasumsikan
+ * di kode. `minute` di sini PENTING: berbeda dari cron otomasi (yang
+ * mengabaikan menit), pengingat justru HARUS tepat pada menit yang diset
+ * admin (mis. 09:00), karena itu inti permintaannya.
+ */
+export type ReminderSetting = Prisma.ReminderSettingModel
+/**
  * Model Holiday
  * Libur nasional / tanggal merah yang dikelola ADMIN (SPEC.md §4).
  * 

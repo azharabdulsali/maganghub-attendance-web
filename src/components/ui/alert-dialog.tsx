@@ -88,15 +88,27 @@ function AlertDialogHeader({
   )
 }
 
+// `layout` menentukan susunan tombol di dalam footer:
+//   - "auto" (default): tombol dijejer ke kanan (dialog lebar). Pada dialog
+//     `size="sm"`, footer dibuat rata-tengah supaya SATU tombol tidak
+//     menggantung di kiri. Ini menyembuhkan popup pengingat "belum absen" yang
+//     tombol "Mengerti"-nya tampak miring ke kiri.
+//   - "split": dua tombol berbagi lebar sama besar (grid 2 kolom). Dipakai
+//     dialog konfirmasi yang punya Batal + aksi. Sengaja opt-in karena grid 2
+//     kolom tampak salah bila jumlah tombolnya bukan dua.
 function AlertDialogFooter({
   className,
+  layout = "auto",
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & {
+  layout?: "auto" | "split"
+}) {
   return (
     <div
       data-slot="alert-dialog-footer"
+      data-layout={layout}
       className={cn(
-        "flex flex-col-reverse gap-3 sm:flex-row sm:justify-end group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2",
+        "flex flex-col-reverse gap-3 sm:flex-row sm:justify-end group-data-[size=sm]/alert-dialog-content:justify-center data-[layout=split]:group-data-[size=sm]/alert-dialog-content:grid data-[layout=split]:group-data-[size=sm]/alert-dialog-content:grid-cols-2",
         className,
       )}
       {...props}

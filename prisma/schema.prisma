@@ -284,6 +284,39 @@ model AutomationConfig {
 }
 
 
+/// Setelan pengingat absen (SATU baris, singleton) yang dikelola ADMIN.
+///
+/// Latar: admin ingin memunculkan popup peringatan ke semua pengguna yang
+/// BELUM absen pada jam:menit tertentu (WIB). Popup hanya tampil di dalam
+/// aplikasi (saat halaman terbuka) — tidak ada email/WA/push.
+///
+/// Kenapa SATU baris (bukan satu baris per pengguna): setelannya bersifat
+/// GLOBAL untuk seluruh aplikasi, diatur sekali oleh admin. Kita memakai
+/// `id = "default"` sebagai baris tunggal, pola umum untuk tabel pengaturan
+/// global. Tidak ada rahasia di sini: hanya jam, menit, dan saklar on/off.
+///
+/// `timezone` disimpan (walau saat ini selalu Asia/Jakarta) supaya konsisten
+/// dengan AutomationConfig dan supaya aturan zona tidak diam-diam diasumsikan
+/// di kode. `minute` di sini PENTING: berbeda dari cron otomasi (yang
+/// mengabaikan menit), pengingat justru HARUS tepat pada menit yang diset
+/// admin (mis. 09:00), karena itu inti permintaannya.
+model ReminderSetting {
+  /// Baris tunggal. Konvensi nilai: "default".
+  id        String   @id
+  /// Saklar utama. `false` = pengingat tidak pernah muncul.
+  isEnabled Boolean  @default(false)
+  /// Jam mulai pengingat menyala (0–23) di `timezone`.
+  hour      Int      @default(8)
+  /// Menit mulai pengingat menyala (0–59) di `timezone`.
+  minute    Int      @default(0)
+  /// Zona waktu, default WIB (samakan dengan AutomationConfig / bot Python).
+  timezone  String   @default("Asia/Jakarta")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reminder_settings")
+}
+
 /// Libur nasional / tanggal merah yang dikelola ADMIN (SPEC.md §4).
 ///
 /// Sebelumnya daftar libur hidup sebagai data statis di `src/lib/holidays.ts`.
