@@ -60,6 +60,7 @@ export const ModelName = {
   Report: 'Report',
   SubmitLog: 'SubmitLog',
   AutomationConfig: 'AutomationConfig',
+  ReminderSetting: 'ReminderSetting',
   Holiday: 'Holiday',
   Session: 'Session',
   AdminActionLog: 'AdminActionLog'
@@ -219,6 +220,19 @@ export const AutomationConfigScalarFieldEnum = {
 } as const
 
 export type AutomationConfigScalarFieldEnum = (typeof AutomationConfigScalarFieldEnum)[keyof typeof AutomationConfigScalarFieldEnum]
+
+
+export const ReminderSettingScalarFieldEnum = {
+  id: 'id',
+  isEnabled: 'isEnabled',
+  hour: 'hour',
+  minute: 'minute',
+  timezone: 'timezone',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReminderSettingScalarFieldEnum = (typeof ReminderSettingScalarFieldEnum)[keyof typeof ReminderSettingScalarFieldEnum]
 
 
 export const HolidayScalarFieldEnum = {

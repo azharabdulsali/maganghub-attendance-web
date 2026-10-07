@@ -210,4 +210,15 @@ export const RATE_LIMITS = {
   reportDraft: { limit: 30, windowMs: 5 * 60_000 },
   /** Pendaftaran: 3 / jam per IP (SPEC.md §8). */
   register: { limit: 3, windowMs: 60 * 60_000 },
+  /**
+   * Cek status pengingat absen oleh klien: 120 / 5 menit per pengguna.
+   *
+   * Klien mengecek berkala (default tiap ~45 detik) SELAMA halaman terbuka.
+   * 45 detik × 5 menit = ~7 panggilan per jendela; 120 memberi ruang besar
+   * untuk tab yang di-refresh, beberapa tab, atau interval lebih cepat. Batas
+   * ini ada BUKAN untuk membatasi pemakaian wajar, melainkan agar endpoint
+   * tidak bisa dijadikan alat membebani server bila disalahgunakan. Cek ini
+   * murah (satu query hitung SubmitLog), jadi angkanya sengaja longgar.
+   */
+  reminderCheck: { limit: 120, windowMs: 5 * 60_000 },
 } as const;

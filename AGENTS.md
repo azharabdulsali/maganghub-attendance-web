@@ -290,8 +290,8 @@ maganghub-attendance-web/
 - `src/lib/`, `env.ts`, `auth.ts`, `prisma.ts`, `crypto.ts` (+test),
   `validate.ts` (+test), `utils.ts`
 - `src/app/api/`, `auth/[...nextauth]`, `register`, `credentials`,
-  `profile`, `account/password`, `automation`, `cron/submit`, `cron/run-all`,
-  `admin/dispatch`, `admin/dispatch/user`, `reports/submit`
+  `profile`, `account/password`, `automation`, `reminder`, `cron/submit`,
+  `cron/run-all`, `admin/dispatch`, `admin/dispatch/user`, `reports/submit`
 - `src/app/(app)/`, rute terlindungi: `dashboard/` (beranda), `calendar/`,
   `credentials/`, `report-templates/`, `history/`, `automation/`, `admin/`,
   `dev-tools/`, `profile/`. Sidebar & cek sesi dipasang sekali di

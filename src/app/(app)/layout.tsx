@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/app-sidebar";
 import { JamIsland } from "@/components/jam-island";
 import { MustChangePasswordBanner } from "./must-change-password-banner";
+import { AttendanceReminder } from "./attendance-reminder";
 
 // Semua halaman di grup ini WAJIB `noindex` (audit T-4). Redirect di bawah
 // adalah penjaga keamanan; noindex adalah sinyal SEO yang tegas supaya isi
@@ -82,6 +83,13 @@ export default async function AppLayout({
         {/* Jam dinding "dynamic island": sticky di tengah atas, semua peran. */}
         <JamIsland />
         {mustChangePassword && <MustChangePasswordBanner />}
+        {/*
+          Pengingat "belum absen hari ini": hanya untuk pengguna biasa. Admin
+          tidak perlu diingatkan absen — tugasnya mengelola, bukan mengikuti
+          program magang. Komponen ini mengecek status ke server sendiri dan
+          menampilkan popup bila perlu; ia tidak memblokir isi halaman.
+        */}
+        {!user.isAdmin && <AttendanceReminder />}
         {children}
       </main>
     </div>

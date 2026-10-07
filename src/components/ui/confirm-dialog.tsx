@@ -99,7 +99,10 @@ function ConfirmDialog({
           ) : null}
         </AlertDialogHeader>
 
-        <AlertDialogFooter>
+        {/* `layout="split"` hanya saat ada DUA tombol: grid 2 kolom membuat
+            Batal & aksi sama lebar. Untuk satu tombol, biarkan footer
+            rata-tengah (default) supaya tidak menggantung di kiri. */}
+        <AlertDialogFooter layout={hideConfirm ? "auto" : "split"}>
           {hideConfirm ? (
             // Dialog hasil/informasi: satu tombol tutup. Tetap `Close`, jadi
             // `onOpenChange` dihormati (pemanggil bisa menolak penutupan).
