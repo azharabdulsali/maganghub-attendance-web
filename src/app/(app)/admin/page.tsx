@@ -312,8 +312,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           ? (formatJakartaTimestamp(u.lastSubmitAt) ?? ",")
                           : "Belum pernah"}
                       </td>
-                      <td className="p-3">
-                        <div className="flex flex-wrap items-center gap-2">
+                      <td className="whitespace-nowrap p-3">
+                        <div className="flex flex-nowrap items-center gap-2">
                           <UserRowActions
                             userId={u.id}
                             userEmail={u.email}

@@ -126,7 +126,7 @@ export function ReminderPanel({
             onClick={simpan}
             disabled={busy || !waktuSah}
             variant="success"
-            title={waktuSah ? "Simpan setelan" : "Jam tidak sah"}
+            title={waktuSah ? "Simpan" : "Jam tidak sah"}
           >
             {busy ? (
               <>
@@ -136,7 +136,7 @@ export function ReminderPanel({
             ) : (
               <>
                 <Save aria-hidden />
-                Simpan setelan
+                Simpan
               </>
             )}
           </Button>

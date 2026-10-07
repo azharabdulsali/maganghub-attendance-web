@@ -115,7 +115,9 @@ export function UserRowActions({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-nowrap items-center gap-2">
+        {/* Netral: aksi tak merusak. Sengaja beda dari Hapus (merah) dan
+            Jalankan (hijau) di kolom Aksi yang sama. */}
         <Button
           type="button"
           variant="neutral"
@@ -127,9 +129,10 @@ export function UserRowActions({
         >
           <KeyRound aria-hidden />
         </Button>
+        {/* Merah (danger): aksi merusak, tak bisa dibatalkan. */}
         <Button
           type="button"
-          variant="neutral"
+          variant="danger"
           size="icon-sm"
           disabled={terkunci || working}
           title={terkunci ? alasanKunci : `Hapus ${userEmail}`}
