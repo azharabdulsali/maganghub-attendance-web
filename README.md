@@ -252,6 +252,8 @@ kredit); pemakaian proyek ini ≈ 60.000/bulan (≈12% kuota). Cukup isi 2 env v
 
 📖 Panduan langkah-demi-langkah: [`docs/UPSTASH-SETUP.md`](docs/UPSTASH-SETUP.md).
 
+> Deploy dari nol (env var, Neon, cron, verifikasi): [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
 ### Pengalihan rute bersifat sementara
 
 `next.config.ts` masih memakai `permanent: false` (307) untuk rute lama. Setelah

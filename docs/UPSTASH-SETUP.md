@@ -154,6 +154,9 @@ sesungguhnya ada di produksi multi-instance.)
 > *Create new database*. Integrasi ini otomatis mengisi kedua env var ke
 > proyek. Tetap gratis selama Anda memilih paket Free di Upstash dan tidak
 > memasukkan kartu kredit.
+>
+> 📖 Langkah deploy lengkap (Neon, env wajib, cron, verifikasi):
+> [`DEPLOY.md`](DEPLOY.md).
 
 ### Langkah 5 — Verifikasi
 
