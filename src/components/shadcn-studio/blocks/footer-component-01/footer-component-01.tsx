@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { LogIn, UserPlus } from "lucide-react";
 
 import Logo from "@/components/shadcn-studio/logo";
-import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/site";
 
 // Blok footer-component-01, disesuaikan dengan proyek ini.
@@ -16,10 +14,10 @@ import { SITE_NAME } from "@/lib/site";
 //  - Nama/logo brand: `MagangHub Autoabsen`, bukan `shadcn/studio`.
 //  - Tautan: ke halaman yang BENAR-BENAR ada di proyek (anchor landing,
 //    /panduan, /docs, /privacy, /terms). Blok asli memakai `#`.
-//  - Kolom kanan: blok asli memakai 4 ikon sosial media yang mengarah ke `#`,
-//    padahal proyek ini tidak punya akun sosial media. Diganti tombol CTA
-//    nyata: "Masuk" dan "Daftar gratis". Ikon sosial dihapus agar tidak ada
-//    tautan mati.
+//  - Kolom kanan: blok asli memakai 4 ikon sosial media yang mengarah ke `#`.
+//    Proyek ini tidak punya akun sosial media; tombol CTA "Masuk"/"Daftar
+//    gratis" juga dihapus atas permintaan (CTA sudah ada di header & hero),
+//    jadi footer hanya memuat brand dan tautan.
 //  - Garis pemisah: blok asli memakai <Separator /> dari Radix. Proyek ini
 //    memakai `@base-ui/react` dan tidak punya komponen Separator, jadi garis
 //    dibuat dengan token proyek (`border-t-2 border-border`) tanpa menambah
@@ -84,29 +82,6 @@ const FooterComponent01 = () => {
             Syarat
           </Link>
         </nav>
-
-        <div className="flex items-center gap-3">
-          <Button
-            size="sm"
-            variant="neutral"
-            render={<Link href="/login" />}
-            title="Masuk"
-            aria-label="Masuk"
-          >
-            <LogIn aria-hidden />
-            Masuk
-          </Button>
-          <Button
-            size="sm"
-            variant="success"
-            render={<Link href="/register" />}
-            title="Daftar gratis"
-            aria-label="Daftar gratis"
-          >
-            <UserPlus aria-hidden />
-            Daftar gratis
-          </Button>
-        </div>
       </div>
 
       <div className="border-t-2 border-border">

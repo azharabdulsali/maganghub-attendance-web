@@ -491,11 +491,11 @@ export default function Home() {
 
       {/* Footer landing memakai blok footer-component-01
           (`@/components/shadcn-studio/blocks/footer-component-01`): baris
-          brand | tautan | CTA, garis pemisah, lalu baris copyright terpusat.
+          brand | tautan, garis pemisah, lalu baris copyright terpusat.
           Struktur ini menggantikan footer inline lama yang menjejalkan
           sembilan tautan dalam dua kolom `justify-between` sehingga menabrak
-          blok brand. Lihat komentar di berkas blok untuk daftar penyesuaian
-          (brand, tautan nyata, ikon sosial → CTA). */}
+          blok brand. Tombol CTA footer sudah dihapus (CTA ada di header &
+          hero). Lihat komentar di berkas blok untuk daftar penyesuaian. */}
       <FooterComponent01 />
     </div>
   );
