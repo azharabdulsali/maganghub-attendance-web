@@ -386,8 +386,9 @@ export default function CredentialsForm({
               </div>
             </dl>
 
-            <div className="flex flex-row flex-wrap items-center justify-end gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               <Button
+                className="w-full sm:w-auto"
                 onClick={loginOtomatis}
                 disabled={loginLoading || loading}
                 variant="success"
@@ -402,6 +403,7 @@ export default function CredentialsForm({
                 {loginLoading ? "Menguji..." : "Uji login"}
               </Button>
               <Button
+                className="w-full sm:w-auto"
                 variant="neutral"
                 onClick={() => setMode("isi")}
                 disabled={loading || loginLoading}
@@ -412,6 +414,7 @@ export default function CredentialsForm({
                 Ganti kredensial
               </Button>
               <Button
+                className="w-full sm:w-auto"
                 variant="danger"
                 onClick={() => setConfirmHapusOpen(true)}
                 disabled={loading || loginLoading}
