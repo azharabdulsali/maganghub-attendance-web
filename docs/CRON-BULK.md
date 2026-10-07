@@ -79,8 +79,17 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 
 | Nama | Nilai |
 | :--- | :--- |
-| `APP_URL` | URL deploy, mis. `https://maganghub-autoabsen.my.id` (**tanpa** slash di akhir) |
+| `APP_URL` | URL deploy, mis. `https://www.maganghub-autoabsen.my.id` (**tanpa** slash di akhir) |
 | `CRON_SECRET` | sama persis dengan langkah 2 |
+
+> **PENTING — pakai host FINAL, bukan yang di-redirect.** Domain ini me-redirect
+> **non-`www` → `www`** dengan `HTTP 308`. Bila `APP_URL` memakai
+> `https://maganghub-autoabsen.my.id` (tanpa `www`), curl mengikuti redirect
+> lintas-host dan **header `Authorization` DIBUANG** di tengah jalan → server
+> menerima request tanpa token → **`401`** meski `CRON_SECRET` sudah benar.
+> Karena itu `APP_URL` **harus** `https://www.maganghub-autoabsen.my.id`.
+> Cek host final dengan:
+> `curl -sS -o /dev/null -w "%{url_effective}" -L "https://maganghub-autoabsen.my.id"`
 
 Workflow `.github/workflows/absensi-dispatch.yml` sudah ada di repo ini dan
 berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
@@ -113,6 +122,18 @@ berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
 > **privat** dan ingin tetap gratis, pilih salah satu: jadikan repo publik,
 > turunkan ke `*/30` (≈1.440 menit/bulan, aman), atau terima biaya tambahan
 > (kelebihannya kecil, ~880 menit ≈ beberapa dolar per bulan).
+
+> **Kuota Vercel (berlaku untuk pemicu apa pun).** Setiap panggilan dispatcher
+> adalah 1 invocation + CPU eksekusi (`runDispatch` selalu query
+> `automationConfig`). Hobby: 1 juta invocation + **4 jam Active CPU/bulan**.
+> Perkiraan kasar biaya CPU:
+> - `*/15` → 2.880 panggilan/bulan ≈ **0,24 jam** (aman).
+> - `*/10` → 4.320 panggilan/bulan ≈ **0,4 jam** (aman, pilihan cron-job.org).
+> - `*/5` → 8.640 panggilan/bulan ≈ **0,7 jam** (masih aman).
+> - `*/1` → 43.200 panggilan/bulan ≈ **3,6 jam** (nyaris menyentuh batas 4 jam).
+>
+> Karena server mencocokkan **jam** (bukan menit), mempercepat pemicu **tidak**
+> menambah keandalan — hanya menambah CPU. Jangan turun di bawah `*/5`.
 
 ---
 
@@ -172,9 +193,61 @@ berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
 - **Yang tetap diawasi:** bila jumlah user naik jauh (≥100 dalam satu jam) atau
   terjadi pengulangan eksekusi (retry), cek **Vercel → Usage**. Naikkan
   `DISPATCH_BATCH_SIZE`/`DISPATCH_CONCURRENCY` hanya bila perlu.
-- **Ketepatan waktu:** GitHub Actions bisa telat 5–15 menit saat sibuk. Tidak
-  masalah untuk absensi harian. Kalau butuh tepat waktu, pakai cron-job.org
-  (lihat `CRON-SETUP.md`) dengan satu job memanggil endpoint yang sama.
+- **Ketepatan waktu:** GitHub Actions bisa telat 5–15 menit saat sibuk, dan
+  sebagian slot `*/15` bisa di-skip (lihat bagian 7). Tidak masalah untuk absensi
+  harian karena server mencocokkan jam, bukan menit. Kalau butuh pemicu yang
+  benar-benar rapat, tambahkan job cron-job.org (bagian 7A) yang memanggil
+  endpoint yang sama.
+- **GitHub Actions bisa MENGGABUNG/menghilangkan run berjadwal.** Ini perilaku
+  bawaan penjadwal GitHub, bukan bug konfigurasi: pada jam sibuk run `schedule`
+  ditunda, dan (terutama di repo dengan aktivitas rendah) sebagian besar slot
+  `*/15` di-**skip** sepenuhnya. Akibatnya di tab Actions jeda antar-run bisa
+  terlihat **berjam-jam** (mis. 3–11 jam), bukan 15 menit — padahal ekspresi
+  cron-nya sudah benar. Karena server mencocokkan **jam** jadwal user, slot yang
+  hilang berarti user berjam jadwal itu bisa **tidak terkirim hari itu**. Solusi
+  andal: tambahkan pemicu eksternal per-15-menit (bagian 7A di bawah).
+
+---
+
+## 7A. Pemicu cadangan di cron-job.org (disarankan agar tepat waktu)
+
+GitHub Actions kurang andal untuk jadwal rapat (lihat catatan skip di atas).
+Tambahkan **satu job gratis** di <https://cron-job.org> yang memanggil endpoint
+yang **sama** dengan workflow. Tidak ada risiko laporan ganda: `runDispatch`
+hanya memproses user yang `hour`-nya = jam sekarang, dan `performSubmit` punya
+penjaga anti-duplikat.
+
+1. Masuk <https://cron-job.org> → **Create cronjob**.
+2. **Title**: `Absensi Monev dispatcher (massal)`.
+3. **URL**: `https://www.maganghub-autoabsen.my.id/api/cron/run-all`
+   (host **final** — pakai `www`, **tanpa** slash di akhir).
+   > **cron-job.org TIDAK mengikuti redirect.** Kalau URL-nya memakai non-`www`,
+   > **Test run** akan menampilkan `308 Permanent Redirect / Redirection
+   > detected`. Jawabannya ada di baris **"Redirection target"** — salin host itu
+   > (yang ber-`www`) ke kolom URL.
+4. **Schedule**: **Every 10 minutes** (`*/10 * * * *`). Set zona waktu akun ke
+   `Asia/Jakarta` bila tersedia; kalau tidak, `*/10` sama saja di UTC (interval
+   10 menit tak bergantung zona).
+   > **Kenapa 10 menit, bukan 1 menit?** Server mencocokkan **jam**, bukan menit
+   > (`isDueNow` hanya membandingkan `hour`). Panggilan 1 menit berarti 6× panggilan
+   > identik tanpa manfaat apa pun, dan memakai **~3,6 jam Active CPU/bulan** —
+   > nyaris menyentuh kuota Hobby 4 jam. `*/10` menaikkan jendela tangkap sedikit
+   > (≤10 menit) dengan CPU ~0,4 jam/bulan, jauh dari batas. Jangan turun ke `*/1`.
+5. **Request method**: `GET`.
+6. **Headers** → tambah satu header:
+   `Authorization: Bearer <CRON_SECRET>`
+   (nilai sama persis dengan yang di Vercel & GitHub Secrets).
+7. Simpan → **TEST RUN** sekali, pastikan respons `200` dan body memuat
+   `considered/processed/deferred`.
+
+> **Jangan pakai endpoint per-user** (`/api/cron/submit`) di sini — endpoint itu
+> ber-rate-limit 30/5 menit per IP dan akan menolak panggilan tiap 10 menit
+> dengan `429`. Dispatcher massal `/api/cron/run-all` **tidak** ber-rate-limit
+> (hanya dijaga `CRON_SECRET`), itulah yang benar untuk pemicu rapat.
+
+> Dua pemicu (GitHub + cron-job.org) boleh jalan bersamaan. Bila keduanya
+> memanggil pada menit yang sama, panggilan kedua hanya menemukan user yang sudah
+> `SUBMITTED`/`ALREADY_SUBMITTED` → dilewati, tidak menimpa laporan.
 
 ---
 
@@ -183,9 +256,11 @@ berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
 | Gejala | Kemungkinan penyebab |
 | :--- | :--- |
 | Actions merah, log `HTTP 308` | `APP_URL` di GitHub Secrets masih kena redirect (http/www). Pakai URL final |
+| cron-job.org: `308 Permanent Redirect / Redirection detected` | cron-job.org **tidak** mengikuti redirect. Ganti URL job ke host di baris **"Redirection target"** (yang ber-`www`) |
 | Actions merah, log `HTTP 401` | `CRON_SECRET` GitHub ≠ Vercel |
 | Actions merah, log `HTTP 503` | `CRON_SECRET` belum diset di Vercel / belum redeploy |
 | `considered: 0` | Tak ada user dengan otomasi aktif, atau sakelarnya mati |
 | `processed: 0` tapi `considered > 0` | Tak ada user yang jam jadwalnya = jam sekarang, normal, tunggu jam berikutnya |
 | `deferred` tinggi | Terlalu banyak user pada jam sama; mereka diproses jam berikutnya |
 | Actions hijau tapi tak ada log baru | `ALLOW_LIVE_SUBMIT` belum `1` → mode latihan (`DRY_RUN`) |
+| Jeda antar-run **berjam-jam** di tab Actions (bukan 15 menit), padahal cron `*/15` | **Normal bagi GitHub Actions**: slot berjadwal di-skip saat sibuk / repo aktivitas rendah. Bukan bug YAML. Tambah pemicu cron-job.org (bagian 7A) agar andal |

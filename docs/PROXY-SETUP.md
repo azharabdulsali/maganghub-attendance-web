@@ -72,7 +72,9 @@ Pilih salah satu (semuanya memberi URL berformat `http://user:pass@host:port`):
 
 | Penyedia | Catatan |
 | :--- | :--- |
-| **IPRoyal** ✅ | "Residential Proxies", **$7.35/GB SEKALI bayar** (lihat §3b, §3c) |
+| **DataImpulse** ✅✅ | "Residential Proxies", **$1/GB, minimum $5 (5 GB), SEKALI bayar**. Kuota **tidak pernah hangus**. **Pilihan utama** (lihat §3b, §3c) |
+| **IPRoyal** ✅ | "Residential Proxies", **$7.35/GB SEKALI bayar** (lihat §3c) |
+| **MarsProxies** | Murah per-GB tapi paketnya **berbasis bulanan** (kuota di-reset) — kurang cocok (lihat §3c) |
 | **Webshare** | "Residential", $3.50/GB tapi **langganan BULANAN** (lihat §3c) |
 | **Decodo** (dulu Smartproxy) | "Residential", ~$2/GB, **langganan bulanan** |
 | **Oxylabs** | Enterprise, ~$2.50/GB, **langganan bulanan** |
@@ -97,67 +99,82 @@ Pilih salah satu (semuanya memberi URL berformat `http://user:pass@host:port`):
 > Jangan tergoda membeli 10 GB. Untuk kasus ini 1 GB sudah sangat lega. Beli
 > dari yang termurah; kalau habis, tinggal isi ulang.
 
-### 3b. Langkah membeli IPRoyal (paling direkomendasikan)
+### 3b. Langkah membeli DataImpulse (paling direkomendasikan)
 
-IPRoyal menyediakan "pay-as-you-go" 1 GB tanpa langganan bulanan — paling
-cocok untuk kebutuhanmu.
+DataImpulse adalah **pay-as-you-go murni** — **tidak ada langganan bulanan**, dan
+kuota **tidak pernah hangus** ("traffic never expires"). Minimum pembelian **$5
+untuk 5 GB** pada paket *Intro For New Users* ($1/GB). Semua fakta di bagian ini
+diverifikasi dari dokumentasi resmi (docs.dataimpulse.com, dicek 2026-06).
 
 1. **Buka & daftar** — kunjungi
-   [iproyal.com](https://iproyal.com) → klik **Sign up** (kanan atas). Cukup
-   email + sandi, tak perlu kartu kredit untuk membuat akun.
+   [dataimpulse.com](https://dataimpulse.com) → tombol **TRY NOW / Sign Up**.
+   Cukup email + sandi.
 
-2. **Masuk ke menu Residential** — setelah login, di dashboard pilih menu
-   **Residential Proxies** (bukan "Datacenter", bukan "ISP").
+2. **Pilih paket Intro** — **$5 = 5 GB** (paket terkecil, "Intro For New Users").
+   Ini sekali bayar; **tidak ada tagihan berikutnya**. Jangan tergoda 50 GB.
 
-3. **Tentukan ukuran** — atur slider/pilihan **1 GB**. Ini paket terkecil yang
-   dijual (ada juga 2/5 GB; tidak perlu).
-
-4. **Konfigurasi rotasi** — pilih tipe **Rotating** (default). Ini membuat tiap
-   request keluar dari IP berbeda — aman untuk 15 user.
-
-5. **Checkout & bayar** — isi data pembayaran (kartu kredit/PayPal/crypto).
-   Biaya **$7.35 untuk 1 GB**, **sekali bayar, tanpa langganan**.
-
-6. **Ambil URL proxy** — setelah pembayaran, buka
-   **Residential → Proxy Access / Setup** di dashboard. Kamu akan melihat
-   endpoint & kredensial:
+3. **Ambil kredensial & host** — setelah bayar, buka **Proxy Access** di
+   dashboard. Yang kamu dapat:
 
    ```
-   Host: geo.iproyal.com
-   Port: 12321
-   Username: xxxxxxx
-   Password: yyyyyyy
+   Host  : gw.dataimpulse.com      (disarankan; ada juga IP 74.81.81.81)
+   Port  : 823                      (HTTP rotating)
+   Login : <username>
+   Pass  : <password>
    ```
 
-7. **Susun URL lengkap** — gabungkan menjadi satu baris (inilah nilai untuk
-   `MAGANGHUB_PROXY_URL`):
+   > Gunakan **hostname DNS** `gw.dataimpulse.com` (stabil). IP hostname bisa
+   > berubah dan harus dipantau — hindari.
+
+4. **Pilih jenis koneksi — ROTATING** (bukan Sticky). Port menentukan perilaku:
+
+   | Jenis | Protokol | Port |
+   | :--- | :--- | ---: |
+   | **Rotating** ✅ | HTTP/HTTPS | **823** |
+   | Rotating | SOCKS5 | 824 |
+   | Sticky | HTTP/SOCKS5 | 10000–20000 |
+
+   Untuk 15 user, **rotating (port 823)** aman: tiap request keluar dari IP
+   berbeda — menghindari pola "banyak login dari 1 IP".
+
+5. **Susun URL lengkap** — gabungkan `http://USERNAME:PASSWORD@HOST:PORT`:
 
    ```
-   http://xxxxxxx:yyyyyyy@geo.iproyal.com:12321
+   http://<username>:<password>@gw.dataimpulse.com:823
    ```
 
-   > Format: `http://USERNAME:PASSWORD@HOST:PORT`. Tidak ada spasi.
+   > Format: `http://USER:PASS@HOST:PORT`. Tidak ada spasi.
 
-8. **Tambahkan parameter negara (opsional tapi disarankan)** — Kemnaker adalah
-   portal Indonesia; IP residensial **Indonesia** paling kecil risiko diblokir.
-   IPRoyal mendukung penargetan negara lewat awalan di **username**:
+6. **Tambahkan penargetan negara Indonesia** — Kemnaker adalah portal Indonesia;
+   IP residensial **ID** paling kecil risiko. DataImpulse memakai parameter
+   `__cr` yang **disisipkan ke USERNAME** (bukan query string), dipisah `__`,
+   nilai dipisah titik. Format manual: `key1.value1,value2;key2.value1,value2`.
 
    ```
-   http://xxxxxxx-country-id:yyyyyyy@geo.iproyal.com:12321
+   http://<username>__cr.id:<password>@gw.dataimpulse.com:823
    ```
 
-   Perhatikan `-country-id` disisipkan ke username (bukan ditambah query).
-   Pola persisnya bisa berbeda per penyedia — cek tab **Country selection** di
-   dashboard IPRoyal, dan salin contoh URL yang mereka sediakan.
+   (`cr` = country, `id` = kode negara Indonesia). Penargetan negara **gratis**
+   — sudah termasuk harga dasar. Beberapa negara: `__cr.id,sg`.
 
-9. **Uji sebelum dipakai** — jalankan di PC-mu:
+   > ⚠️ **Parameter State/City/ZIP/ASN dikenakan tarif 2×.** Jangan tambahkan
+   > `__state`/`__city`/`__zip`/`__asn` — cukup `__cr.id` saja. Untuk kasus ini
+   > (login SSO) penargetan negara sudah lebih dari cukup.
+
+7. **Uji sebelum dipakai** — jalankan di PC-mu:
 
    ```powershell
-   npx tsx scripts/uji-proxy.ts "http://xxxxxxx:yyyyyyy@geo.iproyal.com:12321"
+   npx tsx scripts/uji-proxy.ts "http://<username>__cr.id:<password>@gw.dataimpulse.com:823"
    ```
 
-   Harus muncul `DENGAN PROXY: ✅ LOLOS`. Bila `❌ MASIH DIBLOKIR`, coba tambah
-   `-country-id`, atau hubungi support IPRoyal (chat live 24/7).
+   Harus muncul `DENGAN PROXY: ✅ LOLOS`. Bila `❌ MASIH DIBLOKIR`: cek
+   sandi/port (pastikan **823** untuk rotating HTTP), atau ganti ke IP hostname
+   `74.81.81.81`, atau hubungi support DataImpulse (live chat 24/7, balas
+   < 3 menit).
+
+> **Ringkasan DataImpulse:** bayar $5 sekali untuk 5 GB, kuota tidak hangus,
+> tanpa langganan. Dengan pemakaian ±15 MB/bulan, paket ini praktis tak akan
+> habis bertahun-tahun.
 
 ### 3c. Perbandingan penyedia (harga & MODEL BAYAR)
 
@@ -168,18 +185,30 @@ murah.
 
 | Penyedia | Harga 1 GB | Model | 12 bulan | 24 bulan |
 | :--- | ---: | :--- | ---: | ---: |
+| **DataImpulse** ✅✅ | **$5 / 5 GB → $1/GB** | **Sekali bayar** (kuota tak hangus) | **$5** | **$5** |
 | **IPRoyal** ✅ | **$7.35** | **Sekali bayar** (pay-as-you-go) | **$7.35** | **$7.35** |
-| **Webshare** | $3.50 | **Bulanan** (1 GB/bln) | $42.00 | $84.00 |
 | **Bright Data** | ~$5–8 | Sekali bayar (pay-as-you-go) | ~$5–8 | ~$5–8 |
+| **MarsProxies** | ~$0.70–1.4/GB | **Bulanan** (kuota di-reset) | ~$8–17 | ~$16–34 |
+| **Webshare** | $3.50 | **Bulanan** (1 GB/bln) | $42.00 | $84.00 |
 | **Decodo** (dulu Smartproxy) | ~$2.00+ | Bulanan (kredit hangus bila tak dipakai) | ~$24+ | ~$48+ |
 | **Oxylabs** | ~$2.50+ | Bulanan | ~$30+ | ~$60+ |
 
-**Detail per penyedia (dicek langsung dari halaman harga resmi):**
+**Detail per penyedia (dicek langsung dari halaman harga/dokumentasi resmi):**
 
-- **IPRoyal** — punya **dua** jalur: *Subcription (5% off)* dan *Pay As You Go*.
+- **DataImpulse** — **pay-as-you-go murni**, tanpa langganan. Paket *Intro For New
+  Users* **$5 = 5 GB** ($1/GB). Kuota **"never expires"** — tidak hangus seperti
+  penyedia bulanan. Penargetan negara **gratis** dan sudah termasuk harga dasar;
+  parameter State/City/ZIP/ASN saja yang dikenakan 2×. Pendaftaran mudah
+  (email + sandi), pembayaran kartu/Apple Pay/Google Pay/QRIS/crypto.
+  **Inilah yang direkomendasikan** (§3b).
+- **IPRoyal** — punya **dua** jalur: *Subscription (5% off)* dan *Pay As You Go*.
   Yang kita mau adalah **Pay As You Go**: **1 GB = $7.35 sekali bayar**, tanpa
   langganan, tanpa tagihan berikutnya. (Tier langganan 1 GB = $7.00/GB **per
-  bulan** — jangan tertukar.)
+  bulan** — jangan tertukar.) Cadangan yang aman bila DataImpulse bermasalah.
+- **MarsProxies** — harga per-GB rendah (~$0.70–1.4/GB) **tapi paketnya berbasis
+  bulanan**: yang kamu beli adalah "X GB/bulan", dan kuota **di-reset** tiap
+  bulan. Untuk app yang hanya pakai ±15 MB/bulan, kamu bayar penuh tiap bulan
+  demi kuota yang 99% tak terpakai. **Kurang cocok** untuk kasus ini.
 - **Webshare** — tabel harga menampilkan "$3.50/GB" tapi kolomnya berbunyi
   `$3.50 /mo`: itu **langganan bulanan**, bukan sekali bayar. Webshare punya
   **free tier 10 proxy / 1 GB gratis selamanya** — sayangnya proxy gratis itu
@@ -190,16 +219,18 @@ murah.
 - **Oxylabs** — mulai **$2.50/GB**, model bulanan, kelas enterprise.
 
 > **Kesimpulan tabel:** untuk pemakaian kecil & jangka panjang, hanya penyedia
-> dengan jalur **sekali bayar** yang hemat. Dari semua di atas, **IPRoyal
-> Pay-As-You-Go** satu-satunya yang jelas: bayar $7.35 sekali, selesai.
+> dengan jalur **sekali bayar** yang hemat. **DataImpulse** adalah yang termurah
+> MINIMUM-nya ($5 sekali, kuota tak hangus), disusul **IPRoyal** ($7.35 sekali).
+> MarsProxies/Webshare/Decodo/Oxylabs semuanya bulanan — hindari untuk app ini.
 
 **Cara membaca tabel ini:**
 
-- **IPRoyal $7.35 SEKALI** — kuota 1 GB **tidak akan habis** (kebutuhanmu hanya
-  ±15 MB/bulan). Bayar sekali, selesai, tanpa tagihan berikutnya.
-- **Webshare $3.50 BULANAN** — meski per-GB lebih murah, kamu ditagih
-  **$3.50 setiap bulan** selama app jalan, padahal 98% kuota tak terpakai.
-  Dalam 1 tahun jadi **$42**; 2 tahun **$84**.
+- **DataImpulse $5 SEKALI** — kuota 5 GB **tidak akan habis** (kebutuhanmu hanya
+  ±15 MB/bulan). Bayar sekali, selesai, tanpa tagihan berikutnya. Paling hemat.
+- **IPRoyal $7.35 SEKALI** — kuota 1 GB **tidak akan habis**. Bayar sekali,
+  selesai, tanpa tagihan berikutnya. Minimumnya sedikit di atas DataImpulse.
+- **Webshare/MarsProxies BULANAN** — meski per-GB lebih murah, kamu ditagih
+  **setiap bulan** selama app jalan, padahal 98% kuota tak terpakai.
 - Jadi: **jangan pilih berdasarkan "harga per GB" saja** — kalikan dengan
   berapa lama app-mu berjalan. Untuk pemakaian berkelanjutan, **sekali bayar
   selalu menang**.
@@ -228,7 +259,7 @@ Semua penyedia di atas memberi URL dengan format sama
 Kamu akan mendapat URL seperti:
 
 ```
-http://user123:pass456@geo.iproyal.com:12321
+http://user123__cr.id:pass456@gw.dataimpulse.com:823
 ```
 
 > ⚠️ Jangan pernah menuliskan URL ini ke file yang di-commit. Ia memuat sandi.
@@ -367,7 +398,7 @@ tetap berfungsi sebagai cadangan.
 ## Ringkasan cepat
 
 ```text
-1. Beli proxy residensial (IPRoyal/Webshare)  -> dapat URL http://user:pass@host:port
+1. Beli proxy residensial (DataImpulse; cadangan IPRoyal) -> URL http://user:pass@host:port
 2. npx tsx scripts/uji-proxy.ts "URL"          -> harus "DENGAN PROXY: ✅ LOLOS"
 3. Vercel -> Settings -> Env Vars -> MAGANGHUB_PROXY_URL = URL -> Save
 4. Redeploy

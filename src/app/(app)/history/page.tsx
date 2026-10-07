@@ -108,7 +108,6 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
       id: true,
       status: true,
       message: true,
-      httpCode: true,
       trigger: true,
       attempt: true,
       createdAt: true,
@@ -206,7 +205,6 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
                   <th className="p-3 font-heading">Waktu</th>
                   <th className="p-3 font-heading">Status</th>
                   <th className="p-3 font-heading">Pemicu</th>
-                  <th className="p-3 font-heading">HTTP</th>
                   <th className="p-3 font-heading">Keterangan</th>
                 </tr>
               </thead>
@@ -229,9 +227,6 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
                       <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
                         {describeTrigger(log.trigger)}
                         {log.attempt > 1 && ` (ke-${log.attempt})`}
-                      </td>
-                      <td className="p-3 text-xs text-foreground/70">
-                        {typeof log.httpCode === "number" ? log.httpCode : ","}
                       </td>
                       <td className="p-3 text-xs text-foreground/80">
                         {log.message ?? ","}

@@ -65,7 +65,7 @@ Yang **opsional**:
 | --- | --- |
 | `ADMIN_EMAIL` | Tidak ada admin otomatis; user pertama jadi `USER` biasa |
 | `ALLOW_LIVE_SUBMIT` | Mode **latihan** — tidak ada laporan yang benar-benar dikirim (aman) |
-| `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Rate limit per-proses (kurang akurat lintas instance) |
+| `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Rate limit per-proses (kurang akurat lintas instance). **Gratis** — lihat [`docs/UPSTASH-SETUP.md`](docs/UPSTASH-SETUP.md) |
 | `CRON_SECRET` | Dispatcher massal `/api/cron/run-all` nonaktif (balas 503) |
 
 > **`ENCRYPTION_KEY` jangan pernah diganti** setelah ada kredensial tersimpan —
@@ -167,8 +167,10 @@ Output ada di `graphify-out/` (dilacak git kecuali `cache/`):
    Production — daftar wajib & opsional sama seperti tabel di atas, dengan
    penyesuaian:
 
-   - `NEXTAUTH_URL` = URL produksi, mis. `https://maganghub-autoabsen.my.id`
-     (harus `https://`, bukan `http://`, dan tanpa garis miring di akhir).
+   - `NEXTAUTH_URL` = URL produksi, mis. `https://www.maganghub-autoabsen.my.id`
+     (harus `https://`, pakai host **final** yang tidak di-redirect — domain ini
+     me-redirect non-`www` → `www`, jadi `www` **wajib** — dan tanpa garis miring
+     di akhir).
    - `DATABASE_URL` = koneksi **pooled** Neon; `DIRECT_URL` = **direct**.
    - `NEXTAUTH_SECRET`, `ENCRYPTION_KEY` = nilai produksi yang **baru** (jangan
      pakai yang lokal). Simpan `ENCRYPTION_KEY` di tempat aman.
@@ -189,8 +191,9 @@ Output ada di `graphify-out/` (dilacak git kecuali `cache/`):
 
 5. **Opsional — otomasi massal.** Bila memakai dispatcher
    (`/api/cron/run-all`), set `CRON_SECRET` di Vercel, lalu set **secrets repo**
-   di GitHub (Settings → Secrets → Actions): `APP_URL` (URL Vercel tanpa slash)
-   dan `CRON_SECRET` (harus **sama persis** dengan yang di Vercel). Workflow
+   di GitHub (Settings → Secrets → Actions): `APP_URL` = host **final**
+   (`https://www.maganghub-autoabsen.my.id`, pakai `www`, tanpa slash) dan
+   `CRON_SECRET` (harus **sama persis** dengan yang di Vercel). Workflow
    `.github/workflows/absensi-dispatch.yml` memanggil dispatcher 4x tiap jam
    (`*/15`), sehingga keterlambatan penjadwal GitHub tidak membuat absensi
    terlewat hari itu.
@@ -240,6 +243,14 @@ Tanpa `UPSTASH_REDIS_REST_URL`/`_TOKEN`, pembatas rate limit disimpan di memori
 proses. Di Vercel, satu aplikasi bisa berjalan di beberapa instance sekaligus,
 sehingga batasnya **tidak akurat**. Isi kredensial Upstash Redis untuk pembatas
 terpusat.
+
+**Gratis:** paket Free Upstash = 500.000 perintah/bulan (permanen, tanpa kartu
+kredit); pemakaian proyek ini ≈ 60.000/bulan (≈12% kuota). Cukup isi 2 env var
+— **tanpa mengubah kode** (kode sudah mendukung Upstash sejak awal di
+`src/lib/rate-limit-store.ts`). Bila Upstash mati, pembatas **fail-open**
+(request tetap diizinkan), jadi tidak bisa mematikan aplikasi.
+
+📖 Panduan langkah-demi-langkah: [`docs/UPSTASH-SETUP.md`](docs/UPSTASH-SETUP.md).
 
 ### Pengalihan rute bersifat sementara
 
