@@ -291,16 +291,12 @@ export default function AutomationForm({
             <div className="flex gap-2 rounded-base border-2 border-border bg-secondary-background p-3 text-xs text-foreground/70">
               <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
               <p>
-                <strong>Waktu kirim bisa meleset.</strong> Jam ini adalah
-                perkiraan, bukan patokan detik. Penjadwal dan antrean portal
-                sering memproses beberapa menit lebih lambat — misalnya Anda
-                set <strong>13.00</strong>, absensi bisa baru terkirim sekitar{" "}
-                <strong>13.25</strong>. Sebaliknya, pengiriman juga bisa maju
-                beberapa menit lebih awal. Selama pengiriman masih di sekitar
-                jam ini hari itu, otomasi Anda{" "}
-                <strong>berjalan normal</strong>, bukan gagal. Untuk memastikan
-                hari ini sudah terkirim, lihat status di{" "}
-                <strong>dasbor</strong>.
+                <strong>Waktu kirim bisa meleset.</strong> Jam ini hanya
+                perkiraan, misalnya set <strong>13.00</strong>, absensi bisa
+                terkirim sekitar <strong>13.15</strong> atau beberapa menit
+                lebih awal. Selama masih di sekitar jam ini hari itu, otomasi{" "}
+                <strong>berjalan normal</strong> (cek status di{" "}
+                <strong>dasbor</strong>).
               </p>
             </div>
 
