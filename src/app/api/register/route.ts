@@ -2,7 +2,7 @@
 //
 // Pengaman yang wajib ada:
 //   - Validasi Zod di sisi server (Â§9 poin 5).
-//   - Rate limit 3 pendaftaran/jam per IP (Â§8 tabel endpoint).
+//   - Rate limit 5 pendaftaran/10 menit per IP (Â§8 tabel endpoint).
 //   - Password di-hash bcryptjs cost 12 (Â§9 poin 2).
 //   - Email yang cocok dengan ADMIN_EMAIL otomatis jadi ADMIN (Â§13 baris 8).
 
@@ -27,7 +27,7 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  // Rate limit 3 pendaftaran/jam per IP (SPEC.md Â§8), memakai modul bersama
+  // Rate limit 5 pendaftaran/10 menit per IP (SPEC.md Â§8), memakai modul bersama
   // (rate-limit.ts) agar aturannya satu sumber kebenaran dengan endpoint lain.
   const ip = clientIpFromHeaders((name) => request.headers.get(name));
   const gate = await enforceRateLimit("register", rateLimitKey("register", ip));
