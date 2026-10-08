@@ -353,13 +353,16 @@ Cloudflare maupun proxy. Ini sudah diperiksa langsung ke kode:
 Kesimpulan: user cukup login **sekali per 30 hari**. Beban proxy tidak
 bertambah (lihat §2a).
 
-> ⚠️ **Catatan jujur:** alur tukar refresh token ini **sudah ada di kode, tapi
-> belum pernah diuji ke portal sungguhan** — bentuk respons sukses (`200`) dari
-> `/auth/refresh` belum terekam (docs/MONEV-API.md §10). Kalau bentuknya
-> berbeda dari dugaan, penukaran bisa gagal dan aplikasi akan jujur meminta
-> login ulang (jalur tempel token manual tetap tersedia). Jadi: amati sekali
-> setelah 6 jam pertama; kalau flow submit tetap jalan, berarti auto-refresh
-> bekerja.
+> ⚠️ **Catatan jujur:** alur tukar refresh token ini **sudah ada di kode**, dan
+> bentuk respons sukses (`200`) dari `/auth/refresh` **sebagian sudah terekam**
+> (DevTools, 2026-06): portal **MEROTASI** `monev_refresh_token` tiap refresh
+> sukses — token lama langsung mati (docs/MONEV-API.md §4.1 & §10). Kode sudah
+> menyimpan token baru (`persistRotatedRefreshToken`), jadi auto-refresh tidak
+> memakai token yang sudah dicabut. Yang belum pasti hanya apakah access token
+> datang di body JSON atau cookie; penafsiran tetap toleran, dan bila bentuknya
+> di luar dugaan aplikasi jujur meminta login ulang (jalur tempel token manual
+> tetap tersedia). Amati sekali setelah 6 jam pertama; kalau submit tetap jalan,
+> auto-refresh bekerja.
 
 ---
 

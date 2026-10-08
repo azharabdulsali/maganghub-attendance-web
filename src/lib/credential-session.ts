@@ -78,6 +78,60 @@ export async function saveLoginSession(
   };
 }
 
+/**
+ * Simpan `monev_refresh_token` BARU hasil rotasi (mis. dari `POST /auth/refresh`
+ * atau alur lain), menggantikan token lama.
+ *
+ * Kenapa perlu: portal mengganti nilai `monev_refresh_token` setiap kali refresh
+ * sukses; token lama dicabut server. Kalau token baru tidak disimpan, refresh
+ * berikutnya memakai token mati → `401` palsu lalu pengguna dipaksa login ulang.
+ *
+ * HANYA menyentuh kolom token refresh; status & access token TIDAK diubah
+ * (token baru ini tidak membuktikan sesi ACTIVE — itu tugas pemanggil).
+ * Mengembalikan `true` bila berhasil. Kegagalan DB ditelan (dilaporkan `false`),
+ * bukan dilempar: kegagalan menyimpan rotasi tak boleh menggagalkan pengiriman
+ * laporan yang mungkin sudah sukses.
+ */
+export async function persistRotatedRefreshToken(
+  userId: string,
+  refreshToken: string,
+): Promise<boolean> {
+  if (!refreshToken || refreshToken.trim().length === 0) return false;
+  try {
+    const enc = encrypt(refreshToken);
+    await prisma.maganghubCredential.update({
+      where: { userId },
+      data: {
+        tokenCiphertext: enc.ciphertext,
+        tokenIv: enc.iv,
+        tokenAuthTag: enc.authTag,
+      },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Pilih refresh token mana yang WAJIB disimpan setelah sebuah uji/tukar sesi.
+ *
+ * Konteks (rotasi, docs/MONEV-API.md §4.1): `POST /auth/refresh` yang sukses
+ * mengganti `monev_refresh_token` DAN mencabut yang lama. Saat pengguna menempel
+ * token lalu kita mengujinya, `pastedToken` (tempelan) sudah MATI begitu portal
+ * merotasi. Karena itu token hasil rotasi (`rotatedToken`) harus menang — tanpa
+ * ini, kita menimpa token hidup dengan token mati (bug "rotasi terbalik").
+ *
+ * Murni & total: tidak menyentuh jaringan/DB, selalu mengembalikan string.
+ */
+export function pickRefreshTokenToPersist(
+  rotatedToken: string | null | undefined,
+  pastedToken: string,
+): string {
+  const rotated = rotatedToken?.trim();
+  return rotated && rotated.length > 0 ? rotated : pastedToken;
+}
+
 /** Status umur refresh token, aman ditampilkan (tanpa token mentah). */
 export type RefreshTokenHealth = {
   /** True bila baris kredensial punya refresh token tersimpan. */

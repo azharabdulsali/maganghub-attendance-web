@@ -21,6 +21,7 @@ import {
   submitReport,
 } from "@/lib/monev-submit";
 import { isAccessTokenFresh } from "@/lib/credential-session-policy";
+import { persistRotatedRefreshToken } from "@/lib/credential-session";
 import {
   assessReadiness,
   payloadFromTemplate,
@@ -349,6 +350,24 @@ export async function performSubmit(opts: {
     }
 
     const exchange = await exchangeRefreshForAccess(refreshToken);
+
+    // Rotasi refresh token: portal mengganti monev_refresh_token di tiap refresh
+    // sukses dan mencabut yang lama. Simpan token BARU lebih dulu — apa pun
+    // status akhirnya — supaya refresh berikutnya tidak memakai token mati.
+    // Kegagalan menyimpan di sini tidak menggagalkan alur; hanya dicatat.
+    if ("rotatedRefreshToken" in exchange && exchange.rotatedRefreshToken) {
+      const saved = await persistRotatedRefreshToken(
+        userId,
+        exchange.rotatedRefreshToken,
+      );
+      if (!saved) {
+        console.warn(
+          "Gagal menyimpan refresh token hasil rotasi; token berikutnya bisa " +
+            "memakai nilai lama.",
+        );
+      }
+    }
+
     if (exchange.status !== "OK") {
       const message =
         exchange.status === "SESSION_DEAD"

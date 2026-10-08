@@ -241,6 +241,45 @@ describe("interpretRefreshResponse (murni), §4.4", () => {
     expect(r.status).toBe("ERROR");
   });
 
+  it("rotasi: access token di body + refresh token baru di Set-Cookie", () => {
+    const r = interpretRefreshResponse(
+      200,
+      JSON.stringify({ access_token: "ACCESS-1" }),
+      ["monev_refresh_token=REFRESH-NEW; Path=/; HttpOnly; Secure"],
+    );
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") {
+      expect(r.accessToken).toBe("ACCESS-1");
+      expect(r.rotatedRefreshToken).toBe("REFRESH-NEW");
+    }
+  });
+
+  it("rotasi murni: hanya refresh token baru, tanpa access token → ERROR yang tetap membawa token baru", () => {
+    const r = interpretRefreshResponse(200, "{}", [
+      "monev_refresh_token=REFRESH-ONLY; Path=/; HttpOnly",
+    ]);
+    expect(r.status).toBe("ERROR");
+    if (r.status === "ERROR") {
+      expect(r.rotatedRefreshToken).toBe("REFRESH-ONLY");
+      // Pesan ramah, tanpa jargon.
+      expect(r.message).not.toMatch(/refresh_token|HTTP|Set-Cookie/i);
+    }
+  });
+
+  it("penghapusan cookie (Max-Age=0) TIDAK dianggap rotasi", () => {
+    const r = interpretRefreshResponse(200, "{}", [
+      "monev_refresh_token=; Path=/; Max-Age=0; HttpOnly",
+    ]);
+    expect(r.status).toBe("ERROR");
+    if (r.status === "ERROR") expect(r.rotatedRefreshToken).toBeUndefined();
+  });
+
+  it("tanpa Set-Cookie: rotatedRefreshToken undefined (portal tidak merotasi)", () => {
+    const r = interpretRefreshResponse(200, JSON.stringify({ access_token: "A" }));
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") expect(r.rotatedRefreshToken).toBeUndefined();
+  });
+
   it("200 tanpa token di bentuk apa pun → ERROR jujur (bukan menebak)", () => {
     const r = interpretRefreshResponse(200, JSON.stringify({ ok: true }));
     expect(r.status).toBe("ERROR");
@@ -293,6 +332,36 @@ describe("exchangeRefreshForAccess (fetch di-mock, tidak keluar jaringan)", () =
     expect(headers.cookie).toBe("monev_refresh_token=REFRESH-JWT");
     // Tidak boleh memakai Bearer, refresh lewat cookie.
     expect(headers.authorization).toBeUndefined();
+  });
+
+  it("meneruskan refresh token BARU dari Set-Cookie (rotasi)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (url.includes("version.json")) {
+          return new Response(JSON.stringify({ build_id: "x-production" }), {
+            status: 200,
+          });
+        }
+        const headers = new Headers();
+        headers.append(
+          "set-cookie",
+          "monev_refresh_token=REFRESH-ROTATED; Path=/; HttpOnly",
+        );
+        return new Response(JSON.stringify({ access_token: "A-NEW" }), {
+          status: 200,
+          headers,
+        });
+      }),
+    );
+    const r = await exchangeRefreshForAccess("REFRESH-JWT", {
+      buildId: "x-production",
+    });
+    expect(r.status).toBe("OK");
+    if (r.status === "OK") {
+      expect(r.accessToken).toBe("A-NEW");
+      expect(r.rotatedRefreshToken).toBe("REFRESH-ROTATED");
+    }
   });
 
   it("401 dari portal → SESSION_DEAD", async () => {

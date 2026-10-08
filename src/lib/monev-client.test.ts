@@ -153,6 +153,37 @@ describe("verifySession, §4.1 & §6", () => {
     const res = await verifySession("a.b.c");
     expect(res.status).toBe("ERROR");
   });
+
+  it("200 dengan Set-Cookie monev_refresh_token → mengembalikan token rotasi", async () => {
+    const headers = new Headers();
+    headers.append(
+      "set-cookie",
+      "monev_refresh_token=REFRESH-ROTATED; Path=/; HttpOnly",
+    );
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ build_id: BUILD_ID }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), { status: 200, headers }),
+      );
+
+    const res = await verifySession("a.b.c");
+    expect(res.status).toBe("ACTIVE");
+    if (res.status === "ACTIVE") {
+      expect(res.rotatedRefreshToken).toBe("REFRESH-ROTATED");
+    }
+  });
+
+  it("200 tanpa Set-Cookie → rotatedRefreshToken undefined", async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ build_id: BUILD_ID }))
+      .mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+    const res = await verifySession("a.b.c");
+    expect(res.status).toBe("ACTIVE");
+    if (res.status === "ACTIVE") {
+      expect(res.rotatedRefreshToken).toBeUndefined();
+    }
+  });
 });
 
 describe("extractRefreshTokenFromSetCookies, §4.0 langkah 4", () => {

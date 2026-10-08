@@ -18,6 +18,7 @@ import { prisma } from "@/lib/prisma";
 import { encrypt, decrypt } from "@/lib/crypto";
 import { monevTokenSchema } from "@/lib/validate";
 import { verifySession } from "@/lib/monev-client";
+import { pickRefreshTokenToPersist } from "@/lib/credential-session";
 import { rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 
@@ -97,10 +98,41 @@ export async function POST(request: Request) {
 
   const result = await verifySession(tokenToCheck);
 
+  // Token rotasi: bila portal mengganti monev_refresh_token saat kita memanggil
+  // /auth/refresh, simpan nilai BARU (menimpa yang lama). Berlaku baik untuk
+  // token tempelan baru maupun token tersimpan ("Tes ulang") — kalau tidak,
+  // token lama yang sudah dicabut akan dipakai pada refresh berikutnya.
+  const rotated = result.status === "ACTIVE" ? result.rotatedRefreshToken : undefined;
+  if (rotated) {
+    try {
+      const enc = encrypt(rotated);
+      await prisma.maganghubCredential.update({
+        where: { userId },
+        data: {
+          tokenCiphertext: enc.ciphertext,
+          tokenIv: enc.iv,
+          tokenAuthTag: enc.authTag,
+        },
+      });
+    } catch {
+      // Gagal menyimpan rotasi bukan alasan menutupi hasil tes. Dicatat saja.
+      console.warn(
+        "Tes koneksi berhasil tetapi refresh token hasil rotasi gagal disimpan.",
+      );
+    }
+  }
+
   // Simpan token baru HANYA setelah diuji, dan hanya bila bukan ERROR jaringan
   // (kalau jaringan gagal, token belum terbukti apa-apa, jangan klaim tersimpan).
+  //
+  // PENTING (rotasi): bila portal MEROTASI token saat uji di atas, `rotated`
+  // adalah token yang masih hidup sedangkan `tokenToCheck` (tempelan pengguna)
+  // SUDAH dicabut oleh rotasi itu. Jadi yang disimpan harus `rotated` — kalau
+  // tidak, kita menimpa token hidup dengan token mati (bug rotasi terbalik).
+  // Pilihan ini diekstrak ke fungsi murni `pickRefreshTokenToPersist` (ber-test).
+  const tokenToPersist = pickRefreshTokenToPersist(rotated, tokenToCheck);
   if (isNewToken && result.status !== "ERROR") {
-    const enc = encrypt(tokenToCheck);
+    const enc = encrypt(tokenToPersist);
     try {
       await prisma.maganghubCredential.upsert({
         where: { userId },
