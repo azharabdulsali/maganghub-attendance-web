@@ -1,4 +1,4 @@
-﻿// src/app/api/automation/route.ts: pengaturan otomasi (SPEC.md Â§7).
+﻿// src/app/api/automation/route.ts: pengaturan otomasi (SPEC.md §7).
 //
 // Satu pengguna punya satu AutomationConfig (userId @unique). `webhookKey`
 // dibuat sekali secara acak dan TIDAK diganti otomatis, kalau berubah, cron

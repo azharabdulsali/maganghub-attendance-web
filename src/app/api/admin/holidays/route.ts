@@ -1,6 +1,6 @@
 ﻿// src/app/api/admin/holidays/route.ts: kelola daftar libur (KHUSUS ADMIN).
 //
-// SPEC.md Â§4 memberi admin kendali lintas pengguna; salah satu wujudnya adalah
+// SPEC.md §4 memberi admin kendali lintas pengguna; salah satu wujudnya adalah
 // daftar libur nasional yang menentukan KAPAN otomasi melewati sebuah tanggal
 // (`decide()` di report-policy.ts). Sebelumnya daftar ini data statis di kode;
 // kini disimpan di tabel `holidays` dan dikelola dari sini.

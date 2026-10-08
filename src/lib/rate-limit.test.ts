@@ -159,4 +159,18 @@ describe("RATE_LIMITS", () => {
       RATE_LIMITS.credentialsLogin.limit,
     );
   });
+
+  it("register ada, 5 / 10 menit, jendela pendek (bukan 1 jam)", () => {
+    expect(RATE_LIMITS.register.limit).toBe(5);
+    expect(RATE_LIMITS.register.windowMs).toBe(10 * 60_000);
+    // Jendela sengaja pendek: pengguna yang salah ketik / ganti email tidak
+    // perlu menunggu hampir sejam. Kunci agar tidak diam-diam dikembalikan ke
+    // 1 jam, yang akan membuat pendaftaran terasa "macet" tanpa alasan.
+    expect(RATE_LIMITS.register.windowMs).toBeLessThan(60 * 60_000);
+    // Tetap lebih ketat dari reportDraft supaya tidak jadi jalur termurah
+    // untuk membuat akun massal dari satu IP.
+    expect(RATE_LIMITS.register.windowMs).toBeGreaterThanOrEqual(
+      RATE_LIMITS.reportDraft.windowMs,
+    );
+  });
 });
