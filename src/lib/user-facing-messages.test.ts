@@ -198,7 +198,7 @@ describe("halaman /automation menjelaskan waktu kirim bisa meleset", () => {
     const isi = readFileSync(berkas, "utf8");
     expect(isi).toMatch(/Waktu kirim bisa meleset/);
     expect(isi).toMatch(/13\.00/);
-    expect(isi).toMatch(/13\.25/);
+    expect(isi).toMatch(/13\.15/);
     expect(isi).toMatch(/lebih awal/);
   });
 });
