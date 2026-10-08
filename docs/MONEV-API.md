@@ -291,8 +291,32 @@ Poin penting:
 - Bentuk pesan error `401` di atas adalah **penanda sesi mati** yang bisa
   diandalkan (menjawab §6).
 
-**Masih belum direkam:** respons **sukses** (`200`), apakah ada body JSON?
-Apakah men-set cookie access token baru?
+**✅ Rotasi refresh token TERVERIFIKASI (rekaman DevTools, 2026-06).** Setiap
+`POST /auth/refresh` yang **sukses** membalas `Set-Cookie` baru untuk
+`monev_refresh_token` (nilai berbeda tiap panggilan), **dan token lama langsung
+tidak berlaku** — refresh berikutnya dengan token lama dibalas `401`.
+
+```
+200 OK
+set-cookie: monev_refresh_token=<JWT-BARU>; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax
+set-cookie: monev_access_token=<ACCESS-BARU>; Path=/; HttpOnly   ← (bentuk access bervariasi, lihat §4.4)
+```
+
+Konsekuensi yang WAJIB dipatuhi kode:
+1. **Simpan token baru.** Rotasi tanpa disimpan = token lama sudah dicabut →
+   refresh berikutnya `401` palsu → pengguna dipaksa login ulang padahal sesi
+   masih hidup. Diimplementasikan di `persistRotatedRefreshToken`
+   (`credential-session.ts`), dipakai `perform-submit.ts` & route verify.
+2. **`/auth/refresh` bukan probe yang netral.** Ia *menggeser* token. Ini
+   berlaku untuk "Tes Koneksi"/"Tes ulang" (`verifySession`), yang sekarang ikut
+   menyimpan token rotasi.
+3. **Satu pemakai token pada satu waktu.** Karena rotasi mencabut yang lama,
+   dua proses yang memakai `monev_refresh_token` sama (mis. cron & tab manual)
+   bisa saling menendang. Selalu baca-tukar-simpan terbaru dari DB.
+
+**Masih belum direkam:** bentuk pasti body JSON `200` (bila ada) dan nama field
+access token (bila access datang di body, bukan cookie). Penafsiran tetap
+toleran (§4.4).
 
 ### 4.4 Dari mana `Bearer <access token>` berasal?, ✅ TERJAWAB
 
@@ -777,8 +801,13 @@ Artinya, **sebelum submit** kita perlu menukar `monev_refresh_token` menjadi
 access token, kemungkinan lewat `POST /api/v1/auth/refresh` (§4.1) yang
 `200`-nya berisi access token baru.
 
-> **Status:** bentuk body sukses `/auth/refresh` **belum terekam** (§10). Ini
-> satu-satunya bagian yang masih menggantung untuk Tahap 4.
+> **Status:** bentuk body sukses `/auth/refresh` **sebagian belum terekam** (§10):
+> access token bisa datang di cookie `monev_access_token` *atau* di body JSON.
+> Yang **sudah pasti**: setiap refresh sukses **merotasi**
+> `monev_refresh_token` (§4.1) dan token lama langsung mati, jadi token baru
+> WAJIB disimpan. `interpretRefreshResponse` mengembalikan `rotatedRefreshToken`
+> (OK maupun ERROR) dan pemanggil menyimpannya lewat
+> `persistRotatedRefreshToken`.
 
 ### 8.5 Kerangka yang sudah diisi
 
@@ -846,6 +875,11 @@ kedaluwarsa; bentuk responsnya belum terekam sehingga
 `interpretRefreshResponse` masih toleran dua kemungkinan (body JSON *atau*
 `set-cookie`) dan **tidak menebak**.
 
+> **✅ Sebagian terjawab (DevTools, 2026-06):** refresh sukses **merotasi**
+> `monev_refresh_token` (§4.1). Yang masih perlu direkam hanya: apakah access
+> token ada di body JSON `200`, dan nama fieldnya. Rotasi token itu sendiri
+> sudah ditangani (`rotatedRefreshToken` + `persistRotatedRefreshToken`).
+
 **Status HTTP submit** (`200`/`201` vs `409` duplikat) juga belum terekam,
 diamati saat uji pertama sebelum `ALLOW_LIVE_SUBMIT=1`.
 
@@ -885,13 +919,14 @@ tidak tersedia/diblokir.
 
 | ✅ Sudah pasti (terverifikasi) | ❓ Belum diketahui |
 | :--- | :--- |
-| Host API: `monev-api.maganghub.kemnaker.go.id` | Isi body sukses `/auth/refresh` (200), nama field access token |
+| Host API: `monev-api.maganghub.kemnaker.go.id` | Apakah access token di body sukses `/auth/refresh` (200) di JSON atau hanya cookie |
 | **API TIDAK diblokir Cloudflare**, `401` JSON polos | Apakah klaim `fingerprint` divalidasi lintas-IP |
 | `version.json` → `{"build_id":"...-production"}` | Bentuk POST halaman SSO `account.kemnaker.go.id` |
 | `GET /auth/login` → `201`, body = **URL SSO polos** | Apakah `x-frontend-build-id` wajib |
 | OAuth: `client_id`, `redirect_uri`, `scope=basic email` | Isi body callback (1 KB JSON) |
 | Cookie: `monev_refresh_token` (HttpOnly, 30 hari) | |
 | `/auth/refresh` gagal → **`401 AUTHORIZATION_ERROR`** | |
+| **`/auth/refresh` sukses → MEROTASI `monev_refresh_token`; token lama mati** (DevTools) | |
 | `/auth/login/callback` sukses → **`201 Created`** | |
 | Origin wajib: `https://monev.maganghub.kemnaker.go.id` | |
 | **Submit = `POST /attendances/with-daily-log`**, field `date`/`status=PRESENT`/`activity_log`/`lesson_learned`/`obstacles` (§8) | |
@@ -899,6 +934,7 @@ tidak tersedia/diblokir.
 | Submit butuh `authorization: Bearer <access>` (bukan refresh cookie) | |
 | Kerangka submit + policy siap (`monev-submit.ts`, `report-policy.ts`) | |
 | **Route submit Tahap 4 terpasang, gated by `ALLOW_LIVE_SUBMIT`** (§8.5b) | Status HTTP sukses submit belum terekam |
+| **Rotasi refresh token disimpan** (`persistRotatedRefreshToken`) di submit & verify | |
 
 ---
 

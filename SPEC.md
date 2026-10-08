@@ -1070,7 +1070,7 @@ pemilik**, dengan risiko berikut yang diterima terbuka:
    ke sistem ini tanpa sepengetahuan yang bersangkutan.
 
 Mitigasi minimal yang **wajib** ada, tidak bisa ditawar:
-- Rate limit per-IP di `/api/register` (mis. 3/jam) dan `/api/login`
+- Rate limit per-IP di `/api/register` (5/10 menit) dan `/api/login`
   (mis. 10/15 menit), pakai Upstash Redis free tier atau tabel di Postgres.
 - CAPTCHA/turnstile di form register bila penyalahgunaan mulai terlihat.
 - Peringatan jujur di UI saat mendaftar: *"Sistem ini menyimpan kredensial

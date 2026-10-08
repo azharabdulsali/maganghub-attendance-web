@@ -33,7 +33,7 @@ Yang **terpengaruh** (semua endpoint ber-rate-limit):
 | Scope | Batas | Endpoint |
 | --- | --- | --- |
 | `login` | 10 / 5 menit per IP | Login NextAuth (`src/lib/auth.ts`) |
-| `register` | 3 / jam per IP | `POST /api/register` |
+| `register` | 5 / 10 menit per IP | `POST /api/register` |
 | `submitManual` | 20 / 10 menit per pengguna | `POST /api/reports/submit` |
 | `cron` | 30 / 5 menit per IP | `POST /api/cron/submit` |
 | `reportDraft` | 30 / 5 menit per pengguna | `POST /api/report-templates/generate` |

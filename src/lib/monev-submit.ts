@@ -15,6 +15,7 @@
 import {
   MONEV_API_BASE,
   MONEV_FRONTEND_ORIGIN,
+  extractRefreshTokenFromSetCookies,
   fetchBuildId,
 } from "./monev-client";
 
@@ -446,18 +447,47 @@ export async function checkDailyLogExists(
 
 /** Hasil percobaan menukar refresh token menjadi access token. */
 export type TokenExchangeResult =
-  | { status: "OK"; accessToken: string; httpCode: number }
+  | {
+      status: "OK";
+      accessToken: string;
+      httpCode: number;
+      /**
+       * `monev_refresh_token` BARU bila portal merotasinya saat refresh
+       * (`Set-Cookie`), atau `undefined` bila tidak. Pemanggil WAJIB menyimpan
+       * nilai ini menggantikan token lama, kalau tidak refresh berikutnya akan
+       * memakai token yang sudah dicabut server (§4.1, rotasi refresh token).
+       */
+      rotatedRefreshToken?: string;
+    }
   | { status: "SESSION_DEAD"; httpCode: number; message: string }
-  | { status: "ERROR"; httpCode?: number; message: string; diagnostic?: string };
+  | {
+      status: "ERROR";
+      httpCode?: number;
+      /**
+       * Token rotasi baru bila portal menggantinya walau respons tidak memberi
+       * token akses yang dikenali. Tetap WAJIB disimpan supaya token lama yang
+       * sudah dicabut tidak dipakai lagi.
+       */
+      rotatedRefreshToken?: string;
+      message: string;
+      diagnostic?: string;
+    };
 
 /**
  * Tafsirkan respons `POST /api/v1/auth/refresh`, MURNI, tanpa jaringan.
  *
- * ⚠️  Bentuk respons sukses (`200`) BELUM terekam (§4.4). Karena itu fungsi ini
- * sengaja **toleran dua kemungkinan**: access token bisa datang di body JSON
+ * ⚠️  Bentuk respons sukses (`200`) BELUM terekam utuh (§4.4). Karena itu fungsi
+ * ini sengaja **toleran dua kemungkinan**: access token bisa datang di body JSON
  * (`access_token` / `accessToken` / `token`) atau di header `set-cookie`
  * (cookie access terpisah). Bila tak satu pun ditemukan, hasilnya `ERROR`
  * dengan pesan jujur, bukan menebak.
+ *
+ * **Rotasi refresh token (2026-06, bukti rekaman DevTools):** portal mengganti
+ * `monev_refresh_token` di SETIAP `POST /auth/refresh` yang sukses. Cookie
+ * refresh baru di header `set-cookie` TIDAK dianggap access token, tetapi
+ * dikembalikan lewat `rotatedRefreshToken` supaya pemanggil menyimpannya
+ * menggantikan yang lama. Bila tidak disimpan, refresh berikutnya memakai token
+ * yang sudah dicabut → `401` palsu.
  *
  * `401` (penanda sesi mati yang sudah terverifikasi, §4.1) dipetakan ke
  * `SESSION_DEAD` supaya pemanggil tahu harus minta login ulang, bukan sekadar
@@ -486,6 +516,14 @@ export function interpretRefreshResponse(
     };
   }
 
+  // Refresh token BARU (rotasi) — diambil sekali, dipakai di setiap cabang OK.
+  // Cookie refresh yang nilai kosong (Max-Age=0) = penghapusan, bukan token
+  // baru; helper mengabaikannya.
+  const rotatedRefreshToken =
+    setCookieHeaders && setCookieHeaders.length > 0
+      ? extractRefreshTokenFromSetCookies(setCookieHeaders)
+      : undefined;
+
   // Kemungkinan 1: access token ada di body JSON.
   let parsed: unknown;
   try {
@@ -498,7 +536,7 @@ export function interpretRefreshResponse(
     for (const key of ["access_token", "accessToken", "token"]) {
       const v = rec[key];
       if (typeof v === "string" && v.length > 0) {
-        return { status: "OK", accessToken: v, httpCode };
+        return { status: "OK", accessToken: v, httpCode, rotatedRefreshToken };
       }
     }
     // Beberapa API membungkus di dalam `data`.
@@ -508,7 +546,7 @@ export function interpretRefreshResponse(
       for (const key of ["access_token", "accessToken", "token"]) {
         const v = inner[key];
         if (typeof v === "string" && v.length > 0) {
-          return { status: "OK", accessToken: v, httpCode };
+          return { status: "OK", accessToken: v, httpCode, rotatedRefreshToken };
         }
       }
     }
@@ -527,9 +565,27 @@ export function interpretRefreshResponse(
         /access/i.test(name) &&
         !/refresh/i.test(name)
       ) {
-        return { status: "OK", accessToken: value, httpCode };
+        return { status: "OK", accessToken: value, httpCode, rotatedRefreshToken };
       }
     }
+  }
+
+  // Kemungkinan 3: TIDAK ada access token, TAPI ada refresh token baru
+  // (rotasi murni). Ini tetap bukan "OK" karena kita tidak punya access token
+  // untuk submit; tapi rotasi WAJIB disimpan supaya token berikutnya valid.
+  // Pesan jujur + token baru diteruskan ke pemanggil.
+  if (rotatedRefreshToken) {
+    return {
+      status: "ERROR",
+      httpCode,
+      message:
+        "Portal memperbarui sesi, tetapi tidak mengirim token akses yang bisa " +
+        "dipakai. Coba lagi sebentar.",
+      diagnostic:
+        "Respons 200 hanya memuat monev_refresh_token baru (rotasi) tanpa " +
+        "access token yang dikenali (docs/MONEV-API.md §4.4).",
+      rotatedRefreshToken,
+    };
   }
 
   return {
@@ -547,12 +603,16 @@ export function interpretRefreshResponse(
 /**
  * Tukar refresh token menjadi access token. **Menembak jaringan** ke portal.
  *
- * ⚠️  Belum pernah dijalankan. Karena bentuk respons 200 belum terekam,
- * fungsi ini hanya "mengikuti" respons apa adanya dan menyerahkan penafsiran
- * ke `interpretRefreshResponse`. Jangan panggil dari tes; jangan panggil selama
- * fase uji koneksi.
+ * ⚠️  Bentuk respons 200 belum terekam utuh, jadi fungsi ini "mengikuti"
+ * respons apa adanya dan menyerahkan penafsiran ke `interpretRefreshResponse`.
+ * Jangan panggil dari tes; jangan panggil selama fase uji koneksi.
  *
- * @param refreshToken Nilai cookie `monev_refresh_token` (JWT, ttl 30 hari).
+ * **Penting (rotasi refresh token):** bila hasilnya `OK` atau `ERROR` dengan
+ * `rotatedRefreshToken`, pemanggil WAJIB menyimpan token baru itu (menggantikan
+ * yang lama). Lihat `interpretRefreshResponse` & `perform-submit.ts`.
+ *
+ * @param refreshToken Nilai cookie `monev_refresh_token` (JWT). Umur di klaim
+ *   `exp` (terpantau ~30 hari); portal MEROTASI nilainya tiap refresh sukses.
  */
 export async function exchangeRefreshForAccess(
   refreshToken: string,

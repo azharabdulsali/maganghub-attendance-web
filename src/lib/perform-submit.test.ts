@@ -15,9 +15,15 @@ const checkDailyLogMock = vi.fn();
 const submitLogCreateMock = vi.fn();
 const credentialUpdateMock = vi.fn();
 const holidayFindManyMock = vi.fn();
+const persistRotatedMock = vi.fn();
 
 vi.mock("@/lib/crypto", () => ({
   decrypt: (...args: unknown[]) => decryptMock(...args),
+}));
+
+vi.mock("@/lib/credential-session", () => ({
+  persistRotatedRefreshToken: (...args: unknown[]) =>
+    persistRotatedMock(...args),
 }));
 
 vi.mock("@/lib/monev-submit", () => ({
@@ -91,6 +97,8 @@ beforeEach(() => {
   // Default: portal LAPOR belum ada laporan hari ini → aman lanjut kirim.
   // Tes khusus pra-cek menimpanya sendiri.
   checkDailyLogMock.mockResolvedValue({ status: "ABSENT" });
+  // Default: penyimpanan token rotasi sukses (tak menggagalkan alur).
+  persistRotatedMock.mockResolvedValue(true);
 });
 
 describe("performSubmit, kesiapan", () => {
@@ -263,6 +271,47 @@ describe("performSubmit, token & pengiriman", () => {
     submitReportMock.mockResolvedValue({ status: "SUCCESS", httpCode: 200 });
     await performSubmit(base());
     expect(credentialUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("sukses + rotasi: menyimpan refresh token BARU sebelum lanjut kirim", async () => {
+    decryptMock.mockReturnValue("refresh-token");
+    exchangeMock.mockResolvedValue({
+      status: "OK",
+      accessToken: "at",
+      httpCode: 200,
+      rotatedRefreshToken: "REFRESH-NEW",
+    });
+    submitReportMock.mockResolvedValue({ status: "SUCCESS", httpCode: 200 });
+
+    await performSubmit(base({ userId: "u-rot" }));
+
+    expect(persistRotatedMock).toHaveBeenCalledTimes(1);
+    expect(persistRotatedMock).toHaveBeenCalledWith("u-rot", "REFRESH-NEW");
+  });
+
+  it("tanpa rotasi (rotatedRefreshToken absen) → tidak menyimpan apa pun", async () => {
+    decryptMock.mockReturnValue("refresh-token");
+    exchangeMock.mockResolvedValue({ status: "OK", accessToken: "at", httpCode: 200 });
+    submitReportMock.mockResolvedValue({ status: "SUCCESS", httpCode: 200 });
+
+    await performSubmit(base());
+
+    expect(persistRotatedMock).not.toHaveBeenCalled();
+  });
+
+  it("ERROR tanpa access token tapi ada rotasi → tetap menyimpan token baru (jangan buang)", async () => {
+    decryptMock.mockReturnValue("refresh-token");
+    exchangeMock.mockResolvedValue({
+      status: "ERROR",
+      httpCode: 200,
+      message: "tanpa access token",
+      rotatedRefreshToken: "REFRESH-ONLY",
+    });
+
+    const out = await performSubmit(base({ userId: "u-rot2" }));
+
+    expect(out.kind).toBe("EXCHANGE_FAILED");
+    expect(persistRotatedMock).toHaveBeenCalledWith("u-rot2", "REFRESH-ONLY");
   });
 
   it("sukses → SUBMITTED ok=true + log SUCCESS dengan trigger benar", async () => {

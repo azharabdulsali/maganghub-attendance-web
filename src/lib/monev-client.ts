@@ -39,7 +39,16 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 
 /** Hasil pemeriksaan satu sesi terhadap portal. */
 export type SessionCheckResult =
-  | { status: "ACTIVE"; raw?: unknown }
+  | {
+      status: "ACTIVE";
+      raw?: unknown;
+      /**
+       * `monev_refresh_token` BARU bila portal merotasinya lewat `Set-Cookie`
+       * saat refresh. Pemanggil WAJIB menyimpannya menggantikan yang lama,
+       * kalau tidak refresh berikutnya memakai token yang sudah dicabut.
+       */
+      rotatedRefreshToken?: string;
+    }
   | { status: "INVALID"; httpCode: number; errorCode?: string; message?: string }
   | {
       status: "ERROR";
@@ -119,8 +128,11 @@ export async function fetchBuildId(options?: {
  *   - `401 AUTHORIZATION_ERROR` → sesi mati  → `INVALID`
  *   - error jaringan lain       → `ERROR` (jangan menyimpulkan "mati")
  *
- * PENTING: fungsi ini TIDAK mengirim laporan apa pun. Endpoint refresh hanya
- * memperbarui sesi, jadi aman dipanggil (§9).
+ * PENTING: fungsi ini TIDAK mengirim laporan apa pun. Tetapi endpoint refresh
+ * **merotasi** `monev_refresh_token` (bukti rekaman DevTools, 2026-06), jadi
+ * setiap panggilan menggeser token. Pemanggil WAJIB menyimpan
+ * `rotatedRefreshToken` yang dikembalikan, kalau tidak token lama yang sudah
+ * dicabut akan terpakai lagi (§4.1, §6).
  *
  * @param refreshToken nilai cookie `monev_refresh_token` (JWT) milik pengguna.
  */
@@ -162,7 +174,17 @@ export async function verifySession(
 
     if (res.status === 200) {
       const raw = await res.json().catch(() => undefined);
-      return { status: "ACTIVE", raw };
+      // Rotasi refresh token: portal mengganti monev_refresh_token tiap refresh
+      // sukses. Ambil nilai baru (bila ada) supaya pemanggil bisa menyimpannya.
+      const setCookies =
+        typeof res.headers.getSetCookie === "function"
+          ? res.headers.getSetCookie()
+          : [];
+      return {
+        status: "ACTIVE",
+        raw,
+        rotatedRefreshToken: extractRefreshTokenFromSetCookies(setCookies),
+      };
     }
 
     if (res.status === 401) {

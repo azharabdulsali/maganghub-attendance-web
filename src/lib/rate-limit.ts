@@ -208,8 +208,12 @@ export const RATE_LIMITS = {
    * dibatasi supaya tidak bisa dipakai membebani server.
    */
   reportDraft: { limit: 30, windowMs: 5 * 60_000 },
-  /** Pendaftaran: 3 / jam per IP (SPEC.md §8). */
-  register: { limit: 3, windowMs: 60 * 60_000 },
+  /**
+   * Pendaftaran: 5 / 10 menit per IP. Jendela 10 menit (bukan 1 jam) supaya
+   * peserta yang salah ketik / ganti email tidak tertahan menunggu hampir
+   * sejam; batasnya tetap rendah untuk menahan pendaftaran massal dari satu IP.
+   */
+  register: { limit: 5, windowMs: 10 * 60_000 },
   /**
    * Cek status pengingat absen oleh klien: 120 / 5 menit per pengguna.
    *
