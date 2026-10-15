@@ -6,7 +6,7 @@
 //     ia hanya bisa menggantinya. Ini menutup celah XSS/CSRF membaca password.
 //   - Hanya pemilik sesi yang boleh menyentuh kredensialnya sendiri.
 //   - Email Monev disimpan apa adanya (bukan rahasia), password disandikan
-//     AES-256-GCM (SPEC.md Â§5.1).
+//     AES-256-GCM (SPEC.md §5.1).
 
 import { NextResponse } from "next/server";
 

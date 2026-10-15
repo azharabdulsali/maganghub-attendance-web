@@ -8,6 +8,7 @@ import {
   todayInJakarta,
   policyMessage,
   submitStatusFor,
+  shouldSkipCronSubmit,
   payloadFromTemplate,
   assessReadiness,
 } from "./submit-service";
@@ -47,6 +48,15 @@ describe("submitStatusFor", () => {
 
   it("ALREADY_SUBMITTED → DUPLICATE (bukan FAILED)", () => {
     expect(submitStatusFor({ status: "ALREADY_SUBMITTED" })).toBe("DUPLICATE");
+  });
+
+  it("shouldSkipCronSubmit: 0 log SUCCESS → tidak lewati", () => {
+    expect(shouldSkipCronSubmit(0)).toBe(false);
+  });
+
+  it("shouldSkipCronSubmit: ≥1 log SUCCESS → lewati percobaan berikutnya", () => {
+    expect(shouldSkipCronSubmit(1)).toBe(true);
+    expect(shouldSkipCronSubmit(5)).toBe(true);
   });
 
   it("ERROR / tak dikenal → FAILED", () => {

@@ -54,6 +54,36 @@ export function credentialStatusTone(
   }
 }
 
+/**
+ * Ringkas status template absen seorang pengguna untuk tabel admin.
+ *
+ * Aturan (dipusatkan di sini supaya tabel, ringkasan, dan label tidak pernah
+ * berbeda):
+ *  - Belum ada template harian & tidak ada template bertanggal → "Belum".
+ *  - Ada template harian, tanpa template bertanggal → "Sudah".
+ *  - Ada N template bertanggal → "Sudah · +N khusus".
+ *
+ * MURNI: hanya membaca dua field, tanpa DB.
+ */
+export function describeTemplateStatus(row: {
+  hasTemplate: boolean;
+  datedTemplateCount: number;
+}): string {
+  const khusus =
+    row.datedTemplateCount > 0 ? ` · +${row.datedTemplateCount} khusus` : "";
+  return row.hasTemplate ? `Sudah${khusus}` : `Belum${khusus}`;
+}
+
+/** Nada warna untuk status template: "Sudah" (tanpa hitungan khusus) → hijau. */
+export function templateStatusTone(row: {
+  hasTemplate: boolean;
+  datedTemplateCount: number;
+}): Tone {
+  if (row.hasTemplate) return "good";
+  // Tidak ada template harian, tetapi ada template khusus → bukan "belum" polos.
+  return row.datedTemplateCount > 0 ? "neutral" : "bad";
+}
+
 /** Ringkas data pengguna untuk kolom tabel admin. */
 export interface AdminUserRow {
   /** Id user — dipakai tombol aksi (reset/hapus) untuk menyebut sasaran. */
@@ -62,7 +92,17 @@ export interface AdminUserRow {
   name: string | null;
   role: string;
   credentialStatus: CredentialStatus | null;
+  /**
+   * Apakah pengguna sudah menyimpan template harian (`ReportTemplate`, 3 kolom:
+   * aktivitas/pembelajaran/kendala). Satu baris per user, jadi cukup boolean.
+   */
   hasTemplate: boolean;
+  /**
+   * Jumlah template bertanggal khusus (`DatedReportTemplate`) milik user.
+   * Template ini MENIMPA template harian hanya untuk tanggalnya sendiri.
+   * Dipakai admin untuk melihat siapa yang sudah menyiapkan laporan khusus.
+   */
+  datedTemplateCount: number;
   automationEnabled: boolean;
   /** Jam jadwal otomasi (0–23 WIB), atau null bila belum diatur. */
   automationHour: number | null;

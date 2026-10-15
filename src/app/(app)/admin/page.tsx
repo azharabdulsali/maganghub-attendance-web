@@ -35,15 +35,18 @@ import { ReminderPanel } from "./reminder-panel";
 import { loadReminderSetting } from "@/lib/reminder-setting-repo";
 import { UserRowActions } from "./user-actions";
 import { RunUserButton } from "./run-user-button";
+import { TestLoginButton } from "./test-login-button";
 import FilterBar from "@/components/filter-bar";
 import Pagination from "@/components/pagination";
 import {
   credentialStatusTone,
   describeCredentialStatus,
+  describeTemplateStatus,
   initialsFor,
   isAdminRole,
   labelForAuditUserOption,
   summarizeUsers,
+  templateStatusTone,
 } from "@/lib/admin";
 import { describeTodayRun, scheduleLabel, type TodayRunStatus } from "@/lib/admin-automation";
 import {
@@ -240,6 +243,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <th className="p-3 font-heading">Pengguna</th>
                     <th className="p-3 font-heading">Peran</th>
                     <th className="p-3 font-heading">Kredensial</th>
+                    <th className="p-3 font-heading">Template</th>
                     <th className="p-3 font-heading">Otomasi</th>
                     <th className="p-3 font-heading">Jadwal</th>
                     <th className="p-3 font-heading">Hari ini</th>
@@ -283,6 +287,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           {describeCredentialStatus(u.credentialStatus)}
                         </Badge>
                       </td>
+                      <td className="p-3">
+                        <Badge tone={templateStatusTone(u)}>
+                          {describeTemplateStatus(u)}
+                        </Badge>
+                      </td>
                       <td className="p-3 text-xs text-foreground/70">
                         {u.automationEnabled ? "Aktif" : "Mati"}
                       </td>
@@ -321,6 +330,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             isAdmin={isAdminRole(u.role)}
                           />
                           <RunUserButton
+                            userId={u.id}
+                            name={u.name?.trim() || u.email}
+                          />
+                          <TestLoginButton
                             userId={u.id}
                             name={u.name?.trim() || u.email}
                           />

@@ -60,6 +60,10 @@ enum TriggerType {
 enum AdminActionType {
   USER_DELETE
   USER_RESET_PASSWORD
+  /// Admin menguji login ke portal Monev atas nama seorang pengguna
+  /// (HANYA login, TIDAK mengirim laporan). Dipakai untuk memverifikasi
+  /// kredensial tetap hidup tanpa menyentuh data absen.
+  USER_TEST_LOGIN
 }
 
 // ---------------------------------------------------------------------------

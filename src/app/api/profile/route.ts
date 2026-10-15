@@ -8,8 +8,8 @@
 //   - Hanya pemilik sesi yang boleh mengubah profilnya sendiri (userId dari
 //     sesi, BUKAN dari body, supaya tidak bisa mengubah milik orang lain).
 //   - Email & peran TIDAK diterima dari klien. Email adalah identitas login;
-//     peran hanya boleh diubah lewat jalur admin/ADMIN_EMAIL (Â§13 baris 8).
-//   - Input divalidasi Zod di server sebelum menyentuh DB (AGENTS.md Â§2).
+//     peran hanya boleh diubah lewat jalur admin/ADMIN_EMAIL (§13 baris 8).
+//   - Input divalidasi Zod di server sebelum menyentuh DB (AGENTS.md §2).
 
 import { NextResponse } from "next/server";
 

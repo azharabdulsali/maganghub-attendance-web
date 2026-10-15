@@ -1,10 +1,10 @@
-﻿// src/app/api/register/route.ts: pendaftaran terbuka (SPEC.md Â§13 baris 5).
+﻿// src/app/api/register/route.ts: pendaftaran terbuka (SPEC.md §13 baris 5).
 //
 // Pengaman yang wajib ada:
-//   - Validasi Zod di sisi server (Â§9 poin 5).
-//   - Rate limit 5 pendaftaran/10 menit per IP (Â§8 tabel endpoint).
-//   - Password di-hash bcryptjs cost 12 (Â§9 poin 2).
-//   - Email yang cocok dengan ADMIN_EMAIL otomatis jadi ADMIN (Â§13 baris 8).
+//   - Validasi Zod di sisi server (§9 poin 5).
+//   - Rate limit 5 pendaftaran/10 menit per IP (§8 tabel endpoint).
+//   - Password di-hash bcryptjs cost 12 (§9 poin 2).
+//   - Email yang cocok dengan ADMIN_EMAIL otomatis jadi ADMIN (§13 baris 8).
 
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
@@ -27,7 +27,7 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  // Rate limit 5 pendaftaran/10 menit per IP (SPEC.md Â§8), memakai modul bersama
+  // Rate limit 5 pendaftaran/10 menit per IP (SPEC.md §8), memakai modul bersama
   // (rate-limit.ts) agar aturannya satu sumber kebenaran dengan endpoint lain.
   const ip = clientIpFromHeaders((name) => request.headers.get(name));
   const gate = await enforceRateLimit("register", rateLimitKey("register", ip));

@@ -5,11 +5,13 @@ import { describe, it, expect } from "vitest";
 import {
   credentialStatusTone,
   describeCredentialStatus,
+  describeTemplateStatus,
   formatJoinDate,
   initialsFor,
   isAdminRole,
   labelForAuditUserOption,
   summarizeUsers,
+  templateStatusTone,
   type AdminUserRow,
 } from "./admin";
 
@@ -21,6 +23,7 @@ function row(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
     role: "USER",
     credentialStatus: null,
     hasTemplate: false,
+    datedTemplateCount: 0,
     automationEnabled: false,
     automationHour: null,
     automationMinute: null,
@@ -150,5 +153,45 @@ describe("labelForAuditUserOption", () => {
     expect(
       labelForAuditUserOption({ name: "  Budi  ", email: "b@c.com" }),
     ).toBe("Budi");
+  });
+});
+
+describe("describeTemplateStatus", () => {
+  it("'Belum' bila tidak ada template harian maupun bertanggal", () => {
+    expect(describeTemplateStatus(row({ hasTemplate: false, datedTemplateCount: 0 }))).toBe(
+      "Belum",
+    );
+  });
+
+  it("'Sudah' bila template harian ada tanpa template bertanggal", () => {
+    expect(describeTemplateStatus(row({ hasTemplate: true, datedTemplateCount: 0 }))).toBe(
+      "Sudah",
+    );
+  });
+
+  it("menyertakan jumlah template bertanggal bila ada", () => {
+    expect(describeTemplateStatus(row({ hasTemplate: true, datedTemplateCount: 3 }))).toBe(
+      "Sudah · +3 khusus",
+    );
+    // Bahkan tanpa template harian, jumlah khusus tetap ditampilkan.
+    expect(describeTemplateStatus(row({ hasTemplate: false, datedTemplateCount: 2 }))).toBe(
+      "Belum · +2 khusus",
+    );
+  });
+});
+
+describe("templateStatusTone", () => {
+  it("hijau bila template harian ada", () => {
+    expect(templateStatusTone(row({ hasTemplate: true, datedTemplateCount: 0 }))).toBe("good");
+  });
+
+  it("merah bila benar-benar kosong", () => {
+    expect(templateStatusTone(row({ hasTemplate: false, datedTemplateCount: 0 }))).toBe("bad");
+  });
+
+  it("netral bila hanya ada template khusus (bukan belum polos)", () => {
+    expect(templateStatusTone(row({ hasTemplate: false, datedTemplateCount: 1 }))).toBe(
+      "neutral",
+    );
   });
 });

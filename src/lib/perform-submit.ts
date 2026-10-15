@@ -27,9 +27,11 @@ import {
   payloadFromTemplate,
   plainDateToUtcDate,
   policyMessage,
+  shouldSkipCronSubmit,
   submitStatusFor,
   type SubmitReadiness,
 } from "@/lib/submit-service";
+import { jakartaDayRange } from "@/lib/admin-automation";
 import { loadHolidaySet } from "@/lib/holidays-repo";
 
 export type SubmitTrigger = "MANUAL" | "CRON";
@@ -61,6 +63,7 @@ export type SubmitOutcome =
   | { kind: "NOT_READY"; reason: string; message: string; date: string }
   | { kind: "BAD_DATE"; date: string }
   | { kind: "DRY_RUN"; date: string; policy: string }
+  | { kind: "SKIPPED_ALREADY_DONE"; date: string; message: string }
   | { kind: "TOKEN_UNREADABLE"; message: string }
   | { kind: "EXCHANGE_FAILED"; status: string; message: string; date: string }
   | {
@@ -311,6 +314,42 @@ export async function performSubmit(opts: {
       });
     }
     return { kind: "DRY_RUN", date: readiness.date, policy };
+  }
+
+  // --- Penjaga idempoten CRON (hanya untuk trigger CRON) ----------------------
+  // Absensi harian = operasi SEKALI per hari. Cron dipanggil berkali-kali dalam
+  // jam jadwal (mis. tiap 10 menit: 12:00, 12:10, … 12:50) dan `isDueNow` hanya
+  // mencocokkan JAM, jadi tanpa penjaga ini percobaan ke-2..6 tetap menembak
+  // portal (dicegat jadi DUPLICATE) dan TIAP percobaan menulis SubmitLog baru →
+  // riwayat penuh duplikat. Bila sudah ada log SUCCESS hari ini, LEWATI tanpa
+  // menyentuh jaringan & tanpa menulis log apa pun.
+  //
+  // Sengaja HANYA untuk CRON: submit MANUAL harus tetap bisa dijalankan kapan
+  // saja atas permintaan eksplisit pengguna (mis. memperbaiki/menimpa).
+  if (trigger === "CRON") {
+    try {
+      const range = jakartaDayRange(new Date());
+      if (range) {
+        const successToday = await prisma.submitLog.count({
+          where: {
+            userId,
+            status: "SUCCESS",
+            createdAt: { gte: range.start, lt: range.end },
+          },
+        });
+        if (shouldSkipCronSubmit(successToday)) {
+          return {
+            kind: "SKIPPED_ALREADY_DONE",
+            date: readiness.date,
+            message:
+              "Laporan hari ini sudah terkirim lebih awal. Percobaan otomatis berikutnya dilewati.",
+          };
+        }
+      }
+    } catch {
+      // Gagal-lunak: kalau cek ini error (DB sesaat), JANGAN menghalangi
+      // pengiriman. Penjaga duplikat di portal tetap menjadi jaring terakhir.
+    }
   }
 
   // --- Dapatkan access token untuk submit ------------------------------------

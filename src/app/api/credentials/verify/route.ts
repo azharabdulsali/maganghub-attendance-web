@@ -1,6 +1,6 @@
 ﻿// src/app/api/credentials/verify/route.ts: "Tes Koneksi" ke portal Monev.
 //
-// Alur (docs/MONEV-API.md Â§6, Opsi C1 Â§7):
+// Alur (docs/MONEV-API.md §6, Opsi C1 §7):
 //   1. Pengguna menempel `monev_refresh_token` dari DevTools.
 //   2. Kita simpan terenkripsi (AES-256-GCM), sama seperti password.
 //   3. Kita panggil `POST /auth/refresh` dengan token itu.
@@ -8,7 +8,7 @@
 //        - 401  â†’ INVALID (sesi mati, pengguna harus login ulang)
 //        - lain â†’ jangan ubah apa pun, laporkan ERROR apa adanya
 //
-// PENTING (SPEC.md Â§10): route ini TIDAK PERNAH mengirim laporan apa pun.
+// PENTING (SPEC.md §10): route ini TIDAK PERNAH mengirim laporan apa pun.
 // Hanya memperbarui/ memeriksa sesi. Fase uji koneksi berhenti di sini.
 
 import { NextResponse } from "next/server";
