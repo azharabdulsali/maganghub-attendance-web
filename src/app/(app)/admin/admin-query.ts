@@ -92,7 +92,7 @@ export async function getAdminUsers(now: Date = new Date()): Promise<AdminUserRo
       credential: { select: { status: true } },
       template: { select: { id: true } },
       automation: { select: { isEnabled: true, hour: true, minute: true } },
-      _count: { select: { reports: true, submitLogs: true } },
+      _count: { select: { reports: true, submitLogs: true, datedTemplates: true } },
       submitLogs: {
         select: { createdAt: true },
         orderBy: { createdAt: "desc" },
@@ -135,6 +135,7 @@ export async function getAdminUsers(now: Date = new Date()): Promise<AdminUserRo
       role: u.role,
       credentialStatus: u.credential?.status ?? null,
       hasTemplate: u.template !== null,
+      datedTemplateCount: u._count.datedTemplates,
       automationEnabled: u.automation?.isEnabled ?? false,
       automationHour: u.automation?.hour ?? null,
       automationMinute: u.automation?.minute ?? null,

@@ -63,7 +63,8 @@ export type TriggerType = (typeof TriggerType)[keyof typeof TriggerType]
 
 export const AdminActionType = {
   USER_DELETE: 'USER_DELETE',
-  USER_RESET_PASSWORD: 'USER_RESET_PASSWORD'
+  USER_RESET_PASSWORD: 'USER_RESET_PASSWORD',
+  USER_TEST_LOGIN: 'USER_TEST_LOGIN'
 } as const
 
 export type AdminActionType = (typeof AdminActionType)[keyof typeof AdminActionType]
