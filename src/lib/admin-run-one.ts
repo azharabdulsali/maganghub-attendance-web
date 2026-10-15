@@ -93,7 +93,7 @@ export async function runOne(userId: string, now: Date = new Date()): Promise<Ru
  * TIDAK PERNAH memuat token/pesan portal mentah.
  */
 export type RunOneSummary = {
-  /** Satu kata status: SUBMITTED | NOT_READY | DRY_RUN | TOKEN_UNREADABLE | EXCHANGE_FAILED | BAD_DATE. */
+  /** Satu kata status: SUBMITTED | NOT_READY | DRY_RUN | SKIPPED_ALREADY_DONE | TOKEN_UNREADABLE | EXCHANGE_FAILED | BAD_DATE. */
   kind: SubmitOutcome["kind"];
   ok: boolean;
   message: string;
@@ -121,5 +121,7 @@ export function summarizeRunOne(outcome: SubmitOutcome): RunOneSummary {
         ok: false,
         message: `Tanggal tidak sah: ${outcome.date}.`,
       };
+    case "SKIPPED_ALREADY_DONE":
+      return { kind: "SKIPPED_ALREADY_DONE", ok: true, message: outcome.message };
   }
 }

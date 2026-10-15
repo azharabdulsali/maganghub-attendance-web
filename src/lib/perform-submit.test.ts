@@ -13,6 +13,7 @@ const submitReportMock = vi.fn();
 const exchangeMock = vi.fn();
 const checkDailyLogMock = vi.fn();
 const submitLogCreateMock = vi.fn();
+const submitLogCountMock = vi.fn();
 const credentialUpdateMock = vi.fn();
 const holidayFindManyMock = vi.fn();
 const persistRotatedMock = vi.fn();
@@ -39,6 +40,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     submitLog: {
       create: (...args: unknown[]) => submitLogCreateMock(...args),
+      count: (...args: unknown[]) => submitLogCountMock(...args),
     },
     maganghubCredential: {
       update: (...args: unknown[]) => credentialUpdateMock(...args),
@@ -86,12 +88,23 @@ function base(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** Siapkan jalur "live": gerbang hidup + token & portal bersimulasi sukses. */
+function arrangeLive() {
+  process.env.ALLOW_LIVE_SUBMIT = "1";
+  decryptMock.mockReturnValue("refresh-token");
+  exchangeMock.mockResolvedValue({ status: "OK", accessToken: "at", httpCode: 200 });
+  submitReportMock.mockResolvedValue({ status: "SUCCESS", httpCode: 200 });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   // Default tes = gerbang hidup ("1"), supaya blok "token & pengiriman" bisa
   // menguji dekripsi/tukar-token. Blok gerbang menyetelnya sendiri (delete/"0").
   process.env.ALLOW_LIVE_SUBMIT = "1";
   submitLogCreateMock.mockResolvedValue({});
+  // Default: belum ada log sukses hari ini (jadi penjaga idempoten CRON tidak
+  // ikut campur). Tes khusus penjaga menimpanya sendiri.
+  submitLogCountMock.mockResolvedValue(0);
   // Default: tabel libur kosong (bukan error).
   holidayFindManyMock.mockResolvedValue([]);
   // Default: portal LAPOR belum ada laporan hari ini → aman lanjut kirim.
@@ -422,14 +435,12 @@ describe("performSubmit, access token hasil login otomatis", () => {
       tokenAuthTag: null,
     };
 
-describe("performSubmit, pra-cek duplikat (§12.6)", () => {
-  function arrangeLive() {
-    process.env.ALLOW_LIVE_SUBMIT = "1";
-    decryptMock.mockReturnValue("refresh-token");
-    exchangeMock.mockResolvedValue({ status: "OK", accessToken: "at", httpCode: 200 });
-    submitReportMock.mockResolvedValue({ status: "SUCCESS", httpCode: 200 });
-  }
+    const out = await performSubmit(base({ credential: kosong }));
+    expect(out).toMatchObject({ kind: "NOT_READY", reason: "NO_TOKEN" });
+  });
+});
 
+describe("performSubmit, pra-cek duplikat (§12.6)", () => {
   it("laporan sudah ada → BATAL, submit TIDAK ditembak", async () => {
     arrangeLive();
     checkDailyLogMock.mockResolvedValue({ status: "EXISTS" });
@@ -478,7 +489,60 @@ describe("performSubmit, pra-cek duplikat (§12.6)", () => {
   });
 });
 
-    const out = await performSubmit(base({ credential: kosong }));
-    expect(out).toMatchObject({ kind: "NOT_READY", reason: "NO_TOKEN" });
+describe("performSubmit, penjaga idempoten CRON (sudah sukses hari ini)", () => {
+  it("CRON: sudah ada log SUCCESS hari ini → SKIPPED_ALREADY_DONE, portal TIDAK disentuh, tanpa log baru", async () => {
+    arrangeLive();
+    submitLogCountMock.mockResolvedValue(1);
+
+    const out = await performSubmit(base({ trigger: "CRON" }));
+
+    expect(out).toMatchObject({ kind: "SKIPPED_ALREADY_DONE" });
+    // Inti perbaikan: tidak menembak portal & tidak menulis SubmitLog apa pun.
+    expect(checkDailyLogMock).not.toHaveBeenCalled();
+    expect(submitReportMock).not.toHaveBeenCalled();
+    expect(submitLogCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("CRON: belum ada log SUCCESS (0) → tetap mengirim seperti biasa", async () => {
+    arrangeLive();
+    submitLogCountMock.mockResolvedValue(0);
+
+    const out = await performSubmit(base({ trigger: "CRON" }));
+
+    expect(out).toMatchObject({ kind: "SUBMITTED", ok: true });
+    expect(submitReportMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("CRON: hanya GAGAL hari ini (bukan SUCCESS) → tetap dicoba lagi", async () => {
+    // count hanya menghitung SUCCESS; kegagalan → 0 → penjaga TIDAK menghalangi.
+    arrangeLive();
+    submitLogCountMock.mockResolvedValue(0);
+
+    const out = await performSubmit(base({ trigger: "CRON" }));
+
+    expect(out.kind).toBe("SUBMITTED");
+    expect(submitReportMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("MANUAL: sudah ada log SUCCESS hari ini → tetap dikirim (pengguna minta eksplisit)", async () => {
+    arrangeLive();
+    submitLogCountMock.mockResolvedValue(1);
+
+    const out = await performSubmit(base({ trigger: "MANUAL" }));
+
+    expect(out).toMatchObject({ kind: "SUBMITTED", ok: true });
+    expect(submitReportMock).toHaveBeenCalledTimes(1);
+    // Penjaga CRON tidak pernah dijalankan untuk MANUAL → count tak dipanggil.
+    expect(submitLogCountMock).not.toHaveBeenCalled();
+  });
+
+  it("CRON: bila cek DB error → gagal-lunak, pengiriman TIDAK dihalangi", async () => {
+    arrangeLive();
+    submitLogCountMock.mockRejectedValue(new Error("DB down"));
+
+    const out = await performSubmit(base({ trigger: "CRON" }));
+
+    expect(out).toMatchObject({ kind: "SUBMITTED", ok: true });
+    expect(submitReportMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -596,6 +596,13 @@ Prioritas test:
   hari ini" = ada `SubmitLog` APA PUN hari ini (SUCCESS/DUPLICATE/FAILED);
   bila ada, status log TERAKHIR yang menang (FAILED → `GAGAL`, selain itu
   `SELESAI`). Fungsi ini MURNI terhadap `now` (bisa diuji tanggal tetap).
+- **Penjaga idempoten harian cron** di `src/lib/submit-service.ts`
+  (`shouldSkipCronSubmit`, MURNI) dipakai `performSubmit`: untuk trigger `CRON`,
+  bila sudah ada ≥1 `SubmitLog` `SUCCESS` pada hari WIB ini → kembalikan
+  `SKIPPED_ALREADY_DONE` TANPA menembak portal / menulis log. Cron rapat (mis.
+  tiap 10 menit) yang dulu "jatuh tempo" berulang sepanjang jam jadwal (karena
+  `isDueNow` abaikan menit) kini berhenti setelah sukses pertama. `FAILED` tetap
+  dicoba lagi; `MANUAL` tidak terpengaruh. Detail: `docs/CRON-BULK.md` §7.
 - **Data**: `getAdminUsers(now?)` (`admin-query.ts`) kini juga menarik
   `automation.hour/minute` dan log hari ini (query bersyarat: hanya bila rentang
   hari sah). `AdminUserRow` (`src/lib/admin.ts`) bertambah `automationHour`,
@@ -625,6 +632,31 @@ Prioritas test:
   dalam dialog konfirmasi, jadi aksi berbahaya tetap jelas sebelum dijalankan.
 - **`formatJakartaTimeOnly`** ditambahkan di `src/lib/audit-log.ts` (jam:menit
   WIB, `hourCycle: "h23"` supaya tengah malam `00:00` bukan `24:00`), teruji.
+
+#### Panel Admin: status template & uji login per-user
+
+- **Kolom baru di tabel pengguna `/admin`: `Template`** — badge yang
+  meringkas kesiapan template absensi seorang pengguna: (a) ada/tidak template
+  harian `ReportTemplate`, dan (b) berapa banyak `DatedReportTemplate` (template
+  bertanggal) yang dimiliki. Keputusan MURNI & teruji di `src/lib/admin.ts`:
+  `describeTemplateStatus(row)` (teks ringkas) dan `templateStatusTone(...)`
+  (warna badge). `AdminUserRow` bertambah `datedTemplateCount`; `getAdminUsers`
+  (`admin-query.ts`) menariknya lewat `_count.datedTemplates`.
+- **Tombol aksi baris `Uji Login` (ikon `KeyRound`)** = admin menguji login ke
+  portal Monev ATAS NAMA seorang pengguna, **HANYA login, TIDAK mengirim
+  laporan** (sesuai keputusan: verifikasi kredensial tetap hidup tanpa menyentuh
+  data absen). Inti di `src/lib/admin-test-login.ts` (`testLogin`): dekripsi
+  kredensial sesaat → `runLoginFlow` → `saveLoginSession`; kata sandi/token
+  TIDAK pernah masuk respons.
+- **Endpoint `POST /api/admin/users/[id]/test-login`**: guard sesi + role ADMIN
+  di SERVER, rate limit scope `adminUserAction`, validasi target. Audit
+  `USER_TEST_LOGIN` mencatat `success`/`error`/`denied`. Saat kredensial
+  ditolak (`REJECTED`), status kredensial diset `INVALID`; saat `ERROR`
+  (mis. jaringan) status DIBIARKAN apa adanya (bukan salah kredensial).
+- **Kredensial hanya bisa DILIHAT statusnya, tidak pernah dilihat/diubah
+  kata sandinya** oleh admin — konsisten di seluruh UI & API.
+- **UI klien `src/app/(app)/admin/test-login-button.tsx`**: `useRouter` statis,
+  kirim `{ }` (id di path), tampilkan toast, lalu `router.refresh()`.
 
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
 (gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan

@@ -169,6 +169,20 @@ function manualResponse(outcome: SubmitOutcome): NextResponse {
         { status: 500 },
       );
 
+    case "SKIPPED_ALREADY_DONE":
+      // Hanya muncul untuk trigger CRON; manual tak pernah sampai sini. Tetap
+      // dipetakan agar switch exhaustif (dan aman bila kelak berubah).
+      return NextResponse.json(
+        {
+          ok: true,
+          skipped: true,
+          status: "SKIPPED_ALREADY_DONE",
+          message: outcome.message,
+          date: outcome.date,
+        },
+        { status: 200 },
+      );
+
     case "EXCHANGE_FAILED":
       return NextResponse.json(
         { ok: false, status: outcome.status, message: outcome.message },

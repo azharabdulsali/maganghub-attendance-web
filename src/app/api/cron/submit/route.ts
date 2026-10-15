@@ -168,6 +168,16 @@ function cronResponse(outcome: SubmitOutcome): NextResponse {
         message: `Latihan (DRY_RUN): laporan ${outcome.date} siap dikirim. ${outcome.policy}`,
       });
 
+    case "SKIPPED_ALREADY_DONE":
+      // Sudah terkirim sukses hari ini → jangan menembak portal lagi.
+      return NextResponse.json({
+        ok: true,
+        skipped: true,
+        status: "SKIPPED_ALREADY_DONE",
+        date: outcome.date,
+        message: outcome.message,
+      });
+
     case "TOKEN_UNREADABLE":
       return NextResponse.json({
         ok: false,
