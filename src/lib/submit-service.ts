@@ -81,9 +81,9 @@ export function policyMessage(decision: PolicyDecision): string {
  */
 /**
  * Apakah pengiriman otomatis (CRON) untuk hari ini HARUS dilewati karena sudah
- * ada jejak sukses?
+ * ada jejak TUNTAS (sukses, atau portal menyatakan laporan sudah ada)?
  *
- * MURNI: memutuskan dari jumlah `SubmitLog` berstatus SUCCESS (bukan DB).
+ * MURNI: memutuskan dari jumlah `SubmitLog` tuntas (bukan DB).
  *
  * Latar: cron dipanggil berkali-kali dalam satu jam (mis. tiap 10 menit), dan
  * `isDueNow` hanya mencocokkan JAM — jadi user jadwal 12:00 "jatuh tempo" pada
@@ -91,14 +91,19 @@ export function policyMessage(decision: PolicyDecision): string {
  * menembak portal lalu dicegat jadi DUPLICATE, dan TIAP percobaan menulis
  * baris `SubmitLog` baru → riwayat penuh duplikat & portal dibebani sia-sia.
  *
- * Aturan: lewati bila SUDAH ADA minimal satu log SUCCESS hari ini. Hanya
- * SUCCESS yang menghentikan; GAGAL/DUPLICATE tidak (kegagalan boleh dicoba
- * lagi, sesuai keputusan: "kalau gagal, tiap 10 menit berikutnya jalan").
+ * Aturan: lewati bila SUDAH ADA minimal satu log TUNTAS hari ini, yaitu
+ * SUCCESS (laporan benar-benar terkirim) ATAU DUPLICATE (portal menyatakan
+ * laporan tanggal ini sudah ada). Keduanya final: mencoba lagi MUSTAHIL
+ * mengubah hasil, pra-cek akan selalu menjawab EXISTS.
  *
- * @param successLogCount Hari ini, jumlah SubmitLog status SUCCESS milik user.
+ * Hanya FAILED yang tidak menghentikan, karena kegagalan (jaringan, token
+ * mati, portal down) bisa pulih, sesuai keputusan: "kalau gagal, tiap 10
+ * menit berikutnya jalan".
+ *
+ * @param settledLogCount Hari ini, jumlah SubmitLog SUCCESS/DUPLICATE user ini.
  */
-export function shouldSkipCronSubmit(successLogCount: number): boolean {
-  return successLogCount > 0;
+export function shouldSkipCronSubmit(settledLogCount: number): boolean {
+  return settledLogCount > 0;
 }
 
 export function submitStatusFor(

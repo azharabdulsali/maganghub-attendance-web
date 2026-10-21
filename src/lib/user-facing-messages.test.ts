@@ -184,10 +184,11 @@ describe("pesan yang dilihat pengguna bebas jargon", () => {
   });
 });
 
-describe("halaman /automation menjelaskan waktu kirim bisa meleset", () => {
+describe("halaman /automation menjelaskan waktu kirim hanya per jam", () => {
   // Keluhan nyata: pengguna mengira otomasi GAGAL hanya karena absensi terkirim
-  // pukul 13.25 padahal dijadwalkan 13.00. Penjelasan ini harus tetap ada di UI.
-  it("menyebut jadwal adalah perkiraan & bisa lebih lambat/awal", () => {
+  // pukul 13.25 padahal dijadwalkan jam 13. Penjelasan jendela jam ini harus
+  // tetap ada di UI (bukan disembunyikan).
+  it("menyebut pilihan hanya jam & kiriman bisa di menit mana saja", () => {
     const berkas = path.join(
       AKAR,
       "app",
@@ -196,9 +197,8 @@ describe("halaman /automation menjelaskan waktu kirim bisa meleset", () => {
       "automation-form.tsx",
     );
     const isi = readFileSync(berkas, "utf8");
-    expect(isi).toMatch(/Waktu kirim bisa meleset/);
-    expect(isi).toMatch(/13\.00/);
-    expect(isi).toMatch(/13\.15/);
-    expect(isi).toMatch(/lebih awal/);
+    expect(isi).toMatch(/Yang diatur hanya jam/);
+    expect(isi).toMatch(/08:00–08:59 WIB/);
+    expect(isi).toMatch(/bukan tepat\s+menit ke-00/);
   });
 });

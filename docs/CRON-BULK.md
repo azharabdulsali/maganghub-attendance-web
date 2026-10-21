@@ -28,6 +28,10 @@ GET /api/cron/run-all
 - **Menit diabaikan.** Jadwal `07:30` diproses kapan saja antara 07:00–07:59 WIB.
   Absensi harian tidak butuh ketepatan menit, dan menuntutnya membuat jadwal
   `07:30` tak pernah kena pada cron per jam.
+  > Sejak UI otomasi dibuat jam-only, pengguna hanya bisa memilih **jam** (00–23)
+  > dan menit selalu disimpan `00` — menampilkan menit membuat orang mengira
+  > 07:30 bisa dijadwalkan tepat. Nilai lama yang terlanjur bermenit lain tetap
+  > diproses sesuai jamnya.
 - **Satu user gagal tidak menggagalkan yang lain** (tiap user dibungkus
   `try/catch`).
 - **Bisa juga dipicu dari aplikasi.** Selain GitHub Actions, admin yang sudah
@@ -250,13 +254,16 @@ penjaga anti-duplikat.
 > `SUBMITTED`/`ALREADY_SUBMITTED` → dilewati, tidak menimpa laporan.
 
 > **Penjaga idempoten (harian).** Cron yang dipanggil rapat (mis. tiap 10 menit)
-> TIDAK lagi mencoba berulang kali untuk user yang **sudah sukses hari ini**.
+> TIDAK lagi mencoba berulang kali untuk user yang **sudah tuntas hari ini**.
 > `performSubmit` (trigger `CRON`) memeriksa lebih dulu: bila sudah ada minimal
-> satu `SubmitLog` berstatus `SUCCESS` pada hari WIB ini, pengiriman DILEWATI
+> satu `SubmitLog` berstatus `SUCCESS` **atau `DUPLICATE`** pada hari WIB ini,
+> pengiriman DILEWATI
 > (`kind: "SKIPPED_ALREADY_DONE"`) — portal TIDAK disentuh dan TIDAK ada
 > `SubmitLog` baru. Sebabnya: `isDueNow` hanya mencocokkan JAM, jadi jadwal 12:00
 > "jatuh tempo" pada 12:00, 12:10, … 12:50 (6 kali) dan dulu menghasilkan
-> duplikat di `/history`. Hanya `SUCCESS` yang menghentikan; `FAILED` tetap
+> duplikat di `/history`. `DUPLICATE` ("Sudah ada") ikut menghentikan karena
+> portal memang sudah punya laporan hari itu; mencoba lagi mustahil berubah.
+> Hanya `FAILED` yang tetap
 > dicoba lagi tiap 10 menit. Trigger `MANUAL` TIDAK terkena penjaga ini (pengguna
 > boleh mengirim ulang secara eksplisit). Keputusan murni:
 > `shouldSkipCronSubmit` di `src/lib/submit-service.ts`.

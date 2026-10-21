@@ -64,9 +64,16 @@ export function jakartaDayRange(now: Date): { start: Date; end: Date } | null {
   return { start: new Date(startMs), end: new Date(endMs) };
 }
 
-/** Label jadwal otomasi untuk tabel admin, mis. "07:30 WIB". */
-export function scheduleLabel(hour: number, minute: number): string {
-  return `${formatSchedule(hour, minute)} WIB`;
+/**
+ * Label jadwal otomasi untuk tabel admin, mis. "07:00 WIB".
+ *
+ * Menit SELALU ditampilkan `00`: dispatcher hanya mencocokkan JAM
+ * (`isDueNow`), dan UI pengguna hanya menyunting jam. Baris lama di DB yang
+ * terlanjur bermenit selain 00 (mis. 07:30) tetap tampil "07:00" karena itulah
+ * jendela yang benar-benar dipakai.
+ */
+export function scheduleLabel(hour: number): string {
+  return `${formatSchedule(hour, 0)} WIB`;
 }
 
 /** Status ringkas "sudah dijalankan hari ini" untuk satu pengguna. */

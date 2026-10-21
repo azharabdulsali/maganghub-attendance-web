@@ -403,7 +403,8 @@ kredensial, `summarizeUsers`, `formatJoinDate`, `initialsFor`,
 dipisah di `admin-query.ts` (pola sama seperti `stats-query.ts`).
 
 **Pemantauan otomasi & jalankan per-user.** Tabel pengguna juga menunjukkan
-**jadwal** tiap user (`AutomationConfig.hour/minute`, mis. `07:30 WIB`) dan
+**jadwal** tiap user (`AutomationConfig.hour/minute`, mis. `07:00 WIB`; UI hanya
+menyunting jam, menit disimpan `00`) dan
 **status hari ini** ("Belum jalan" / "Sudah jalan" / "Gagal" + jam percobaan
 terakhir). Aturan murninya ada di `src/lib/admin-automation.ts` (teruji):
 `jakartaDayRange(now)` menentukan batas hari WIB, `scheduleLabel` memformat jam,
@@ -912,7 +913,8 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 >   `isEnabled` dan `ALLOW_LIVE_SUBMIT`, policy libur/akhir program diperiksa
 >   lebih dulu, semua percobaan dicatat dengan `trigger: CRON` (ditentukan
 >   server, bukan klien).
-> - `src/app/(app)/automation/page.tsx` + form, atur jam/menit, sakelar,
+> - `src/app/(app)/automation/page.tsx` + form, atur jam (00–23; menit selalu
+>   00), sakelar,
 >   dan salin URL webhook untuk cron-job.org.
 > - **Rate limit (SPEC §8/§10 poin 6), SELESAI.** `src/lib/rate-limit.ts`
 >   (murni) + `rate-limit-store.ts` (in-memory / Upstash opsional) +

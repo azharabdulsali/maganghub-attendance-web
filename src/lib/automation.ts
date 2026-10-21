@@ -97,23 +97,3 @@ export function minutesUntilNext(
   const diff = targetMinutes - nowMinutes;
   return diff > 0 ? diff : diff + 24 * 60;
 }
-
-/**
- * Label "jadwal berikutnya" untuk UI: "hari ini" / "besok" + jam:menit WIB, atau
- * `null` bila jadwal tidak sah. Tidak pernah melempar.
- *
- * "hari ini" hanya bila jadwal belum lewat pada hari WIB yang sama, bukan
- * sekadar "kurang dari 24 jam" (jam yang sudah lewat pagi ini bisa tertutupi).
- */
-export function describeNextRun(
-  now: Date,
-  hour: number,
-  minute: number,
-): string | null {
-  if (!isValidSchedule(hour, minute)) return null;
-  const p = jakartaParts(now);
-  const nowMinutes = p.hour * 60 + p.minute;
-  const targetMinutes = hour * 60 + minute;
-  const hari = targetMinutes > nowMinutes ? "hari ini" : "besok";
-  return `${formatSchedule(hour, minute)} WIB ${hari}`;
-}

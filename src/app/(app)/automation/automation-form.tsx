@@ -6,9 +6,15 @@ import { Check, Copy, Info, Loader2, Plus, RefreshCw, Save } from "lucide-react"
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -18,13 +24,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { describeNextRun, formatSchedule } from "@/lib/automation";
+import { formatSchedule } from "@/lib/automation";
+import { jakartaHour } from "@/lib/cron-dispatch";
+
+// Pilihan jam 00–23. Menit sengaja TIDAK ada: dispatcher hanya mencocokkan jam.
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 type Props = {
   hasExisting: boolean;
   initialEnabled: boolean;
   initialHour: number;
-  initialMinute: number;
   initialWebhookKey: string | null;
 };
 
@@ -32,7 +41,6 @@ export default function AutomationForm({
   hasExisting,
   initialEnabled,
   initialHour,
-  initialMinute,
   initialWebhookKey,
 }: Props) {
   const router = useRouter();
@@ -43,12 +51,11 @@ export default function AutomationForm({
   const formRef = useRef<HTMLFormElement>(null);
 
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
-  // Satu nilai waktu "HH:MM" (dari <input type="time">), bukan dua angka
-  // terpisah. `hour`/`minute` diturunkan dari sini saat menghitung dan saat
-  // mengirim, sehingga kontrak PUT /api/automation (hour + minute) tak berubah.
-  const [time, setTime] = useState(
-    `${String(initialHour).padStart(2, "0")}:${String(initialMinute).padStart(2, "0")}`,
-  );
+  // Hanya JAM yang bisa disunting; menit selalu 00. Dispatch cron mencocokkan
+  // jam saja (`isDueNow`), jadi menampilkan menit hanya membuat pengguna
+  // mengira bisa menjadwalkan 08:40 padahal kiriman bisa terjadi kapan saja di
+  // jam 08. Baris DB lama yang bermenit lain tampil/dipertahankan sebagai jamnya.
+  const [hour, setHour] = useState(initialHour);
   const [webhookKey, setWebhookKey] = useState<string | null>(
     initialWebhookKey,
   );
@@ -62,19 +69,14 @@ export default function AutomationForm({
   const [konfirmasiSimpan, setKonfirmasiSimpan] = useState(false);
   const [konfirmasiRotasi, setKonfirmasiRotasi] = useState(false);
 
-  // Turunkan jam/menit dari "HH:MM". Bila nilai belum lengkap, hasilnya NaN
-  // dan pemakai di bawah menanganinya sebagai "tidak sah".
-  const hour = time.split(":")[0] ?? "";
-  const minute = time.split(":")[1] ?? "";
-
-  // Pratinjau "jadwal berikutnya" dihitung klien memakai helper murni yang
-  // sama dengan server, hanya untuk tampilan, bukan logika penentu.
+  // Pratinjau jadwal berikutnya. Memakai JENDELA JAM (jam:00–jam:59), bukan
+  // "tepat menit", karena dispatcher mencocokkan jam: selama jam sekarang masih
+  // sama dengan jam jadwal, kiriman masih bisa terjadi hari ini.
   const nextRun = useMemo(() => {
-    const h = Number(hour);
-    const m = Number(minute);
-    if (!Number.isInteger(h) || !Number.isInteger(m)) return null;
-    return describeNextRun(new Date(), h, m);
-  }, [hour, minute]);
+    if (!Number.isInteger(hour) || hour < 0 || hour > 23) return null;
+    const hari = hour >= jakartaHour(new Date()) ? "hari ini" : "besok";
+    return `${formatSchedule(hour, 0)}–${formatSchedule(hour, 59)} WIB ${hari}`;
+  }, [hour]);
 
   // URL lengkap cara lama (`?key=`): DIPERTAHANKAN sementara untuk penjadwal yang
   // sudah terpasang, tetapi ditandai deprecated di UI (dihapus 1 Jan 2026).
@@ -99,10 +101,10 @@ export default function AutomationForm({
     e.preventDefault();
     setError(null);
     setSukses(null);
-    // <input type="time"> bisa dikosongkan; tanpa penjagaan ini "Number("")"
-    // menjadi 0 dan jadwal diam-diam tersimpan sebagai 00:00. Tolak lebih jelas.
-    if (!time) {
-      setError("Jam kirim wajib diisi.");
+    // Pemilih jam selalu berisi nilai sah, tetapi jaga-jaga: jangan pernah
+    // mengirim jam di luar 0–23 (server akan menolak).
+    if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+      setError("Jam kirim wajib dipilih.");
       return;
     }
     setLoading(true);
@@ -113,8 +115,9 @@ export default function AutomationForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           isEnabled,
-          hour: Number(hour),
-          minute: Number(minute),
+          hour,
+          // Menit dipaku 00: server juga memaksa 0 (dispatch hanya cek jam).
+          minute: 0,
         }),
       });
 
@@ -197,8 +200,8 @@ export default function AutomationForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           isEnabled,
-          hour: Number(hour),
-          minute: Number(minute),
+          hour,
+          minute: 0,
           action: "rotate-key",
         }),
       });
@@ -239,9 +242,9 @@ export default function AutomationForm({
         <CardHeader>
           <CardTitle>Jadwal harian</CardTitle>
           <CardDescription>
-            Layanan penjadwal akan memanggil tautan otomatis pada jam ini setiap
-            hari. Waktu kirim bisa <strong>meleset sedikit</strong> — lihat
-            catatan di bawah jam.
+            Absensi diproses pada jam yang Anda pilih setiap hari. Anda hanya
+            mengatur <strong>jam</strong>, bukan menit: pengiriman massal
+            mencocokkan jam, jadi menit tidak berpengaruh.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -264,16 +267,26 @@ export default function AutomationForm({
             </p>
 
             <div className="space-y-2 sm:max-w-xs">
-              <Label htmlFor="time-picker">Jam kirim (WIB)</Label>
-              <Input
-                id="time-picker"
-                type="time"
-                step="60"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                aria-describedby="jadwal-berikutnya"
-                className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-              />
+              <Label htmlFor="hour-picker">Jam kirim (WIB)</Label>
+              <Select
+                value={hour}
+                onValueChange={(next) => {
+                  if (typeof next === "number") setHour(next);
+                }}
+              >
+                <SelectTrigger id="hour-picker" aria-describedby="jadwal-berikutnya">
+                  <SelectValue>
+                    {(value) => formatSchedule(Number(value ?? hour), 0)}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {HOURS.map((h) => (
+                    <SelectItem key={h} value={h}>
+                      {formatSchedule(h, 0)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <p
                 id="jadwal-berikutnya"
                 className="text-sm text-foreground/70"
@@ -282,19 +295,19 @@ export default function AutomationForm({
               </p>
             </div>
 
-            {/* PENTING: jam yang dipilih hanyalah PERKIRAAN. Penjadwal (cron-job.org
-                / GitHub Actions) dan antrean di sisi portal sering memproses
-                beberapa menit lebih lambat, jadi absensi bisa terkirim di menit
-                ke-20-an, bukan tepat di detik jam yang diset. Ini disebut di UI
+            {/* PENTING: yang dipilih hanya JAM. Dispatch (GitHub Actions /
+                cron-job.org) mencocokkan jam saja, jadi kiriman bisa terjadi
+                kapan saja antara menit ke-00 dan ke-59 — bukan tepat di menit
+                ke-00 seperti yang mungkin dibayangkan pengguna. Disebut di UI
                 (bukan disembunyikan) supaya pengguna tidak mengira otomasi
                 gagal hanya karena jamnya "telat". */}
             <div className="flex gap-2 rounded-base border-2 border-border bg-secondary-background p-3 text-xs text-foreground/70">
               <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
               <p>
-                <strong>Waktu kirim bisa meleset.</strong> Jam ini hanya
-                perkiraan, misalnya set <strong>13.00</strong>, absensi bisa
-                terkirim sekitar <strong>13.15</strong> atau beberapa menit
-                lebih awal. Selama masih di sekitar jam ini hari itu, otomasi{" "}
+                <strong>Yang diatur hanya jam.</strong> Absensi diproses pada
+                jam itu, misalnya pilih <strong>08:00</strong> berarti bisa
+                terkirim antara <strong>08:00–08:59 WIB</strong>, bukan tepat
+                menit ke-00. Selama masih di jam itu, otomasi{" "}
                 <strong>berjalan normal</strong> (cek status di{" "}
                 <strong>dasbor</strong>).
               </p>
@@ -464,7 +477,7 @@ export default function AutomationForm({
             </div>
 
             <p className="text-xs text-foreground/60">
-              Jadwal: {formatSchedule(Number(hour) || 0, Number(minute) || 0)}{" "}
+              Jadwal: {formatSchedule(hour, 0)}{" "}
               WIB setiap hari. Mengganti kunci akan mematikan tautan/perintah
               lama, pasang ulang di penjadwal Anda setelah itu.
             </p>
@@ -487,13 +500,13 @@ export default function AutomationForm({
           <>
             {isEnabled ? (
               <>
-                Otomasi akan <strong>aktif</strong> dan penjadwal mengirim
-                absensi tiap hari pukul{" "}
+                Otomasi akan <strong>aktif</strong> dan absensi diproses pada
+                jam{" "}
                 <strong>
-                  {formatSchedule(Number(hour) || 0, Number(minute) || 0)} WIB
-                </strong>
-                . Waktu kirim bisa meleset beberapa menit (bisa lebih lambat,
-                bisa lebih awal) — itu normal.
+                  {formatSchedule(hour, 0)}–{formatSchedule(hour, 59)} WIB
+                </strong>{" "}
+                setiap hari. Bisa terkirim kapan saja di jam itu, bukan tepat
+                menit ke-00.
               </>
             ) : (
               <>

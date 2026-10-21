@@ -4,7 +4,6 @@ import { describe, it, expect } from "vitest";
 
 import {
   describeAutomation,
-  describeNextRun,
   formatSchedule,
   generateWebhookKey,
   isValidSchedule,
@@ -71,25 +70,5 @@ describe("minutesUntilNext", () => {
   it("selalu > 0 bahkan tepat pada menit jadwal", () => {
     // Tepat 07:00 WIB → dianggap untuk besok, bukan 0.
     expect(minutesUntilNext(now, 7, 0)).toBe(24 * 60);
-  });
-});
-
-describe("describeNextRun", () => {
-  const now = new Date("2026-01-02T00:00:00Z"); // 07:00 WIB
-
-  it("menyebut 'hari ini' bila belum lewat", () => {
-    expect(describeNextRun(now, 7, 30)).toBe("07:30 WIB hari ini");
-  });
-
-  it("menyebut 'besok' bila sudah lewat", () => {
-    expect(describeNextRun(now, 6, 0)).toBe("06:00 WIB besok");
-  });
-
-  it("tepat pada menit jadwal → 'besok' (bukan hari ini)", () => {
-    expect(describeNextRun(now, 7, 0)).toBe("07:00 WIB besok");
-  });
-
-  it("jadwal tidak sah → null", () => {
-    expect(describeNextRun(now, 99, 0)).toBeNull();
   });
 });

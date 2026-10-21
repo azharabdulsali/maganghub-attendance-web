@@ -1,8 +1,9 @@
 // src/app/(app)/automation/page.tsx: pengaturan otomasi harian (Tahap 5).
 //
 // Server component: sesi → ambil AutomationConfig. Form (client) menyunting
-// jam/menit & sakelar. Kunci "tautan otomatis" ditampilkan agar bisa ditempel
-// ke layanan penjadwal (mis. cron-job.org). Zona waktu selalu Asia/Jakarta.
+// JAM & sakelar; menit selalu 00 karena dispatcher hanya mencocokkan jam.
+// Kunci "tautan otomatis" ditampilkan agar bisa ditempel ke layanan penjadwal
+// (mis. cron-job.org). Zona waktu selalu Asia/Jakarta.
 
 import { redirect } from "next/navigation";
 
@@ -17,13 +18,13 @@ export default async function AutomationPage() {
     redirect("/login");
   }
 
+  // `minute` sengaja TIDAK diambil: form hanya menyunting jam (menit selalu 00).
   const config = await prisma.automationConfig.findUnique({
     where: { userId: session.user.id },
     select: {
       isEnabled: true,
       webhookKey: true,
       hour: true,
-      minute: true,
       timezone: true,
     },
   });
@@ -43,7 +44,6 @@ export default async function AutomationPage() {
         hasExisting={Boolean(config)}
         initialEnabled={config?.isEnabled ?? false}
         initialHour={config?.hour ?? 7}
-        initialMinute={config?.minute ?? 30}
         initialWebhookKey={config?.webhookKey ?? null}
       />
     </div>
