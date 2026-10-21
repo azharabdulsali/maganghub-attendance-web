@@ -321,8 +321,8 @@ export async function performSubmit(opts: {
   // jam jadwal (mis. tiap 10 menit: 12:00, 12:10, … 12:50) dan `isDueNow` hanya
   // mencocokkan JAM, jadi tanpa penjaga ini percobaan ke-2..6 tetap menembak
   // portal (dicegat jadi DUPLICATE) dan TIAP percobaan menulis SubmitLog baru →
-  // riwayat penuh duplikat. Bila sudah ada log SUCCESS hari ini, LEWATI tanpa
-  // menyentuh jaringan & tanpa menulis log apa pun.
+  // riwayat penuh duplikat. Bila sudah ada log TUNTAS hari ini (SUCCESS atau
+  // DUPLICATE), LEWATI tanpa menyentuh jaringan & tanpa menulis log apa pun.
   //
   // Sengaja HANYA untuk CRON: submit MANUAL harus tetap bisa dijalankan kapan
   // saja atas permintaan eksplisit pengguna (mis. memperbaiki/menimpa).
@@ -330,19 +330,25 @@ export async function performSubmit(opts: {
     try {
       const range = jakartaDayRange(new Date());
       if (range) {
-        const successToday = await prisma.submitLog.count({
+        // SUCCESS dan DUPLICATE sama-sama keadaan TUNTAS: DUPLICATE berarti
+        // portal sudah punya laporan tanggal ini, jadi percobaan berikutnya
+        // MUSTAHIL berubah hasil (pra-cek akan selalu menjawab EXISTS). Tanpa
+        // DUPLICATE di sini, user yang laporannya sudah ada (mis. dikirim bot
+        // lain) akan menulis satu baris "Sudah ada" tiap 10 menit sepanjang
+        // jam jadwal, selamanya. Hanya FAILED yang boleh dicoba lagi.
+        const settledToday = await prisma.submitLog.count({
           where: {
             userId,
-            status: "SUCCESS",
+            status: { in: ["SUCCESS", "DUPLICATE"] },
             createdAt: { gte: range.start, lt: range.end },
           },
         });
-        if (shouldSkipCronSubmit(successToday)) {
+        if (shouldSkipCronSubmit(settledToday)) {
           return {
             kind: "SKIPPED_ALREADY_DONE",
             date: readiness.date,
             message:
-              "Laporan hari ini sudah terkirim lebih awal. Percobaan otomatis berikutnya dilewati.",
+              "Laporan hari ini sudah selesai (terkirim atau sudah ada di portal). Percobaan otomatis berikutnya dilewati.",
           };
         }
       }

@@ -50,11 +50,11 @@ describe("submitStatusFor", () => {
     expect(submitStatusFor({ status: "ALREADY_SUBMITTED" })).toBe("DUPLICATE");
   });
 
-  it("shouldSkipCronSubmit: 0 log SUCCESS → tidak lewati", () => {
+  it("shouldSkipCronSubmit: 0 log tuntas → tidak lewati", () => {
     expect(shouldSkipCronSubmit(0)).toBe(false);
   });
 
-  it("shouldSkipCronSubmit: ≥1 log SUCCESS → lewati percobaan berikutnya", () => {
+  it("shouldSkipCronSubmit: >=1 log tuntas (SUCCESS atau DUPLICATE) → lewati percobaan berikutnya", () => {
     expect(shouldSkipCronSubmit(1)).toBe(true);
     expect(shouldSkipCronSubmit(5)).toBe(true);
   });

@@ -102,7 +102,7 @@ beforeEach(() => {
   // menguji dekripsi/tukar-token. Blok gerbang menyetelnya sendiri (delete/"0").
   process.env.ALLOW_LIVE_SUBMIT = "1";
   submitLogCreateMock.mockResolvedValue({});
-  // Default: belum ada log sukses hari ini (jadi penjaga idempoten CRON tidak
+  // Default: belum ada log tuntas hari ini (jadi penjaga idempoten CRON tidak
   // ikut campur). Tes khusus penjaga menimpanya sendiri.
   submitLogCountMock.mockResolvedValue(0);
   // Default: tabel libur kosong (bukan error).
@@ -489,7 +489,7 @@ describe("performSubmit, pra-cek duplikat (§12.6)", () => {
   });
 });
 
-describe("performSubmit, penjaga idempoten CRON (sudah sukses hari ini)", () => {
+describe("performSubmit, penjaga idempoten CRON (hari ini sudah tuntas)", () => {
   it("CRON: sudah ada log SUCCESS hari ini → SKIPPED_ALREADY_DONE, portal TIDAK disentuh, tanpa log baru", async () => {
     arrangeLive();
     submitLogCountMock.mockResolvedValue(1);
@@ -501,6 +501,28 @@ describe("performSubmit, penjaga idempoten CRON (sudah sukses hari ini)", () => 
     expect(checkDailyLogMock).not.toHaveBeenCalled();
     expect(submitReportMock).not.toHaveBeenCalled();
     expect(submitLogCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("CRON: log DUPLICATE hari ini (portal sudah punya laporan) juga menghentikan", async () => {
+    // Kasus "Sudah ada" berulang: tak pernah ada SUCCESS, hanya DUPLICATE.
+    // Dulu penjaga cuma menghitung SUCCESS, jadi cron menulis satu baris baru
+    // tiap 10 menit sepanjang jam jadwal.
+    arrangeLive();
+    submitLogCountMock.mockResolvedValue(1);
+
+    const out = await performSubmit(base({ trigger: "CRON" }));
+
+    expect(out).toMatchObject({ kind: "SKIPPED_ALREADY_DONE" });
+    expect(checkDailyLogMock).not.toHaveBeenCalled();
+    expect(submitReportMock).not.toHaveBeenCalled();
+    expect(submitLogCreateMock).not.toHaveBeenCalled();
+    // Filter WAJIB menyertakan DUPLICATE, bukan SUCCESS saja.
+    const countArg = submitLogCountMock.mock.calls[0]?.[0] as {
+      where: { status: { in: string[] } };
+    };
+    expect(countArg.where.status.in).toEqual(
+      expect.arrayContaining(["SUCCESS", "DUPLICATE"]),
+    );
   });
 
   it("CRON: belum ada log SUCCESS (0) → tetap mengirim seperti biasa", async () => {

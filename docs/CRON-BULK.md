@@ -250,13 +250,16 @@ penjaga anti-duplikat.
 > `SUBMITTED`/`ALREADY_SUBMITTED` → dilewati, tidak menimpa laporan.
 
 > **Penjaga idempoten (harian).** Cron yang dipanggil rapat (mis. tiap 10 menit)
-> TIDAK lagi mencoba berulang kali untuk user yang **sudah sukses hari ini**.
+> TIDAK lagi mencoba berulang kali untuk user yang **sudah tuntas hari ini**.
 > `performSubmit` (trigger `CRON`) memeriksa lebih dulu: bila sudah ada minimal
-> satu `SubmitLog` berstatus `SUCCESS` pada hari WIB ini, pengiriman DILEWATI
+> satu `SubmitLog` berstatus `SUCCESS` **atau `DUPLICATE`** pada hari WIB ini,
+> pengiriman DILEWATI
 > (`kind: "SKIPPED_ALREADY_DONE"`) — portal TIDAK disentuh dan TIDAK ada
 > `SubmitLog` baru. Sebabnya: `isDueNow` hanya mencocokkan JAM, jadi jadwal 12:00
 > "jatuh tempo" pada 12:00, 12:10, … 12:50 (6 kali) dan dulu menghasilkan
-> duplikat di `/history`. Hanya `SUCCESS` yang menghentikan; `FAILED` tetap
+> duplikat di `/history`. `DUPLICATE` ("Sudah ada") ikut menghentikan karena
+> portal memang sudah punya laporan hari itu; mencoba lagi mustahil berubah.
+> Hanya `FAILED` yang tetap
 > dicoba lagi tiap 10 menit. Trigger `MANUAL` TIDAK terkena penjaga ini (pengguna
 > boleh mengirim ulang secara eksplisit). Keputusan murni:
 > `shouldSkipCronSubmit` di `src/lib/submit-service.ts`.

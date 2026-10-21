@@ -598,11 +598,16 @@ Prioritas test:
   `SELESAI`). Fungsi ini MURNI terhadap `now` (bisa diuji tanggal tetap).
 - **Penjaga idempoten harian cron** di `src/lib/submit-service.ts`
   (`shouldSkipCronSubmit`, MURNI) dipakai `performSubmit`: untuk trigger `CRON`,
-  bila sudah ada ≥1 `SubmitLog` `SUCCESS` pada hari WIB ini → kembalikan
-  `SKIPPED_ALREADY_DONE` TANPA menembak portal / menulis log. Cron rapat (mis.
-  tiap 10 menit) yang dulu "jatuh tempo" berulang sepanjang jam jadwal (karena
-  `isDueNow` abaikan menit) kini berhenti setelah sukses pertama. `FAILED` tetap
-  dicoba lagi; `MANUAL` tidak terpengaruh. Detail: `docs/CRON-BULK.md` §7.
+  bila sudah ada ≥1 `SubmitLog` `SUCCESS` **atau `DUPLICATE`** pada hari WIB ini →
+  kembalikan
+  `SKIPPED_ALREADY_DONE` TANPA menembak portal / menulis log. `DUPLICATE` ikut
+  menghentikan karena portal sudah punya laporan hari itu, jadi percobaan
+  berikutnya mustahil berubah (kalau tidak, user yang laporannya sudah ada akan
+  mendapat satu baris "Sudah ada" tiap 10 menit sepanjang jam jadwal). Cron rapat
+  (mis. tiap 10 menit) yang dulu "jatuh tempo" berulang sepanjang jam jadwal
+  (karena `isDueNow` abaikan menit) kini berhenti setelah percobaan pertama yang
+  tuntas. `FAILED` tetap dicoba lagi; `MANUAL` tidak terpengaruh. Detail:
+  `docs/CRON-BULK.md` §7.
 - **Data**: `getAdminUsers(now?)` (`admin-query.ts`) kini juga menarik
   `automation.hour/minute` dan log hari ini (query bersyarat: hanya bila rentang
   hari sah). `AdminUserRow` (`src/lib/admin.ts`) bertambah `automationHour`,
