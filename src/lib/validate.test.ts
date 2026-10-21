@@ -430,6 +430,10 @@ describe("automationSchema, action rotasi (VERIFY-002)", () => {
   it("tetap menolak jam/menit di luar rentang", () => {
     expect(automationSchema.safeParse({ ...base, hour: 24 }).success).toBe(false);
     expect(automationSchema.safeParse({ ...base, minute: 60 }).success).toBe(false);
+    // `minute` opsional: dispatcher (& route) hanya memakai jam, menit dipaksa 00.
+    expect(
+      automationSchema.safeParse({ isEnabled: true, hour: 7 }).success,
+    ).toBe(true);
   });
 });
 

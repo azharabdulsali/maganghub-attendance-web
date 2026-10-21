@@ -38,7 +38,6 @@ export async function GET() {
       isEnabled: true,
       webhookKey: true,
       hour: true,
-      minute: true,
       timezone: true,
       updatedAt: true,
     },
@@ -53,7 +52,6 @@ export async function GET() {
     isEnabled: config.isEnabled,
     webhookKey: config.webhookKey,
     hour: config.hour,
-    minute: config.minute,
     timezone: config.timezone,
     updatedAt: config.updatedAt,
   });
@@ -81,7 +79,12 @@ export async function PUT(request: Request) {
     );
   }
 
-  const { isEnabled, hour, minute, action } = parsed.data;
+  const { isEnabled, hour, action } = parsed.data;
+
+  // Menit SELALU 00: dispatcher hanya mencocokkan JAM (`isDueNow`), dan UI
+  // hanya menyunting jam. Nilai `minute` dari klien SENGAJA diabaikan (bukan
+  // ditolak) supaya tab lama yang masih mengirim 40 tidak gagal menyimpan.
+  const minute = 0;
 
   // Rotasi hanya bila pengguna MEMINTANYA (action: "rotate-key"). Simpan biasa
   // selalu mempertahankan kunci lama supaya cron yang sudah terpasang tidak
@@ -106,7 +109,6 @@ export async function PUT(request: Request) {
       isEnabled: true,
       webhookKey: true,
       hour: true,
-      minute: true,
       timezone: true,
       updatedAt: true,
     },
@@ -119,7 +121,6 @@ export async function PUT(request: Request) {
     // ini milik pengguna sendiri, bukan kredensial pihak ketiga.
     webhookKey: saved.webhookKey,
     hour: saved.hour,
-    minute: saved.minute,
     timezone: saved.timezone,
     updatedAt: saved.updatedAt,
   });

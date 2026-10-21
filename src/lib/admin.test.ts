@@ -26,7 +26,6 @@ function row(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
     datedTemplateCount: 0,
     automationEnabled: false,
     automationHour: null,
-    automationMinute: null,
     reportCount: 0,
     submitCount: 0,
     lastSubmitAt: null,

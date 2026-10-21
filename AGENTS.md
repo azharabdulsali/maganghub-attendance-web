@@ -585,14 +585,15 @@ Prioritas test:
 
 #### Panel Admin: pantau jadwal & jalankan otomasi per-user
 
-- **Kolom baru di tabel pengguna `/admin`**: `Jadwal` (jam:menit WIB dari
-  `AutomationConfig.hour/minute`) dan `Hari ini` (badge apakah otomasi sudah
+- **Kolom baru di tabel pengguna `/admin`**: `Jadwal` (jam WIB dari
+  `AutomationConfig.hour`; menit selalu `00` karena UI otomasi hanya menyunting
+  jam) dan `Hari ini` (badge apakah otomasi sudah
   dicoba hari itu). Tombol **Jalankan** per-baris memaksa jalankan otomasi
   seorang pengguna tanpa menunggu jam jadwalnya.
 - **Aturan murni & teruji di `src/lib/admin-automation.ts`**:
   `jakartaDayRange(now)` (batas hari WIB sebagai `Date` UTC, offset dihitung
   dari `now` lewat `Intl` — bukan asumsi `+07:00` tetap),
-  `scheduleLabel(hour, minute)`, dan `assessTodayRun(logs, now)`. "Sudah jalan
+  `scheduleLabel(hour)`, dan `assessTodayRun(logs, now)`. "Sudah jalan
   hari ini" = ada `SubmitLog` APA PUN hari ini (SUCCESS/DUPLICATE/FAILED);
   bila ada, status log TERAKHIR yang menang (FAILED → `GAGAL`, selain itu
   `SELESAI`). Fungsi ini MURNI terhadap `now` (bisa diuji tanggal tetap).
@@ -609,9 +610,9 @@ Prioritas test:
   tuntas. `FAILED` tetap dicoba lagi; `MANUAL` tidak terpengaruh. Detail:
   `docs/CRON-BULK.md` §7.
 - **Data**: `getAdminUsers(now?)` (`admin-query.ts`) kini juga menarik
-  `automation.hour/minute` dan log hari ini (query bersyarat: hanya bila rentang
+  `automation.hour` dan log hari ini (query bersyarat: hanya bila rentang
   hari sah). `AdminUserRow` (`src/lib/admin.ts`) bertambah `automationHour`,
-  `automationMinute`, `todayRunStatus`, `todayRunAt`.
+  `todayRunStatus`, `todayRunAt`.
 - **Eksekusi 1 user = `src/lib/admin-run-one.ts` (`runOne`)**, memakai
   `performSubmit` yang SAMA dengan dispatcher massal & webhook. Jadi **"paksa"
   berarti abaikan JAM jadwal, BUKAN abaikan kebijakan laporan** — libur/akhir

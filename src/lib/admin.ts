@@ -106,8 +106,6 @@ export interface AdminUserRow {
   automationEnabled: boolean;
   /** Jam jadwal otomasi (0–23 WIB), atau null bila belum diatur. */
   automationHour: number | null;
-  /** Menit jadwal otomasi (0–59), atau null bila belum diatur. */
-  automationMinute: number | null;
   reportCount: number;
   submitCount: number;
   /** Waktu submit terakhir (ms), atau null bila belum pernah submit. */

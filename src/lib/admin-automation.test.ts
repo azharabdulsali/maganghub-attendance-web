@@ -10,10 +10,10 @@ import {
 } from "./admin-automation";
 
 describe("scheduleLabel", () => {
-  it("memformat jam:menit dua digit dengan sufiks WIB", () => {
-    expect(scheduleLabel(7, 30)).toBe("07:30 WIB");
-    expect(scheduleLabel(0, 0)).toBe("00:00 WIB");
-    expect(scheduleLabel(23, 59)).toBe("23:59 WIB");
+  it("memformat jam dua digit dengan sufiks WIB dan menit selalu 00", () => {
+    expect(scheduleLabel(7)).toBe("07:00 WIB");
+    expect(scheduleLabel(0)).toBe("00:00 WIB");
+    expect(scheduleLabel(23)).toBe("23:00 WIB");
   });
 });
 

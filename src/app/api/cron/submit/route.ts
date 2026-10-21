@@ -72,7 +72,6 @@ export async function GET(request: Request) {
       userId: true,
       isEnabled: true,
       hour: true,
-      minute: true,
       user: {
         select: {
           template: {

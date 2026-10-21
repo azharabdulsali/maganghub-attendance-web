@@ -154,11 +154,14 @@ export const automationSchema = z.object({
     .int("Jam harus bilangan bulat")
     .min(0, "Jam minimal 0")
     .max(23, "Jam maksimal 23"),
+  // `minute` DITERIMA demi kompatibilitas tab/form lama, tetapi TIDAK dipakai:
+  // dispatcher HANYA mencocokkan jam (`isDueNow`) dan route selalu menyimpan 00.
   minute: z
     .number()
     .int("Menit harus bilangan bulat")
     .min(0, "Menit minimal 0")
-    .max(59, "Menit maksimal 59"),
+    .max(59, "Menit maksimal 59")
+    .optional(),
   action: z.enum(["save", "rotate-key"]).optional(),
 });
 

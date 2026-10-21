@@ -296,8 +296,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         {u.automationEnabled ? "Aktif" : "Mati"}
                       </td>
                       <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
-                        {u.automationHour !== null && u.automationMinute !== null
-                          ? scheduleLabel(u.automationHour, u.automationMinute)
+                        {/* Menit tidak ditampilkan: hanya jam yang menentukan
+                            kapan dispatcher memproses (lihat scheduleLabel). */}
+                        {u.automationHour !== null
+                          ? scheduleLabel(u.automationHour)
                           : ","}
                       </td>
                       <td className="p-3">
