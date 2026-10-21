@@ -169,7 +169,8 @@ function cronResponse(outcome: SubmitOutcome): NextResponse {
       });
 
     case "SKIPPED_ALREADY_DONE":
-      // Sudah terkirim sukses hari ini → jangan menembak portal lagi.
+      // Hari ini sudah tuntas (terkirim, atau portal menyatakan sudah ada) →
+      // jangan menembak portal lagi dan jangan menulis log baru.
       return NextResponse.json({
         ok: true,
         skipped: true,
