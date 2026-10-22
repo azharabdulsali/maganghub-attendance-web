@@ -62,6 +62,7 @@ export const ModelName = {
   AutomationConfig: 'AutomationConfig',
   ReminderSetting: 'ReminderSetting',
   Holiday: 'Holiday',
+  Feedback: 'Feedback',
   Session: 'Session',
   AdminActionLog: 'AdminActionLog'
 } as const
@@ -245,6 +246,17 @@ export const HolidayScalarFieldEnum = {
 } as const
 
 export type HolidayScalarFieldEnum = (typeof HolidayScalarFieldEnum)[keyof typeof HolidayScalarFieldEnum]
+
+
+export const FeedbackScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  message: 'message',
+  readAt: 'readAt',
+  createdAt: 'createdAt'
+} as const
+
+export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
 
 
 export const SessionScalarFieldEnum = {

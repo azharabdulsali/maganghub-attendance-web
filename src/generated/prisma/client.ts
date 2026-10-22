@@ -144,6 +144,13 @@ export type ReminderSetting = Prisma.ReminderSettingModel
  */
 export type Holiday = Prisma.HolidayModel
 /**
+ * Model Feedback
+ * Kritik & saran dari pengguna untuk admin. SATU ARAH: admin membaca dan
+ * menandai sudah dibaca, tidak membalas. `readAt` NULL = belum dibaca.
+ * `message` disimpan setelah trim; batas panjang ada di src/lib/feedback.ts.
+ */
+export type Feedback = Prisma.FeedbackModel
+/**
  * Model Session
  * 
  */
