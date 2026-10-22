@@ -112,12 +112,21 @@ template. Ini pengganti gradien/glow yang dilarang.
 Diputuskan dan dieksekusi (R-21, opsi b):
 - Sakelar terang/gelap nyata ada di UI: header landing (`page.tsx`), header docs
   (`docs-content.tsx`), dan kartu akun di sidebar (`app-sidebar.tsx`).
-- Nilai awal dipasang **sebelum paint** lewat skrip inline kecil di
-  `src/app/layout.tsx` (baca `localStorage["theme"]`, jatuh ke
-  `prefers-color-scheme`) supaya tidak ada kedipan putih. Komponen
-  `src/components/theme-toggle.tsx` hanya menyinkronkan setelahnya.
-- Tanpa paket baru. Tema mengandalkan blok `.dark` yang sudah ada di
-  `globals.css`.
+- Nilai awal dipasang **tanpa JavaScript**: `RootLayout` membaca cookie `tema`
+  (`light`/`dark`) dan memasangnya sebagai kelas di `<html>`; kedua palet di
+  `globals.css` ditulis berdampingan lewat `light-dark()`, jadi browser memakai
+  warna yang benar sejak paint pertama. Tanpa cookie, `color-scheme: light dark`
+  membuat tema mengikuti OS. `src/components/theme-toggle.tsx` menulis cookie +
+  kelas saat tombol ditekan.
+- Riwayat: skrip anti-flicker di `public/tema.js` sudah DIHAPUS karena memicu
+  error React 19 ("Encountered a script tag …"); `next/script`
+  `beforeInteractive` terukur berjalan setelah paint pertama, dan
+  `useServerInsertedHTML` memicu mismatch hidrasi.
+- Tanpa paket baru. Tema mengandalkan token `light-dark()` di `globals.css`.
+- **Ikon tombol dipilih CSS**, bukan state React (`.ikon-tema-gelap` /
+  `.ikon-tema-terang` di `globals.css`). Server tidak tahu tema saat merender
+  `ThemeToggle`, jadi ikon yang dipilih lewat state membuat markup server
+  berbeda dari klien dan React melaporkan "Hydration failed".
 - Penyesuaian mode gelap yang ikut diambil: `--shadow` diikat ke putih 90%
   (bukan turunan `--border` yang jadi terlalu tipis dan membuat shadow keras
   hilang, sekaligus tidak sekeras putih 100%), dan warna scrollbar kini memakai
@@ -158,9 +167,9 @@ pembalikan warna terang — lewat skill `dark-mode-design`
 - **Transisi halus antar mode.** Kelas `html.theme-transition` (dipasang-lepas
   oleh `theme-toggle.tsx` selama 240ms) menganimasikan `background-color`,
   `border-color`, `color`, `fill`, `stroke`, dan `box-shadow` 220ms. Sengaja
-  dipasang-lepas, **bukan** transisi global, karena skrip anti-flicker memasang
-  `.dark` sebelum paint pertama — transisi global justru akan menganimasikan
-  pemuatan awal dan memunculkan kedipan. Transisi dilewati bila pengguna meminta
+  dipasang-lepas, **bukan** transisi global, karena tema sudah benar sejak paint
+  pertama — transisi global justru akan menganimasikan pemuatan awal dan
+  memunculkan kedipan. Transisi dilewati bila pengguna meminta
   `prefers-reduced-motion`.
 - `--overlay` (tirai panel geser) dipekatkan ke `oklch(0% 0 0 / 0.7)` dan
   `--shadow` dilunakkan ke `oklch(1 0 0 / 90%)` agar offset keras khas

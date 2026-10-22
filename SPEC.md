@@ -516,7 +516,28 @@ mengabarkan dua hal sekaligus untuk satu kejadian.
 > Jika tidak (tambahkan toast. Jika aksinya tidak bisa dibatalkan)
 > pakai `<ConfirmDialog>`, jangan `window.confirm` atau `confirm`.
 
+### 5.13 Kritik & Saran (`/feedback`, `/admin/feedback`)
 
+**Keputusan (2026-10): satu arah.** Pengguna mengirim masukan, admin membacanya
+dan menandai "sudah dibaca". **Tidak ada balasan admin** — pemilik memilih opsi
+ini agar tidak ada utang fitur notifikasi/percakapan.
+
+- Model `Feedback` (`feedbacks`): `userId`, `message`, `readAt` (NULL = belum
+  dibaca), `createdAt`. Relasi cascade ke `User`; menambah/menghapus user tidak
+  meninggalkan baris yatim.
+- Aturan murni & teruji di `src/lib/feedback.ts`: `FEEDBACK_MIN_LENGTH` = 10,
+  `FEEDBACK_MAX_LENGTH` = 2000, `countFeedbackLength` (trim dulu, dipakai form
+  DAN server), `validateFeedbackInput` (Zod), `describeFeedbackState`,
+  `feedbackStateTone`.
+- Endpoint: `POST /api/feedback` (sesi + rate limit scope `feedback`, 5 / 10
+  menit per pengguna) dan `PATCH`/`DELETE /api/admin/feedback/[id]` (guard role
+  ADMIN di server + rate limit `adminUserAction`). `PATCH` idempoten: waktu baca
+  pertama tidak ditimpa.
+- Halaman pengguna menampilkan riwayat masukan sendiri (maks. 50 terbaru) +
+  status dibaca. Halaman admin menampilkan semua masukan, **belum dibaca dulu**,
+  dengan tombol ikon `Check` (tandai) dan `Trash2` (hapus + `ConfirmDialog`).
+- Tanpa notifikasi email/push. Admin melihat jumlah belum dibaca sebagai badge
+  di halaman admin.
 
 ---
 

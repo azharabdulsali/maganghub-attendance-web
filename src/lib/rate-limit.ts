@@ -202,6 +202,11 @@ export const RATE_LIMITS = {
    */
   adminUserAction: { limit: 20, windowMs: 10 * 60_000 },
   /**
+   * Kirim kritik & saran: 5 / 10 menit per pengguna. Cukup untuk satu-dua
+   * kiriman yang dipikirkan matang; menahan banjir pesan ke halaman admin.
+   */
+  feedback: { limit: 5, windowMs: 10 * 60_000 },
+  /**
    * Menyusun draf laporan dari kata kunci: 30 / 5 menit per pengguna. Longgar
    * karena ini aksi murah & sering diulang pengguna saat menyusun laporan
    * (menekan ulang setelah mengganti kata kunci itu wajar), tetapi tetap

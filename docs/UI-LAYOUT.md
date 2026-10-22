@@ -101,6 +101,15 @@ const MENU_UMUM: MenuItem[] = [
 
 Ikon diambil dari `lucide-react` (sudah terpasang).
 
+**Sidebar tidak pernah memanjang melebihi layar.** Brand & blok identitas
+(nama, peran, tombol tema, **Keluar**) dipatok, **hanya daftar menu yang
+menggulir**: `<aside>`/laci = `flex flex-col`, `SidebarContent` =
+`min-h-0 flex-1`, `<nav>` = `min-h-0 flex-1 overflow-y-auto`, brand & footer
+`shrink-0`. Sebelum ini daftar menu mendorong tombol **Keluar** ke bawah
+viewport, dan karena sidebar `sticky`, bagian itu tidak pernah bisa dijangkau —
+"logout hilang" bagi admin yang menunya banyak. Menambah menu (lihat contoh di
+atas) kini aman: yang bertambah panjang hanya area gulir.
+
 **Penyorotan menu aktif.** Logikanya murni di `src/lib/nav.ts` (diuji di
 `nav.test.ts`), bukan di dalam komponen. Aturannya: **hanya SATU menu menyala,
 yaitu yang href-nya paling spesifik cocok** dengan rute saat ini. Ini penting

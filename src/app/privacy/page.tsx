@@ -74,6 +74,11 @@ export default function PrivacyPage() {
             portal saat laporan dikirim.
           </li>
           <li>
+            <strong>Kritik &amp; saran:</strong> pesan yang Anda kirim ke admin
+            lewat halaman Kritik &amp; Saran, beserta waktu kirim dan status
+            sudah dibaca.
+          </li>
+          <li>
             <strong>Pengaturan jadwal:</strong> pilihan manual atau otomatis,
             beserta kunci tautan otomatis pribadi Anda.
           </li>

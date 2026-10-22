@@ -291,9 +291,11 @@ maganghub-attendance-web/
   `validate.ts` (+test), `utils.ts`
 - `src/app/api/`, `auth/[...nextauth]`, `register`, `credentials`,
   `profile`, `account/password`, `automation`, `reminder`, `cron/submit`,
-  `cron/run-all`, `admin/dispatch`, `admin/dispatch/user`, `reports/submit`
+  `cron/run-all`, `admin/dispatch`, `admin/dispatch/user`, `reports/submit`,
+  `feedback`, `admin/feedback/[id]`
 - `src/app/(app)/`, rute terlindungi: `dashboard/` (beranda), `calendar/`,
-  `credentials/`, `report-templates/`, `history/`, `automation/`, `admin/`,
+  `credentials/`, `report-templates/`, `history/`, `automation/`,
+  `feedback/`, `admin/` (termasuk `admin/holidays/` & `admin/feedback/`),
   `dev-tools/`, `profile/`. Sidebar & cek sesi dipasang sekali di
   `src/app/(app)/layout.tsx`.
 
@@ -663,6 +665,20 @@ Prioritas test:
   kata sandinya** oleh admin — konsisten di seluruh UI & API.
 - **UI klien `src/app/(app)/admin/test-login-button.tsx`**: `useRouter` statis,
   kirim `{ }` (id di path), tampilkan toast, lalu `router.refresh()`.
+
+#### Kritik & Saran (`/feedback`, `/admin/feedback`)
+
+- **Satu arah** (keputusan pemilik): user kirim, admin baca + tandai + hapus.
+  Tidak ada balasan. Jangan menambah kotak balasan tanpa keputusan baru.
+- Model `Feedback` (`message`, `readAt` NULL = belum dibaca, `userId`). Batas
+  10–2000 karakter di `src/lib/feedback.ts` (MURNI, teruji); form memakai
+  `countFeedbackLength` yang sama, jadi penghitung di layar tidak mungkin
+  berbeda dari validasi server.
+- `POST /api/feedback` (sesi + rate limit `feedback`), `PATCH`/`DELETE
+  /api/admin/feedback/[id]` (guard ADMIN di SERVER + `adminUserAction`).
+  `PATCH` idempoten, waktu baca pertama tidak ditimpa.
+- Tabel admin diurutkan **belum dibaca dulu**; tombol ikon `Check`/`Trash2`
+  dengan `title` + `aria-label`, hapus lewat `<ConfirmDialog>`.
 
 Untuk perubahan yang menyentuh kode rahasia, verifikasi **negative case**
 (gagal seperti seharusnya), bukan hanya jalur sukses. **Wajib** membuktikan

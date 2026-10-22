@@ -106,6 +106,7 @@ model User {
   automation   AutomationConfig?
   adminActionsPerformed AdminActionLog[] @relation("AdminActor")
   adminActionsReceived  AdminActionLog[] @relation("AdminTarget")
+  feedbacks    Feedback[]
 
   @@map("users")
 }
@@ -346,6 +347,24 @@ model Holiday {
 
   @@index([date])
   @@map("holidays")
+}
+
+/// Kritik & saran dari pengguna untuk admin. SATU ARAH: admin membaca dan
+/// menandai sudah dibaca, tidak membalas. `readAt` NULL = belum dibaca.
+/// `message` disimpan setelah trim; batas panjang ada di src/lib/feedback.ts.
+model Feedback {
+  id        String    @id @default(cuid())
+  userId    String
+  message   String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Halaman admin mengurutkan "belum dibaca dulu, lalu terbaru".
+  @@index([readAt, createdAt])
+  @@index([userId, createdAt])
+  @@map("feedbacks")
 }
 
 model Session {
