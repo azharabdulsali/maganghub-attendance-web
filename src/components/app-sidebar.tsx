@@ -32,6 +32,8 @@ import {
   KeyRound,
   LayoutDashboard,
   Menu,
+  MessageSquare,
+  MessageSquarePlus,
   Settings,
   ShieldAlert,
   UserRound,
@@ -77,6 +79,7 @@ const MENU_UMUM: MenuItem[] = [
   },
   { href: "/history", label: "Riwayat Absensi", icon: CalendarCheck },
   { href: "/automation", label: "Otomasi", icon: Clock },
+  { href: "/feedback", label: "Kritik & Saran", icon: MessageSquarePlus },
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ];
 
@@ -87,6 +90,7 @@ const MENU_UMUM: MenuItem[] = [
 const MENU_ADMIN: MenuItem[] = [
   { href: "/admin", label: "Panel Admin", icon: Users },
   { href: "/admin/holidays", label: "Hari Libur", icon: CalendarOff },
+  { href: "/admin/feedback", label: "Kritik & Saran", icon: MessageSquare },
   { href: "/dev-tools", label: "Alat Diagnostik", icon: ShieldAlert },
 ];
 
@@ -105,11 +109,15 @@ function SidebarContent({
   const current = activeHref(pathname, items);
 
   return (
-    <div className="flex h-full flex-col gap-6 p-4">
+    // `min-h-0 flex-1`: sidebar setinggi layar dan TIDAK boleh ikut memanjang
+    // mengikuti isi menu. Tanpa ini, admin dengan 11 menu mendorong blok
+    // identitas + tombol Keluar ke bawah viewport, dan karena sidebar `sticky`
+    // bagian itu tak pernah bisa dijangkau — logout seolah hilang.
+    <div className="flex min-h-0 flex-1 flex-col gap-6 p-4">
       <Link
         href="/dashboard"
         onClick={onNavigate}
-        className="flex items-center gap-2 rounded-base border-2 border-border bg-main px-3 py-2 text-main-foreground shadow-shadow"
+        className="flex shrink-0 items-center gap-2 rounded-base border-2 border-border bg-main px-3 py-2 text-main-foreground shadow-shadow"
       >
         <CalendarCheck className="size-5" />
         <span className="font-heading text-base leading-tight">
@@ -120,7 +128,14 @@ function SidebarContent({
         </span>
       </Link>
 
-      <nav className="flex flex-1 flex-col gap-1.5" aria-label="Navigasi utama">
+      {/* `min-h-0 overflow-y-auto`: SATU-SATUNYA bagian yang menggulir. Footer
+          (identitas, tema, Keluar) diberi `shrink-0` di bawah supaya selalu
+          terlihat. `px-1 -mx-1` menyisakan ruang untuk bayangan item aktif
+          agar tidak terpotong tepi area gulir. */}
+      <nav
+        className="-mx-1 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain px-1"
+        aria-label="Navigasi utama"
+      >
         {items.map((item) => {
           const active = item.href === current;
           const Icon = item.icon;
@@ -144,7 +159,7 @@ function SidebarContent({
         })}
       </nav>
 
-      <div className="rounded-base border-2 border-border bg-secondary-background p-3">
+      <div className="shrink-0 rounded-base border-2 border-border bg-secondary-background p-3">
         <Link
           href="/profile"
           onClick={onNavigate}
@@ -237,7 +252,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
       </header>
 
       {/* Sidebar tetap (desktop). */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 border-r-2 border-border bg-background md:block">
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r-2 border-border bg-background md:flex">
         <SidebarContent user={user} />
       </aside>
 
@@ -252,7 +267,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
             className="absolute inset-0 bg-overlay/60"
             onClick={() => setOpen(false)}
           />
-          <div className="pt-safe pb-safe pl-safe pr-safe absolute inset-y-0 right-0 w-72 max-w-[85%] animate-slide-in-right overflow-y-auto border-l-2 border-border bg-background">
+          <div className="pt-safe pb-safe pl-safe pr-safe absolute inset-y-0 right-0 flex w-72 max-w-[85%] animate-slide-in-right flex-col overflow-hidden border-l-2 border-border bg-background">
             <div className="flex justify-end p-2">
               <Button
                 variant="neutral"
