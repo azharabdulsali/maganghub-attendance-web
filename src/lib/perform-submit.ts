@@ -221,9 +221,10 @@ export async function markCredentialInvalid(userId: string): Promise<void> {
  * Tidak menyentuh `NextResponse`, tidak membaca session/webhook, pemanggil
  * menyediakan `userId`, `date`, template & credential yang sudah diambil.
  *
- * @param opts.logOnNotReady  true (cron): setiap alasan tidak-siap dicatat.
- *                            false (manual): libur/akhir program tidak dicatat
- *                            sebagai FAILED (bukan kegagalan yang bisa diulang).
+ * @param opts.logOnNotReady  true (cron): alasan tidak-siap dicatat, KECUALI
+ *                            POLICY_SKIPPED (libur tidak pernah dicatat).
+ *                            false (manual): tidak dicatat, kecuali kegagalan
+ *                            yang bisa diulang (NO_TEMPLATE, NO_TOKEN).
  */
 export async function performSubmit(opts: {
   userId: string;
@@ -287,9 +288,12 @@ export async function performSubmit(opts: {
 
   if (!readiness.ready) {
     const message = readinessMessage(readiness.reason);
-    const isPolicy =
-      readiness.reason === "POLICY_SKIPPED" || readiness.reason === "PROGRAM_ENDED";
-    if (logOnNotReady || !isPolicy) {
+    // Libur/akhir pekan (POLICY_SKIPPED) BUKAN kegagalan → tidak menulis
+    // SubmitLog sama sekali, apa pun trigger. Dulu cron mencatatnya FAILED
+    // ("hari dicek, memang libur"), tapi itu memenuhi Riwayat absensi dengan
+    // baris libur yang bukan laporan. Riwayat kini hanya memuat hari kerja.
+    // PROGRAM_ENDED tetap dicatat: itu keadaan permanen yang perlu terlihat.
+    if (readiness.reason !== "POLICY_SKIPPED") {
       await safeLog({ userId, status: "FAILED", message, trigger });
     }
     return {

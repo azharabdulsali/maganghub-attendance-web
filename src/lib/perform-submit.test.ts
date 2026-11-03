@@ -136,13 +136,12 @@ describe("performSubmit, kesiapan", () => {
     expect(submitLogCreateMock).not.toHaveBeenCalled();
   });
 
-  it("libur: cron TETAP mencatat log (Riwayat menunjukkan hari dicek)", async () => {
+  it("libur: TIDAK mencatat log, manual maupun cron (riwayat hanya hari kerja)", async () => {
     const out = await performSubmit(
       base({ date: "2026-02-07", trigger: "CRON", logOnNotReady: true }),
     );
     expect(out).toMatchObject({ kind: "NOT_READY", reason: "POLICY_SKIPPED" });
-    expect(submitLogCreateMock).toHaveBeenCalledTimes(1);
-    expect(submitLogCreateMock.mock.calls[0][0].data.status).toBe("FAILED");
+    expect(submitLogCreateMock).not.toHaveBeenCalled();
   });
 
   it("NO_TEMPLATE tetap dicatat meski manual (kegagalan yang bisa diulang)", async () => {

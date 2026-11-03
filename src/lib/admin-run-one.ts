@@ -80,8 +80,8 @@ export async function runOne(userId: string, now: Date = new Date()): Promise<Ru
     ).template,
     credential: user.credential,
     trigger: "CRON",
-    // Sama seperti cron: catat SEMUA alasan tidak-siap (termasuk libur) supaya
-    // Riwayat & tabel admin menunjukkan "hari ini dicek, memang libur".
+    // Sama seperti cron: catat alasan tidak-siap (kecuali libur — performSubmit
+    // tidak pernah menulis log untuk POLICY_SKIPPED, Riwayat tetap bersih).
     logOnNotReady: true,
   });
 
