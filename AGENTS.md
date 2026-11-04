@@ -19,7 +19,8 @@ Tiga kemampuan inti:
 2. Menyusun laporan harian dari **3 kolom** (Uraian Aktivitas, Pembelajaran
    yang Diperoleh, Kendala). Kolom bisa diisi manual, atau disusun lewat tombol
    "Susun draf" yang memakai **LLM Gemini** (opsional, key admin) dengan
-   **fallback otomatis** ke penyusun lokal. Tanpa integrasi GitHub.
+   **fallback otomatis** ke penyusun lokal. Bahan draf boleh ditambah dari
+   commit GitHub/GitLab (opsional, opt-in, §5.4a SPEC).
 3. Mengirim laporan lewat **Direct REST API**, tanpa browser, tanpa worker,
    tanpa biaya bulanan.
 
@@ -44,7 +45,20 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
 > semuanya 404 karena dihapus Google. Pakai alias `-latest`;
 > (e) endpoint **hanya `/v1beta`**. `/v1` selalu 404 di sini, percobaan
 > sebelumnya mengasumsikan sebaliknya dan membuat fitur mati selama-lamanya.
-> Integrasi GitHub tetap dibatalkan.
+
+> **KEPUTUSAN BARU (2026-06) — integrasi GitHub/GitLab DIIZINKAN untuk mengambil
+> commit.** Kalimat lama "Integrasi GitHub tetap dibatalkan" **dicabut pemilik**.
+> Rencana lengkap: `docs/GIT-COMMITS-PLAN.md`. Batas yang TETAP berlaku:
+> (a) **token hanya boleh punya scope BACA** (fine-grained PAT `Contents: Read`
+> di GitHub; `read_api` di GitLab) — aplikasi ini tidak pernah menulis ke repo
+> siapa pun;
+> (b) **token tidak pernah dikembalikan ke klien**, tidak pernah masuk log atau
+> pesan error — perlakuan sama persis dengan password Monev (lihat §5);
+> (c) **URL API dibangun dari enum `GitProvider`**, bukan dari input pengguna,
+> untuk menutup celah SSRF;
+> (d) **fallback lokal wajib tetap ada** — API git gagal atau tidak ada commit
+> tidak boleh membuat form laporan error. Fitur ini hanya *menambah bahan draf*,
+> tidak pernah menghalangi submit normal.
 
 > **Cara men-debug "kok masih pakai lokal?":** jalankan
 > `npx tsx scripts/uji-gemini.ts`. Skrip itu memanggil API sungguhan dan
@@ -292,12 +306,12 @@ maganghub-attendance-web/
 - `src/app/api/`, `auth/[...nextauth]`, `register`, `credentials`,
   `profile`, `account/password`, `automation`, `reminder`, `cron/submit`,
   `cron/run-all`, `admin/dispatch`, `admin/dispatch/user`, `reports/submit`,
-  `feedback`, `admin/feedback/[id]`
+  `feedback`, `admin/feedback/[id]`, `repos`, `repos/preview`
 - `src/app/(app)/`, rute terlindungi: `dashboard/` (beranda), `calendar/`,
   `credentials/`, `report-templates/`, `history/`, `automation/`,
   `feedback/`, `admin/` (termasuk `admin/holidays/` & `admin/feedback/`),
-  `dev-tools/`, `profile/`. Sidebar & cek sesi dipasang sekali di
-  `src/app/(app)/layout.tsx`.
+  `repos/` (repo git untuk bahan draf), `dev-tools/`, `profile/`. Sidebar &
+  cek sesi dipasang sekali di `src/app/(app)/layout.tsx`.
 
 ### Aturan penyimpanan kredensial Monev
 

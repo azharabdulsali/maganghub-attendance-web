@@ -410,7 +410,8 @@ export const ModelName = {
   Holiday: 'Holiday',
   Feedback: 'Feedback',
   Session: 'Session',
-  AdminActionLog: 'AdminActionLog'
+  AdminActionLog: 'AdminActionLog',
+  GitRepoConfig: 'GitRepoConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -426,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "verificationToken" | "maganghubCredential" | "reportTemplate" | "datedReportTemplate" | "report" | "submitLog" | "automationConfig" | "reminderSetting" | "holiday" | "feedback" | "session" | "adminActionLog"
+    modelProps: "user" | "account" | "verificationToken" | "maganghubCredential" | "reportTemplate" | "datedReportTemplate" | "report" | "submitLog" | "automationConfig" | "reminderSetting" | "holiday" | "feedback" | "session" | "adminActionLog" | "gitRepoConfig"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1466,6 +1467,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    GitRepoConfig: {
+      payload: Prisma.$GitRepoConfigPayload<ExtArgs>
+      fields: Prisma.GitRepoConfigFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GitRepoConfigFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GitRepoConfigFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload>
+        }
+        findFirst: {
+          args: Prisma.GitRepoConfigFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GitRepoConfigFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload>
+        }
+        findMany: {
+          args: Prisma.GitRepoConfigFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload>[]
+        }
+        create: {
+          args: Prisma.GitRepoConfigCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload>
+        }
+        createMany: {
+          args: Prisma.GitRepoConfigCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GitRepoConfigCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload>[]
+        }
+        delete: {
+          args: Prisma.GitRepoConfigDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload>
+        }
+        update: {
+          args: Prisma.GitRepoConfigUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload>
+        }
+        deleteMany: {
+          args: Prisma.GitRepoConfigDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GitRepoConfigUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GitRepoConfigUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload>[]
+        }
+        upsert: {
+          args: Prisma.GitRepoConfigUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitRepoConfigPayload>
+        }
+        aggregate: {
+          args: Prisma.GitRepoConfigAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGitRepoConfig>
+        }
+        groupBy: {
+          args: Prisma.GitRepoConfigGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitRepoConfigGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GitRepoConfigCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitRepoConfigCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1703,6 +1778,25 @@ export const AdminActionLogScalarFieldEnum = {
 export type AdminActionLogScalarFieldEnum = (typeof AdminActionLogScalarFieldEnum)[keyof typeof AdminActionLogScalarFieldEnum]
 
 
+export const GitRepoConfigScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  provider: 'provider',
+  repoPath: 'repoPath',
+  branch: 'branch',
+  ciphertext: 'ciphertext',
+  iv: 'iv',
+  authTag: 'authTag',
+  enabled: 'enabled',
+  lastFetchedAt: 'lastFetchedAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitRepoConfigScalarFieldEnum = (typeof GitRepoConfigScalarFieldEnum)[keyof typeof GitRepoConfigScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1877,6 +1971,20 @@ export type EnumAdminActionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$
  * Reference to a field of type 'AdminActionType[]'
  */
 export type ListEnumAdminActionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AdminActionType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'GitProvider'
+ */
+export type EnumGitProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GitProvider'>
+    
+
+
+/**
+ * Reference to a field of type 'GitProvider[]'
+ */
+export type ListEnumGitProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GitProvider[]'>
     
 
 
@@ -2058,6 +2166,7 @@ export type GlobalOmitConfig = {
   feedback?: Prisma.FeedbackOmit
   session?: Prisma.SessionOmit
   adminActionLog?: Prisma.AdminActionLogOmit
+  gitRepoConfig?: Prisma.GitRepoConfigOmit
 }
 
 /* Types for Logging */

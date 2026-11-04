@@ -28,10 +28,19 @@ export type CredentialStatus = (typeof CredentialStatus)[keyof typeof Credential
 
 export const SourceType = {
   TEMPLATE: 'TEMPLATE',
-  MANUAL_EDIT: 'MANUAL_EDIT'
+  MANUAL_EDIT: 'MANUAL_EDIT',
+  COMMITS: 'COMMITS'
 } as const
 
 export type SourceType = (typeof SourceType)[keyof typeof SourceType]
+
+
+export const GitProvider = {
+  GITHUB: 'GITHUB',
+  GITLAB: 'GITLAB'
+} as const
+
+export type GitProvider = (typeof GitProvider)[keyof typeof GitProvider]
 
 
 export const ReportStatus = {

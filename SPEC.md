@@ -48,7 +48,7 @@ Ini bagian terpenting dan harus dibaca lebih dulu.
 | Jumlah pengguna | Satu (pemilik PC) | Multi-user |
 | Database | `data/state.json` | PostgreSQL (Neon) |
 | Laporan | Tiga template tetap, sama tiap hari | **Sama, tiga template tetap**, tapi per pengguna & bisa diedit |
-| AI | Tidak dipakai | **Tidak dipakai** (dibatalkan, lihat §13) |
+| AI | Tidak dipakai | **Gemini opsional** (keputusan 2026-06, §13 #2) + fallback lokal |
 | Status | **Tetap jalan apa adanya** | Proyek baru, terpisah total |
 
 **Yang diminta pemilik:** script Python **tetap ada dan tetap jalan**. Web app
@@ -81,8 +81,10 @@ Pemilik hanya boleh mengaktifkan salah satu per hari.
 | Deploy web | Vercel | Cocok untuk Next.js, paket gratis cukup |
 | Test | Vitest | Cepat, menyatu dengan ekosistem Vite |
 
-**Catatan:** tidak ada AI, tidak ada integrasi GitHub. Keduanya dibatalkan
-atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
+**Catatan:** tidak ada penyedia AI untuk menyusun laporan selain Gemini opsional
+(§13 #2). Integrasi GitHub/GitLab **DIIZINKAN** sejak keputusan 2026-06 (§13 #7)
+untuk mengambil commit sebagai bahan draf; lihat §5.4a dan
+`docs/GIT-COMMITS-PLAN.md`. Tidak ada `OPENAI_API_KEY`.
 
 ---
 
@@ -110,7 +112,7 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
 - Password **tidak pernah** dikembalikan ke client, bahkan ke pemiliknya.
   Untuk mengubah, pengguna harus mengetik ulang.
 
-### 5.3 Template Laporan (pengganti Integrasi GitHub)
+### 5.3 Template Laporan (jalur default)
 - Tiga kolom tetap: **Uraian Aktivitas**, **Pembelajaran yang Diperoleh**,
   **Kendala yang Dialami**, mengikuti proyek Python lama.
 - Pengguna mengisi & menyimpan template sekali; dipakai ulang setiap hari.
@@ -144,6 +146,35 @@ atas keputusan pemilik (§13). Karena itu pula tidak ada `OPENAI_API_KEY`.
   2. **Salin lalu edit**, template jadi titik awal, pengguna mengubahnya manual
      bila hari itu berbeda.
 - Tidak ada panggilan ke layanan AI mana pun. Tidak ada biaya variabel.
+
+
+### 5.4a Sumber bahan dari commit git (opsional, opt-in)
+
+> **Keputusan 2026-06:** keputusan lama "integrasi GitHub dibatalkan" **dicabut**
+> pemilik. Rencana lengkap ada di [`docs/GIT-COMMITS-PLAN.md`](./GIT-COMMITS-PLAN.md).
+
+- Pengguna **boleh** menambahkan **satu** repo git (GitHub atau GitLab) sebagai
+  bahan tambahan saat menyusun draf. Satu repo per pengguna untuk rilis pertama;
+  skema sudah berbentuk relasi sehingga banyak repo bisa menyusul.
+- **Ini bukan pengganti template.** Commit hanya menjadi sumber `keywords` bagi
+  penyusun yang sudah ada (§5.4). Alur penyusunan dan form tidak berubah.
+- **Token akses disimpan terenkripsi** AES-256-GCM, pola sama dengan kredensial
+  Monev (§5.2). Token **tidak pernah** dikembalikan ke klien, tidak pernah masuk
+  log atau pesan error.
+- **Token wajib read-only.** UI dan dokumentasi mewajibkan fine-grained PAT
+  `Contents: Read` (GitHub) atau `read_api` (GitLab). Aplikasi tidak pernah
+  menulis apa pun ke repo pengguna.
+- **Filter "hari itu" memakai zona Asia/Jakarta**, konsisten dengan §11B. Bukan
+  UTC.
+- **Fallback wajib:** API git gagal, token kedaluwarsa, atau tidak ada commit
+  hari itu → draf tetap tersusun dari template/penyusun lokal. Form **tidak
+  boleh** menampilkan error hanya karena fitur ini. Kegagalan dicatat di
+  `lastError` dan ditampilkan jujur di halaman `/repos`, bukan disembunyikan.
+- **Default nonaktif.** Pengguna harus mengaktifkannya sendiri (baik repo maupun
+  pemakaian di otomasi), sesuai prinsip kendali penuh pengguna (§1).
+- **Privasi:** bila `GEMINI_API_KEY` diisi, isi commit ikut dikirim ke Google
+  sebagai bahan draf. Bila kosong, penyusun lokal dipakai dan tidak ada data
+  keluar. Wajib disebutkan di `/privacy` bagian 4.
 
 
 ### 5.5 Submit & Riwayat
@@ -648,12 +679,15 @@ Ringkas; nama field dapat menyesuaikan saat implementasi.
 | `Report` | userId, tanggal, activity, learning, obstacles, source, status |
 | `SubmitLog` | reportId, userId, status, message, httpCode, pemicu, attempt |
 | `AutomationConfig` | userId, isEnabled, `webhookKey`, jam, timezone |
+| `GitRepoConfig` | userId (**unik**, satu repo dulu), `provider`, `repoPath`, `branch`, `ciphertext`/`iv`/`authTag`, `enabled`, `lastFetchedAt`, `lastError` |
 
 Enum: `Role`, `CredentialStatus`, `SourceType`, `ReportStatus`, `SubmitStatus`,
-`TriggerType`.
+`TriggerType`, `GitProvider`.
 
-`SourceType` nilainya menjadi `TEMPLATE` dan `MANUAL_EDIT`, nilai `GITHUB`
-**dihapus**. Model `GithubRepo` dan `AiConfig` **dihapus seluruhnya**.
+`SourceType` nilainya `TEMPLATE`, `MANUAL_EDIT`, dan **`COMMITS`** (bertambah
+sejak keputusan 2026-06, menandai draf yang disusun memakai bahan commit git).
+Model `GithubRepo` dan `AiConfig` lama **tetap tidak dipakai**; penggantinya
+`GitRepoConfig` (§5.4a), yang mendukung GitHub **dan** GitLab sekaligus.
 
 Batasan: `Report` unik per `(userId, date)`, mencegah draf ganda.
 
@@ -677,6 +711,8 @@ Batasan: `Report` unik per `(userId, date)`, mencegah draf ganda.
 | `PATCH` | `/api/profile` | Ubah nama tampilan pengguna sendiri | Cookie sesi | - (belum dibatasi) |
 | `POST` | `/api/account/password` | Ubah kata sandi sendiri (dalam sesi, tanpa email) | Cookie sesi | 5/10 menit per pengguna |
 | `POST` | `/api/account/email` | Ubah email sendiri (verifikasi kata sandi + guard eskalasi peran) | Cookie sesi | 5/10 menit per pengguna |
+| `GET/PUT/DELETE` | `/api/repos` | Baca/simpan/hapus konfigurasi repo git (token **tidak pernah** dikembalikan) | Cookie sesi | 20/10 menit per pengguna (`gitRepo`) |
+| `POST` | `/api/repos/preview` | Pratinjau commit hari ini (Asia/Jakarta) tanpa menyimpan apa pun | Cookie sesi | 20/10 menit per pengguna (`gitRepo`) |
 
 **Implementasi rate limit (Tahap 5):** kebijakan murni di `src/lib/rate-limit.ts`
 (jendela tetap, teruji dengan waktu disuntik), penyimpanan di
@@ -688,8 +724,12 @@ sensitif (login, register, submit manual, webhook cron, ubah kredensial) dijaga.
 Store mati → **fail open** (ketersediaan diutamakan; rate limit adalah lapisan
 pertahanan, bukan gerbang tunggal).
 
-**Dihapus:** `/api/github/commits` dan `/api/reports/generate` (yang dulu
-memanggil AI). Keduanya tidak lagi punya alasan untuk ada.
+**Dihapus:** `/api/reports/generate` (yang dulu memanggil AI, kini digantikan
+penyusun draf §5.4).
+
+**Dipulihkan cakupannya (keputusan 2026-06):** `/api/github/commits` dulu
+dihapus. Penggantinya `/api/repos` + `/api/repos/preview` (§5.4a), yang
+mendukung GitHub **dan** GitLab lewat enum `GitProvider`.
 
 Rate limit register & login **wajib ada sebelum rilis** (lihat §13), karena
 pendaftaran langsung aktif tanpa verifikasi email.
@@ -754,7 +794,7 @@ Karena pemilik memilih jalur Direct REST API, bagian ini dipecah dua.
 
 | Dibuang | Alasan |
 | :--- | :--- |
-| Integrasi GitHub (ambil commit) | Pemilik tidak ingin mencantumkan repo di web app ini |
+| Integrasi GitHub (ambil commit) | ~~Pemilik tidak ingin mencantumkan repo di web app ini~~ **DICABUT 2026-06**: pemilik kini menginginkan fitur ini. Diizinkan dengan batas ketat (§5.4a, `docs/GIT-COMMITS-PLAN.md`) |
 | Penyusun laporan AI / OpenRouter / OpenAI | Tanpa commit, AI tidak punya bahan. Dihapus sepenuhnya |
 | **Penyusun draf LOKAL** (`report-draft.ts`, 0 token) | **DIPERTAHANKAN sebagai fallback wajib.** Merakit 3 kolom dari kata kunci + pustaka frasa. Selalu tersedia, tanpa provider luar. Dipakai bila `GEMINI_API_KEY` kosong ATAU LLM gagal (kuota habis / timeout / jaringan putus / jawaban tidak lolos validasi). |
 | **Penyusun draf LLM** (`report-draft-llm.ts`, Gemini) | **DITAMBAHKAN atas keputusan pemilik.** Gratis, key milik admin dipakai bersama semua pengguna. ⚠️ Kata kunci aktivitas pengguna dikirim ke Google saat aktif; jangan pasang billing agar kuota habis = ditolak, bukan menagih otomatis. |
@@ -790,6 +830,8 @@ residensial = meniru browser pengguna; bukan mengakali CAPTCHA.)
 - Jangan mengirim request dengan identitas palsu.
 - Jangan menambah dependensi tanpa alasan jelas.
 - Jangan submit untuk hari yang sama dari dua sistem sekaligus.
+- Jangan meminta token git dengan scope tulis. Hanya baca (§5.4a).
+- Jangan membangun URL API git dari input pengguna (cegah SSRF).
 
 ### Keterbatasan yang diketahui
 - **Invalidasi sesi kini memerlukan satu query DB per permintaan ber-sesi.**
@@ -976,7 +1018,7 @@ Semua sudah diputuskan pemilik. Berikut ringkasannya.
 | 4 | Domain | **`maganghub-autoabsen.my.id`** (aktif). Awalnya pakai domain Vercel (`*.vercel.app`); kini domain khusus, jadi URL produksi berbentuk `https://maganghub-autoabsen.my.id` |
 | 5 | Akses pendaftaran | **Terbuka bebas**, siapa pun boleh daftar, **langsung aktif, tanpa verifikasi email** |
 | 6 | Cara login | **Email + password** (tanpa OAuth) |
-| 7 | Sumber commit GitHub | **DIBATALKAN**, tidak ada integrasi GitHub. Uraian aktivitas diisi dari 3 template siap pakai |
+| 7 | Sumber commit GitHub | **DIIZINKAN sejak 2026-06 (mencabut keputusan lama "DIBATALKAN")**. Commit dari satu repo GitHub **atau** GitLab boleh dipakai sebagai bahan draf, opt-in, token read-only terenkripsi. Detail & batas: §5.4a + `docs/GIT-COMMITS-PLAN.md`. Template tetap jadi jalur default |
 | 8 | Admin pertama | **`ADMIN_EMAIL` di env** (opsi 1), lihat di bawah |
 | 9 | Isi laporan | **3 template sama setiap hari**, persis bot Python. Bisa diedit manual sebelum submit bila perlu |
 
@@ -1214,9 +1256,10 @@ npx prisma studio       # opsional
 3. **Jangan pernah** menaruh nilai-nilai ini di kode atau commit.
 4. Setelah env terpasang, lakukan deploy ulang agar terbaca.
 
-> **Tidak ada** `OPENAI_API_KEY` dan **tidak ada** `GITHUB_CLIENT_ID`. AI dan
-> integrasi GitHub sudah dibatalkan (§13). Kalau variabel itu masih ada dari
-> rencana lama, hapus.
+> **Tidak ada** `OPENAI_API_KEY` dan **tidak ada** `GITHUB_CLIENT_ID`. Penyedia
+> AI selain Gemini tidak dipakai, dan integrasi git memakai **token tempel
+> manual**, bukan OAuth (lihat §5.4a). Kalau variabel OAuth/OpenAI masih ada
+> dari rencana lama, hapus.
 
 ### Catatan penting
 - `ENCRYPTION_KEY` **tidak boleh berubah** setelah ada data tersimpan.

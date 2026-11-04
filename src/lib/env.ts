@@ -34,6 +34,13 @@ const schema = z.object({
   // punya fallback lokal bila gagal.
   GEMINI_API_KEY: z.string().optional().or(z.literal("")),
   GEMINI_MODEL: z.string().optional().or(z.literal("")),
+  // Kill switch global untuk fitur "draf dari commit git" (SPEC.md §5.4a).
+  //
+  // OPSIONAL dan default AKTIF: fitur ini sudah opt-in per pengguna (toggle di
+  // /automation + baris `GitRepoConfig`), jadi variabel ini hanya jaring darurat
+  // bagi operator untuk mematikan seluruh fitur tanpa deploy. Karena opsional,
+  // build lama yang belum mengisinya tetap jalan.
+  GIT_COMMITS_ENABLED: z.string().optional().or(z.literal("")),
 });
 
 const parsed = schema.safeParse(process.env);

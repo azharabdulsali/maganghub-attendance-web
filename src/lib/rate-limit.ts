@@ -194,6 +194,13 @@ export const RATE_LIMITS = {
    */
   emailChange: { limit: 5, windowMs: 10 * 60_000 },
   /**
+   * Repo git (simpan/ubah/hapus + pratinjau commit): 20 / 10 menit per
+   * pengguna. Tiap pratinjau memanggil API GitHub/GitLab sungguhan, jadi batas
+   * ini melindungi kuota token pengguna sendiri (GitHub 5000/jam) sekaligus
+   * mencegah endpoint dipakai memindai repo. Nilai mengikuti SPEC.md §8.
+   */
+  gitRepo: { limit: 20, windowMs: 10 * 60_000 },
+  /**
    * Aksi admin atas pengguna (atribut ulang kata sandi / hapus): 20 / 10 menit
    * per admin. Batas ini melindungi dari salah-klik beruntun, bukan dari brute
    * force (admin sudah terautentikasi), karena itu lebih longgar dari scope

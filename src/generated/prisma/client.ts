@@ -164,3 +164,17 @@ export type Session = Prisma.SessionModel
  * aksi, hasil, dan id aktor/sasaran.
  */
 export type AdminActionLog = Prisma.AdminActionLogModel
+/**
+ * Model GitRepoConfig
+ * Satu repo git per pengguna (keputusan pemilik 2026-06 #2).
+ * 
+ * `userId` diberi `@unique` SEKARANG karena fitur dimulai dengan satu repo.
+ * Saat banyak-repo diaktifkan kelak, cukup HAPUS `@unique` itu lalu tambah
+ * indeks biasa: datanya sudah berbentuk relasi, jadi tidak perlu migrasi ulang.
+ * 
+ * TOKEN: kolom `ciphertext`/`iv`/`authTag` menyimpan token akses terenkripsi
+ * AES-256-GCM, pola sama dengan `MaganghubCredential`. Plaintext tidak pernah
+ * disimpan, dan kolom ini TIDAK BOLEH ikut di-`select` pada respons API mana
+ * pun (GIT-COMMITS-PLAN.md §6).
+ */
+export type GitRepoConfig = Prisma.GitRepoConfigModel

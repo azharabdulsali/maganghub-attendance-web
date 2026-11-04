@@ -17,6 +17,7 @@ desain dan aturan teknis, lihat:
 | [`docs/CRON-SETUP.md`](./docs/CRON-SETUP.md) | Menyiapkan cron per pengguna |
 | [`docs/CRON-BULK.md`](./docs/CRON-BULK.md) | Dispatcher massal (satu cron untuk semua) |
 | [`docs/MONEV-API.md`](./docs/MONEV-API.md) | Catatan integrasi API Monev |
+| [`docs/GIT-COMMITS-PLAN.md`](./docs/GIT-COMMITS-PLAN.md) | Rencana fitur auto laporan dari commit GitHub/GitLab |
 
 ## Tumpukan teknologi
 
@@ -67,6 +68,7 @@ Yang **opsional**:
 | `ALLOW_LIVE_SUBMIT` | Mode **latihan** — tidak ada laporan yang benar-benar dikirim (aman) |
 | `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Rate limit per-proses (kurang akurat lintas instance). **Gratis** — lihat [`docs/UPSTASH-SETUP.md`](docs/UPSTASH-SETUP.md) |
 | `CRON_SECRET` | Dispatcher massal `/api/cron/run-all` nonaktif (balas 503) |
+| `GIT_COMMITS_ENABLED` | Fitur bahan draf dari commit git nonaktif untuk semua pengguna. Lihat [`docs/GIT-COMMITS-PLAN.md`](docs/GIT-COMMITS-PLAN.md) |
 
 > **`ENCRYPTION_KEY` jangan pernah diganti** setelah ada kredensial tersimpan —
 > data lama akan tidak bisa didekripsi. Simpan baik-baik.

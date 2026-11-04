@@ -321,6 +321,23 @@ export type EnumAdminActionTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumAdminActionTypeFilter<$PrismaModel>
 }
 
+export type EnumGitProviderFilter<$PrismaModel = never> = {
+  equals?: $Enums.GitProvider | Prisma.EnumGitProviderFieldRefInput<$PrismaModel>
+  in?: $Enums.GitProvider[] | Prisma.ListEnumGitProviderFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GitProvider[] | Prisma.ListEnumGitProviderFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGitProviderFilter<$PrismaModel> | $Enums.GitProvider
+}
+
+export type EnumGitProviderWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.GitProvider | Prisma.EnumGitProviderFieldRefInput<$PrismaModel>
+  in?: $Enums.GitProvider[] | Prisma.ListEnumGitProviderFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GitProvider[] | Prisma.ListEnumGitProviderFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGitProviderWithAggregatesFilter<$PrismaModel> | $Enums.GitProvider
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumGitProviderFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumGitProviderFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -639,6 +656,23 @@ export type NestedEnumAdminActionTypeWithAggregatesFilter<$PrismaModel = never> 
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumAdminActionTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumAdminActionTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumGitProviderFilter<$PrismaModel = never> = {
+  equals?: $Enums.GitProvider | Prisma.EnumGitProviderFieldRefInput<$PrismaModel>
+  in?: $Enums.GitProvider[] | Prisma.ListEnumGitProviderFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GitProvider[] | Prisma.ListEnumGitProviderFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGitProviderFilter<$PrismaModel> | $Enums.GitProvider
+}
+
+export type NestedEnumGitProviderWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.GitProvider | Prisma.EnumGitProviderFieldRefInput<$PrismaModel>
+  in?: $Enums.GitProvider[] | Prisma.ListEnumGitProviderFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GitProvider[] | Prisma.ListEnumGitProviderFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGitProviderWithAggregatesFilter<$PrismaModel> | $Enums.GitProvider
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumGitProviderFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumGitProviderFilter<$PrismaModel>
 }
 
 

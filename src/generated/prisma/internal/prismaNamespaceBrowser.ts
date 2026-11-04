@@ -64,7 +64,8 @@ export const ModelName = {
   Holiday: 'Holiday',
   Feedback: 'Feedback',
   Session: 'Session',
-  AdminActionLog: 'AdminActionLog'
+  AdminActionLog: 'AdminActionLog',
+  GitRepoConfig: 'GitRepoConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -279,6 +280,25 @@ export const AdminActionLogScalarFieldEnum = {
 } as const
 
 export type AdminActionLogScalarFieldEnum = (typeof AdminActionLogScalarFieldEnum)[keyof typeof AdminActionLogScalarFieldEnum]
+
+
+export const GitRepoConfigScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  provider: 'provider',
+  repoPath: 'repoPath',
+  branch: 'branch',
+  ciphertext: 'ciphertext',
+  iv: 'iv',
+  authTag: 'authTag',
+  enabled: 'enabled',
+  lastFetchedAt: 'lastFetchedAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitRepoConfigScalarFieldEnum = (typeof GitRepoConfigScalarFieldEnum)[keyof typeof GitRepoConfigScalarFieldEnum]
 
 
 export const SortOrder = {
