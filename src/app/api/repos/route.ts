@@ -12,12 +12,13 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { gitRepoSchema } from "@/lib/validate";
+import { gitRepoSchema, gitRepoToggleSchema } from "@/lib/validate";
 import { rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 import {
   gitCommitsEnabled,
   saveRepoConfig,
+  setRepoEnabled,
   toRepoView,
   type GitRepoRow,
 } from "@/lib/git-repo-service";
@@ -93,6 +94,32 @@ export async function PUT(request: Request) {
       { error: "Data yang dikirim tidak terbaca. Muat ulang halaman lalu coba lagi." },
       { status: 400 },
     );
+  }
+
+  // Jalur sakelar: hanya mengubah `enabled`, TIDAK menyentuh token. Dipisah
+  // sebelum `gitRepoSchema` karena permintaan ini sengaja tidak membawa token
+  // (pengguna tidak wajib menempel ulang hanya untuk menjeda fitur).
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    (body as { action?: unknown }).action === "toggle"
+  ) {
+    const parsed = gitRepoToggleSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Data tidak valid" },
+        { status: 400 },
+      );
+    }
+
+    const hasil = await setRepoEnabled(userId, parsed.data.enabled);
+    if (!hasil) {
+      return NextResponse.json(
+        { error: "Belum ada repo untuk diaktifkan/dimatikan." },
+        { status: 404 },
+      );
+    }
+    return NextResponse.json({ ok: true, enabled: hasil.enabled });
   }
 
   const parsed = gitRepoSchema.safeParse(body);

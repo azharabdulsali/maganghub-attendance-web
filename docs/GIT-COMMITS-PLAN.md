@@ -1,9 +1,9 @@
 # Rencana: Auto Laporan dari Commit Git
 
-> Status: **draf rencana, disetujui pemilik untuk ditulis sebagai acuan resmi.**
-> Belum ada kode fitur yang ditulis. Dokumen ini yang jadi pegangan saat
-> implementasi. Bila ada penyimpangan saat menulis kode, dokumen ini yang
-> diperbarui lebih dulu, bukan dibiarkan diam-diam (AGENTS.md §2).
+> Status: **Fase 1–4 SELESAI** (kecuali dua butir yang menunggu pemilik, lihat
+> §11). Draf rencana ini disetujui pemilik dan menjadi acuan resmi. Bila ada
+> penyimpangan saat menulis kode, dokumen ini yang diperbarui lebih dulu, bukan
+> dibiarkan diam-diam (AGENTS.md §2).
 
 ---
 
@@ -212,6 +212,7 @@ Aturan tambahan:
 | `src/lib/git-draft-source.ts` | Jembatan: config -> ambil commit -> keywords -> `DraftInput` |
 | `src/app/api/repos/route.ts` | `GET`/`PUT`/`DELETE` konfigurasi repo |
 | `src/app/api/repos/preview/route.ts` | `POST`: pratinjau commit hari ini (tanpa menyimpan) |
+| `src/app/api/report-templates/generate/route.ts` | `POST`: susun draf; commit hari itu dipakai sebagai bahan bila kata kunci kosong |
 | `src/app/(app)/repos/page.tsx` | Halaman kelola repo |
 | `src/components/repos/repo-form.tsx` | Form provider + repoPath + branch + token |
 | `src/lib/git-commits.test.ts` | Tes fungsi murni |
@@ -273,9 +274,10 @@ Aturan tambahan:
   menjadi dua modul hanya menambah lapisan tanpa memisahkan tanggung jawab
   nyata. Logika murni tetap terpisah di `git-commits.ts` (Fase 2).
 - Integrasi **tidak** dimasukkan ke dalam `draftWithFallback`. Commit disuntikkan
-  sebagai `DraftInput.keywords` oleh pemanggil (`/api/repos/preview`), lalu
-  draf disusun lewat `getDrafter()`. Dengan begitu penyusun lokal dan LLM tidak
-  perlu tahu apa pun tentang git, dan kontrak `ReportDrafter` tetap utuh.
+  sebagai `DraftInput.keywords` oleh pemanggil (`/api/repos/preview` dan
+  `/api/report-templates/generate`), lalu draf disusun lewat `draftWithFallback`/
+  `getDrafter()`. Dengan begitu penyusun lokal dan LLM tidak perlu tahu apa pun
+  tentang git, dan kontrak `ReportDrafter` tetap utuh.
 - Kolom **"Pembelajaran yang Diperoleh"** tidak diisi dari commit. Commit
   menunjukkan *apa yang dikerjakan*, bukan *apa yang dipelajari*; mengisinya
   otomatis berarti mengarang. Respons draf menandai `learningNeedsReview: true`
@@ -302,10 +304,112 @@ rute API tanpa UI tidak bisa dipakai pemilik untuk menguji:
   karena opt-in per pengguna sudah dijaga `GitRepoConfig`).
 - Menu sidebar "Repo Git" sudah ditambahkan.
 
-**Belum dikerjakan:** butir 3 (toggle di `/automation`). Menghubungkan repo di
-`/repos` sudah menjadi opt-in yang efektif karena tanpa baris `GitRepoConfig`
-tidak ada data yang diambil sama sekali, tetapi sakelar terpisah di
-`/automation` tetap perlu agar sejalan dengan bunyi SPEC.md §5.4a.
+**Belum dikerjakan:** tidak ada. Butir 3 (sakelar) selesai di `/repos`, bukan
+`/automation` — lihat catatan penyimpangan di bawah.
+
+> **Celah yang ditemukan & ditutup setelah Fase 4 "selesai".** Sampai saat itu
+> commit hanya bisa dilihat lewat tombol "Uji ambil commit" di `/repos`.
+> Tombol **"Generate draf"** di `/report-templates` sama sekali tidak memakai
+> commit — jadi fitur ini belum menghemat waktu pengguna di tempat ia dipakai
+> sehari-hari. Sekarang `POST /api/report-templates/generate` mengambil commit
+> hari itu dan memakainya sebagai `keywords`:
+>
+> - **Kata kunci ketikan pengguna menang atas commit.** Pengguna yang mengetik
+>   sedang menyatakan maksudnya secara sadar; menimpanya diam-diam membuat
+>   laporan berisi hal yang tidak diminta.
+> - **Kegagalan git tidak pernah menggagalkan draf** (SPEC §5.4a). Panggilan
+>   `resolveCommits` dibungkus `.catch()` di rute, jadi janji "tidak melempar"
+>   milik modul lain tidak menjadi titik gagal tombol Generate.
+> - Balasan memuat `git: { status, commitCount, learningNeedsReview }` dengan
+>   status `used` / `no-commits` / `unavailable` / `ignored`. Pesan galat git
+>   **tidak** dikirim ke klien: pengguna tidak meminta fitur git di form
+>   laporan, jadi kegagalannya bukan urusannya dan tidak boleh tampil sebagai
+
+---
+
+## 12. Menyambungkan commit ke alur kirim otomatis (Fase 5) — SUDAH DIPUTUSKAN
+
+Sebelumnya commit hanya dipakai tombol **Generate draf** (manual). Cron tetap
+mengirim template. Bagian ini menutup jarak itu.
+
+### Keputusan pemilik (jangan diubah tanpa bertanya lagi)
+
+| # | Pertanyaan | Keputusan |
+|---|---|---|
+| 1 | Alur | **B** — draf dari commit disimpan sebagai template bertanggal, lalu dikirim |
+| 2 | Tanpa commit | Pakai **template harian** (tetap kirim, tidak menahan laporan) |
+| 3 | Kolom Pembelajaran | **Selalu terisi.** Ketiga kolom disusun dari sumber yang sama. Penyusun lokal menjamin panjang >= `MIN_REPORT_LENGTH`, jadi tidak ada kolom kosong yang ditolak portal |
+| 4 | Jendela meninjau | **Tidak perlu meninjau.** Draf disusun sesaat sebelum kirim |
+| 5 | Pemicu | **Satu cron saja** (jam yang sudah ada). Tidak menambah jadwal baru |
+
+### Urutan sumber isi (berlaku di SEMUA jalur kirim)
+
+```
+commit hari itu  ->  template bertanggal  ->  template harian  ->  batal
+```
+
+Aturan ini ada di satu tempat, `chooseReportContent()`
+(`src/lib/report-source.ts`), dan dipakai oleh **kedua** jalur cron:
+
+- `src/lib/cron-dispatch-run.ts` — dispatcher massal (`/api/cron/run-all`)
+- `src/app/api/cron/submit/route.ts` — cron per pengguna (`?key=<webhookKey>`)
+
+Memasangnya di satu jalur saja akan membuat pengguna jalur lain terus mengirim
+template selamanya — fitur tampak ada tetapi tidak pernah aktif.
+
+### Cara kerja
+
+1. Cron jalan (dipanggil berulang dalam jam jadwal; idempotensi sudah ada di
+   `performSubmit`).
+2. `prepareCommitDraft(userId, date)`:
+   - template bertanggal hari itu **sudah ada** -> tidak menulis apa pun
+     (`ALREADY_EXISTS`), **suntingan manusia tidak pernah ditimpa**;
+   - ada commit -> susun 3 kolom -> simpan sebagai `DatedReportTemplate`
+     (`SAVED`), sehingga bisa dibuka & disunting di `/report-templates`;
+   - tidak ada commit / git gagal / penyusun gagal -> `NO_COMMITS` / `FAILED`,
+     **tidak melempar**, alur lanjut ke template.
+3. Isi terpilih dikirim lewat `performSubmit` seperti biasa.
+
+### Jaminan yang dikunci tes
+
+- Urutan sumber benar (`report-source.test.ts`, `cron-dispatch-run.test.ts`)
+- Suntingan manusia tidak ditimpa; cek dilakukan **sebelum** memanggil API git
+  (hemat kuota token) (`commit-draft-service.test.ts`)
+- Draf setengah jadi (ada kolom kosong) **tidak** dikirim
+- Kegagalan git/penyusun tidak menghalangi kirim; satu user gagal tidak
+  menjatuhkan user lain
+- Semua tes di atas dibuktikan **bisa gagal** (kode sengaja dirusak -> merah ->
+  dikembalikan)
+
+### Bug yang ditemukan & diperbaiki saat pengerjaan
+
+`runDispatch(now)` memakai `now` untuk jam tetapi `new Date()` untuk tanggal.
+Akibatnya jam 7 WIB bisa dipasangkan dengan tanggal yang salah di sekitar tengah
+malam, dan fungsi itu tidak bisa diuji. Kini `todayInJakarta(now)`.
+
+>   error merah. Ini dikunci tes `not.toContain("Token git ditolak")`.
+> - Toast membedakan "Draf disusun dari commit hari ini (N commit)" dari
+>   "Draf disusun", supaya draf lama tidak disangka berasal dari commit.
+> - 9 tes di `src/app/api/report-templates/generate/route.test.ts`. Tes terbukti
+>   bisa gagal: memaksa `bahanGit = null` menghasilkan 3 tes merah.
+
+> **Penyimpangan butir 3, disengaja.** Rencana menyebut "toggle di
+> `/automation`", tetapi sakelar diletakkan di halaman **`/repos`** karena di
+> sanalah repo terlihat. Alasan lain: `GitRepoConfig.enabled` adalah kolom milik
+> repo, sedangkan `/automation` mengurus jam kirim dan `webhookKey`; menaruh
+> sakelar bahan draf di halaman jadwal membuatnya sulit ditemukan.
+> Isinya tetap sejalan dengan SPEC.md §5.4a dan keputusan pemilik §2 butir 3:
+> opt-in, default nonaktif, dikendalikan pengguna.
+>
+> **Temuan saat pengerjaan:** kolom `enabled` sebelumnya sudah ada di skema dan
+> **sudah dihormati** `resolveCommits` (baris `if (!row.enabled)`), tetapi
+> **tidak ada satu pun UI atau endpoint yang bisa mengubahnya** — form selalu
+> menulis `enabled: true`. Artinya pengguna tidak punya cara mematikan fitur
+> selain menghapus repo beserta tokennya. Sekarang ditutup:
+> `PUT /api/repos` dengan `{ action: "toggle", enabled }` (skema
+> `gitRepoToggleSchema`), dilayani `setRepoEnabled` yang **hanya** menulis kolom
+> `enabled` sehingga token tidak tersentuh dan tidak perlu ditempel ulang.
+> Tes `setRepoEnabled` mengunci hal ini dengan `expect(Object.keys(data)).toEqual(["enabled"])`.
 
 ---
 
@@ -337,15 +441,28 @@ Sengaja dibatasi, sesuai `AGENTS.md` §2 dan SPEC §10:
 
 ## 11. Daftar periksa sebelum menyatakan selesai
 
-- [ ] `SPEC.md` dan `AGENTS.md` sudah diperbarui (pencabutan resmi tertulis)
-- [ ] `npm run db:push` dijalankan pemilik
-- [ ] `npm run lint` bersih
-- [ ] `npm run typecheck` bersih
-- [ ] `npm test` hijau, termasuk tes baru
-- [ ] `npm run build` sukses
-- [ ] Dibuktikan bahwa tes baru **bisa gagal** (sengaja rusakkan kode -> merah
-      -> kembalikan). Lihat AGENTS.md §7.
-- [ ] Token tidak muncul di satu pun respons API (diperiksa manual)
-- [ ] `/privacy` menyebut pengiriman commit ke Gemini
-- [ ] Tidak ada `.env` atau rahasia yang ikut ter-commit
+- [x] `SPEC.md` dan `AGENTS.md` sudah diperbarui (pencabutan resmi tertulis)
+- [ ] `npm run db:push` dijalankan pemilik — **belum dicatat di repo**; jalankan
+      bila `GitRepoConfig` belum ada di DB Anda
+- [x] `npm run lint` bersih
+- [x] `npm run typecheck` bersih
+- [x] `npm test` hijau, termasuk tes baru (940 tes)
+- [x] `npm run build` sukses
+- [x] Dibuktikan bahwa tes baru **bisa gagal** (sengaja rusakkan kode -> merah
+      -> kembalikan). Lihat AGENTS.md §7. Dilakukan pada `setRepoEnabled` dan
+      pada integrasi commit -> tombol Generate draf.
+- [x] Token tidak muncul di satu pun respons API (dikunci tes `toRepoView` /
+      `resolveCommits`; endpoint sakelar tidak menerima token sama sekali)
+- [x] `/privacy` menyebut pengiriman commit ke Gemini
 - [ ] Pemilik meninjau `git diff` lalu commit sendiri (agent tidak commit)
+- [ ] **Uji nyata dengan token asli** — sudah dilakukan sampai pesan
+      "Tidak ada commit pada hari itu." Diterima sebagai bukti jalur baca
+      bekerja (repo + token + API lolos), walau belum ada commit yang tampil.
+
+**Dua butir terbuka yang butuh keputusan pemilik:**
+
+1. Kolom **"Pembelajaran yang Diperoleh"** tidak diisi otomatis dan ditandai
+   `learningNeedsReview: true`. Ini disengaja (lihat §8 Fase 3). Bila pemilik
+   ingin kolom ini diisi dari commit, itu perubahan keputusan, bukan bug.
+2. **Uji dengan commit sungguhan** belum dilakukan karena belum ada commit pada
+   tanggal uji. Lakukan pada hari pertama Anda commit sebelum menyatakan selesai.

@@ -34,6 +34,8 @@ import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 import { todayInJakarta, toPlainDate } from "@/lib/submit-service";
 import { chooseTemplate } from "@/lib/template-selection";
+import { prepareCommitDraft, contentOf } from "@/lib/commit-draft-service";
+import { chooseReportContent } from "@/lib/report-source";
 import { type SubmitOutcome, performSubmit } from "@/lib/perform-submit";
 import { cronKeyFromRequest } from "@/lib/bearer-token";
 
@@ -117,19 +119,32 @@ export async function GET(request: Request) {
 
   const date = todayInJakarta();
 
+  // Sumber isi laporan (diputuskan pemilik, sama persis dengan dispatcher massal):
+  // commit hari itu -> template bertanggal -> template harian -> batal.
+  //
+  // Disusun DI SINI (bukan hanya di dispatcher) karena pengguna yang memasang
+  // cron-job.org sendiri memakai jalur ini. Bila aturannya hanya dipasang di
+  // dispatcher, pengguna jalur ini akan terus mengirim template selamanya —
+  // fitur tampak ada tetapi tidak pernah aktif untuk mereka.
+  const commitOutcome = await prepareCommitDraft(config.userId, date);
+  const dated = config.user.datedTemplates.map((t) => ({
+    date: toPlainDate(t.date),
+    activity: t.activity,
+    learning: t.learning,
+    obstacles: t.obstacles,
+  }));
+  const dipilih = chooseReportContent(
+    date,
+    contentOf(commitOutcome),
+    config.user.template,
+    dated,
+  );
+
   const outcome = await performSubmit({
     userId: config.userId,
     date,
-    template: chooseTemplate(
-      date,
-      config.user.template,
-      config.user.datedTemplates.map((t) => ({
-        date: toPlainDate(t.date),
-        activity: t.activity,
-        learning: t.learning,
-        obstacles: t.obstacles,
-      })),
-    ).template,
+    template:
+      dipilih.content ?? chooseTemplate(date, config.user.template, dated).template,
     credential: config.user.credential,
     trigger: "CRON",
     // logOnNotReady=true: cron mencatat alasan tidak-siap (token dsb.) supaya

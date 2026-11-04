@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { gitPreviewSchema, gitRepoSchema } from "./validate";
+import { gitPreviewSchema, gitRepoSchema, gitRepoToggleSchema } from "./validate";
 
 const TOKEN = "ghp_abcdefghijklmnopqrstuvwxyz0123";
 
@@ -94,3 +94,26 @@ describe("gitPreviewSchema", () => {
     },
   );
 });
+
+// Sakelar repo: hanya `enabled` (boolean). Sengaja TIDAK menerima token, supaya
+// permintaan sakelar tidak bisa dipakai untuk menimpa token.
+describe("gitRepoToggleSchema", () => {
+  it("menerima true dan false", () => {
+    expect(
+      gitRepoToggleSchema.safeParse({ action: "toggle", enabled: true }).success,
+    ).toBe(true);
+    expect(
+      gitRepoToggleSchema.safeParse({ action: "toggle", enabled: false }).success,
+    ).toBe(true);
+  });
+
+  it("menolak nilai yang bukan boolean", () => {
+    // "true" sebagai STRING adalah kesalahan klasik dari klien yang lupa
+    // mengirim boolean. Kalau diloloskan, Prisma akan menyimpan nilai yang
+    // sudah dikonversi diam-diam dan sakelar bisa "nyangkut".
+    expect(gitRepoToggleSchema.safeParse({ enabled: "true" }).success).toBe(false);
+    expect(gitRepoToggleSchema.safeParse({ enabled: 1 }).success).toBe(false);
+    expect(gitRepoToggleSchema.safeParse({}).success).toBe(false);
+  });
+});
+

@@ -249,6 +249,33 @@ export function draftInputFromCommits(
   return { keywords: bersih };
 }
 
+/**
+ * Nyalakan/matikan pemakaian commit TANPA menyentuh token.
+ *
+ * Kenapa perlu fungsi sendiri, bukan lewat `saveRepoConfig`: menyimpan ulang
+ * lewat form mewajibkan pengguna menempel token lagi (server tidak bisa
+ * membacanya balik). Kalau mematikan fitur harus menempel token, orang akan
+ * memilih menghapus repo saja. Sakelar ini hanya mengubah satu kolom.
+ *
+ * Mengembalikan `null` bila belum ada repo; pemanggil menerjemahkannya jadi 404.
+ */
+export async function setRepoEnabled(
+  userId: string,
+  enabled: boolean,
+): Promise<{ enabled: boolean } | null> {
+  const ada = await prisma.gitRepoConfig.findUnique({
+    where: { userId },
+    select: { userId: true },
+  });
+  if (!ada) return null;
+
+  return prisma.gitRepoConfig.update({
+    where: { userId },
+    data: { enabled },
+    select: { enabled: true },
+  });
+}
+
 /** Simpan konfigurasi repo (buat atau ganti). Token dienkripsi di sini. */
 export async function saveRepoConfig(
   userId: string,

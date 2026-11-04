@@ -177,6 +177,9 @@ export default function ReportTemplatesForm({
   const [drafting, setDrafting] = useState(false);
   const [draftSource, setDraftSource] = useState<string | null>(null);
   const [draftError, setDraftError] = useState<string | null>(null);
+  // True bila draf terakhir disusun dari commit: kolom "Pembelajaran" belum
+  // diisi mesin dan perlu disunting pengguna (keputusan Fase 3).
+  const [learningPerluDitinjau, setLearningPerluDitinjau] = useState(false);
 
   // Hitung status tiap kolom sekali per perubahan isi.
   const status = useMemo(() => {
@@ -198,6 +201,9 @@ export default function ReportTemplatesForm({
   function ubah(name: FieldName, teks: string) {
     setValues((prev) => ({ ...prev, [name]: teks }));
     setServerError(null);
+    // Pengguna sudah menyunting kolom Pembelajaran: pengingatnya tidak perlu
+    // tampil lagi dan tidak boleh terus berkedip saat mengetik.
+    if (name === "learning") setLearningPerluDitinjau(false);
   }
 
   /**
@@ -258,6 +264,11 @@ export default function ReportTemplatesForm({
         obstacles?: string;
         source?: string;
         error?: string;
+        git?: {
+          status?: "used" | "no-commits" | "unavailable" | "ignored";
+          commitCount?: number;
+          learningNeedsReview?: boolean;
+        };
       };
 
       if (!res.ok) {
@@ -271,11 +282,26 @@ export default function ReportTemplatesForm({
         obstacles: data.obstacles ?? "",
       });
       setDraftSource(data.source ?? null);
+      // Penanda bahwa kolom Pembelajaran belum diisi dari commit: pengguna
+      // harus menyuntingnya sendiri. Bukan error, hanya pengingat.
+      setLearningPerluDitinjau(data.git?.learningNeedsReview === true);
       setServerError(null);
-      toast.success(
-        "Draf disusun",
-        "Periksa dan sesuaikan isinya sebelum menyimpan.",
-      );
+
+      // Pesan hasil dibedakan supaya pengguna tahu persis bahan apa yang
+      // dipakai — termasuk saat commit TIDAK terpakai. Tanpa ini, draf dari
+      // kata kunci lama bisa disangka berasal dari commit hari ini.
+      if (data.git?.status === "used") {
+        toast.success(
+          "Draf disusun dari commit hari ini",
+          `${data.git.commitCount ?? 0} commit dipakai. Periksa dan sesuaikan isinya sebelum menyimpan.`,
+        );
+      } else {
+        toast.success(
+          "Draf disusun",
+          "Periksa dan sesuaikan isinya sebelum menyimpan.",
+        );
+      }
+
     } catch {
       // Jaringan gagal: beri tahu apa adanya, jangan diam-diam mengosongkan.
       setDraftError("Tidak bisa menghubungi server. Periksa koneksi Anda.");
@@ -583,9 +609,20 @@ export default function ReportTemplatesForm({
         </div>
 
         <p className="mt-2 text-xs text-foreground/60">
-          Kosongkan kata kunci bila hari itu tidak ada kendala khusus, kolom
-          kendala akan diisi pernyataan jujur bahwa pekerjaan berjalan lancar.
+          Bila repo git sudah terhubung dan aktif, commit Anda hari ini otomatis
+          dipakai sebagai bahan. Kosongkan kata kunci untuk memakainya; isi kata
+          kunci bila ingin menyusun dari aktivitas lain.
         </p>
+
+        {learningPerluDitinjau ? (
+          <div className="mt-2">
+            <Message tone="neutral">
+              Kolom &ldquo;Pembelajaran yang Diperoleh&rdquo; tidak diisi dari
+              commit — commit menunjukkan apa yang dikerjakan, bukan apa yang
+              dipelajari. Sunting kolom itu sebelum menyimpan.
+            </Message>
+          </div>
+        ) : null}
 
         {draftSource ? (
           <div className="mt-2 space-y-1">

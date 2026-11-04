@@ -14,6 +14,8 @@ import { todayInJakarta, toPlainDate } from "@/lib/submit-service";
 import { chooseTemplate } from "@/lib/template-selection";
 import { performSubmit, type SubmitOutcome } from "@/lib/perform-submit";
 import { jakartaHour, planDispatch, type DueCandidate } from "@/lib/cron-dispatch";
+import { prepareCommitDraft, contentOf } from "@/lib/commit-draft-service";
+import { chooseReportContent } from "@/lib/report-source";
 
 /** Berapa user diproses bersamaan. Menahan burst tanpa membanjiri portal. */
 export const DISPATCH_CONCURRENCY = 10;
@@ -88,7 +90,11 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
   const { due, deferred } = planDispatch(candidates, hour, DISPATCH_BATCH_SIZE);
   const byUser = new Map(configs.map((c) => [c.userId, c]));
 
-  const date = todayInJakarta();
+  // `date` WAJIB diturunkan dari `now`, bukan dari `new Date()`: seluruh fungsi
+  // ini menerima `now` sebagai acuan waktu, dan memakai jam dari satu waktu tapi
+  // tanggal dari waktu lain membuat hasilnya tak bisa diuji — sekaligus salah di
+  // pergantian tengah malam WIB (jam 7 WIB tetapi tanggal masih kemarin).
+  const date = todayInJakarta(now);
   const start = Date.now();
   const results: DispatchUserResult[] = [];
   let deadlineHit = false;
@@ -104,18 +110,46 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
         const cfg = byUser.get(cand.userId);
         if (!cfg) return { userId: cand.userId, kind: "SKIPPED" };
         try {
+          // --- Sumber isi laporan (SPEC §5.3a, diputuskan pemilik) -------------
+          // commit hari itu -> template bertanggal -> template harian -> batal.
+          //
+          // `prepareCommitDraft` MENYIMPAN hasilnya sebagai template bertanggal
+          // hari itu, sehingga pengguna bisa membuka & menyuntingnya di
+          // /report-templates. Kalau baris bertanggal sudah ada (tulisan atau
+          // suntingan pengguna), ia TIDAK menimpa — suntingan manusia menang.
+          //
+          // Kegagalan git tidak pernah menghalangi kirim: hasilnya NO_COMMITS
+          // dan alur jatuh ke template di bawah.
+          const commitOutcome = await prepareCommitDraft(cfg.userId, date);
+
+          const dated = cfg.user.datedTemplates.map((t) => ({
+            date: toPlainDate(t.date),
+            activity: t.activity,
+            learning: t.learning,
+            obstacles: t.obstacles,
+          }));
+
+          // Bila draf baru saja disimpan, ia sudah ada di `datedTemplates` yang
+          // dibaca SEBELUM penyimpanan — jadi salinan DB itu belum memuatnya.
+          // Kita suntikkan isi segar agar tidak perlu query ulang per user.
+          const dipilih = chooseReportContent(
+            date,
+            contentOf(commitOutcome),
+            cfg.user.template,
+            dated,
+          );
+
           const outcome: SubmitOutcome = await performSubmit({
             userId: cfg.userId,
             date,
-            template: chooseTemplate(
+            // Pemanggil lama memakai `chooseTemplate`; kini urutannya ditentukan
+            // `chooseReportContent`. `chooseTemplate` tetap dipakai sebagai
+            // cadangan bila pemilihan baru tidak menemukan apa pun, supaya
+            // perilaku lama tidak berubah untuk data yang sudah ada.
+            template: dipilih.content ?? chooseTemplate(
               date,
               cfg.user.template,
-              cfg.user.datedTemplates.map((t) => ({
-                date: toPlainDate(t.date),
-                activity: t.activity,
-                learning: t.learning,
-                obstacles: t.obstacles,
-              })),
+              dated,
             ).template,
             credential: cfg.user.credential,
             trigger: "CRON",

@@ -108,6 +108,19 @@ export const gitRepoSchema = z.object({
 export type GitRepoInput = z.infer<typeof gitRepoSchema>;
 
 /**
+ * Sakelar "pakai commit saat menyusun draf" (SPEC.md §5.4a, "Default nonaktif").
+ *
+ * Sengaja terpisah dari `gitRepoSchema` supaya mematikan fitur TIDAK menuntut
+ * token ditempel ulang. Tanpa ini, satu-satunya cara mematikan adalah menghapus
+ * repo beserta tokennya — terlalu berat untuk sekadar jeda.
+ */
+export const gitRepoToggleSchema = z.object({
+  enabled: z.boolean({ message: "Nilai sakelar harus benar/salah" }),
+});
+
+export type GitRepoToggleInput = z.infer<typeof gitRepoToggleSchema>;
+
+/**
  * Pratinjau commit hari itu, atau simpan hari itu ke laporan.
  *
  * `date` opsional berbentuk `YYYY-MM-DD`; bila kosong server memakai hari ini

@@ -45,6 +45,7 @@ import {
   gitCommitsEnabled,
   resolveCommits,
   saveRepoConfig,
+  setRepoEnabled,
   toCommitView,
   toRepoView,
 } from "./git-repo-service";
@@ -188,6 +189,29 @@ describe("saveRepoConfig", () => {
     const arg = upsertMock.mock.calls[0][0];
     expect(arg.update.lastError).toBeNull();
     expect(arg.update.enabled).toBe(true);
+  });
+});
+
+describe("setRepoEnabled", () => {
+  it("mematikan repo tanpa menyentuh kolom token", async () => {
+    await setRepoEnabled("u1", false);
+    const arg = updateMock.mock.calls[0][0];
+    expect(arg.data).toEqual({ enabled: false });
+    // Jaminan penting: hanya `enabled` yang berubah. Kalau suatu saat ada yang
+    // menambahkan penulisan ulang token di sini, token akan hilang/berubah
+    // hanya karena pengguna menjeda fitur.
+    expect(Object.keys(arg.data)).toEqual(["enabled"]);
+  });
+
+  it("menyalakan kembali repo", async () => {
+    await setRepoEnabled("u1", true);
+    expect(updateMock.mock.calls[0][0].data).toEqual({ enabled: true });
+  });
+
+  it("mengembalikan null bila belum ada repo (bukan melempar)", async () => {
+    findUniqueMock.mockResolvedValue(null);
+    await expect(setRepoEnabled("u1", false)).resolves.toBeNull();
+    expect(updateMock).not.toHaveBeenCalled();
   });
 });
 

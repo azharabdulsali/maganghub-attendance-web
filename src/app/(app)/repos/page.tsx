@@ -51,6 +51,7 @@ export default async function ReposPage() {
         existingRepoPath={repo?.repoPath ?? null}
         existingBranch={repo?.branch ?? null}
         hasToken={Boolean(repo?.ciphertext)}
+        initialEnabled={repo?.enabled ?? false}
         lastFetchedAt={repo?.lastFetchedAt?.toISOString() ?? null}
         lastError={repo?.lastError ?? null}
       />

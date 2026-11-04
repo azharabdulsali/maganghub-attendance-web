@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 
 type Provider = "GITHUB" | "GITLAB";
@@ -33,6 +34,7 @@ interface RepoFormProps {
   existingRepoPath: string | null;
   existingBranch: string | null;
   hasToken: boolean;
+  initialEnabled: boolean;
   lastFetchedAt: string | null;
   lastError: string | null;
 }
@@ -168,6 +170,7 @@ export default function RepoForm({
   existingRepoPath,
   existingBranch,
   hasToken,
+  initialEnabled,
   lastFetchedAt,
   lastError,
 }: RepoFormProps) {
@@ -184,6 +187,11 @@ export default function RepoForm({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmHapus, setConfirmHapus] = useState(false);
+  // Sakelar pemakaian commit. Default-nya mengikuti nilai tersimpan; untuk
+  // pengguna yang belum punya repo nilainya false dan sakelarnya tidak
+  // ditampilkan (tidak ada yang bisa diaktifkan).
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [toggling, setToggling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sukses, setSukses] = useState<string | null>(null);
 
@@ -302,6 +310,46 @@ export default function RepoForm({
         message:
           "Tidak bisa menghubungi server. Periksa koneksi lalu coba lagi.",
       });
+    }
+  }
+
+  async function toggleEnabled(next: boolean) {
+    if (toggling) return;
+    // Optimistis: sakelar langsung bergerak supaya terasa responsif, lalu
+    // dikembalikan bila server menolak. Tanpa ini, kegagalan jaringan akan
+    // membuat sakelar tampak "nyangkut" dan pengguna mengira sudah tersimpan.
+    const sebelumnya = enabled;
+    setEnabled(next);
+    setToggling(true);
+    setError(null);
+    setSukses(null);
+    try {
+      const res = await fetch("/api/repos", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "toggle", enabled: next }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        enabled?: boolean;
+      };
+      if (!res.ok) {
+        setEnabled(sebelumnya);
+        setError(data.error ?? "Gagal mengubah sakelar.");
+        return;
+      }
+      setEnabled(data.enabled ?? next);
+      toast.success(
+        next
+          ? "Commit akan dipakai sebagai bahan draf."
+          : "Commit tidak akan dipakai sampai dinyalakan lagi.",
+      );
+      router.refresh();
+    } catch {
+      setEnabled(sebelumnya);
+      setError("Tidak bisa menghubungi server. Periksa koneksi lalu coba lagi.");
+    } finally {
+      setToggling(false);
     }
   }
 
@@ -461,6 +509,36 @@ export default function RepoForm({
           )}
         </div>
       </form>
+
+      {/* Sakelar dipisah dari form dan diletakkan sebagai kartu sendiri karena
+          penyimpanannya SENDIRI-SENDIRI (PUT `action: "toggle"`), tanpa token.
+          Kalau ditaruh di dalam form, pengguna akan mengira ia ikut tersimpan
+          saat menekan "Perbarui repo" — padahal tidak, dan itu membingungkan. */}
+      {hasExisting && (
+        <section className="rounded-base border-2 border-border p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="repo-enabled">Pakai commit sebagai bahan draf</Label>
+              <p className="text-xs text-foreground/70">
+                {enabled
+                  ? "Aktif. Saat menyusun draf, commit hari itu (zona WIB) ikut dipakai sebagai bahan."
+                  : "Nonaktif. Repo tetap tersimpan, tapi tidak ada commit yang diambil sampai dinyalakan."}
+              </p>
+            </div>
+            <Switch
+              id="repo-enabled"
+              checked={enabled}
+              onCheckedChange={(v) => void toggleEnabled(v)}
+              disabled={toggling}
+            />
+          </div>
+          <p className="mt-3 text-xs text-foreground/60">
+            Mengubah sakelar ini tidak menghapus token dan tidak perlu menempel
+            ulang token. Matikan sementara bila ingin berhenti memakai commit
+            tanpa kehilangan pengaturan repo.
+          </p>
+        </section>
+      )}
 
       <aside className="space-y-4 text-sm">
         <div className="rounded-base border-2 border-border p-4">
