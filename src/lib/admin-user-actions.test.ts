@@ -1,15 +1,18 @@
 // src/lib/admin-user-actions.test.ts: uji aturan murni aksi admin.
 //
-// Yang penting diuji: penjagaan (diri sendiri & admin lain ditolak) dan bentuk
-// kata sandi sementara. Keduanya tak butuh DB, jadi bisa diuji cepat.
+// Yang penting diuji: penjagaan (diri sendiri & admin lain ditolak), aturan
+// perubahan PERAN, dan bentuk kata sandi sementara. Semuanya tak butuh DB.
 
 import { describe, expect, it } from "vitest";
 
 import {
   checkAdminTarget,
+  checkRoleChange,
   describeActionDenial,
+  describeRoleChangeDenial,
   generateTemporaryPassword,
   statusForDenial,
+  statusForRoleChangeDenial,
 } from "./admin-user-actions";
 
 describe("checkAdminTarget", () => {
@@ -47,6 +50,70 @@ describe("checkAdminTarget", () => {
     expect(
       checkAdminTarget("admin-1", { id: "admin-1", role: "ADMIN" }),
     ).toBe("SELF");
+  });
+});
+
+describe("checkRoleChange", () => {
+  const aktor = "admin-1";
+
+  it("USER -> ADMIN diizinkan (promosi)", () => {
+    expect(checkRoleChange(aktor, { id: "u-1", role: "USER" }, "ADMIN")).toBeNull();
+  });
+
+  it("menerima peran huruf kecil & spasi (dinormalkan)", () => {
+    expect(checkRoleChange(aktor, { id: "u-1", role: "USER" }, " admin ")).toBeNull();
+  });
+
+  it("tidak boleh pada diri sendiri", () => {
+    expect(checkRoleChange(aktor, { id: aktor, role: "ADMIN" }, "USER")).toBe("SELF");
+  });
+
+  it("menurunkan admin lain ditolak (cegah sistem terkunci)", () => {
+    expect(checkRoleChange(aktor, { id: "admin-2", role: "ADMIN" }, "USER")).toBe("IS_ADMIN");
+  });
+
+  it("sasaran tidak ada / sudah dihapus = NOT_FOUND", () => {
+    expect(checkRoleChange(aktor, null, "ADMIN")).toBe("NOT_FOUND");
+  });
+
+  it("peran tak dikenal = INVALID_ROLE", () => {
+    expect(checkRoleChange(aktor, { id: "u-1", role: "USER" }, "SUPERADMIN")).toBe(
+      "INVALID_ROLE",
+    );
+    expect(checkRoleChange(aktor, { id: "u-1", role: "USER" }, "")).toBe("INVALID_ROLE");
+  });
+
+  it("peran sama = NO_CHANGE (bukan ditulis ulang tanpa guna)", () => {
+    expect(checkRoleChange(aktor, { id: "u-1", role: "USER" }, "USER")).toBe("NO_CHANGE");
+  });
+
+  // REGRESI: `checkRoleChange` sempat dibangun di atas `checkAdminTarget` apa
+  // adanya. Aturan itu menolak SEMUA sasaran ber-peran ADMIN tanpa melihat
+  // peran TUJUAN, sehingga promosi USER -> ADMIN ikut tertolak dan peran jadi
+  // tak bisa dikelola sama sekali. Tes ini mengunci bahwa promosi tetap jalan.
+  it("promosi tetap diizinkan meski sasaran nantinya admin", () => {
+    expect(checkRoleChange(aktor, { id: "u-2", role: "USER" }, "ADMIN")).toBeNull();
+  });
+});
+
+describe("pesan & status penolakan peran", () => {
+  it("INVALID_ROLE -> 400, NO_CHANGE -> 409", () => {
+    expect(statusForRoleChangeDenial("INVALID_ROLE")).toBe(400);
+    expect(statusForRoleChangeDenial("NO_CHANGE")).toBe(409);
+  });
+
+  it("mewarisi status penolakan dasar", () => {
+    expect(statusForRoleChangeDenial("SELF")).toBe(403);
+    expect(statusForRoleChangeDenial("IS_ADMIN")).toBe(403);
+    expect(statusForRoleChangeDenial("NOT_FOUND")).toBe(404);
+  });
+
+  it("setiap alasan punya pesan, dan pesan dasar tetap konsisten", () => {
+    for (const d of ["INVALID_ROLE", "NO_CHANGE", "SELF", "IS_ADMIN", "NOT_FOUND"] as const) {
+      expect(describeRoleChangeDenial(d).length).toBeGreaterThan(0);
+    }
+    expect(describeRoleChangeDenial("SELF")).toBe(describeActionDenial("SELF"));
+    expect(describeRoleChangeDenial("NOT_FOUND")).toBe(describeActionDenial("NOT_FOUND"));
   });
 });
 

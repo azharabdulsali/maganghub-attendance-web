@@ -63,6 +63,81 @@ export function statusForDenial(denial: ActionDenial): number {
   }
 }
 
+/** Peran yang dikenal aplikasi. `Role` di Prisma hanya punya dua nilai. */
+export type AssignableRole = "USER" | "ADMIN";
+
+/** Alasan sebuah perubahan PERAN ditolak. */
+export type RoleChangeDenial =
+  | ActionDenial // SELF / IS_ADMIN / NOT_FOUND — aturan sama dengan aksi destruktif
+  | "INVALID_ROLE" // peran yang diminta tidak dikenal
+  | "NO_CHANGE"; // peran sama dengan yang sekarang
+
+export interface TargetUserWithRole extends TargetUser {
+  role: string;
+}
+
+/**
+ * Boleh atau tidak admin mengubah PERAN `target`.
+ *
+ * Aturan (beda dari aksi destruktif, sengaja):
+ *   - tidak boleh pada diri sendiri (cegah admin menurunkan/menaikkan dirinya
+ *     sendiri dan mengunci sistem),
+ *   - peran yang diminta harus USER atau ADMIN,
+ *   - tidak ada perubahan bila perannya sama,
+ *   - sasaran admin hanya boleh DIKECUALIKAN dari penurunan peran: mengubah
+ *     ADMIN -> USER belum didukung (bisa mengunci sistem bila admin terakhir),
+ *     tetapi USER -> ADMIN DIIZINKAN. Ini alasan aturan `checkAdminTarget`
+ *     tidak dipakai apa adanya: aturan itu menolak SEMUA sasaran admin, yang
+ *     di sini akan membuat promosi mustahil dan peran tak bisa dikelola.
+ *
+ * Mengembalikan `null` bila boleh, selain itu alasan penolakan.
+ */
+export function checkRoleChange(
+  actorId: string,
+  target: TargetUserWithRole | null | undefined,
+  newRole: string,
+): RoleChangeDenial | null {
+  if (!target) return "NOT_FOUND";
+  if (target.id === actorId) return "SELF";
+
+  const diminta = newRole.trim().toUpperCase();
+  if (diminta !== "USER" && diminta !== "ADMIN") return "INVALID_ROLE";
+
+  const sekarang = target.role.toUpperCase();
+  if (sekarang === diminta) return "NO_CHANGE";
+
+  // Menurunkan admin lain butuh jaminan "masih ada admin lain" yang belum
+  // tersedia di sini; lebih baik ditolak terang-terangan daripada sistem
+  // terkunci tanpa jalan masuk.
+  if (sekarang === "ADMIN" && diminta === "USER") return "IS_ADMIN";
+
+  return null;
+}
+
+/** Pesan ramah untuk penolakan perubahan peran. */
+export function describeRoleChangeDenial(denial: RoleChangeDenial): string {
+  switch (denial) {
+    case "INVALID_ROLE":
+      return "Peran hanya boleh USER atau ADMIN.";
+    case "NO_CHANGE":
+      return "Pengguna ini sudah memiliki peran tersebut.";
+    default:
+      return describeActionDenial(denial);
+  }
+}
+
+/** Status HTTP untuk penolakan perubahan peran. */
+export function statusForRoleChangeDenial(denial: RoleChangeDenial): number {
+  switch (denial) {
+    case "INVALID_ROLE":
+      return 400;
+    case "NO_CHANGE":
+      return 409; // konflik dengan keadaan sekarang, bukan salah permintaan
+    default:
+      return statusForDenial(denial);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Kata sandi sementara
 // ---------------------------------------------------------------------------

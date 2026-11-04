@@ -466,3 +466,168 @@ Sengaja dibatasi, sesuai `AGENTS.md` §2 dan SPEC §10:
    ingin kolom ini diisi dari commit, itu perubahan keputusan, bukan bug.
 2. **Uji dengan commit sungguhan** belum dilakukan karena belum ada commit pada
    tanggal uji. Lakukan pada hari pertama Anda commit sebelum menyatakan selesai.
+
+## 13. Tinjauan Menyeluruh (setelah Fase 5)
+
+Pemeriksaan seluruh aplikasi, bukan hanya alur commit. Status alat: typecheck
+bersih · lint bersih · **974 tes lulus** · build sukses.
+
+### Diperbaiki di tinjauan ini
+
+**1. Query template bertanggal memuat seluruh riwayat (ditemukan & dibatasi).**
+
+Kedua jalur kirim membaca `datedTemplates` **tanpa `where`**, sehingga tiap
+pemanggilan cron menarik *semua* baris bertanggal milik pengguna — bukan hanya
+tanggal hari ini. Karena draf commit disimpan sebagai baris bertanggal setiap
+hari, jumlahnya tumbuh terus (Â±90 baris/pengguna setelah 3 bulan), dan isinya
+teks panjang. Di dispatcher massal dampaknya berlipat: satu query untuk semua
+pengguna. Kini disaring `where: { date: hariIni }`, dengan tanggal WIB diturunkan
+dari `now` **satu kali** dan dipakai ulang (dua perhitungan terpisah bisa
+berbeda bila melewati tengah malam WIB). Indeks `(userId, date)` sudah ada,
+jadi tidak perlu migrasi.
+
+Dikunci 2 tes di `cron-dispatch-run.test.ts`. Dibuktikan bisa gagal: menghapus
+`where` â†’ 2 tes merah â†’ dikembalikan.
+
+**2. `SPEC.md` Â§5.6 bertentangan dengan kode.**
+
+Tertulis "buat dari **template pengguna**", padahal alurnya kini
+commit â†’ bertanggal â†’ harian. Diperbarui, dan Â§5.3b ditambahkan sebagai
+sumber kebenaran urutan tersebut.
+
+### Diperiksa dan dinilai aman (tidak diubah)
+
+- **29 route API**: semuanya punya auth kecuali yang memang publik (`register`,
+  `cron/*`, `auth`). Route template/profile tanpa rate limit dinilai wajar â€”
+  operasi DB lokal milik sendiri, bukan aksi berisiko atau ke portal luar.
+- **DB produksi (Neon)**: `dated_report_templates` dan `git_repo_configs`
+  **sudah ada** dengan kolom benar dan indeks `(userId, date)`; tak perlu
+  `db:push` untuk fitur ini.
+- **Bukti fitur belum pernah jalan sungguhan**: `dated_report_templates` berisi
+  **0 baris**. Konsisten dengan catatan bahwa semua pengujian masih memakai
+  mock. Ini bukan bug, tetapi berarti jalur simpan draf commit belum terbukti
+  di lingkungan nyata.
+
+## 14. Dua keputusan yang tadinya ditunda — kini dikerjakan
+
+Kedua butir yang di Â§13 dicatat "menunggu keputusan pemilik" sudah diputuskan
+dan diimplementasikan.
+
+### 14.1 Kolom "Pembelajaran yang Diperoleh" diisi dari BUKTI commit
+
+Keputusan lama (Â§8 Fase 3) â€” *jangan isi otomatis karena commit menunjukkan
+apa yang dikerjakan, bukan apa yang dipelajari* â€” **tetap dihormati**. Yang
+ditambahkan bukan pengisian bebas, melainkan penurunan dari bukti:
+
+- Modul murni baru `src/lib/commit-learning.ts`: `detectChangeKind()` membaca
+  jenis perubahan dari prefix Conventional Commits atau kata di judul; lalu
+  `learningFromCommits()` merakit kalimat yang **hanya** merujuk pada jenis
+  perubahan yang benar-benar ada + topik dari judul commit.
+- **Guard yang menentukan**: bila tidak ada satu pun JENIS perubahan yang
+  dikenali, fungsi mengembalikan `null` dan kolom dibiarkan kosong. Topik saja
+  tidak cukup â€” judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada
+  yang dipelajari.
+- `DraftInput` menerima `learning?`. Penyusun memakainya bila lolos
+  `checkReportField`, selain itu tetap menyusun sendiri. Drafter tidak tahu
+  soal git.
+- `/api/repos/preview` menambah `learningSource: "DERIVED" | "EMPTY"` di
+  samping `learningNeedsReview: true`. Keduanya tetap `needsReview`: teks
+  derived wajib disesuaikan dengan pengalaman sebenarnya.
+
+**Temuan saat menguji (penting).** Tes pertama untuk guard di atas **lulus
+secara kebetulan**: dengan guard dihapus tes tetap hijau karena teks kosong
+memang sudah ditolak `MIN_REPORT_LENGTH` (100). Tes seperti itu tidak menjaga
+apa pun. Setelah diperbaiki dengan bahan yang cukup panjang, tes langsung merah
+dan **menyingkap cacat desain nyata**: judul panjang tanpa sinyal jenis masih
+menghasilkan kalimat "saya mempelajari penerapannya" â€” persis karangan yang
+ingin dihindari. Guard diperketat dari `jenis === 0 && topik === 0` menjadi
+`jenis === 0`.
+
+Dikunci 12 tes di `commit-learning.test.ts`. Dibuktikan bisa gagal: menghapus
+guard â†’ 1 tes merah â†’ dikembalikan.
+
+### 14.2 Panel admin: ubah peran (Hapus sudah ada sejak awal)
+
+- `checkRoleChange()` + pesan/status di `admin-user-actions.ts` (aturan murni,
+  24 tes).
+- `PATCH /api/admin/users/:id` di rute yang sama dengan `DELETE`, berbagi
+  penjagaan admin + rate limit. Menaikkan `sessionVersion` supaya JWT lama
+  tidak terus membawa peran lama.
+- Enum `AdminActionType` bertambah `USER_CHANGE_ROLE`, sehingga perubahan peran
+  masuk audit log yang sama. Diverifikasi langsung di DB produksi:
+  `USER_DELETE, USER_RESET_PASSWORD, USER_TEST_LOGIN, USER_CHANGE_ROLE`.
+- Tombol "Jadikan admin" (ikon `ShieldCheck`) di panel admin untuk pengguna
+  biasa; akun sendiri dan admin lain tidak ditawari.
+
+**Bug nyata yang tertangkap saat menulis.** Versi pertama `checkRoleChange`
+dibangun di atas `checkAdminTarget`, yang menolak **semua** sasaran ber-peran
+ADMIN tanpa melihat peran tujuan. Akibatnya promosi USER â†’ ADMIN mustahil dan
+fitur jadi tidak berguna. Aturan ditulis ulang agar memutuskan berdasarkan
+peran TUJUAN; ada tes regresi khusus.
+
+**Batas yang disengaja:** menurunkan ADMIN â†’ USER belum didukung. Tanpa
+jaminan "masih ada admin lain", menurunkan admin terakhir akan mengunci panel
+admin tanpa jalan masuk. Server menolak terang-terangan (403) dan UI tidak
+menawarkan tombolnya.
+
+Baseline setelah perubahan: typecheck âœ… Â· lint âœ… Â· **997 tes lulus** (+23) Â·
+build âœ… Â· `prisma db push` âœ… (enum tersinkron).
+
+## 15. Perbaikan setelah meninjau ulang hasil sendiri
+
+Butir-butir di bawah ditemukan dengan membaca ulang diff, **bukan** dari tes
+yang merah — semuanya lolos seluruh 997 tes pada saat itu. Dua di antaranya
+adalah bug keamanan dan janji yang salah kepada pengguna.
+
+### 15.1 KRITIS — peran sesi adalah potret saat login
+
+Callback `jwt` pada permintaan biasa menyegarkan `sessionVersion`, `deletedAt`,
+dan `mustChangePassword` dari DB, tetapi **tidak** `role`. Padahal semua
+penjagaan admin (`/admin`, `/api/admin/*`, termasuk `PATCH` ubah peran) membaca
+`session.user.role` yang berasal dari `token.role` — nilai saat login. Jadi
+peran yang sudah dicabut tetap berlaku sampai token kedaluwarsa.
+
+`sessionVersion++` di route ubah-peran memang mencabut sesi, sehingga celah ini
+tidak bisa dieksploitasi lewat jalur tersebut. Tetapi klaim "JWT lama tidak
+membawa peran lama" hanya benar karena efek samping itu, bukan karena sesi
+menanyakan peran ke sumbernya. Pengguna yang **dinaikkan** juga ikut ter-logout
+tanpa penjelasan — sesi tidak perlu dicabut saat promosi.
+
+Perbaikan: `role` ikut `select` di callback `jwt`, keputusan diambil fungsi murni
+baru `peranSesiEfektif()` (`session-version.ts`) — DB sebagai penentu, peran tak
+dikenal tidak pernah menaikkan siapa pun menjadi ADMIN, dan tanpa peran yang
+bisa dipakai hasilnya `USER` (menutup, bukan membuka).
+
+**Tes lama tidak menjaga ini sama sekali.** Dengan perbaikan dimatikan lagi,
+**997 tes tetap hijau**. Tes baru (6 kasus) ditulis lebih dulu, lalu dibuktikan
+bisa gagal dengan merusak `peranSesiEfektif` → 1 merah → dikembalikan.
+
+### 15.2 Kolom pembelajaran masih mengklaim isi kepala pengguna
+
+Guard `jenis.length === 0` sudah benar, tetapi kalimat topiknya berbunyi
+*"…, saya mempelajari penerapannya secara langsung, bukan hanya dari teori."*
+Kalimat itu muncul untuk **setiap** commit yang punya topik dan tidak diturunkan
+dari bukti apa pun — persis karangan yang jadi alasan modul ini ada. Ia lolos
+karena semua tes memeriksa ada/tidaknya keluaran, bukan isinya.
+
+Sekarang kalimat topik hanya melaporkan pekerjaan ("Pekerjaan hari ini mencakup
+…"); klaim "mempelajari / saya belajar" hanya boleh datang dari
+`PELAJARAN_PER_JENIS` yang punya dasar jenis perubahan. Dua tes baru mengunci
+ini, dibuktikan bisa gagal: klaim lama dipulihkan → 2 merah → dikembalikan.
+
+### 15.3 Saringan tanggal gagal secara senyap
+
+`runDispatch` memakai `plainDateToUtcDate(date) ?? undefined`. Bila tanggal tak
+terbaca, `where` menjadi `undefined` → Prisma mengabaikan saringan → query
+kembali memuat **seluruh riwayat** template bertanggal semua pengguna, yaitu
+persis pemborosan yang ingin dicegah, tanpa tanda apa pun. Sekarang gagal keras
+dengan pesan jelas.
+
+### 15.4 Kode mati di panel admin
+
+`jalankanPeran()` menghitung `peranBaru = isAdmin ? "USER" : "ADMIN"` padahal
+tombolnya tidak pernah aktif untuk sasaran admin (dan server menolak penurunan
+peran). Cabang "turunkan ke USER" — termasuk pesan toast-nya — tidak akan pernah
+tercapai. Diganti peran tujuan tetap `"ADMIN"` dengan komentar alasannya.
+
+Baseline akhir: typecheck ✅ · lint ✅ · **1005 tes lulus** (+31) · build ✅.

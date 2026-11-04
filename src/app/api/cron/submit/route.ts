@@ -32,7 +32,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
-import { todayInJakarta, toPlainDate } from "@/lib/submit-service";
+import { plainDateToUtcDate, todayInJakarta, toPlainDate } from "@/lib/submit-service";
 import { chooseTemplate } from "@/lib/template-selection";
 import { prepareCommitDraft, contentOf } from "@/lib/commit-draft-service";
 import { chooseReportContent } from "@/lib/report-source";
@@ -68,6 +68,21 @@ export async function GET(request: Request) {
     );
   }
 
+  // Tanggal WIB hari ini, dihitung SEKALI dan dipakai baik untuk menyaring
+  // template bertanggal maupun untuk mengirim. Dua perhitungan terpisah bisa
+  // berbeda hasil bila pemanggilan melewati tengah malam.
+  const date = todayInJakarta();
+  const hariIni = plainDateToUtcDate(date);
+  if (!hariIni) {
+    // Praktis mustahil (`todayInJakarta` selalu menghasilkan YYYY-MM-DD sah),
+    // tapi `plainDateToUtcDate` mengembalikan null untuk bentuk tak sah. Lebih
+    // baik menolak jelas daripada mengirim laporan untuk tanggal yang salah.
+    return NextResponse.json(
+      { error: "Tanggal hari ini tidak dapat ditentukan." },
+      { status: 500 },
+    );
+  }
+
   const config = await prisma.automationConfig.findUnique({
     where: { webhookKey: key.trim() },
     select: {
@@ -80,6 +95,13 @@ export async function GET(request: Request) {
             select: { activity: true, learning: true, obstacles: true },
           },
           datedTemplates: {
+            // HANYA baris untuk tanggal hari ini. Tanpa `where` ini, setiap
+            // pemanggilan cron memuat SELURUH riwayat template bertanggal —
+            // dan jumlahnya bertambah tiap hari (draf commit disimpan sebagai
+            // baris bertanggal). Setelah beberapa bulan itu ratusan baris teks
+            // panjang per pengguna, dikirim dari DB berkali-kali sehari, padahal
+            // `chooseReportContent` hanya memakai baris tanggal ini.
+            where: { date: hariIni },
             select: {
               date: true,
               activity: true,
@@ -116,8 +138,6 @@ export async function GET(request: Request) {
       reason: "Otomasi sedang nonaktif.",
     });
   }
-
-  const date = todayInJakarta();
 
   // Sumber isi laporan (diputuskan pemilik, sama persis dengan dispatcher massal):
   // commit hari itu -> template bertanggal -> template harian -> batal.

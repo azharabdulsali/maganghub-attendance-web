@@ -14,14 +14,14 @@
 "use client";
 
 import * as React from "react";
-import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
+import { Check, Copy, KeyRound, ShieldCheck, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Message } from "@/components/ui/message";
 import { useToast } from "@/components/ui/toast";
 
-type Aksi = "reset" | "hapus";
+type Aksi = "reset" | "hapus" | "peran";
 
 export function UserRowActions({
   userId,
@@ -99,6 +99,42 @@ export function UserRowActions({
     }
   }
 
+  // Ubah peran pengguna. Server tetap penentu akhir.
+  //
+  // Hanya PROMOSI (USER -> ADMIN) yang ditawarkan: tombolnya memang tidak
+  // muncul untuk sasaran admin, dan `checkRoleChange` di server juga menolak
+  // penurunan. Karena itu peran tujuan ditulis tetap, bukan dihitung dari
+  // `isAdmin` — dulu ada cabang "turunkan ke USER" yang tidak akan pernah
+  // tercapai dan hanya menambah jalur yang tak teruji.
+  async function jalankanPeran() {
+    setWorking(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "ADMIN" }),
+      });
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (!res.ok) {
+        toast.error(
+          "Gagal mengubah peran",
+          data?.error ?? "Terjadi kesalahan.",
+        );
+        return;
+      }
+      toast.success(
+        "Peran diubah",
+        `${userEmail} sekarang admin. Sesi lamanya berakhir.`,
+      );
+      // Muat ulang: badge peran dan tombol yang tersedia ikut berubah.
+      window.location.reload();
+    } catch {
+      toast.error("Gagal mengubah peran", "Tidak bisa menghubungi server.");
+    } finally {
+      setWorking(false);
+    }
+  }
+
   async function salin() {
     if (!sandiBaru) return;
     try {
@@ -129,6 +165,27 @@ export function UserRowActions({
         >
           <KeyRound aria-hidden />
         </Button>
+        {/* Ubah peran: netral, hanya untuk pengguna yang bukan admin.
+            Menurunkan admin lain sengaja TIDAK ditawarkan (lihat
+            `checkRoleChange`) — server akan menolaknya, dan sistem bisa
+            terkunci bila itu admin terakhir. */}
+        <Button
+          type="button"
+          variant="neutral"
+          size="icon-sm"
+          disabled={isSelf || isAdmin || working}
+          title={
+            isSelf
+              ? "Tidak bisa pada akun sendiri"
+              : isAdmin
+                ? "Menurunkan admin lain belum didukung"
+                : `Jadikan ${userEmail} admin`
+          }
+          aria-label={`Jadikan ${userEmail} admin`}
+          onClick={() => setKonfirmasi("peran")}
+        >
+          <ShieldCheck aria-hidden />
+        </Button>
         {/* Merah (danger): aksi merusak, tak bisa dibatalkan. */}
         <Button
           type="button"
@@ -153,6 +210,19 @@ export function UserRowActions({
         onConfirm={() => {
           setKonfirmasi(null);
           void jalankanReset();
+        }}
+      />
+
+      {/* Konfirmasi ubah peran. */}
+      <ConfirmDialog
+        open={konfirmasi === "peran"}
+        onOpenChange={(buka) => !buka && setKonfirmasi(null)}
+        title="Jadikan pengguna ini admin?"
+        description={`${userEmail} akan mendapat akses penuh ke panel admin, termasuk mengelola pengguna lain. Sesi lamanya akan berakhir dan ia perlu masuk kembali.`}
+        confirmLabel="Ya, jadikan admin"
+        onConfirm={() => {
+          setKonfirmasi(null);
+          void jalankanPeran();
         }}
       />
 

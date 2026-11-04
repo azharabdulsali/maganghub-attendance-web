@@ -24,6 +24,7 @@
 import { prisma } from "./prisma";
 import { draftInputFromCommits, resolveCommits } from "./git-repo-service";
 import { getDrafter } from "./report-draft";
+import { learningFromCommits } from "./commit-learning";
 import type { ReportContent } from "./report-source";
 
 /** Hasil penyusunan draf commit untuk satu tanggal. */
@@ -76,7 +77,12 @@ export async function prepareCommitDraft(
   }
 
   try {
-    const draf = await getDrafter().draft({ keywords: bahan.keywords, date });
+    // Kolom "Pembelajaran" diturunkan dari BUKTI commit (jenis perubahan &
+    // topiknya), bukan dikarang dari template. Bila bukti tidak cukup,
+    // `learningFromCommits` mengembalikan `null` dan penyusun memakai kalimat
+    // netral — kolom tidak pernah diisi klaim tanpa dasar.
+    const learning = learningFromCommits(hasilGit.commits) ?? undefined;
+    const draf = await getDrafter().draft({ keywords: bahan.keywords, date, learning });
     const content: ReportContent = {
       activity: draf.activity,
       learning: draf.learning,

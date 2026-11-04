@@ -17,7 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { env, isAdminEmail } from "@/lib/env";
 import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
-import { sesiMasihSah, versiSesiDariKlien, wajibGantiDariKlien } from "@/lib/session-version";
+import { sesiMasihSah, versiSesiDariKlien, wajibGantiDariKlien, peranSesiEfektif } from "@/lib/session-version";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -144,7 +144,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       const current = await prisma.user.findUnique({
         where: { id },
-        select: { sessionVersion: true, deletedAt: true, mustChangePassword: true },
+        select: {
+          sessionVersion: true,
+          deletedAt: true,
+          mustChangePassword: true,
+          // `role` WAJIB ikut dibaca dari DB tiap permintaan, bukan hanya
+          // disalin saat login. Sesi ini JWT: `token.role` adalah potret saat
+          // login. Tanpa baris ini, admin yang baru diturunkan (atau pengguna
+          // yang baru dinaikkan) terus memakai peran lamanya sampai token
+          // kedaluwarsa — semua guard admin membaca `session.user.role`, yang
+          // berasal dari token. Menaikkan `sessionVersion` di route ubah-peran
+          // sudah mencabut sesi, tetapi ini menjadikannya benar dari sumbernya.
+          role: true,
+        },
       });
       // Akun yang di-soft-delete langsung mengakhiri sesi yang masih beredar.
       if (!current || current.deletedAt) return null;
@@ -156,6 +168,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Sumber kebenaran flag wajib-ganti adalah DB, bukan klien: admin yang
       // baru mengatur ulang kata sandi akan terlihat oleh sesi yang masih hidup.
       token.mustChangePassword = current.mustChangePassword;
+      // Idem untuk peran: DB yang menentukan, bukan potret saat login.
+      token.role = peranSesiEfektif(token.role, current.role);
 
       return token;
     },

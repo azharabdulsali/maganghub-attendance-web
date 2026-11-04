@@ -33,8 +33,8 @@ export default async function ReposPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-      <div className="mb-8">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <header className="mb-6">
         <h1 className="font-heading text-3xl">Repo Git</h1>
         <p className="mt-1 text-sm text-foreground/70">
           Hubungkan <strong>satu</strong> repo GitHub atau GitLab agar commit
@@ -42,7 +42,7 @@ export default async function ReposPage() {
           <strong>mati secara bawaan</strong>; tidak ada yang diambil sebelum
           Anda mengisi repo di sini.
         </p>
-      </div>
+      </header>
 
       <RepoForm
         featureEnabled={gitCommitsEnabled()}

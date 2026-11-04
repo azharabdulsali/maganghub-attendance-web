@@ -26,6 +26,7 @@ import {
   toCommitView,
 } from "@/lib/git-repo-service";
 import { getDrafter } from "@/lib/report-draft";
+import { learningFromCommits } from "@/lib/commit-learning";
 
 /** Ambil id user dari sesi; null kalau belum login. */
 async function currentUserId(): Promise<string | null> {
@@ -88,8 +89,16 @@ export async function POST(request: Request) {
 
   // Draf disusun lewat `getDrafter()` — jalur SAMA yang dipakai tombol "Susun
   // draf" di form. Jadi commit tidak menambah cara kedua menyusun laporan.
+  // Kolom "Pembelajaran" diturunkan dari BUKTI commit (jenis perubahan &
+  // topik), bukan dikarang; bila bukti tidak cukup, kolom itu tetap kosong dan
+  // `learningFromCommits` mengembalikan `null`.
+  const learning = learningFromCommits(hasil.commits);
   const draf = bahan
-    ? await getDrafter().draft({ keywords: bahan.keywords, date: hasil.date })
+    ? await getDrafter().draft({
+        keywords: bahan.keywords,
+        date: hasil.date,
+        learning: learning ?? undefined,
+      })
     : null;
 
   return NextResponse.json({
@@ -97,9 +106,16 @@ export async function POST(request: Request) {
     date: hasil.date,
     count: hasil.commits.length,
     commits: toCommitView(hasil.commits),
-    // Kolom "Pembelajaran" tetap diserahkan ke pengguna (keputusan Fase 3):
-    // commit menunjukkan APA yang dikerjakan, bukan APA yang dipelajari.
-    // UI memakai penanda ini untuk menyuruh pengguna menyuntingnya.
-    draft: draf ? { ...draf, learningNeedsReview: true } : null,
+    // Pengguna tetap WAJIB meninjau kolom "Pembelajaran". Bila diturunkan dari
+    // bukti commit, penandanya `DERIVED` (ada dasar, perlu disesuaikan dengan
+    // pengalaman sebenarnya); bila kosong, `EMPTY` (harus ditulis sendiri).
+    // Keduanya `needsReview`, supaya UI tidak pernah menyiratkan teks final.
+    draft: draf
+      ? {
+          ...draf,
+          learningNeedsReview: true,
+          learningSource: learning === null ? "EMPTY" : "DERIVED",
+        }
+      : null,
   });
 }

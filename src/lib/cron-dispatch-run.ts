@@ -10,7 +10,7 @@
 // perform-submit.ts.
 
 import { prisma } from "@/lib/prisma";
-import { todayInJakarta, toPlainDate } from "@/lib/submit-service";
+import { plainDateToUtcDate, todayInJakarta, toPlainDate } from "@/lib/submit-service";
 import { chooseTemplate } from "@/lib/template-selection";
 import { performSubmit, type SubmitOutcome } from "@/lib/perform-submit";
 import { jakartaHour, planDispatch, type DueCandidate } from "@/lib/cron-dispatch";
@@ -52,6 +52,18 @@ export type DispatchSummary = {
  * @param now  Waktu acuan (bisa disuntik untuk pengujian).
  */
 export async function runDispatch(now: Date = new Date()): Promise<DispatchSummary> {
+  // Tanggal dihitung SEBELUM query karena dipakai untuk menyaring template
+  // bertanggal. Diturunkan dari `now` (bukan `new Date()`) supaya jam dan
+  // tanggal selalu berasal dari waktu acuan yang sama.
+  const date = todayInJakarta(now);
+  // WAJIB gagal keras bila tanggal tak terbaca. `?? undefined` akan MENGHAPUS
+  // saringan, sehingga query kembali memuat SELURUH riwayat template bertanggal
+  // (persis pemborosan yang ingin dicegah) tanpa ada tanda apa pun.
+  const hariIni = plainDateToUtcDate(date);
+  if (!hariIni) {
+    throw new Error(`Tanggal WIB tidak dapat dibaca: "${date}"`);
+  }
+
   // Semua user otomasi aktif + data yang dibutuhkan untuk mengirim.
   const configs = await prisma.automationConfig.findMany({
     where: { isEnabled: true },
@@ -63,6 +75,11 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
         select: {
           template: { select: { activity: true, learning: true, obstacles: true } },
           datedTemplates: {
+            // Hanya tanggal hari ini: tanpa saringan ini, seluruh riwayat
+            // template bertanggal semua pengguna ikut terbaca di setiap
+            // pemanggilan cron, dan jumlahnya bertambah tiap hari (draf commit
+            // disimpan sebagai baris bertanggal).
+            where: { date: hariIni },
             select: { date: true, activity: true, learning: true, obstacles: true },
           },
           credential: {
@@ -90,11 +107,8 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
   const { due, deferred } = planDispatch(candidates, hour, DISPATCH_BATCH_SIZE);
   const byUser = new Map(configs.map((c) => [c.userId, c]));
 
-  // `date` WAJIB diturunkan dari `now`, bukan dari `new Date()`: seluruh fungsi
-  // ini menerima `now` sebagai acuan waktu, dan memakai jam dari satu waktu tapi
-  // tanggal dari waktu lain membuat hasilnya tak bisa diuji — sekaligus salah di
-  // pergantian tengah malam WIB (jam 7 WIB tetapi tanggal masih kemarin).
-  const date = todayInJakarta(now);
+  // `date` dihitung di atas (sebelum query) dan WAJIB diturunkan dari `now`,
+  // bukan dari `new Date()`. Lihat komentar di deklarasi `date`.
   const start = Date.now();
   const results: DispatchUserResult[] = [];
   let deadlineHit = false;

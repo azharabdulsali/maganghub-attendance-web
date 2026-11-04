@@ -58,3 +58,30 @@ export function wajibGantiDariKlien(session: unknown): boolean | null {
     ?.mustChangePassword;
   return typeof v === "boolean" ? v : null;
 }
+
+/**
+ * Peran yang harus dipakai sesi ini, diambil dari DB (bukan dari token).
+ *
+ * Kenapa harus ada: `token.role` adalah POTRET saat login. Tanpa penyegaran,
+ * admin yang perannya diturunkan (atau pengguna yang dinaikkan) terus memakai
+ * peran lamanya sampai token kedaluwarsa — dan semua penjagaan admin membaca
+ * `session.user.role`, yang berasal dari token itu. Itu berarti pencabutan
+ * peran bisa tertunda berjam-jam/berhari-hari.
+ *
+ * Aturan:
+ *   - DB yang menentukan; nilai token hanya dipakai bila DB tak terbaca.
+ *   - Peran tak dikenal dari DB diperlakukan sebagai `USER` (menutup, bukan
+ *     membuka) — sama seperti `isAdminRole` yang default ke `USER`.
+ *
+ * @param peranToken peran di token (potret saat login)
+ * @param peranDb    peran di DB saat permintaan ini, atau `null` bila tak ada
+ */
+export function peranSesiEfektif(
+  peranToken: unknown,
+  peranDb: unknown,
+): string {
+  const db = typeof peranDb === "string" ? peranDb.trim().toUpperCase() : "";
+  if (db === "ADMIN" || db === "USER") return db;
+  const token = typeof peranToken === "string" ? peranToken.trim().toUpperCase() : "";
+  return token === "ADMIN" ? "ADMIN" : "USER";
+}

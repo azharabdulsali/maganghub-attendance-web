@@ -4,6 +4,7 @@ import {
   sesiMasihSah,
   versiSesiDariKlien,
   wajibGantiDariKlien,
+  peranSesiEfektif,
 } from "./session-version";
 
 describe("sesiMasihSah", () => {
@@ -70,5 +71,51 @@ describe("wajibGantiDariKlien", () => {
     expect(wajibGantiDariKlien(undefined)).toBeNull();
     expect(wajibGantiDariKlien("apa saja")).toBeNull();
     expect(wajibGantiDariKlien({})).toBeNull();
+  });
+});
+
+describe("peranSesiEfektif", () => {
+  // INTI: peran sesi HARUS mengikuti DB, bukan potret saat login. Sebelum
+  // penyegaran ini ada, admin yang diturunkan tetap lolos semua penjagaan
+  // admin sampai token kedaluwarsa (token menyimpan `role` saat login).
+  it("memakai peran DB, bukan peran token, saat keduanya berbeda", () => {
+    // Diturunkan: token masih ADMIN, DB sudah USER -> harus USER.
+    expect(peranSesiEfektif("ADMIN", "USER")).toBe("USER");
+    // Dinaikkan: token masih USER, DB sudah ADMIN -> harus ADMIN.
+    expect(peranSesiEfektif("USER", "ADMIN")).toBe("ADMIN");
+  });
+
+  it("tetap benar bila peran token dan DB sama", () => {
+    expect(peranSesiEfektif("ADMIN", "ADMIN")).toBe("ADMIN");
+    expect(peranSesiEfektif("USER", "USER")).toBe("USER");
+  });
+
+  it("tidak peka huruf besar-kecil dan spasi", () => {
+    expect(peranSesiEfektif("admin", " user ")).toBe("USER");
+    expect(peranSesiEfektif(" user ", "admin")).toBe("ADMIN");
+  });
+
+  // Peran tak dikenal di DB TIDAK dianggap ADMIN. Sesi lama yang kebetulan
+  // masih memegang ADMIN tetap boleh ADMIN (token belum dicabut), tetapi nilai
+  // asing tidak pernah MENGUBAH siapa pun menjadi ADMIN.
+  it("peran DB tak dikenal tidak pernah menaikkan peran", () => {
+    expect(peranSesiEfektif("USER", "SUPERADMIN")).toBe("USER");
+    expect(peranSesiEfektif("user", "OWNER")).toBe("USER");
+    // Token lama yang sudah ADMIN tidak diturunkan oleh nilai asing; sesi itu
+    // dicabut lewat `sessionVersion`, bukan lewat tebakan peran.
+    expect(peranSesiEfektif("ADMIN", "SUPERADMIN")).toBe("ADMIN");
+  });
+
+  it("memakai peran token bila DB tidak memberi peran yang bisa dipakai", () => {
+    expect(peranSesiEfektif("ADMIN", "")).toBe("ADMIN");
+    expect(peranSesiEfektif("ADMIN", null)).toBe("ADMIN");
+    expect(peranSesiEfektif("USER", undefined)).toBe("USER");
+  });
+
+  it("tanpa peran yang bisa dipakai, hasilnya USER (menutup, bukan membuka)", () => {
+    expect(peranSesiEfektif(null, null)).toBe("USER");
+    expect(peranSesiEfektif(undefined, undefined)).toBe("USER");
+    expect(peranSesiEfektif(123, 456)).toBe("USER");
+    expect(peranSesiEfektif({}, [])).toBe("USER");
   });
 });

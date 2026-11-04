@@ -31,6 +31,15 @@ export interface DraftInput {
   date?: string;
   /** Nama unit/divisi, opsional, dipakai untuk memberi konteks. */
   unit?: string;
+  /**
+   * Kolom "Pembelajaran" yang sudah disusun dari BUKTI (mis. jenis perubahan
+   * pada commit hari itu, lihat `commit-learning.ts`).
+   *
+   * Bila diisi, penyusun memakainya apa adanya alih-alih mengarang kalimat
+   * generik. Pemanggil bertanggung jawab menyusunnya dari bukti nyata; penyusun
+   * sengaja tidak tahu asal-usulnya.
+   */
+  learning?: string;
 }
 
 /** Tiga kolom hasil, siap dimasukkan ke form. */
@@ -213,13 +222,15 @@ export const localDrafter: ReportDrafter = {
       unit,
       benih,
     );
-    const learning = bangunKolom(
-      OPENERS_LEARNING,
-      PADDING_LEARNING,
-      kw,
-      unit,
-      benih,
-    );
+    // Bila pemanggil sudah menyusun kolom pembelajaran dari BUKTI (mis. jenis
+    // perubahan pada commit), pakai itu. Mengarang kalimat generik padahal ada
+    // bukti nyata hanya membuat laporan kurang jujur. Validasi tetap dijalankan
+    // supaya bahan dari luar tidak bisa menyelipkan kolom yang ditolak server.
+    const bukti = input.learning?.trim();
+    const learning =
+      bukti && checkReportField(bukti) === null
+        ? normalizeReportText(bukti)
+        : bangunKolom(OPENERS_LEARNING, PADDING_LEARNING, kw, unit, benih);
 
     // Kolom kendala diperlakukan khusus: bila pengguna menandai tidak ada
     // kendala (kata kunci kosong / memuat "tidak ada"), jangan mengarang

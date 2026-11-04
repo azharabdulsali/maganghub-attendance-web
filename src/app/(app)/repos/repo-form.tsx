@@ -24,6 +24,24 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { PasswordInput } from "@/components/ui/password-input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { repoPathFromCloneUrl } from "./repo-path";
+
+// Diekspor ulang agar berkas tes lama (`repo-path-from-clone-url.test.ts`)
+// tetap bisa mengimpor dari sini; implementasinya kini di `repo-path.ts`.
+export { repoPathFromCloneUrl };
+
 
 type Provider = "GITHUB" | "GITLAB";
 
@@ -54,6 +72,12 @@ interface PreviewState {
   date: string | null;
   commits: CommitView[];
   learningNeedsReview: boolean;
+  /**
+   * Asal saran kolom "Pembelajaran": `DERIVED` bila diturunkan dari bukti
+   * jenis pekerjaan di commit, `EMPTY` bila tidak ada bukti sehingga kolom
+   * harus ditulis sendiri. `null` saat belum ada draf.
+   */
+  learningSource: "DERIVED" | "EMPTY" | null;
 }
 
 const PROVIDER_LABEL: Record<Provider, string> = {
@@ -103,47 +127,6 @@ const TOKEN_HELP: Record<
   },
 };
 
-/**
- * Ambil `owner/repo` dari URL clone yang salah tempel.
- *
- * Pengguna hampir selalu menyalin URL dari tombol "Clone" GitLab/GitHub,
- * padahal kolom ini minta jalur polos. Dua bentuk yang paling sering:
- *   git@gitlab.com:azhar/jadwal-app.git
- *   https://gitlab.com/azhar/jadwal-app.git
- *
- * Mengembalikan `null` bila teks sudah berupa jalur polos (tidak perlu diubah),
- * supaya pemanggil bisa membedakan "bukan URL" dari "URL yang berhasil diurai".
- * Sisa `.git` dibuang karena bukan bagian dari nama repo di API.
- */
-export function repoPathFromCloneUrl(teks: string): string | null {
-  const t = teks.trim();
-  if (!t) return null;
-
-  // Bentuk SSH: `git@host:owner/repo.git`
-  const ssh = /^[\w.-]+@[^:/\s]+:(.+)$/.exec(t);
-  let jalur: string | null = ssh ? ssh[1] : null;
-
-  // Bentuk URL: `https://host/owner/repo.git` (host apa pun, agar GitLab
-  // self-hosted tetap terbaca).
-  if (!jalur && /^https?:\/\//i.test(t)) {
-    try {
-      const url = new URL(t);
-      jalur = decodeURIComponent(url.pathname);
-    } catch {
-      return null;
-    }
-  }
-
-  if (!jalur) return null;
-
-  const bersih = jalur
-    .replace(/^\/+/, "")
-    .replace(/\.git$/i, "")
-    .replace(/\/+$/, "");
-
-  return bersih.includes("/") ? bersih : null;
-}
-
 /** Format waktu ke tanggal-jam WIB yang mudah dibaca. */
 function formatWib(iso: string | null): string {
   if (!iso) return "—";
@@ -161,6 +144,7 @@ const PREVIEW_KOSONG: PreviewState = {
   date: null,
   commits: [],
   learningNeedsReview: false,
+  learningSource: null,
 };
 
 export default function RepoForm({
@@ -278,7 +262,10 @@ export default function RepoForm({
         message?: string;
         date?: string;
         commits?: CommitView[];
-        draft?: { learningNeedsReview?: boolean } | null;
+        draft?: {
+          learningNeedsReview?: boolean;
+          learningSource?: "DERIVED" | "EMPTY";
+        } | null;
       };
 
       if (!res.ok) {
@@ -301,6 +288,7 @@ export default function RepoForm({
         date: data.date ?? null,
         commits: data.commits ?? [],
         learningNeedsReview: Boolean(data.draft?.learningNeedsReview),
+        learningSource: data.draft?.learningSource ?? null,
       });
       router.refresh();
     } catch {
@@ -367,256 +355,125 @@ export default function RepoForm({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <form onSubmit={simpan} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="provider">Penyedia</Label>
-          <select
-            id="provider"
-            className="w-full rounded-base border-2 border-border bg-background px-3 py-2 text-sm"
-            value={provider}
-            onChange={(e) => setProvider(e.target.value as Provider)}
-          >
-            <option value="GITHUB">GitHub</option>
-            <option value="GITLAB">GitLab</option>
-          </select>
-          <p className="text-xs text-foreground/60">{TOKEN_HELP[provider].scopeNote}</p>
-        </div>
+    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="space-y-6">
+        <KartuRepo
+          provider={provider}
+          setProvider={setProvider}
+          repoPath={repoPath}
+          setRepoPath={setRepoPath}
+          branch={branch}
+          setBranch={setBranch}
+          token={token}
+          setToken={setToken}
+          hasExisting={hasExisting}
+          hasToken={hasToken}
+          saving={saving}
+          bisaSimpan={bisaSimpan}
+          error={error}
+          sukses={sukses}
+          previewLoading={preview.loading}
+          onSimpan={simpan}
+          onUji={() => void ujiAmbil()}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="repoPath">Repo</Label>
-          <Input
-            id="repoPath"
-            value={repoPath}
-            onChange={(e) => setRepoPath(e.target.value)}
-            onBlur={() => {
-              // Rapikan otomatis HANYA saat fokus berpindah, bukan setiap
-              // ketikan — kalau dirapikan sambil mengetik, pengguna yang
-              // mengetik manual akan melihat teksnya berubah di tengah jalan.
-              const rapi = repoPathFromCloneUrl(repoPath);
-              if (rapi) setRepoPath(rapi);
-            }}
-            placeholder="budi/proyek-magang"
-            autoComplete="off"
-            required
-          />
-          <p className="text-xs text-foreground/60">
-            Format <code>owner/nama-repo</code>. Untuk GitLab boleh bertingkat,
-            mis. <code>grup/sub/proyek</code>. Tempel URL clone juga boleh —
-            akan dirapikan otomatis.
-          </p>
-        </div>
+        {/* Kartu 2: sakelar. Penyimpanannya SENDIRI (PUT `action: "toggle"`),
+            tanpa token — karena itu dipisah dari form di atas. */}
+        {hasExisting && (
+          <Card size="sm">
+            <CardContent>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="repo-enabled">
+                    Pakai commit sebagai bahan draf
+                  </Label>
+                  <p className="text-xs text-foreground/70">
+                    {enabled
+                      ? "Aktif. Saat menyusun draf, commit hari itu (zona WIB) ikut dipakai sebagai bahan."
+                      : "Nonaktif. Repo tetap tersimpan, tapi tidak ada commit yang diambil sampai dinyalakan."}
+                  </p>
+                </div>
+                <Switch
+                  id="repo-enabled"
+                  checked={enabled}
+                  onCheckedChange={(v) => void toggleEnabled(v)}
+                  disabled={toggling}
+                />
+              </div>
+              <p className="mt-3 text-xs text-foreground/60">
+                Perubahan sakelar berlaku langsung — tidak perlu menempel ulang
+                token atau menekan tombol simpan di atas.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <div className="space-y-2">
-          <Label htmlFor="branch">Branch</Label>
-          <Input
-            id="branch"
-            value={branch}
-            onChange={(e) => setBranch(e.target.value)}
-            placeholder="main"
-            autoComplete="off"
-          />
-        </div>
+        {preview.ok !== null && <KartuHasilUji preview={preview} />}
+      </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="token">Token akses</Label>
-          <Input
-            id="token"
-            type="password"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder={
-              hasToken ? "•••••••• (token lama tidak ditampilkan)" : "ghp_…"
-            }
-            autoComplete="off"
-            required
-          />
-          <p className="text-xs text-foreground/60">
-            Token disimpan terenkripsi dan tidak pernah ditampilkan lagi, bahkan
-            kepada Anda. Hanya dipakai untuk membaca commit. Untuk memperbarui
-            pengaturan, tempel ulang token yang sama atau token baru.
-          </p>
+      <aside className="space-y-4 text-sm">
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle className="text-base">Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="space-y-2 text-xs">
+              <div className="space-y-1 border-t-2 border-border pt-2">
+                <dt className="text-foreground/60">Terhubung</dt>
+                {/* `break-words` (bukan `break-all`): jalur repo GitLab bisa
+                    sangat panjang dan dulu membungkus jadi kolom sempit di
+                    samping label. Ditaruh di barisnya sendiri supaya muat,
+                    dan `break-words` memotong di batas kata yang wajar. */}
+                <dd className="break-words">
+                  {hasExisting
+                    ? `${PROVIDER_LABEL[existingProvider ?? provider]} · ${existingRepoPath ?? "—"}`
+                    : "Belum"}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-foreground/60">Token</dt>
+                <dd>
+                  <Badge tone={hasToken ? "good" : "neutral"}>
+                    {hasToken ? "Tersimpan" : "Belum ada"}
+                  </Badge>
+                </dd>
+              </div>
+              <div className="space-y-1 border-t-2 border-border pt-2">
+                <dt className="text-foreground/60">Terakhir diambil</dt>
+                <dd>{formatWib(lastFetchedAt)}</dd>
+              </div>
+            </dl>
 
-          {/*
-            Petunjuk pembuatan token ditaruh DI DALAM kolom token, bukan di atas
-            form: pengguna baru menyadari butuh token saat sampai di sini.
-            Detail dibungkus <details> supaya pengguna lama yang sudah punya
-            token tidak terganggu, tapi tetap bisa dibuka tanpa pindah halaman.
-          */}
-          <details className="rounded-base border-2 border-border p-3">
-            <summary className="cursor-pointer text-sm font-base">
-              Belum punya token {PROVIDER_LABEL[provider]}?
-            </summary>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs text-foreground/70">
-              {TOKEN_HELP[provider].steps.map((langkah) => (
-                <li key={langkah}>{langkah}</li>
-              ))}
-            </ol>
-            <a
-              href={TOKEN_HELP[provider].createUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-block text-sm underline underline-offset-4"
-            >
-              {TOKEN_HELP[provider].createLabel} (buka tab baru)
-            </a>
-            <p className="mt-2 text-xs text-foreground/60">
-              Memberi izin lebih luas dari yang disebutkan tidak membuat fitur
-              ini bekerja lebih baik, dan hanya menambah risiko bila token
-              bocor. Token Anda hanya untuk repo ini — jangan pakai token kerja
-              yang punya akses ke banyak repo.
-            </p>
-            <p className="mt-1 text-xs text-foreground/60">
-              Di GitLab, token hanya bisa membaca repo tempat Anda sendiri
-              punya akses. Kalau muncul pesan repo tidak ditemukan, pastikan Anda
-              sudah menjadi anggota repo tersebut (minimal peran Reporter), bukan
-              hanya mengubah izin token.
-            </p>
-          </details>
-        </div>
+            {lastError && (
+              <div className="mt-3">
+                <Message tone="bad">{lastError}</Message>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        {error && <Message tone="bad">{error}</Message>}
-        {sukses && <Message tone="good">{sukses}</Message>}
-
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={!bisaSimpan || saving}>
-            {saving
-              ? "Menyimpan…"
-              : hasExisting
-                ? "Perbarui repo"
-                : "Simpan repo"}
-          </Button>
-
-          {hasExisting && (
-            <>
+        {/* Aksi merusak dipisah jauh dari tombol simpan: tidak boleh
+            bersebelahan dengan tombol yang sering ditekan. */}
+        {hasExisting && (
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle className="text-base">Lepas repo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-foreground/70">
+                Menghapus repo dan token tersimpan. Draf dari commit berhenti
+                sampai Anda menghubungkan repo lagi.
+              </p>
               <Button
                 type="button"
-                variant="neutral"
-                onClick={ujiAmbil}
-                disabled={preview.loading}
-              >
-                {preview.loading ? "Mengambil…" : "Uji ambil commit"}
-              </Button>
-              <Button
-                type="button"
-                variant="neutral"
+                variant="danger"
                 onClick={() => setConfirmHapus(true)}
                 disabled={deleting}
               >
                 Hapus repo
               </Button>
-            </>
-          )}
-        </div>
-      </form>
-
-      {/* Sakelar dipisah dari form dan diletakkan sebagai kartu sendiri karena
-          penyimpanannya SENDIRI-SENDIRI (PUT `action: "toggle"`), tanpa token.
-          Kalau ditaruh di dalam form, pengguna akan mengira ia ikut tersimpan
-          saat menekan "Perbarui repo" — padahal tidak, dan itu membingungkan. */}
-      {hasExisting && (
-        <section className="rounded-base border-2 border-border p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="repo-enabled">Pakai commit sebagai bahan draf</Label>
-              <p className="text-xs text-foreground/70">
-                {enabled
-                  ? "Aktif. Saat menyusun draf, commit hari itu (zona WIB) ikut dipakai sebagai bahan."
-                  : "Nonaktif. Repo tetap tersimpan, tapi tidak ada commit yang diambil sampai dinyalakan."}
-              </p>
-            </div>
-            <Switch
-              id="repo-enabled"
-              checked={enabled}
-              onCheckedChange={(v) => void toggleEnabled(v)}
-              disabled={toggling}
-            />
-          </div>
-          <p className="mt-3 text-xs text-foreground/60">
-            Mengubah sakelar ini tidak menghapus token dan tidak perlu menempel
-            ulang token. Matikan sementara bila ingin berhenti memakai commit
-            tanpa kehilangan pengaturan repo.
-          </p>
-        </section>
-      )}
-
-      <aside className="space-y-4 text-sm">
-        <div className="rounded-base border-2 border-border p-4">
-          <h2 className="font-heading text-base">Status</h2>
-          <dl className="mt-3 space-y-2 text-xs">
-            <div className="flex justify-between gap-2">
-              <dt className="text-foreground/60">Terhubung</dt>
-              <dd>
-                {hasExisting
-                  ? `${PROVIDER_LABEL[existingProvider ?? provider]} · ${existingRepoPath ?? "—"}`
-                  : "Belum"}
-              </dd>
-            </div>
-            <div className="flex justify-between gap-2">
-              <dt className="text-foreground/60">Token</dt>
-              <dd>
-                <Badge tone={hasToken ? "good" : "neutral"}>
-                  {hasToken ? "Tersimpan" : "Belum ada"}
-                </Badge>
-              </dd>
-            </div>
-            <div className="flex justify-between gap-2">
-              <dt className="text-foreground/60">Terakhir diambil</dt>
-              <dd>{formatWib(lastFetchedAt)}</dd>
-            </div>
-          </dl>
-
-          {lastError && (
-            <div className="mt-3">
-              <Message tone="bad">{lastError}</Message>
-            </div>
-          )}
-        </div>
-
-        {preview.ok !== null && (
-          <div className="rounded-base border-2 border-border p-4">
-            <h2 className="font-heading text-base">
-              Commit {preview.date ? `(${preview.date})` : ""}
-            </h2>
-
-            {preview.message && (
-              <div className="mt-2">
-                <Message tone={preview.ok ? "neutral" : "bad"}>
-                  {preview.message}
-                </Message>
-              </div>
-            )}
-
-            {preview.commits.length > 0 && (
-              <ul className="mt-3 space-y-2">
-                {preview.commits.map((c) => (
-                  <li key={c.shortId} className="text-xs">
-                    <code className="text-foreground/60">{c.shortId}</code>{" "}
-                    {c.url ? (
-                      <a
-                        href={c.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline"
-                      >
-                        {c.title}
-                      </a>
-                    ) : (
-                      c.title
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {preview.learningNeedsReview && (
-              <p className="mt-3 text-xs text-foreground/60">
-                Commit hanya menjadi bahan kolom <strong>aktivitas</strong>.
-                Kolom <strong>Pembelajaran yang Diperoleh</strong> tetap perlu
-                Anda tulis sendiri di halaman laporan.
-              </p>
-            )}
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         <p className="text-xs text-foreground/60">
@@ -635,5 +492,290 @@ export default function RepoForm({
         onConfirm={hapus}
       />
     </div>
+  );
+}
+
+/** Kartu 3: hasil uji pengambilan commit. Murni tampilan, tanpa aksi simpan. */
+function KartuHasilUji({ preview }: { preview: PreviewState }) {
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <CardTitle className="text-base">
+          Hasil uji ambil commit
+          {preview.date ? ` — ${preview.date}` : ""}
+        </CardTitle>
+        {preview.message && (
+          <CardDescription className="text-foreground/70">
+            {preview.message}
+          </CardDescription>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {preview.commits.length > 0 && (
+          <ul className="divide-y-2 divide-border rounded-base border-2 border-border">
+            {preview.commits.map((c) => (
+              <li key={c.shortId} className="p-2 text-xs">
+                <code className="text-foreground/60">{c.shortId}</code>{" "}
+                {c.url ? (
+                  <a
+                    href={c.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-4"
+                  >
+                    {c.title}
+                  </a>
+                ) : (
+                  c.title
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {preview.learningNeedsReview && (
+          <p className="text-xs text-foreground/60">
+            Kolom <strong>Pembelajaran yang Diperoleh</strong>
+            {preview.learningSource === "DERIVED" ? (
+              <>
+                {" "}
+                disarankan dari <em>jenis pekerjaan</em> di commit Anda, jadi
+                masih perlu Anda sesuaikan dengan apa yang benar-benar Anda
+                pelajari.
+              </>
+            ) : (
+              <>
+                {" "}
+                belum bisa disarankan karena commit hari itu tidak menunjukkan
+                jenis pekerjaan yang jelas, jadi perlu Anda tulis sendiri.
+              </>
+            )}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* Bagian tampilan disusun per Kartu karena penyimpanannya BERBEDA-BEDA */
+
+/** Kartu 1: repo + token, disimpan bersama lewat satu tombol. */
+function KartuRepo({
+  provider,
+  setProvider,
+  repoPath,
+  setRepoPath,
+  branch,
+  setBranch,
+  token,
+  setToken,
+  hasExisting,
+  hasToken,
+  saving,
+  bisaSimpan,
+  error,
+  sukses,
+  previewLoading,
+  onSimpan,
+  onUji,
+}: {
+  provider: Provider;
+  setProvider: (v: Provider) => void;
+  repoPath: string;
+  setRepoPath: (v: string) => void;
+  branch: string;
+  setBranch: (v: string) => void;
+  token: string;
+  setToken: (v: string) => void;
+  hasExisting: boolean;
+  hasToken: boolean;
+  saving: boolean;
+  bisaSimpan: boolean;
+  error: string | null;
+  sukses: string | null;
+  previewLoading: boolean;
+  onSimpan: (e: React.FormEvent) => void;
+  onUji: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Repo yang dipantau</CardTitle>
+        <CardDescription className="text-foreground/70">
+          {hasExisting
+            ? "Mengubah pengaturan di sini mengganti pengaturan yang tersimpan."
+            : "Hubungkan satu repo. Setelah tersimpan, uji dulu pengambilannya sebelum mengandalkannya untuk laporan."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={onSimpan} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="provider">
+              Penyedia <span className="text-destructive">*</span>
+            </Label>
+            <NativeSelect
+              id="provider"
+              className="w-full"
+              value={provider}
+              onChange={(e) => setProvider(e.target.value as Provider)}
+            >
+              <NativeSelectOption value="GITHUB">GitHub</NativeSelectOption>
+              <NativeSelectOption value="GITLAB">GitLab</NativeSelectOption>
+            </NativeSelect>
+            <p className="text-xs text-foreground/60">
+              {TOKEN_HELP[provider].scopeNote}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="repoPath">
+              Repo <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="repoPath"
+              value={repoPath}
+              onChange={(e) => setRepoPath(e.target.value)}
+              onBlur={() => {
+                // Rapikan otomatis HANYA saat fokus berpindah, bukan setiap
+                // ketikan — kalau dirapikan sambil mengetik, pengguna yang
+                // mengetik manual akan melihat teksnya berubah di tengah jalan.
+                const rapi = repoPathFromCloneUrl(repoPath);
+                if (rapi) setRepoPath(rapi);
+              }}
+              placeholder="budi/proyek-magang"
+              autoComplete="off"
+              aria-describedby="repoPath-hint"
+              required
+            />
+            <p id="repoPath-hint" className="text-xs text-foreground/60">
+              Format <code>owner/nama-repo</code>. Untuk GitLab boleh bertingkat,
+              mis. <code>grup/sub/proyek</code>. Tempel URL clone juga boleh —
+              akan dirapikan otomatis.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="branch">Branch</Label>
+            <Input
+              id="branch"
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              placeholder="main"
+              autoComplete="off"
+              aria-describedby="branch-hint"
+            />
+            <p id="branch-hint" className="text-xs text-foreground/60">
+              Kosongkan untuk memakai <code>main</code>.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="token">
+              Token akses <span className="text-destructive">*</span>
+            </Label>
+            {/* PasswordInput, bukan Input biasa (docs/UI-LAYOUT.md §5b): token
+                panjang mudah salah tempel, dan tanpa tombol "lihat" pengguna
+                tidak punya cara memeriksanya sebelum menyimpan. */}
+            <PasswordInput
+              id="token"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder={hasToken ? "•••••••• (token tersimpan)" : "ghp_…"}
+              autoComplete="off"
+              aria-describedby="token-hint"
+              required
+            />
+            <p id="token-hint" className="text-xs text-foreground/60">
+              Disimpan terenkripsi dan tidak pernah ditampilkan lagi, bahkan
+              kepada Anda. Hanya dipakai untuk membaca commit.
+              {hasExisting && (
+                <>
+                  {" "}
+                  <strong>Menyimpan wajib menempel ulang token</strong> — sama
+                  atau baru — karena token lama tidak dipakai ulang otomatis.
+                </>
+              )}
+            </p>
+
+            <TokenHelp provider={provider} />
+          </div>
+
+          {error && <Message tone="bad">{error}</Message>}
+          {sukses && <Message tone="good">{sukses}</Message>}
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" disabled={!bisaSimpan || saving}>
+              {saving
+                ? "Menyimpan…"
+                : hasExisting
+                  ? "Perbarui repo"
+                  : "Simpan repo"}
+            </Button>
+
+            {hasExisting && (
+              <Button
+                type="button"
+                variant="neutral"
+                onClick={onUji}
+                disabled={previewLoading}
+              >
+                {previewLoading ? "Mengambil…" : "Uji ambil commit"}
+              </Button>
+            )}
+
+            {/* Dulu tombol simpan mati tanpa penjelasan. Sekarang alasannya
+                tertulis tepat di sebelah tombol. */}
+            {!bisaSimpan && (
+              <p className="text-xs text-foreground/60" aria-live="polite">
+                Isi {repoPath.trim() ? "token akses" : "repo dan token akses"}{" "}
+                untuk menyimpan.
+              </p>
+            )}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* Bagian tampilan disusun per Kartu karena penyimpanannya BERBEDA-BEDA: repo +
+ * token lewat satu tombol simpan, sakelar punya jalurnya sendiri (PUT
+ * `action: "toggle"`), dan hasil uji hanya tampilan. Dulu semuanya ditumpuk
+ * dalam satu form, sehingga pengguna wajar mengira sakelar ikut tersimpan saat
+ * menekan "Perbarui repo". */
+
+/** Petunjuk pembuatan token, dilipat agar pengguna lama tidak terganggu. */
+function TokenHelp({ provider }: { provider: Provider }) {
+  const help = TOKEN_HELP[provider];
+  return (
+    <details className="rounded-base border-2 border-border p-3">
+      <summary className="cursor-pointer text-sm font-base">
+        Belum punya token {PROVIDER_LABEL[provider]}?
+      </summary>
+      <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs text-foreground/70">
+        {help.steps.map((langkah) => (
+          <li key={langkah}>{langkah}</li>
+        ))}
+      </ol>
+      <a
+        href={help.createUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 inline-block text-sm underline underline-offset-4"
+      >
+        {help.createLabel} (buka tab baru)
+      </a>
+      <p className="mt-2 text-xs text-foreground/60">
+        Memberi izin lebih luas tidak membuat fitur ini bekerja lebih baik, dan
+        hanya menambah risiko bila token bocor. Jangan pakai token kerja yang
+        punya akses ke banyak repo.
+      </p>
+      <p className="mt-1 text-xs text-foreground/60">
+        Di GitLab, token hanya bisa membaca repo tempat Anda sendiri punya akses.
+        Kalau muncul pesan repo tidak ditemukan, pastikan Anda sudah menjadi
+        anggota repo tersebut (minimal peran Reporter), bukan hanya mengubah izin
+        token.
+      </p>
+    </details>
   );
 }

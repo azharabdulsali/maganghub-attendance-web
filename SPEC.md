@@ -139,6 +139,31 @@ untuk mengambil commit sebagai bahan draf; lihat §5.4a dan
 - Menghapus template bertanggal **tidak** menghapus `Report` yang sudah
   terkirim; riwayat adalah bukti, bukan bagian dari template.
 
+### 5.3b Sumber Isi Laporan (commit → template)
+- Urutan yang berlaku di **semua** jalur kirim (cron per pengguna, dispatcher
+  massal, dan pratinjau manual):
+  1. **Commit hari itu** — disusun otomatis menjadi 3 kolom.
+  2. **Template bertanggal** untuk tanggal tersebut.
+  3. **Template harian**.
+  4. Tidak ada satu pun → **batal**, alasan dicatat. Tidak pernah mengirim
+     laporan kosong atau karangan.
+- Draf dari commit **disimpan** sebagai `DatedReportTemplate` hari itu, sehingga
+  pengguna dapat membuka & menyuntingnya di `/report-templates`.
+- **Suntingan pengguna tidak pernah ditimpa.** Bila baris bertanggal sudah ada,
+  penyusunan otomatis tidak menulis apa pun.
+- Kegagalan mengambil commit (token ditolak, jaringan, repo kosong) **tidak
+  menghalangi** pengiriman; alur jatuh ke template. Kegagalan git bukan alasan
+  menahan laporan harian.
+- Draf setengah jadi (ada kolom kosong) tidak dipakai; dianggap tidak ada bahan.
+- **Kolom "Pembelajaran yang Diperoleh"** diturunkan dari **bukti** commit, bukan
+  dikarang (`src/lib/commit-learning.ts`): jenis perubahan (perbaikan, fitur,
+  pengujian, dokumentasi, penataan ulang, konfigurasi) dibaca dari prefix
+  Conventional Commits atau kata di judul, lalu dirangkai bersama topiknya.
+  Bila **tidak ada** jenis perubahan yang dapat dikenali, kolom dibiarkan kosong
+  — judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada yang
+  dipelajari. Pratinjau menandainya `learningNeedsReview: true` +
+  `learningSource: "DERIVED" | "EMPTY"`; pengguna tetap wajib menyesuaikannya.
+
 ### 5.4 Penyusun Laporan (tanpa AI)
 - Laporan harian **berasal dari template pengguna**, bukan dari commit.
 - Dua jalur, keduanya sah:
@@ -187,7 +212,9 @@ untuk mengambil commit sebagai bahan draf; lihat §5.4a dan
 ### 5.6 Mode Terjadwal
 - Setiap pengguna punya `webhookKey` unik.
 - Dashboard memberi perintah `curl` siap tempel ke cron-job.org / GitHub Actions / `crontab`.
-- Saat dipicu: jika belum ada draf → buat dari **template pengguna**; lalu submit.
+- Saat dipicu: urutan sumber isi laporan adalah **commit hari itu → template
+  bertanggal → template harian**; bila ketiganya tidak ada, pengiriman
+  dibatalkan (bukan laporan kosong). Lihat §5.3b.
 - Respons asli portal (200 / 409 / 422) dicatat ke tabel audit.
 
 ### 5.7 Audit Log
@@ -403,13 +430,31 @@ sudah terkirim, mana yang masih kosong", melengkapi tabel linear di `/history`.
 
 ### 5.10 Panel Admin (`/admin`)
 
-> **Keputusan (UI/UX putaran 2):** halaman admin pertama dibangun **hanya-baca**.
+> **Keputusan (UI/UX putaran 2):** halaman admin pertama dibangun **hanya-baca**,
+> lalu aksi kelola pengguna ditambahkan setelah aturan aman & backend-nya ada.
 > SPEC §4 menyebut admin dapat "kelola semua pengguna, lihat audit log,
-> statistik, paksa submit". Dari daftar itu, **statistik** dan **audit lintas
-> pengguna** sudah punya data & aturan yang jelas, jadi dikerjakan lebih dulu.
-> Mengubah peran, menghapus pengguna, dan memaksa submit **belum** dibuat: ketiga
-> tindakan itu mengubah data orang lain dan belum punya aturan aman/backend.
-> Menampilkannya sebagai tombol kosong akan menjanjikan hal yang tidak ada.
+> statistik, paksa submit". Status kini:
+>
+> | Kemampuan | Status |
+> |---|---|
+> | Statistik & audit lintas pengguna | ✅ dibuat |
+> | Hapus pengguna (soft delete) | ✅ `DELETE /api/admin/users/:id` |
+> | Atur ulang kata sandi | ✅ `POST .../:id/reset-password` |
+> | Uji login (tanpa kirim laporan) | ✅ `POST .../:id/test-login` |
+> | Ubah peran USER → ADMIN | ✅ `PATCH /api/admin/users/:id` |
+> | Turunkan ADMIN → USER | ⛔ belum (lihat di bawah) |
+> | Paksa submit per pengguna | ✅ lewat `/api/admin/dispatch` (§5.9) |
+>
+> **Aturan aksi atas pengguna lain** (`src/lib/admin-user-actions.ts`, murni &
+> teruji): aksi destruktif tidak boleh pada **diri sendiri** (mencegah admin
+> mengunci diri keluar) maupun pada **admin lain**. Setiap penolakan dicatat ke
+> `AdminActionLog` dengan alasannya, dan setiap perubahan peran mencabut sesi
+> lama (`sessionVersion++`) supaya JWT lama tidak terus membawa peran lama.
+>
+> **Turunkan ADMIN → USER sengaja belum didukung.** Tanpa jaminan "masih ada
+> admin lain", menurunkan admin terakhir akan mengunci panel admin tanpa jalan
+> masuk. Server menolaknya terang-terangan (403) dan UI tidak menawarkan
+> tombolnya — lebih baik fitur tidak ada daripada ada tapi bisa mengunci sistem.
 
 Halaman ini memuat tiga bagian:
 

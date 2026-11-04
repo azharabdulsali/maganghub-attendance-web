@@ -179,3 +179,34 @@ describe("runDispatch: ketahanan", () => {
     expect(hasil.results.map((r) => r.kind).sort()).toEqual(["ERROR", "SUCCESS"]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Saringan tanggal pada query template bertanggal.
+//
+// Tanpa saringan ini dispatcher memuat SELURUH riwayat template bertanggal
+// semua pengguna di setiap pemanggilan cron, padahal yang dipakai hanya baris
+// tanggal hari ini. Jumlah baris bertambah tiap hari (draf commit disimpan
+// sebagai baris bertanggal), jadi biayanya membesar diam-diam. Tes di bawah
+// mengunci argumen query-nya supaya saringan tidak hilang tanpa ketahuan.
+// ---------------------------------------------------------------------------
+describe("runDispatch: query template bertanggal dibatasi hari ini", () => {
+  it("menyaring datedTemplates dengan tanggal WIB dari `now`", async () => {
+    await runDispatch(SEKARANG);
+
+    const where = findManyMock.mock.calls[0][0].select.user.select.datedTemplates.where;
+
+    // SEKARANG = 2026-06-01T00:30Z = 07:30 WIB → tanggal WIB 2026-06-01.
+    expect(where.date).toBeInstanceOf(Date);
+    expect(where.date.toISOString()).toBe("2026-06-01T00:00:00.000Z");
+  });
+
+  it("memakai tanggal WIB, bukan tanggal UTC", async () => {
+    // 2026-06-01T18:00Z = 2026-06-02T01:00 WIB: tanggal UTC dan WIB BERBEDA.
+    // Query yang memakai `new Date()` atau tanggal UTC akan menghasilkan
+    // 2026-06-01 sehingga template hari ini tidak terbaca.
+    await runDispatch(new Date("2026-06-01T18:00:00.000Z"));
+
+    const where = findManyMock.mock.calls[0][0].select.user.select.datedTemplates.where;
+    expect(where.date.toISOString()).toBe("2026-06-02T00:00:00.000Z");
+  });
+});
