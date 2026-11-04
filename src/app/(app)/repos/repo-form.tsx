@@ -177,6 +177,9 @@ export default function RepoForm({
   const [enabled, setEnabled] = useState(initialEnabled);
   const [toggling, setToggling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Galat sakelar dipisah: kartu sakelar berada di luar `<form>`, jadi pesan
+  // yang dirender di kartu repo tidak akan terbaca saat sakelar gagal.
+  const [toggleError, setToggleError] = useState<string | null>(null);
   const [sukses, setSukses] = useState<string | null>(null);
 
   const [preview, setPreview] = useState<PreviewState>(PREVIEW_KOSONG);
@@ -309,7 +312,7 @@ export default function RepoForm({
     const sebelumnya = enabled;
     setEnabled(next);
     setToggling(true);
-    setError(null);
+    setToggleError(null);
     setSukses(null);
     try {
       const res = await fetch("/api/repos", {
@@ -323,7 +326,7 @@ export default function RepoForm({
       };
       if (!res.ok) {
         setEnabled(sebelumnya);
-        setError(data.error ?? "Gagal mengubah sakelar.");
+        setToggleError(data.error ?? "Gagal mengubah sakelar.");
         return;
       }
       setEnabled(data.enabled ?? next);
@@ -335,7 +338,7 @@ export default function RepoForm({
       router.refresh();
     } catch {
       setEnabled(sebelumnya);
-      setError("Tidak bisa menghubungi server. Periksa koneksi lalu coba lagi.");
+      setToggleError("Tidak bisa menghubungi server. Periksa koneksi lalu coba lagi.");
     } finally {
       setToggling(false);
     }
@@ -383,23 +386,37 @@ export default function RepoForm({
           <Card size="sm">
             <CardContent>
               <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="repo-enabled">
+                <div className="min-w-0 space-y-1">
+                  {/* Sengaja TIDAK memakai `<Label htmlFor>`: Base UI Switch
+                      memasang `id` internalnya sendiri sehingga `htmlFor`
+                      menunjuk ke elemen yang tidak ada dan klik label tidak
+                      berbuat apa-apa. `aria-labelledby` + `aria-describedby`
+                      mengikat label/penjelasan langsung ke sakelar. */}
+                  <span id="repo-enabled-label" className="text-sm font-heading">
                     Pakai commit sebagai bahan draf
-                  </Label>
-                  <p className="text-xs text-foreground/70">
+                  </span>
+                  <p id="repo-enabled-desc" className="text-xs text-foreground/70">
                     {enabled
                       ? "Aktif. Saat menyusun draf, commit hari itu (zona WIB) ikut dipakai sebagai bahan."
                       : "Nonaktif. Repo tetap tersimpan, tapi tidak ada commit yang diambil sampai dinyalakan."}
                   </p>
                 </div>
                 <Switch
-                  id="repo-enabled"
                   checked={enabled}
                   onCheckedChange={(v) => void toggleEnabled(v)}
                   disabled={toggling}
+                  aria-labelledby="repo-enabled-label"
+                  aria-describedby="repo-enabled-desc"
                 />
               </div>
+              {/* Galat sakelar DULU memakai `error` bersama yang hanya dirender
+                  di kartu repo — jadi kegagalan sakelar tampil di kartu yang
+                  salah. Sekarang pesannya muncul di kartu sakelar sendiri. */}
+              {toggleError && (
+                <div className="mt-3">
+                  <Message tone="bad">{toggleError}</Message>
+                </div>
+              )}
               <p className="mt-3 text-xs text-foreground/60">
                 Perubahan sakelar berlaku langsung — tidak perlu menempel ulang
                 token atau menekan tombol simpan di atas.

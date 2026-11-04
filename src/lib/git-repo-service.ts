@@ -193,10 +193,7 @@ export async function resolveCommits(
     // TIDAK boleh menggagalkan permintaan (DB bisa sedang sibuk), jadi
     // `.catch` kosong di sini disengaja, bukan kelalaian.
     await prisma.gitRepoConfig
-      .update({
-        where: { userId },
-        data: { lastFetchedAt: new Date(), lastError: null },
-      })
+      .updateMany({ where: { userId }, data: { lastFetchedAt: new Date(), lastError: null } })
       .catch(() => undefined);
 
     return { ok: true, commits, keywords: commitsToKeywords(commits), date: hari };
@@ -208,8 +205,12 @@ export async function resolveCommits(
 
     // Simpan supaya pengguna melihat statusnya di halaman Repo Git, bukan
     // mengira fitur berfungsi padahal tokennya sudah mati.
+    // `updateMany` (bukan `update`): `update` MELEMPAR P2025 bila baris sudah
+    // dihapus pengguna di sela permintaan, dan galat itu akan tertelan
+    // `.catch` sehingga kegagalan simpan status tak pernah terlihat. Dengan
+    // `updateMany` nol baris = tidak ada repo (wajar), bukan galat.
     await prisma.gitRepoConfig
-      .update({ where: { userId }, data: { lastError: message } })
+      .updateMany({ where: { userId }, data: { lastError: message } })
       .catch(() => undefined);
 
     return { ok: false, message, date: hari };
@@ -269,11 +270,18 @@ export async function setRepoEnabled(
   });
   if (!ada) return null;
 
-  return prisma.gitRepoConfig.update({
-    where: { userId },
-    data: { enabled },
-    select: { enabled: true },
-  });
+  // `update` bisa MELEMPAR P2025 bila baris dihapus di sela `findUnique` ->
+  // pengguna melihat 500 padahal kondisinya hanya "repo sudah tidak ada".
+  // Diperlakukan sama dengan "tidak ada repo" (null) supaya rute membalas 404.
+  try {
+    return await prisma.gitRepoConfig.update({
+      where: { userId },
+      data: { enabled },
+      select: { enabled: true },
+    });
+  } catch {
+    return null;
+  }
 }
 
 /** Simpan konfigurasi repo (buat atau ganti). Token dienkripsi di sini. */

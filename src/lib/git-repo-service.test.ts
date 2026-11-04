@@ -9,7 +9,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const findUniqueMock = vi.fn();
+// `update` dan `updateMany` dipisah walau perilakunya mirip: perbedaannya
+// BUKAN kosmetik. `update` melempar P2025 bila baris hilang, `updateMany`
+// hanya mengembalikan count 0. Pencatatan status (`lastError`) harus tahan
+// baris hilang, sedangkan `setRepoEnabled` butuh nilai balik -> keduanya
+// memakai operasi berbeda dan tes harus bisa membedakannya.
 const updateMock = vi.fn();
+const updateManyMock = vi.fn();
 const upsertMock = vi.fn();
 const decryptMock = vi.fn();
 const encryptMock = vi.fn();
@@ -24,6 +30,12 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     gitRepoConfig: {
       findUnique: (...a: unknown[]) => findUniqueMock(...a),
+      // Pencatatan `lastError`/`lastFetchedAt` memakai `updateMany` (lihat
+      // komentar di git-repo-service.ts): `update` melempar P2025 bila baris
+      // hilang dan galatnya tertelan `.catch`, sehingga kegagalan simpan
+      // status tak pernah terlihat. `setRepoEnabled` tetap memakai `update`
+      // karena nilai `enabled` terbaru dipakai pemanggil.
+      updateMany: (...a: unknown[]) => updateManyMock(...a),
       update: (...a: unknown[]) => updateMock(...a),
       upsert: (...a: unknown[]) => upsertMock(...a),
     },
@@ -85,6 +97,9 @@ beforeEach(() => {
   decryptMock.mockReturnValue("TOKEN-RAHASIA-SEKALI");
   encryptMock.mockReturnValue({ ciphertext: "C", iv: "I", authTag: "T" });
   updateMock.mockResolvedValue({ userId: "u1" });
+  // `updateMany` mengembalikan `{ count }`, bukan baris. Nilai ini dipakai
+  // `.catch()` di service, jadi HARUS promise — bukan undefined.
+  updateManyMock.mockResolvedValue({ count: 1 });
   findUniqueMock.mockResolvedValue(baris());
   fetchCommitsMock.mockResolvedValue([commit()]);
 });
@@ -213,6 +228,17 @@ describe("setRepoEnabled", () => {
     await expect(setRepoEnabled("u1", false)).resolves.toBeNull();
     expect(updateMock).not.toHaveBeenCalled();
   });
+
+  it("mengembalikan null bila baris hilang di sela pemeriksaan (P2025), bukan 500", async () => {
+    // Skenario nyata: pengguna menghapus repo di tab lain tepat setelah
+    // `findUnique` melihatnya ada. Tanpa penanganan, galat Prisma lolos ke
+    // rute dan pengguna melihat 500 padahal kondisinya cuma "repo sudah tidak
+    // ada" — yang seharusnya 404.
+    updateMock.mockRejectedValue(
+      Object.assign(new Error("Record to update not found."), { code: "P2025" }),
+    );
+    await expect(setRepoEnabled("u1", true)).resolves.toBeNull();
+  });
 });
 
 describe("resolveCommits", () => {
@@ -317,12 +343,16 @@ describe("resolveCommits", () => {
 
   it("mencatat lastFetchedAt dan membersihkan lastError saat sukses", async () => {
     await resolveCommits("u1", "2026-06-01");
-    expect(updateMock).toHaveBeenCalledWith(
+    // `updateMany`, bukan `update`: bila baris repo hilang di sela permintaan,
+    // `update` melempar P2025 dan galatnya tertelan `.catch` -> "sukses"
+    // padahal status tak tersimpan. `updateMany` = 0 baris, tanpa galat.
+    expect(updateManyMock).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: "u1" },
         data: expect.objectContaining({ lastError: null }),
       }),
     );
+    expect(updateMock).not.toHaveBeenCalled();
   });
 
   it("gagal anggun bila belum ada repo", async () => {
@@ -369,11 +399,21 @@ describe("resolveCommits", () => {
 
     expect(hasil.ok).toBe(false);
     if (!hasil.ok) expect(hasil.message).toBe("Token git ditolak oleh GitHub.");
-    expect(updateMock).toHaveBeenCalledWith(
+    expect(updateManyMock).toHaveBeenCalledWith(
       expect.objectContaining({
         data: { lastError: "Token git ditolak oleh GitHub." },
       }),
     );
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("tetap mengembalikan hasil saat penyimpanan status gagal (baris repo hilang)", async () => {
+    // `updateMany` tidak melempar P2025, tapi DB tetap bisa galat (mis. sibuk).
+    // `.catch` kosong di service disengaja: kegagalan mencatat status TIDAK
+    // boleh membatalkan commit yang sudah berhasil diambil.
+    updateManyMock.mockRejectedValue(new Error("database sedang sibuk"));
+    const hasil = await resolveCommits("u1", "2026-06-01");
+    expect(hasil.ok).toBe(true);
   });
 
   it("TIDAK melempar untuk galat tak terduga (GitHub down, DNS, dsb.)", async () => {
