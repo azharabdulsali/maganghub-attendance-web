@@ -77,6 +77,12 @@ enum AdminActionType {
   /// (HANYA login, TIDAK mengirim laporan). Dipakai untuk memverifikasi
   /// kredensial tetap hidup tanpa menyentuh data absen.
   USER_TEST_LOGIN
+  /// Satu pemanggilan dispatcher cron selesai (SPEC: pengamatan otomasi).
+  /// Actor & target diisi akun penanda sistem, BUKAN admin sungguhan: baris ini
+  /// mencatat tindakan sistem, bukan tindakan orang. Isinya hanya angka
+  /// (diproses/tertunda/tenggat) — tidak pernah memuat id pengguna atau isi
+  /// laporan. Lihat src/lib/dispatch-log.ts.
+  SYSTEM_DISPATCH
 }
 
 // ---------------------------------------------------------------------------

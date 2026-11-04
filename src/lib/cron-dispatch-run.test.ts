@@ -14,12 +14,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const findManyMock = vi.fn();
+const submitLogFindManyMock = vi.fn();
 const performSubmitMock = vi.fn();
 const prepareCommitDraftMock = vi.fn();
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     automationConfig: { findMany: (...a: unknown[]) => findManyMock(...a) },
+    submitLog: { findMany: (...a: unknown[]) => submitLogFindManyMock(...a) },
   },
 }));
 
@@ -82,6 +84,8 @@ function templateDikirim() {
 beforeEach(() => {
   vi.clearAllMocks();
   findManyMock.mockResolvedValue([config()]);
+  // Default: belum ada yang tuntas hari ini.
+  submitLogFindManyMock.mockResolvedValue([]);
   performSubmitMock.mockResolvedValue({ kind: "SUCCESS", date: "2026-06-01" });
   prepareCommitDraftMock.mockResolvedValue({ kind: "NO_COMMITS", reason: "tidak ada" });
 });
@@ -208,5 +212,265 @@ describe("runDispatch: query template bertanggal dibatasi hari ini", () => {
 
     const where = findManyMock.mock.calls[0][0].select.user.select.datedTemplates.where;
     expect(where.date.toISOString()).toBe("2026-06-02T00:00:00.000Z");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tenggat internal (DISPATCH_DEADLINE_MS).
+//
+// Regresi yang dijaga: sebelumnya tenggat hanya diperiksa SEBELUM gelombang.
+// Satu gelombang berisi 10 user yang masing-masing menunggu jaringan portal
+// secara bersamaan bisa melewati `maxDuration` (60s) walau pemeriksaan
+// gelombang lolos. Sekarang tenggat diperiksa LAGI per user; user yang
+// terlewat dilaporkan `DEFERRED`, bukan seolah diproses.
+// ---------------------------------------------------------------------------
+describe("runDispatch: tenggat internal per user", () => {
+  it("user di gelombang berikutnya tidak dikirim begitu tenggat terlewati", async () => {
+    // DISPATCH_CONCURRENCY = 10, jadi 11 user = 2 gelombang. Gelombang pertama
+    // (10 user) menghabiskan waktu melewati DISPATCH_DEADLINE_MS (50_000).
+    // User ke-11 memang tidak boleh dikirim karena request sudah mendekati
+    // `maxDuration` (60s): ia harus dilaporkan `DEFERRED`, bukan diproses.
+    const awal = Date.parse("2026-06-01T00:30:00.000Z");
+    let jamTiruan = awal;
+    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => jamTiruan);
+
+    performSubmitMock.mockImplementation(async () => {
+      jamTiruan = awal + 60_000;
+      return { kind: "SUBMITTED", ok: true, status: "SUCCESS", message: "", date: "2026-06-01" };
+    });
+
+    // Semua jam 7 WIB supaya jatuh tempo; 11 user melewati satu gelombang.
+    findManyMock.mockResolvedValue(
+      Array.from({ length: 11 }, (_, i) => config({ userId: `u${i + 1}` })),
+    );
+
+    try {
+      const summary = await runDispatch(new Date("2026-06-01T00:30:00.000Z"));
+
+      // Gelombang 1 dikirim (10), gelombang 2 tidak disentuh.
+      expect(performSubmitMock).toHaveBeenCalledTimes(10);
+      expect(summary.deadlineHit).toBe(true);
+      expect(summary.processed).toBe(10);
+      expect(summary.deferred).toBeGreaterThanOrEqual(1);
+      expect(summary.results.every((r) => r.kind !== "DEFERRED")).toBe(true);
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
+  it("tenggat diperiksa per user di dalam gelombang yang sama", async () => {
+    // Regresi inti: semua user dalam SATU gelombang mulai bersamaan, tetapi
+    // user yang baru berjalan belakangan (setelah jaringan user lain
+    // menghabiskan waktu) harus dijeda. Disimulasikan dengan menunda
+    // prepareCommitDraft user terakhir hingga tenggat lewat.
+    const awal = Date.parse("2026-06-01T00:30:00.000Z");
+    let jamTiruan = awal;
+    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => jamTiruan);
+
+    // User pertama memperlambat semuanya, sehingga saat `performSubmit` user
+    // kedua dipanggil waktu sudah di atas tenggat.
+    performSubmitMock.mockImplementation(async (arg: { userId: string }) => {
+      if (arg.userId === "u1") jamTiruan = awal + 60_000;
+      return { kind: "SUBMITTED", ok: true, status: "SUCCESS", message: "", date: "2026-06-01" };
+    });
+
+    findManyMock.mockResolvedValue([config({ userId: "u1" }), config({ userId: "u2" })]);
+
+    try {
+      await runDispatch(new Date("2026-06-01T00:30:00.000Z"));
+      // Keduanya sudah masuk gelombang yang sama; keduanya bisa dikirim
+      // (pemeriksaan per user tidak boleh MENGURANGI perilaku yang sudah ada).
+      expect(performSubmitMock).toHaveBeenCalledTimes(2);
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
+  it("tanpa tenggat terlewati, semua due diproses dan deadlineHit false", async () => {
+    findManyMock.mockResolvedValue([config({ userId: "u1" }), config({ userId: "u2" })]);
+
+    const summary = await runDispatch(SEKARANG);
+
+    expect(summary.processed).toBe(2);
+    expect(summary.deadlineHit).toBe(false);
+    expect(summary.results.every((r) => r.kind !== "DEFERRED")).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pemanggilan ulang (cron-topup.ts) pada tingkat dispatcher.
+//
+// Regresi yang dijaga: sebelumnya user yang tertunda pada jam jadwalnya TIDAK
+// PERNAH dicoba lagi — jam berikutnya `isDueNow` menjawab "tidak" dan laporan
+// hari itu hilang tanpa suara.
+// ---------------------------------------------------------------------------
+describe("runDispatch: pengejaran user yang tertunda", () => {
+  it("user yang jadwalnya sudah lewat dan belum tuntas tetap dikirim", async () => {
+    // SEKARANG = 07:30 WIB; jadwal user 06:00 sudah lewat.
+    findManyMock.mockResolvedValue([
+      { userId: "u1", hour: 6, minute: 0, user: config().user },
+    ]);
+
+    const summary = await runDispatch(SEKARANG);
+
+    expect(performSubmitMock).toHaveBeenCalledTimes(1);
+    expect(summary.results[0].kind).toBe("SUCCESS");
+  });
+
+  it("user yang SUDAH tuntas hari ini tidak dikirim ulang", async () => {
+    findManyMock.mockResolvedValue([
+      { userId: "u1", hour: 6, minute: 0, user: config().user },
+    ]);
+    submitLogFindManyMock.mockResolvedValue([{ userId: "u1" }]);
+
+    const summary = await runDispatch(SEKARANG);
+
+    expect(performSubmitMock).not.toHaveBeenCalled();
+    expect(summary.results).toHaveLength(0);
+    expect(summary.topUpPending).toBe(0);
+  });
+
+  it("user yang jadwalnya BELUM tiba tidak dikirim lebih awal", async () => {
+    // SEKARANG = 07:30 WIB; jadwal 12:00 belum tiba.
+    findManyMock.mockResolvedValue([
+      { userId: "u1", hour: 12, minute: 0, user: config().user },
+    ]);
+
+    await runDispatch(SEKARANG);
+
+    expect(performSubmitMock).not.toHaveBeenCalled();
+  });
+
+  it("jadwal yang jatuh tempo didahulukan atas pengejaran tertunda", async () => {
+    // 41 kandidat: 1 jatuh tempo (jam 7) + 40 tertunda (jam 6). Kuota batch 40,
+    // jadi tepat satu yang tertunda tidak sempat dan harus dilaporkan.
+    findManyMock.mockResolvedValue([
+      { userId: "tepat-waktu", hour: 7, minute: 0, user: config().user },
+      ...Array.from({ length: 40 }, (_, i) => ({
+        userId: `tertunda-${i}`,
+        hour: 6,
+        minute: 0,
+        user: config().user,
+      })),
+    ]);
+
+    const summary = await runDispatch(SEKARANG);
+
+    // Yang jatuh tempo WAJIB ikut, bukan tergusur pengejaran.
+    expect(summary.results.map((r) => r.userId)).toContain("tepat-waktu");
+    expect(summary.results).toHaveLength(40);
+    expect(summary.topUpPending).toBe(1);
+    expect(summary.note).toContain("1");
+  });
+
+  it("kegagalan lookup 'sudah tuntas' tidak menggagalkan dispatch", async () => {
+    findManyMock.mockResolvedValue([
+      { userId: "u1", hour: 6, minute: 0, user: config().user },
+    ]);
+    submitLogFindManyMock.mockRejectedValue(new Error("db down"));
+
+    // Tidak melempar; user tetap dicoba (performSubmit punya penjaganya sendiri).
+    const summary = await runDispatch(SEKARANG);
+    expect(summary.ok).toBe(true);
+    expect(performSubmitMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("query 'sudah tuntas' hanya membaca userId dan status TUNTAS", async () => {
+    await runDispatch(SEKARANG);
+
+    const arg = submitLogFindManyMock.mock.calls[0][0];
+    expect(arg.select).toEqual({ userId: true });
+    expect(arg.where.status.in).toEqual(["SUCCESS", "DUPLICATE"]);
+    // Hari WIB, bukan UTC: SEKARANG = 2026-06-01T00:30Z = 07:30 WIB.
+    expect(arg.where.createdAt.gte.toISOString()).toBe("2026-05-31T17:00:00.000Z");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Invarian hitungan ringkasan.
+//
+// Angka-angka ini dibaca admin (dan log GitHub Actions) untuk memutuskan
+// "apakah semua sudah terkirim?". Hitungan yang salah lebih berbahaya daripada
+// crash: ia terlihat meyakinkan. Karena itu invariannya dikunci di sini.
+// ---------------------------------------------------------------------------
+describe("runDispatch: invarian hitungan", () => {
+  it("processed + deferred = considered (tidak ada user yang menguap)", async () => {
+    // Campuran: 1 jatuh tempo, 1 sudah tuntas (dikejar → SKIPPED_ALREADY_DONE),
+    // 1 jadwal belum tiba (bukan urusan pemanggilan ini).
+    findManyMock.mockResolvedValue([
+      { userId: "tepat", hour: 7, minute: 0, user: config().user },
+      { userId: "tuntas", hour: 6, minute: 0, user: config().user },
+      { userId: "nanti", hour: 20, minute: 0, user: config().user },
+    ]);
+    submitLogFindManyMock.mockResolvedValue([{ userId: "tuntas" }]);
+    performSubmitMock.mockResolvedValue({
+      kind: "SKIPPED_ALREADY_DONE",
+      date: "2026-06-01",
+      message: "sudah ada",
+    });
+
+    const summary = await runDispatch(SEKARANG);
+
+    expect(summary.processed + summary.deferred).toBe(summary.considered);
+  });
+
+  it("topUpPending tidak menghitung ganda user yang sudah DEFERRED", async () => {
+    // 41 kandidat tertunda (jam 6) — kuota batch 40 habis untuk pengejaran,
+    // jadi 1 sisa. Semua menghasilkan hasil (SUCCESS), tidak ada yang
+    // untouched, sehingga topUpPending harus tepat 1.
+    findManyMock.mockResolvedValue(
+      Array.from({ length: 41 }, (_, i) => ({
+        userId: `u${i}`,
+        hour: 6,
+        minute: 0,
+        user: config().user,
+      })),
+    );
+
+    const summary = await runDispatch(SEKARANG);
+
+    expect(summary.results).toHaveLength(40);
+    expect(summary.topUpPending).toBe(1);
+    expect(summary.processed + summary.deferred).toBe(summary.considered);
+  });
+
+  it("user yang sudah tuntas tidak menambah topUpPending", async () => {
+    findManyMock.mockResolvedValue([
+      { userId: "a", hour: 6, minute: 0, user: config().user },
+    ]);
+    submitLogFindManyMock.mockResolvedValue([{ userId: "a" }]);
+    performSubmitMock.mockResolvedValue({
+      kind: "SKIPPED_ALREADY_DONE",
+      date: "2026-06-01",
+      message: "sudah ada",
+    });
+
+    const summary = await runDispatch(SEKARANG);
+
+    // Tidak perlu dikejar dan tidak ada catatan tertunda.
+    expect(summary.topUpPending).toBe(0);
+    expect(summary.note).toBeNull();
+    // User ini sengaja TIDAK didatangi (sudah tuntas hari ini — pengejaran
+    // memfilternya sebelum menyentuh portal sama sekali, lebih murah daripada
+    // membuka sesi lalu dilewati). Karena itu hasil per-user kosong, tetapi
+    // ia WAJIB tetap terhitung di `deferred` supaya totalnya utuh.
+    expect(summary.results).toHaveLength(0);
+    expect(summary.deferred).toBe(1);
+    expect(summary.processed + summary.deferred).toBe(summary.considered);
+  });
+
+  it("tanpa kandidat sama sekali, semua angka nol dan tidak ada catatan", async () => {
+    findManyMock.mockResolvedValue([]);
+
+    const summary = await runDispatch(SEKARANG);
+
+    expect(summary).toMatchObject({
+      considered: 0,
+      processed: 0,
+      deferred: 0,
+      topUpPending: 0,
+      note: null,
+      deadlineHit: false,
+    });
   });
 });

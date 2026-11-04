@@ -74,7 +74,8 @@ export const AdminActionType = {
   USER_DELETE: 'USER_DELETE',
   USER_RESET_PASSWORD: 'USER_RESET_PASSWORD',
   USER_CHANGE_ROLE: 'USER_CHANGE_ROLE',
-  USER_TEST_LOGIN: 'USER_TEST_LOGIN'
+  USER_TEST_LOGIN: 'USER_TEST_LOGIN',
+  SYSTEM_DISPATCH: 'SYSTEM_DISPATCH'
 } as const
 
 export type AdminActionType = (typeof AdminActionType)[keyof typeof AdminActionType]

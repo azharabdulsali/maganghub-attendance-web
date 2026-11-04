@@ -29,6 +29,7 @@ import { timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env";
 import { runDispatch } from "@/lib/cron-dispatch-run";
 import { bearerTokenFrom } from "@/lib/bearer-token";
+import { recordDispatchLog, systemActorId } from "@/lib/dispatch-log";
 
 // Wajib: fungsi ini mengirim laporan untuk BANYAK user dalam satu pemanggilan.
 // Tanpa ini Vercel memakai default (10s di Hobby) dan eksekusi akan dipotong.
@@ -59,5 +60,12 @@ export async function GET(request: Request) {
   // 2–4. Seleksi per jam + kirim. Semua ada di lib bersama (cron-dispatch-run.ts)
   // supaya route ini dan tombol admin memakai aturan yang sama persis.
   const summary = await runDispatch();
+
+  // Jejak observasi: tanpa ini, ringkasan (apalagi `deadlineHit`) hilang setelah
+  // respons dikirim dan pertanyaan "apakah cron kemarin lengkap?" tak bisa
+  // dijawab dari aplikasi. Tidak pernah melempar; dispatch tidak terpengaruh.
+  const sistem = await systemActorId();
+  await recordDispatchLog({ actorId: sistem, targetId: sistem, summary });
+
   return NextResponse.json(summary);
 }

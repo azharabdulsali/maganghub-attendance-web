@@ -15,6 +15,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdminRole } from "@/lib/admin";
 import { runDispatch } from "@/lib/cron-dispatch-run";
+import { recordDispatchLog } from "@/lib/dispatch-log";
 
 // Sama seperti route cron: banyak user per pemanggilan → butuh waktu.
 export const maxDuration = 60;
@@ -34,5 +35,14 @@ export async function POST() {
   }
 
   const summary = await runDispatch();
+  // Dicatat atas nama admin yang menekan tombol (actor = target = admin itu):
+  // jejaknya berguna saat menyelidiki "siapa memicu pengiriman jam ini".
+  // `recordDispatchLog` tidak pernah melempar, jadi ringkasan tetap kembali
+  // walau pencatatan gagal.
+  await recordDispatchLog({
+    actorId: session.user.id,
+    targetId: session.user.id,
+    summary,
+  });
   return NextResponse.json(summary);
 }

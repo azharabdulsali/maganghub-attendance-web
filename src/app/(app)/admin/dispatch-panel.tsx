@@ -18,15 +18,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
 
-type DispatchSummary = {
-  ok: true;
-  hour: number;
-  considered: number;
-  processed: number;
-  deferred: number;
-  deadlineHit: boolean;
-  results: Array<{ userId: string; kind: string }>;
-};
+// Tipe asli dari lib, BUKAN salinan lokal.
+//
+// Sebelumnya berkas ini mendeklarasikan ulang bentuk ringkasannya. Salinan
+// seperti itu tidak pernah gagal di-build saat lib menambah field (`topUpPending`
+// ditambahkan di lib dan panel diam-diam melewatkannya) — ia hanya jadi tidak
+// lengkap tanpa peringatan. Impor tipe aslinya membuat perubahan lib LANGSUNG
+// terlihat di sini sebagai galat TypeScript.
+import type { DispatchSummary } from "@/lib/cron-dispatch-run";
 
 /** Label manusia untuk tiap `kind` dari SubmitOutcome (bukan rahasia). */
 const KIND_LABEL: Record<string, string> = {
@@ -117,8 +116,14 @@ export function DispatchPanel() {
               <strong>{summary.considered}</strong> user aktif
               {summary.deferred > 0 ? (
                 <>
-                  {" "}· <strong>{summary.deferred}</strong> tertunda ke jam
-                  berikutnya
+                  {" "}· <strong>{summary.deferred}</strong> tidak diproses pada
+                  pemanggilan ini
+                </>
+              ) : null}
+              {summary.topUpPending > 0 ? (
+                <>
+                  {" "}· <strong>{summary.topUpPending}</strong> user akan dikejar
+                  pada pemanggilan berikutnya
                 </>
               ) : null}
               {summary.deadlineHit ? " · tenggat tercapai (sebagian diproses)" : ""}
