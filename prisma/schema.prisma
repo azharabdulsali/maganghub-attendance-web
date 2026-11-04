@@ -33,6 +33,17 @@ enum CredentialStatus {
 enum SourceType {
   TEMPLATE
   MANUAL_EDIT
+  /// Draf disusun memakai bahan dari pesan commit git hari itu
+  /// (docs/GIT-COMMITS-PLAN.md, keputusan 2026-06).
+  COMMITS
+}
+
+/// Penyedia git yang didukung fitur "auto laporan dari commit".
+/// Nilai enum ini yang menentukan URL API yang dipanggil — URL TIDAK PERNAH
+/// dibangun dari input pengguna (mitigasi SSRF, GIT-COMMITS-PLAN.md §6).
+enum GitProvider {
+  GITHUB
+  GITLAB
 }
 
 enum ReportStatus {
@@ -60,10 +71,18 @@ enum TriggerType {
 enum AdminActionType {
   USER_DELETE
   USER_RESET_PASSWORD
+  /// Admin mengubah peran pengguna (USER <-> ADMIN).
+  USER_CHANGE_ROLE
   /// Admin menguji login ke portal Monev atas nama seorang pengguna
   /// (HANYA login, TIDAK mengirim laporan). Dipakai untuk memverifikasi
   /// kredensial tetap hidup tanpa menyentuh data absen.
   USER_TEST_LOGIN
+  /// Satu pemanggilan dispatcher cron selesai (SPEC: pengamatan otomasi).
+  /// Actor & target diisi akun penanda sistem, BUKAN admin sungguhan: baris ini
+  /// mencatat tindakan sistem, bukan tindakan orang. Isinya hanya angka
+  /// (diproses/tertunda/tenggat) — tidak pernah memuat id pengguna atau isi
+  /// laporan. Lihat src/lib/dispatch-log.ts.
+  SYSTEM_DISPATCH
 }
 
 // ---------------------------------------------------------------------------
@@ -104,6 +123,8 @@ model User {
   reports      Report[]
   submitLogs   SubmitLog[]
   automation   AutomationConfig?
+  /** Repo git untuk bahan draf (satu per pengguna untuk sekarang). */
+  gitRepoConfig GitRepoConfig?
   adminActionsPerformed AdminActionLog[] @relation("AdminActor")
   adminActionsReceived  AdminActionLog[] @relation("AdminTarget")
   feedbacks    Feedback[]
@@ -400,4 +421,50 @@ model AdminActionLog {
   @@index([targetId, createdAt])
   @@map("admin_action_logs")
 }
+
+// ---------------------------------------------------------------------------
+// Fitur: auto laporan dari commit git (docs/GIT-COMMITS-PLAN.md)
+// ---------------------------------------------------------------------------
+
+/// Satu repo git per pengguna (keputusan pemilik 2026-06 #2).
+///
+/// `userId` diberi `@unique` SEKARANG karena fitur dimulai dengan satu repo.
+/// Saat banyak-repo diaktifkan kelak, cukup HAPUS `@unique` itu lalu tambah
+/// indeks biasa: datanya sudah berbentuk relasi, jadi tidak perlu migrasi ulang.
+///
+/// TOKEN: kolom `ciphertext`/`iv`/`authTag` menyimpan token akses terenkripsi
+/// AES-256-GCM, pola sama dengan `MaganghubCredential`. Plaintext tidak pernah
+/// disimpan, dan kolom ini TIDAK BOLEH ikut di-`select` pada respons API mana
+/// pun (GIT-COMMITS-PLAN.md §6).
+model GitRepoConfig {
+  id       String      @id @default(cuid())
+  userId   String      @unique
+  provider GitProvider
+  /// "owner/nama-repo" (GitHub) atau "grup/sub/proyek" (GitLab).
+  /// Divalidasi ketat dengan Zod; hanya boleh huruf, angka, `-`, `_`, `.`, `/`.
+  repoPath String
+  branch   String      @default("main")
+
+  /// Token akses (read-only), terenkripsi. Lihat catatan di atas.
+  ciphertext String
+  iv         String
+  authTag    String
+
+  /// Matikan tanpa menghapus token, mis. saat repo sedang tidak dipakai.
+  enabled Boolean @default(true)
+
+  lastFetchedAt DateTime?
+  /// Pesan kegagalan terakhir yang SUDAH disanitasi (tanpa token, tanpa URL
+  /// berisi kredensial). NULL = tidak ada masalah. Ditampilkan di UI supaya
+  /// pengguna tahu tokennya kedaluwarsa, bukan dibiarkan diam-diam gagal.
+  lastError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("git_repo_configs")
+}
+
 

@@ -19,9 +19,28 @@ GET /api/cron/run-all
         │
         ├─ ambil semua AutomationConfig.isEnabled = true
         ├─ pilih yang jam jadwalnya (WIB) = jam sekarang
+        ├─ pilih yang jadwalnya SUDAH LEWAT & belum tuntas (dikejar ulang)
         ├─ jalankan performSubmit untuk tiap user (paralel berbatas)
-        └─ balas ringkasan: { considered, processed, deferred, results }
+        └─ balas ringkasan: { considered, processed, deferred, topUpPending, note, results }
 ```
+
+- **Yang tertunda tidak pernah hilang.** Sebelumnya user yang tidak sempat
+  diproses pada jam jadwalnya (batch penuh, tenggat 50 dtk, atau server mati)
+  tidak pernah dicoba lagi: jam berikutnya ia tidak lagi "jatuh tempo", jadi
+  laporan hari itu hilang tanpa suara. Kini tiap pemanggilan juga mengejar user
+  yang **jam jadwalnya sudah lewat dan belum punya log tuntas**
+  (`SUCCESS`/`DUPLICATE`) hari ini. Yang jatuh tempo pada jam sekarang selalu
+  didahulukan; sisanya dilaporkan sebagai `topUpPending` dan diambil
+  pemanggilan berikutnya. Aturannya ada di `src/lib/cron-topup.ts`.
+
+- **Angka ringkasan selalu utuh:** `considered = processed + deferred`. Setiap
+  user pasti masuk salah satu: `processed` (sempat didatangi) atau `deferred`
+  (tidak didatangi — jam jadwalnya lain, kehabisan kuota, atau tenggat
+  terlewati). Invarian ini dikunci tes, karena kesalahan hitung di sini tidak
+  pernah memunculkan galat; ia hanya terlihat meyakinkan.
+- `topUpPending` = yang **harus** dikejar pemanggilan berikutnya (belum tuntas
+  dan tidak sempat didatangi). Angka inilah yang perlu dipantau admin, bukan
+  `deferred` (yang juga memuat user jadwal jam lain secara normal).
 
 - **Jadwal per-user tetap dihormati.** Dispatcher dipanggil 4x tiap jam; server
   hanya memproses user yang jam jadwalnya sama dengan jam sekarang.
@@ -279,7 +298,9 @@ penjaga anti-duplikat.
 | Actions merah, log `HTTP 401` | `CRON_SECRET` GitHub ≠ Vercel |
 | Actions merah, log `HTTP 503` | `CRON_SECRET` belum diset di Vercel / belum redeploy |
 | `considered: 0` | Tak ada user dengan otomasi aktif, atau sakelarnya mati |
-| `processed: 0` tapi `considered > 0` | Tak ada user yang jam jadwalnya = jam sekarang, normal, tunggu jam berikutnya |
-| `deferred` tinggi | Terlalu banyak user pada jam sama; mereka diproses jam berikutnya |
+| `processed: 0` tapi `considered > 0` | Tak ada user yang jam jadwalnya = jam sekarang. **Normal** — `deferred` memuat mereka; tunggu jam berikutnya. Lihat `topUpPending` untuk yang benar-benar tertinggal |
+| `deferred` tinggi | Normal bila banyak user berjadwal di jam lain. Yang perlu ditindak hanya bila `topUpPending` juga tinggi |
+| `topUpPending` terus > 0 | Pengejaran selalu kehabisan kuota. Naikkan `DISPATCH_BATCH_SIZE` atau sebar jam jadwal pengguna |
+| Log `SYSTEM_DISPATCH` di panel admin | Ringkasan tiap pemanggilan cron (angka saja). `TENGGAT TERCAPAI` = ada yang tertinggal pada jam itu |
 | Actions hijau tapi tak ada log baru | `ALLOW_LIVE_SUBMIT` belum `1` → mode latihan (`DRY_RUN`) |
 | Jeda antar-run **berjam-jam** di tab Actions (bukan 15 menit), padahal cron `*/15` | **Normal bagi GitHub Actions**: slot berjadwal di-skip saat sibuk / repo aktivitas rendah. Bukan bug YAML. Tambah pemicu cron-job.org (bagian 7A) agar andal |

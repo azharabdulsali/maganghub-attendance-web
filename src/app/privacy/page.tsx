@@ -82,6 +82,13 @@ export default function PrivacyPage() {
             <strong>Pengaturan jadwal:</strong> pilihan manual atau otomatis,
             beserta kunci tautan otomatis pribadi Anda.
           </li>
+          <li>
+            <strong>Repo git (opsional):</strong> bila Anda sendiri
+            menghubungkannya, kami menyimpan penyedia (GitHub/GitLab), nama repo
+            (mis. <code>nama/repo</code>), nama branch, dan token akses
+            read-only yang terenkripsi AES-256-GCM. Fitur ini mati secara
+            bawaan dan tidak menyentuh apa pun sebelum Anda mengisinya.
+          </li>
         </ul>
       </Section>
 
@@ -98,6 +105,16 @@ export default function PrivacyPage() {
           membuka kredensial tersebut. Kunci tidak pernah ditulis di dalam kode
           atau log, tetapi Anda tetap sebaiknya tidak memakai kata sandi yang
           juga dipakai di layanan lain.
+        </p>
+        <p>
+          <strong>Tentang repo git:</strong> token hanya dipakai untuk{" "}
+          <em>membaca</em> daftar commit pada repo yang Anda tentukan, dan hanya
+          saat Anda menekan tombol uji ambil atau meminta draf dari commit. Isi
+          repo tidak diunduh dan tidak disimpan. Aplikasi tidak pernah membuat
+          commit atau push ke repo Anda. Seperti kredensial Monev, token ini
+          dienkripsi dua arah, jadi pengelola yang memegang kunci enkripsi
+          secara teknis mampu membukanya. Karena itu buat token{" "}
+          <strong>read-only</strong> dan khusus untuk repo ini.
         </p>
       </Section>
 

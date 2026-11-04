@@ -28,10 +28,19 @@ export type CredentialStatus = (typeof CredentialStatus)[keyof typeof Credential
 
 export const SourceType = {
   TEMPLATE: 'TEMPLATE',
-  MANUAL_EDIT: 'MANUAL_EDIT'
+  MANUAL_EDIT: 'MANUAL_EDIT',
+  COMMITS: 'COMMITS'
 } as const
 
 export type SourceType = (typeof SourceType)[keyof typeof SourceType]
+
+
+export const GitProvider = {
+  GITHUB: 'GITHUB',
+  GITLAB: 'GITLAB'
+} as const
+
+export type GitProvider = (typeof GitProvider)[keyof typeof GitProvider]
 
 
 export const ReportStatus = {
@@ -64,7 +73,9 @@ export type TriggerType = (typeof TriggerType)[keyof typeof TriggerType]
 export const AdminActionType = {
   USER_DELETE: 'USER_DELETE',
   USER_RESET_PASSWORD: 'USER_RESET_PASSWORD',
-  USER_TEST_LOGIN: 'USER_TEST_LOGIN'
+  USER_CHANGE_ROLE: 'USER_CHANGE_ROLE',
+  USER_TEST_LOGIN: 'USER_TEST_LOGIN',
+  SYSTEM_DISPATCH: 'SYSTEM_DISPATCH'
 } as const
 
 export type AdminActionType = (typeof AdminActionType)[keyof typeof AdminActionType]

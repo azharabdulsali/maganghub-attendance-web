@@ -49,6 +49,94 @@ export const monevTokenSchema = z
 export type MonevTokenInput = z.infer<typeof monevTokenSchema>;
 
 /**
+ * Konfigurasi repo git untuk bahan draf laporan (SPEC.md §5.4a).
+ *
+ * `repoPath` divalidasi dengan pola yang SAMA ketatnya dengan
+ * `buildApiPath` di `git-provider.ts`. Ini lapis pertama; lapis kedua tetap
+ * ada di sana, karena Zod boleh terlewat bila rute baru ditambahkan kelak.
+ *
+ * Sengaja TIDAK menerima `provider` bebas: hanya dua nilai ini, sinkron dengan
+ * enum Prisma `GitProvider`. Host API tidak pernah berasal dari input.
+ */
+export const gitRepoSchema = z.object({
+  provider: z.enum(["GITHUB", "GITLAB"], {
+    message: "Pilih GitHub atau GitLab",
+  }),
+  repoPath: z
+    .string()
+    .trim()
+    .min(3, "Nama repo wajib diisi, contoh: budi/proyek-magang")
+    .max(200, "Nama repo terlalu panjang")
+    // Hanya karakter yang sah untuk owner/namespace + nama repo.
+    .regex(
+      /^[A-Za-z0-9][A-Za-z0-9._/-]*$/,
+      "Hanya huruf, angka, titik, garis bawah, dan garis miring",
+    )
+    .refine((v) => !v.includes("//"), "Tidak boleh ada '//'")
+    .refine((v) => !v.includes(".."), "Tidak boleh mengandung '..'")
+    .refine((v) => !v.endsWith("/"), "Tidak boleh diakhiri '/'")
+    .refine(
+      (v) => v.split("/").length >= 2,
+      "Format harus 'owner/nama-repo' (GitLab boleh 'grup/sub/proyek')",
+    )
+    .refine(
+      (v) => v.split("/").every((seg) => seg.length > 0),
+      "Owner dan nama repo tidak boleh kosong",
+    ),
+  branch: z
+    .string()
+    .trim()
+    .min(1, "Nama branch wajib diisi")
+    .max(200, "Nama branch terlalu panjang")
+    .regex(
+      /^[A-Za-z0-9][A-Za-z0-9._/-]*$/,
+      "Nama branch mengandung karakter yang tidak diizinkan",
+    )
+    .default("main"),
+  /**
+   * Token akses read-only. Batas minimumnya rendah (20) karena GitLab bisa
+   * memakai token pendek; validasi bentuk sebenarnya dilakukan penyedia git,
+   * dan pesan galat dari sana yang lebih berguna bagi pengguna.
+   */
+  token: z
+    .string()
+    .trim()
+    .min(20, "Token terlalu pendek, sepertinya bukan token yang benar")
+    .max(4096, "Token terlalu panjang"),
+});
+
+export type GitRepoInput = z.infer<typeof gitRepoSchema>;
+
+/**
+ * Sakelar "pakai commit saat menyusun draf" (SPEC.md §5.4a, "Default nonaktif").
+ *
+ * Sengaja terpisah dari `gitRepoSchema` supaya mematikan fitur TIDAK menuntut
+ * token ditempel ulang. Tanpa ini, satu-satunya cara mematikan adalah menghapus
+ * repo beserta tokennya — terlalu berat untuk sekadar jeda.
+ */
+export const gitRepoToggleSchema = z.object({
+  enabled: z.boolean({ message: "Nilai sakelar harus benar/salah" }),
+});
+
+export type GitRepoToggleInput = z.infer<typeof gitRepoToggleSchema>;
+
+/**
+ * Pratinjau commit hari itu, atau simpan hari itu ke laporan.
+ *
+ * `date` opsional berbentuk `YYYY-MM-DD`; bila kosong server memakai hari ini
+ * menurut zona Asia/Jakarta (bukan UTC).
+ */
+export const gitPreviewSchema = z.object({
+  date: z
+    .string()
+    .trim()
+    .refine((v) => isPlainDate(v), "Tanggal harus berbentuk YYYY-MM-DD")
+    .optional(),
+});
+
+export type GitPreviewInput = z.infer<typeof gitPreviewSchema>;
+
+/**
  * Tiga template laporan harian. Portal Maganghub menuntut minimal 100 karakter
  * per field; angkanya diambil dari `report-rules.ts` supaya hanya ada satu
  * sumber kebenaran (bot Python memakai `len(value.strip()) < 100`).

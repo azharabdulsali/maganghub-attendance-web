@@ -359,6 +359,55 @@ halaman publik (`/`, `/login`, `/register`) tidak memakainya.
 
 ---
 
+## 5c. Konvensi form pengaturan (putaran UI/UX 2 — /repos)
+
+Halaman `/repos` dulu ditulis tangan: `<select>` buatan sendiri, kartu
+`rounded-base border-2` tanpa `shadow-shadow`, dan token memakai
+`<Input type="password">`. Akibatnya halaman ini satu-satunya yang terlihat
+"datar" dibanding `/settings`, `/report-templates`, dan `/automation`, dan
+token panjang tidak bisa diperiksa sebelum disimpan. Aturan yang berlaku
+sekarang untuk **semua halaman pengaturan**:
+
+1. **Kartu memakai `<Card>`** (`CardHeader`/`CardTitle`/`CardDescription`/
+   `CardContent`), bukan `div` dengan kelas kartu yang disalin. `<Card>` sudah
+   membawa `shadow-shadow` + `border-border`; kartu buatan tangan menghilangkan
+   bayangan khas tema ini.
+2. **Pilihan memakai `<NativeSelect>` / `<NativeSelectOption>`**, bukan
+   `<select>` mentah. Versi mentah kehilangan cincin fokus keyboard dan warna
+   `bg-secondary-background`.
+3. **Nilai rahasia panjang memakai `<PasswordInput>`**, bukan
+   `<Input type="password">` (lihat §5b). Ini juga berlaku untuk token API,
+   bukan hanya kata sandi: pengguna harus bisa memeriksa hasil tempel.
+4. **Satu kartu = satu jalur simpan.** Bila dua blok disimpan oleh request
+   berbeda (mis. repo+token lewat satu tombol, sakelar lewat
+   `PUT { action: "toggle" }`), keduanya **wajib** dipisah ke kartu sendiri dan
+   teksnya menyebut bahwa perubahannya berlaku langsung. Menumpuknya dalam satu
+   `<form>` membuat pengguna mengira sakelar ikut tersimpan saat menekan
+   tombol simpan.
+5. **Tombol yang dinonaktifkan harus menyebut alasannya** di sebelah tombol
+   (mis. "Isi token akses untuk menyimpan") dalam `aria-live="polite"`.
+   Tombol mati tanpa penjelasan adalah jalan buntu.
+6. **Aksi merusak (`variant="danger"`) tidak boleh bersebelahan** dengan tombol
+   simpan. Di `/repos` tombol "Hapus repo" dipindah ke kartu sendiri di kolom
+   samping.
+7. **Kolom yang wajib diberi penanda `*`** di dalam `<Label>`, dan setiap
+   kolom memakai `aria-describedby` ke paragraf petunjuknya.
+
+Logika murni yang dipakai form **dipisah ke berkas sendiri** agar bisa diuji
+tanpa React: `/repos` memakai `repo-path.ts` (`repoPathFromCloneUrl`).
+Form tetap mengekspor ulang fungsinya supaya tes lama tidak perlu diubah.
+
+### Verifikasi visual
+
+Perubahan tampilan tidak cukup diverifikasi lewat `npm run build`. Periksa
+dengan Playwright (atau manual) pada **1440px dan 390px**, dan pastikan
+`document.documentElement.scrollWidth === clientWidth` (tidak ada gulir
+horizontal). Untuk halaman yang butuh login, buat rute pratinjau SEMENTARA di
+luar grup `(app)` yang merender form dengan prop contoh, lalu **hapus** setelah
+selesai — jangan menambah pengguna uji ke database produksi.
+
+---
+
 ## 6. Yang belum dikerjakan (kandidat putaran berikutnya)
 
 - Dashboard utama dengan **kartu statistik + tabel + grafik** (data sudah
