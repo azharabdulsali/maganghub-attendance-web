@@ -24,8 +24,16 @@ Tiga kemampuan inti:
 3. Mengirim laporan lewat **Direct REST API**, tanpa browser, tanpa worker,
    tanpa biaya bulanan.
 
-**Status saat ini: Tahap 1 selesai** (fondasi autentikasi: register, login,
-dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
+**Status saat ini: Tahap 1–6 selesai.** Fondasi auth, kredensial terenkripsi,
+template laporan (termasuk per-tanggal), submit Direct REST API, webhook cron
+per-user, dan dispatcher massal sudah berjalan. Fitur yang menyusul setelah
+Tahap 6 dan **sudah aktif**: penyusun draf Gemini + fallback lokal, bahan draf
+dari commit git (GitHub/GitLab), panel admin lengkap (hapus/atur ulang sandi/
+ubah peran/uji login), hari libur, kritik & saran, pengingat "belum absen",
+kalender kehadiran, dan halaman legal/panduan. Baseline verifikasi saat ini:
+`npm run typecheck` ✅ · `npm run lint` ✅ · `npm test` (**1040 tes**) ✅ ·
+`npm run build` ✅. Lihat `SPEC.md` §12 untuk tahapan dan §13 untuk keputusan
+yang mengikat.
 
 > **Pembaruan keputusan AI:** keputusan lama "AI dibatalkan" sudah **dicabut
 > pemilik**. Kini ada penyusun draf opsional berbasis Gemini gratis
@@ -123,8 +131,10 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
 - **Setiap percobaan submit dicatat** ke tabel audit log.
 - **Periksa `SPEC.md` dulu** sebelum mengambil keputusan arsitektur. Kalau
   ingin menyimpang, tulis alasannya di `SPEC.md`, jangan diam-diam.
-- **Jalankan `npm run lint`, `npm run typecheck`, dan `npm run build`** sebelum
-  menyatakan selesai. (`npm test` belum terpasang, lihat §7.)
+- **Jalankan `npm run lint`, `npm run typecheck`, `npm run build`, dan
+  `npm test`** sebelum menyatakan selesai. Empat-empatnya wajib hijau; tes
+  (`vitest`, 1040 tes) adalah jaring pengaman utama proyek ini — lihat §7 untuk
+  aturan menulis tes yang benar-benar bisa gagal.
 - **Balas dalam Bahasa Indonesia.** Seluruh komunikasi ke pemilik proyek
   memakai Bahasa Indonesia, konsisten sampai akhir — jangan berganti bahasa di
   tengah jalan. Lihat juga larangan di bagian "Jangan pernah" di atas.
@@ -142,7 +152,7 @@ dashboard terlindungi). Lihat `SPEC.md` §13 untuk keputusan yang mengikat.
 | ORM       | Prisma 7 (driver adapter `@prisma/adapter-neon`)                  |
 | Auth      | NextAuth.js v5 (**email/password saja**, tanpa OAuth)             |
 | Enkripsi  | AES-256-GCM (`node:crypto`)                                       |
-| AI        | **Tidak dipakai**, template tetap menggantikan peringkasan AI     |
+| AI        | **Gemini opsional** (`gemini-flash-lite-latest`, key admin bersama) **+ fallback lokal wajib** |
 | Test      | Vitest 3.2.7 (environment `node`)                                 |
 | Deploy    | Vercel (serverless, paket gratis)                                 |
 
@@ -170,8 +180,13 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
      cjs output format"_. Bungkus dalam `async function main()` lalu
      `main().catch(...).finally(() => prisma.$disconnect())`.
 - Proyek ini memakai **`prisma db push`**, bukan migrasi (tidak ada folder
-  `prisma/migrations`). Per 2026-09, **9 tabel sudah ada di Neon** dan cocok
-  dengan 9 model di schema.
+  `prisma/migrations`). **15 model sudah ada** di `schema.prisma` dan wajib
+  disamakan ke Neon dengan `npm run db:push`: `User`, `Account`,
+  `VerificationToken`, `Session`, `MaganghubCredential`, `ReportTemplate`,
+  `DatedReportTemplate`, `Report`, `SubmitLog`, `AutomationConfig`,
+  `ReminderSetting`, `Holiday`, `Feedback`, `AdminActionLog`, `GitRepoConfig`.
+  Menambah model/kolom berarti menjalankan `db push` lagi **sebelum** deploy —
+  lihat peringatan di bawah.
   - **Tambahan kolom (bukan tabel):** `User.sessionVersion` (fitur invalidasi
     sesi, SPEC.md §5.8b). Menambah kolom tetap butuh `npm run db:push` supaya
     schema Neon ikut berubah, jalankan **sebelum** deploy kode yang memakainya,
@@ -269,49 +284,67 @@ Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
 
 ## 4. Struktur yang Dituju
 
-Mengikuti pola di `SPEC.md`. Saat menambah file, hormati pembagian ini:
+Mengikuti pola di `SPEC.md`. Saat menambah file, hormati pembagian ini.
+**Struktur di bawah adalah yang BENAR-BENAR ADA** (diperiksa ke repo), bukan
+rencana. Jangan membuat folder `services/`, `actions/`, atau `schemas/` — proyek
+ini menaruh logika bisnis di `src/lib/` dan query DB di berkas `*-query.ts` di
+samping halamannya.
 
 ```text
 maganghub-attendance-web/
 ├── src/
-│   ├── app/          # halaman & route (App Router)
-│   │   ├── (auth)/       # login, register
-│   │   ├── (dashboard)/  # dashboard, reports, settings, admin
-│   │   ├── api/          # /api/cron/trigger, /api/reports/*, /api/auth/*
-│   │   └── docs/         # halaman dokumentasi publik
-│   ├── components/   # komponen UI (termasuk ui/ untuk primitif)
-│   ├── actions/      # server actions
-│   ├── services/     # logika bisnis (report, settings, template)
-│   ├── schemas/      # skema Zod
-│   ├── lib/          # crypto, maganghub-api, submit-orchestrator
-│   ├── hooks/        # hook React
-│   ├── types/        # tipe bersama
-│   └── utils/        # fungsi kecil (cn, filter)
-├── prisma/           # schema.prisma
-├── tests/            # vitest
-├── .env              # RAHASIA, jangan pernah commit
-└── SPEC.md / AGENTS.md
+│   ├── app/
+│   │   ├── page.tsx          # landing PUBLIK (satu-satunya pemilik "/")
+│   │   ├── login/ register/  # halaman publik
+│   │   ├── docs/ panduan/ privacy/ terms/   # halaman publik lain
+│   │   ├── (app)/            # route group: tidak muncul di URL
+│   │   │   ├── layout.tsx    # cek sesi + sidebar, dipasang SEKALI
+│   │   │   ├── error.tsx loading.tsx not-found.tsx   # batas galat wilayah login
+│   │   │   └── dashboard/ calendar/ credentials/ report-templates/
+│   │   │       history/ automation/ repos/ feedback/ admin/ dev-tools/ profile/ settings/
+│   │   ├── api/              # route handler (lihat daftar endpoint lengkap di SPEC §8)
+│   │   ├── error.tsx global-error.tsx not-found.tsx  # batas galat tingkat root
+│   │   └── layout.tsx providers.tsx globals.css
+│   ├── components/           # app-sidebar, filter-bar, pagination, theme-toggle, …
+│   │   └── ui/               # primitif dari registry (button, card, dialog, …)
+│   ├── lib/                  # SEMUA logika bisnis & murni + tesnya berdampingan
+│   └── generated/prisma/     # hasil `prisma generate` — JANGAN diedit
+├── prisma/schema.prisma      # sumber kebenaran skema (15 model)
+├── scripts/                  # uji-gemini.ts, uji-proxy.ts (dijalankan manual)
+├── docs/                     # panduan operasional (lihat tabel di README)
+├── .env                      # RAHASIA, jangan pernah commit
+└── SPEC.md / AGENTS.md / README.md / DESIGN.md
 ```
 
 **Aturan penempatan:**
 
-- Kode yang menyentuh rahasia (dekripsi, API key) hanya di `src/lib/` dan
-  `src/services/`, tidak pernah di `components/`.
-- Komponen UI tidak boleh mengimpor Prisma langsung, lewat server action.
+- Kode yang menyentuh rahasia (dekripsi, API key) hanya di `src/lib/`, tidak
+  pernah di `components/`.
+- Komponen UI tidak boleh mengimpor Prisma langsung.
+- **Tes diletakkan BERDAMPINGAN dengan sumbernya** (`src/lib/foo.ts` ↔
+  `src/lib/foo.test.ts`), bukan di folder `tests/` terpisah.
+- **Batas galat wajib ada di tiga tingkat** — jangan hapus salah satunya:
+  `src/app/global-error.tsx` (root layout gagal), `src/app/error.tsx` (galat
+  sebelum login), `src/app/(app)/error.tsx` (galat setelah login, sidebar tetap
+  tampil). Lihat §9 untuk aturan isinya.
 
-**Yang sudah ada (per 2026-09):**
+**Yang sudah ada (diperiksa ke repo):**
 
 - `src/lib/`, `env.ts`, `auth.ts`, `prisma.ts`, `crypto.ts` (+test),
-  `validate.ts` (+test), `utils.ts`
+  `validate.ts` (+test), `utils.ts`, `site.ts`, dan modul fitur lain — semuanya
+  ber-`*.test.ts`.
 - `src/app/api/`, `auth/[...nextauth]`, `register`, `credentials`,
-  `profile`, `account/password`, `automation`, `reminder`, `cron/submit`,
-  `cron/run-all`, `admin/dispatch`, `admin/dispatch/user`, `reports/submit`,
-  `feedback`, `admin/feedback/[id]`, `repos`, `repos/preview`
+  `credentials/login`, `credentials/verify`, `profile`, `account/password`,
+  `account/email`, `account/sessions/revoke`, `automation`, `reminder`,
+  `report-templates` (+`dated`, `generate`), `cron/submit`, `cron/run-all`,
+  `reports/submit`, `feedback`, `admin/feedback/[id]`, `admin/holidays`,
+  `admin/dispatch`, `admin/dispatch/user`, `admin/users/[id]` (+`reset-password`,
+  `test-login`), `repos`, `repos/preview`, `dev-tools/analyze-capture`.
 - `src/app/(app)/`, rute terlindungi: `dashboard/` (beranda), `calendar/`,
   `credentials/`, `report-templates/`, `history/`, `automation/`,
   `feedback/`, `admin/` (termasuk `admin/holidays/` & `admin/feedback/`),
-  `repos/` (repo git untuk bahan draf), `dev-tools/`, `profile/`. Sidebar &
-  cek sesi dipasang sekali di `src/app/(app)/layout.tsx`.
+  `repos/` (repo git untuk bahan draf), `dev-tools/`, `profile/`, `settings/`.
+  Sidebar & cek sesi dipasang sekali di `src/app/(app)/layout.tsx`.
 
 ### Aturan penyimpanan kredensial Monev
 
@@ -774,6 +807,39 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 - Kalau keputusan menyimpang dari `SPEC.md`, **perbarui `SPEC.md`** dalam
   perubahan yang sama.
 
+### Batas galat (`error.tsx`, `not-found.tsx`, `loading.tsx`)
+
+Ini hasil perbaikan celah nyata: sebelumnya proyek **tidak punya satu pun**
+berkas batas galat, sehingga galat query Prisma menampilkan layar putih
+"Application error" berbahasa Inggris ke pengguna. Aturan yang mengikat:
+
+1. **Tiga `error.tsx` wajib ada bersamaan** — `src/app/global-error.tsx`,
+   `src/app/error.tsx`, `src/app/(app)/error.tsx`. Batas galat TIDAK menangkap
+   galat di segmen tempat ia berada, jadi ketiganya menutup tingkat berbeda.
+   Menghapus salah satu membuka kembali layar putih.
+2. **Jangan pernah menampilkan `error.message` mentah.** Pesan Prisma memuat
+   nama tabel/kolom, dan pesan env memuat nama variabel. Yang boleh tampil hanya
+   `error.digest` (bisa dicocokkan admin dengan log server Vercel).
+3. **`global-error.tsx` wajib menulis `<html>` dan `<body>` sendiri**, memakai
+   gaya INLINE (bukan kelas Tailwind, karena `globals.css` tidak dijamin
+   termuat saat root layout gagal), dan **tidak boleh mengimpor komponen UI**.
+   Ini satu-satunya berkas yang boleh memakai warna hard-code.
+4. **Teks terlihat, bukan hanya animasi.** `loading.tsx` wajib memuat teks
+   "Memuat…" (bukan sekadar kotak berdenyut), memakai
+   `motion-safe:animate-pulse` agar `prefers-reduced-motion` dihormati, dan
+   memasang `role="status"` + `aria-busy`.
+5. **Halaman galat `noindex`.** Ekspor `metadata` dengan
+   `robots: { index: false, follow: false }` di `not-found.tsx` (galat runtime
+   tidak punya `metadata`, jadi tidak berlaku di sana).
+6. **Cara membuktikannya masih bekerja:** jangan percaya `npm run build` saja.
+   Jalankan `npm run start`, minta URL yang tidak ada (harus 404 + teks Indonesia
+   + tautan keluar), lalu sementara suntikkan `throw` di halaman **dinamis**
+   (mis. `(app)/calendar`, setelah `auth()` supaya TypeScript tetap lolos) dan
+   pastikan halaman galat tampil TANPA membocorkan pesan. **Kembalikan suntikan
+   itu** dan jalankan `git diff` untuk memastikan tidak ada sisa.
+   Halaman statis yang di-prerender (mis. `/panduan`) TIDAK bisa dipakai untuk
+   uji ini — galatnya muncul saat build, bukan saat request.
+
 ---
 
 ## 10. Hubungan dengan Proyek Python Lama
@@ -781,7 +847,7 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 |              | `maganghub-autoabsen` | Proyek ini          |
 | :----------- | :-------------------- | :------------------ |
 | Mesin submit | Playwright + Chromium | Direct REST API     |
-| Status       | Produksi, tetap jalan | Baru, tahap rencana |
+| Status       | Produksi, tetap jalan | Berjalan; Tahap 1–6 selesai |
 
 - **Tidak saling bergantung.** Proyek web tidak boleh mengimpor dari proyek
   Python, dan sebaliknya.
