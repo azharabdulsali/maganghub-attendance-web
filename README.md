@@ -68,7 +68,7 @@ Yang **opsional**:
 | `ALLOW_LIVE_SUBMIT` | Mode **latihan** — tidak ada laporan yang benar-benar dikirim (aman) |
 | `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Rate limit per-proses (kurang akurat lintas instance). **Gratis** — lihat [`docs/UPSTASH-SETUP.md`](docs/UPSTASH-SETUP.md) |
 | `CRON_SECRET` | Dispatcher massal `/api/cron/run-all` nonaktif (balas 503) |
-| `GIT_COMMITS_ENABLED` | Fitur bahan draf dari commit git nonaktif untuk semua pengguna. Lihat [`docs/GIT-COMMITS-PLAN.md`](docs/GIT-COMMITS-PLAN.md) |
+| `GIT_COMMITS_ENABLED` | Jaring darurat fitur bahan draf dari commit git. **Bila kosong = fitur AKTIF** (default), karena fitur ini sudah opt-in per pengguna lewat `/repos` + sakelar di `/automation`. Isi `0` untuk mematikan fitur bagi SEMUA pengguna. Lihat [`docs/GIT-COMMITS-PLAN.md`](docs/GIT-COMMITS-PLAN.md) |
 
 > **`ENCRYPTION_KEY` jangan pernah diganti** setelah ada kredensial tersimpan —
 > data lama akan tidak bisa didekripsi. Simpan baik-baik.
@@ -108,6 +108,7 @@ peran admin.
 | `npm run test:watch` | Vitest mode watch |
 | `npm run db:push` | Selaraskan skema Prisma ke database |
 | `npm run db:studio` | Prisma Studio (lihat/ubah data) |
+| `npm run make-admin -- email@anda.com` | Naikkan peran pengguna yang **sudah terdaftar** menjadi ADMIN. Jalur pemulihan bila `ADMIN_EMAIL` kosong atau admin terakhir terkunci. Hanya dari lokal; tidak membuat akun baru. |
 
 Sebelum mengirim perubahan, pastikan **keempatnya** lulus:
 

@@ -410,8 +410,35 @@ selesai — jangan menambah pengguna uji ke database produksi.
 
 ## 6. Yang belum dikerjakan (kandidat putaran berikutnya)
 
-- Dashboard utama dengan **kartu statistik + tabel + grafik** (data sudah
-  tersedia di `Report`/`SubmitLog`, tanpa migrasi).
-- Halaman **admin**: daftar pengguna, audit log lintas pengguna.
+Dua butir lama sudah **selesai** dan dikeluarkan dari daftar (jangan
+dikerjakan ulang): dashboard dengan kartu statistik + tabel + grafik
+(`stats-cards.tsx`, `trend-chart.tsx`, `stats-query.ts`), dan halaman admin
+(daftar pengguna, audit log lintas pengguna, kelola hari libur, kritik & saran).
+
+Yang benar-benar **masih kosong**:
+
 - Foto avatar / bio / data magang (mis. NIM, periode), **butuh migrasi Prisma**
-  karena kolomnya belum ada.
+  karena kolomnya belum ada. Halaman `/profile` kini hanya menampilkan
+  informasi akun yang sudah tersedia.
+- Kalender **lintas pengguna** untuk admin (SPEC §5.9 menyebutnya pekerjaan
+  terpisah; `/calendar` masih per pengguna).
+- Pemulihan "lupa kata sandi" **mandiri**. Ini keputusan sadar (SPEC §13):
+  tanpa verifikasi email, pemulihan hanya lewat admin. Jangan menambah halaman
+  "lupa sandi" yang mengirim email sebelum ada layanan email + kolom token.
+- Ekspor riwayat (CSV/Excel) di `/history` dan audit admin.
+
+### Batas galat — sudah ada, jangan dihapus
+
+Sampai putaran ini proyek **tidak punya** satu pun berkas batas galat, sehingga
+galat query Prisma menampilkan layar putih "Application error" berbahasa Inggris.
+Sekarang ada enam berkas yang wajib dipertahankan bersamaan (aturannya di
+`AGENTS.md` §9):
+
+| Berkas | Kapan dipakai |
+| :--- | :--- |
+| `src/app/global-error.tsx` | Root layout sendiri gagal (menggantikan `<html>`/`<body>`) |
+| `src/app/error.tsx` | Galat di halaman publik sebelum login |
+| `src/app/not-found.tsx` | URL 404 tingkat root (`noindex`) |
+| `src/app/(app)/error.tsx` | Galat setelah login — **sidebar tetap tampil** |
+| `src/app/(app)/not-found.tsx` | `notFound()` dari halaman terlindungi |
+| `src/app/(app)/loading.tsx` | Kerangka muat saat pindah halaman (mewarisi ke semua halaman `(app)`) |

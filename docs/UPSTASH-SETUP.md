@@ -35,11 +35,20 @@ Yang **terpengaruh** (semua endpoint ber-rate-limit):
 | `login` | 10 / 5 menit per IP | Login NextAuth (`src/lib/auth.ts`) |
 | `register` | 5 / 10 menit per IP | `POST /api/register` |
 | `submitManual` | 20 / 10 menit per pengguna | `POST /api/reports/submit` |
-| `cron` | 30 / 5 menit per IP | `POST /api/cron/submit` |
+| `cron` | 30 / 5 menit per IP | `GET /api/cron/submit` |
 | `reportDraft` | 30 / 5 menit per pengguna | `POST /api/report-templates/generate` |
-| `credentials` / `credentialsLogin` / `credentialsVerify` | 6–12 / 10 menit | Manajemen kredensial Monev |
+| `credentialsLogin` / `credentialsVerify` / `credentials` | 6 / 12 / 12 per 10 menit | Manajemen kredensial Monev |
 | `passwordChange` / `emailChange` / `sessionRevoke` | 5 / 10 menit | Aksi akun sendiri |
-| `adminUserAction` | 20 / 10 menit per admin | Aksi admin atas pengguna |
+| `gitRepo` | 20 / 10 menit per pengguna | `/api/repos`, `/api/repos/preview` |
+| `adminUserAction` | 20 / 10 menit per admin | Aksi admin (panel admin, hari libur, kritik & saran, simpan setelan pengingat) |
+| `feedback` | 5 / 10 menit per pengguna | `POST /api/feedback` |
+| `reminderCheck` | 120 / 5 menit per pengguna | `GET /api/reminder` (dipanggil berkala ±45 detik oleh klien, jadi batasnya sengaja longgar) |
+
+> `reminderCheck` adalah scope dengan pemakaian tertinggi: satu tab yang dibiarkan
+> terbuka bisa memanggilnya ±80 kali/jam. Bila kuota Upstash mulai terasa,
+> naikkan `CEK_INTERVAL_MS` di `src/app/(app)/attendance-reminder.tsx` — jangan
+> menurunkan batas rate limit, karena klien akan menerima 429 dan popup berhenti
+> muncul tanpa penjelasan.
 
 > **Penting:** `/api/cron/run-all` (dispatcher massal) **tidak** ber-rate-limit
 > — hanya dijaga `CRON_SECRET`. Jadi memasang Upstash **tidak** mengubah

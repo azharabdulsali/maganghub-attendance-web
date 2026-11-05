@@ -615,6 +615,61 @@ ini agar tidak ada utang fitur notifikasi/percakapan.
 - Tanpa notifikasi email/push. Admin melihat jumlah belum dibaca sebagai badge
   di halaman admin.
 
+### 5.14 Batas galat & keadaan muat (`error.tsx`, `not-found.tsx`, `loading.tsx`)
+
+**Celah yang ditutup.** Sebelum bagian ini ada, proyek **tidak punya satu pun**
+berkas batas galat Next.js. Akibatnya bila query Prisma gagal (database tidak
+bisa dihubungi, kolom belum ada karena `db push` belum dijalankan,
+`ENCRYPTION_KEY` salah), pengguna melihat layar putih **"Application error"**
+berbahasa Inggris dari Next.js — tanpa navigasi dan tanpa petunjuk apa pun.
+Untuk aplikasi yang dipakai peserta magang, itu meyakinkan mereka bahwa
+seluruh situs rusak padahal hanya satu query yang gagal.
+
+**Enam berkas, tiga tingkat.** Batas galat Next.js **tidak** menangkap galat di
+segmen tempat berkasnya berada, jadi ketiganya diperlukan dan wajib ada
+bersamaan:
+
+| Berkas | Menangkap | Catatan |
+| :--- | :--- | :--- |
+| `src/app/global-error.tsx` | Galat di `src/app/layout.tsx` (root layout) | **Menggantikan** root layout: wajib menulis `<html>` + `<body>` sendiri, gaya inline, tanpa impor komponen UI |
+| `src/app/error.tsx` | Galat di halaman publik sebelum login | Tampil tanpa sidebar |
+| `src/app/not-found.tsx` | URL 404 tingkat root | `noindex`, tawaran netral (Beranda, Masuk) |
+| `src/app/(app)/error.tsx` | Galat di halaman setelah login | **Sidebar tetap tampil** — pengguna tidak terjebak |
+| `src/app/(app)/not-found.tsx` | `notFound()` dari halaman terlindungi | Tawaran relevan untuk pengguna login |
+| `src/app/(app)/loading.tsx` | Keadaan muat saat pindah halaman | Dipasang di level grup: satu perbaikan berlaku untuk SEMUA halaman `(app)` |
+
+**Aturan isi.**
+
+- **`error.message` mentah TIDAK PERNAH ditampilkan.** Pesan Prisma memuat nama
+  tabel/kolom dan pesan env memuat nama variabel; keduanya tidak berguna bagi
+  pengguna dan membocorkan struktur sistem. Yang ditampilkan hanya
+  `error.digest` — nilai yang sama muncul di log server Vercel sehingga admin
+  bisa mencocokkannya.
+- **Selalu ada satu tindakan yang benar-benar memulihkan.** `reset()` dari
+  Next.js merender ulang segmen tanpa memuat ulang seluruh halaman; ditambah
+  satu tautan keluar (Dasbor / Beranda).
+- **`loading.tsx` wajib punya teks terlihat** "Memuat…", bukan hanya kotak
+  berdenyut, karena animasi tidak dapat dipahami pengguna yang tidak melihatnya
+  (WCAG 1.3.1/4.1.3). Ia juga memakai `motion-safe:animate-pulse` agar
+  `prefers-reduced-motion` dihormati (WCAG 2.3.3) dan memasang
+  `role="status"` + `aria-busy="true"`.
+- **`global-error.tsx` adalah satu-satunya berkas yang boleh memakai warna
+  hard-code.** Alasan: saat root layout gagal, `globals.css` tidak dijamin
+  termuat, jadi kelas Tailwind bisa tidak berefek. Pengecualian ini dicatat
+  eksplisit agar tidak dianggap pelanggaran aturan token DESIGN.md.
+- **Halaman galat `noindex`** (`robots: { index: false, follow: false }`).
+
+**Verifikasi.** `npm run build` saja **tidak cukup** — ia hanya membuktikan
+berkasnya terkompilasi. Cara membuktikan perilakunya: jalankan `npm run start`,
+minta URL yang tidak ada (harus `404` + teks Indonesia + tautan keluar), lalu
+sementara suntikkan `throw` di halaman **dinamis** (mis. `(app)/calendar`,
+setelah `auth()` supaya TypeScript tetap lolos) dan pastikan halaman galat
+tampil tanpa membocorkan pesan. Kembalikan suntikan itu dan periksa `git diff`
+bersih. **Halaman statis yang di-prerender** (mis. `/panduan`) tidak bisa
+dipakai untuk uji ini — galatnya muncul saat build, bukan saat request. Ini
+sudah dilakukan dan hasilnya sesuai (404 kustom tampil 24 KB body; galat
+tersuntik tertangkap tanpa membocorkan `error.message`).
+
 ---
 
 ## 6. Cara Submit, Keputusan Kunci
@@ -740,24 +795,47 @@ Batasan: `Report` unik per `(userId, date)`, mencegah draf ganda.
 
 ## 8. Endpoint API
 
+Tabel ini **disusun langsung dari `src/app/**/route.ts`** (bukan rencana), jadi
+setiap baris bisa dicocokkan ke berkas nyata. Bila menambah endpoint, tambahkan
+barisnya di sini **dalam perubahan yang sama** — `AGENTS.md` §9 mewajibkan itu.
+
 | Method | Endpoint | Deskripsi | Auth | Rate limit |
 | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/api/register` | Daftar akun baru (email + password) | Publik | **3/jam per IP** |
-| `GET` | `/api/cron/submit` | Memicu submit otomatis (dipanggil cron eksternal) | Header `Authorization: Bearer` (dianjurkan) **atau** query `key` | 30/5 menit per IP |
-| `GET` | `/api/cron/run-all` | Dispatcher massal: proses semua user yang jadwalnya jatuh di jam ini | `Authorization: Bearer <CRON_SECRET>` | - (rahasia) |
+| `GET/POST` | `/api/auth/[...nextauth]` | Autentikasi (login/logout/sesi) | Publik / callback | **10/15 menit per IP** (login) |
+| `GET` | `/api/cron/submit` | Memicu submit otomatis satu pengguna (cron eksternal) | Header `Authorization: Bearer <webhookKey>` (dianjurkan) **atau** query `?key=` (deprecated) | 30/5 menit per IP |
+| `GET` | `/api/cron/run-all` | Dispatcher massal: proses semua user yang jadwalnya jatuh di jam ini | `Authorization: Bearer <CRON_SECRET>` | - (dijaga rahasia) |
 | `POST` | `/api/admin/dispatch` | Pemicu manual dispatcher massal dari Panel Admin | Cookie sesi + role **ADMIN** | - (hanya admin) |
-| `POST` | `/api/admin/dispatch/user` | Admin memaksa jalankan otomasi SATU user terpilih (abaikan jam jadwal) | Cookie sesi + role **ADMIN** | **20/10 menit per admin** (`adminUserAction`) |
+| `POST` | `/api/admin/dispatch/user` | Admin memaksa jalankan otomasi SATU user terpilih (abaikan jam jadwal) | Cookie sesi + role **ADMIN** | 20/10 menit per admin (`adminUserAction`) |
+| `PATCH`/`DELETE` | `/api/admin/users/[id]` | Ubah peran (USER→ADMIN) / hapus pengguna (soft delete) | Cookie sesi + role **ADMIN** | 20/10 menit (`adminUserAction`) |
+| `POST` | `/api/admin/users/[id]/reset-password` | Atur ulang kata sandi pengguna (sandi sementara acak) | Cookie sesi + role **ADMIN** | 20/10 menit (`adminUserAction`) |
+| `POST` | `/api/admin/users/[id]/test-login` | Uji login ke portal Monev atas nama user (**tanpa** kirim laporan) | Cookie sesi + role **ADMIN** | 20/10 menit (`adminUserAction`) |
+| `GET/POST/PUT/DELETE` | `/api/admin/holidays` | Kelola daftar hari libur nasional/cuti bersama | Cookie sesi + role **ADMIN** | 20/10 menit (`adminUserAction`) |
+| `PATCH`/`DELETE` | `/api/admin/feedback/[id]` | Tandai kritik & saran sudah dibaca / hapus | Cookie sesi + role **ADMIN** | 20/10 menit (`adminUserAction`) |
 | `GET/PUT` | `/api/automation` | Baca/simpan jadwal otomasi + webhook key | Cookie sesi | 20/menit |
-| `GET/POST` | `/api/auth/[...nextauth]` | Autentikasi (login/logout) | Publik / callback | **10/15 menit per IP** (login) |
-| `GET/PUT` | `/api/template` | Baca & simpan 3 template pengguna | Cookie sesi | 20/menit |
-| `GET/PUT/DELETE` | `/api/report-templates/dated` | Kelola template per-tanggal (`?date=` untuk DELETE) | Cookie sesi | 20/menit |
-| `POST` | `/api/reports/draft` | Buat draf dari template | Cookie sesi | 20/menit |
-| `POST` | `/api/reports/submit` | Kirim draf langsung ke Monev | Cookie sesi | 20/10 menit per pengguna |
+| `GET/PUT/DELETE` | `/api/credentials` | Status & simpan kredensial Monev (token **tidak pernah** dikembalikan); `DELETE` = hapus | Cookie sesi | 12/10 menit (`credentials`) |
+| `POST` | `/api/credentials/login` | Login otomatis SSO Kemnaker (lewat proxy bila `MAGANGHUB_PROXY_URL` diisi) | Cookie sesi | 6/10 menit (`credentialsLogin`) |
+| `POST` | `/api/credentials/verify` | Verifikasi refresh token yang ditempel manual dari DevTools | Cookie sesi | 12/10 menit (`credentialsVerify`) |
+| `GET/PUT/DELETE` | `/api/report-templates` | Baca/simpan/hapus 3 template tetap pengguna | Cookie sesi | 20/menit |
+| `GET/PUT/DELETE` | `/api/report-templates/dated` | Template per-tanggal (`?date=` untuk DELETE) | Cookie sesi | 20/menit |
+| `POST` | `/api/report-templates/generate` | Susun draf (Gemini opsional → fallback lokal) | Cookie sesi | 30/5 menit (`reportDraft`) |
+| `POST` | `/api/reports/submit` | Kirim laporan langsung ke Monev | Cookie sesi | 20/10 menit per pengguna (`submitManual`) |
+| `GET` | `/api/reminder` | Status pengingat "belum absen hari ini" untuk pengguna sendiri | Cookie sesi | 120/5 menit (`reminderCheck`) |
+| `PUT` | `/api/reminder` | Simpan jam & sakelar pengingat | Cookie sesi + role **ADMIN** | 20/10 menit (`adminUserAction`) |
 | `PATCH` | `/api/profile` | Ubah nama tampilan pengguna sendiri | Cookie sesi | - (belum dibatasi) |
-| `POST` | `/api/account/password` | Ubah kata sandi sendiri (dalam sesi, tanpa email) | Cookie sesi | 5/10 menit per pengguna |
-| `POST` | `/api/account/email` | Ubah email sendiri (verifikasi kata sandi + guard eskalasi peran) | Cookie sesi | 5/10 menit per pengguna |
-| `GET/PUT/DELETE` | `/api/repos` | Baca/simpan/hapus konfigurasi repo git (token **tidak pernah** dikembalikan) | Cookie sesi | 20/10 menit per pengguna (`gitRepo`) |
-| `POST` | `/api/repos/preview` | Pratinjau commit hari ini (Asia/Jakarta) tanpa menyimpan apa pun | Cookie sesi | 20/10 menit per pengguna (`gitRepo`) |
+| `POST` | `/api/account/password` | Ubah kata sandi sendiri (dalam sesi, tanpa email) | Cookie sesi | 5/10 menit (`passwordChange`) |
+| `POST` | `/api/account/email` | Ubah email sendiri (verifikasi kata sandi + guard eskalasi peran) | Cookie sesi | 5/10 menit (`emailChange`) |
+| `POST` | `/api/account/sessions/revoke` | "Keluar dari semua perangkat lain" (menaikkan `sessionVersion`) | Cookie sesi | 5/10 menit (`sessionRevoke`) |
+| `POST` | `/api/feedback` | Kirim kritik & saran (satu arah: user kirim, admin baca) | Cookie sesi | `feedback` |
+| `GET/PUT/DELETE` | `/api/repos` | Baca/simpan/hapus konfigurasi repo git (token **tidak pernah** dikembalikan) | Cookie sesi | 20/10 menit (`gitRepo`) |
+| `POST` | `/api/repos/preview` | Pratinjau commit hari ini (Asia/Jakarta) tanpa menyimpan apa pun | Cookie sesi | 20/10 menit (`gitRepo`) |
+| `POST` | `/api/dev-tools/analyze-capture` | Analisis rekaman HAR/DevTools (khusus ADMIN, alat diagnostik) | Cookie sesi + role **ADMIN** | - |
+
+> **Endpoint lama yang TIDAK ada lagi** (jangan menambahkannya kembali tanpa
+> keputusan baru): `/api/template` (diganti `/api/report-templates`),
+> `/api/reports/draft` (draf kini dibuat di server saat render + dari
+> `/api/report-templates/generate`), `/api/reports/generate` (dulu memanggil AI),
+> dan `/api/github/commits` (diganti `/api/repos` + `/api/repos/preview`).
 
 **Implementasi rate limit (Tahap 5):** kebijakan murni di `src/lib/rate-limit.ts`
 (jendela tetap, teruji dengan waktu disuntik), penyimpanan di
@@ -1093,8 +1171,17 @@ Catatan keamanan:
 - `ADMIN_EMAIL` **bukan** rahasia (email bukan password), jadi wajar terlihat.
   Tetap jangan di-commit ke repo publik bila tidak perlu.
 - Kalau `ADMIN_EMAIL` kosong, aplikasi tetap jalan, hanya tidak ada admin
-  otomatis. Pemilik bisa menyusul dengan `npx prisma studio` atau
-  `npm run make-admin -- email@anda.com`.
+  otomatis. Pemilik bisa menyusul dengan:
+
+  ```bash
+  npm run make-admin -- email@anda.com
+  ```
+
+  Skripnya ada di `scripts/make-admin.ts` (dijalankan `tsx`, hanya dari lokal,
+  memakai `.env.local`). Ia **tidak membuat akun** — pengguna harus mendaftar
+  lebih dulu lewat `/register`. Keluar dengan kode 1 bila email tidak ditemukan,
+  tidak wajar, atau akunnya sudah dihapus (soft delete), dengan pesan yang
+  menyebutkan langkah berikutnya. Jalur alternatif: `npx prisma studio`.
 
 Semua pilihan di atas memakai password yang **dibuat pemilik sendiri**, bukan
 password contoh.
@@ -1283,10 +1370,14 @@ npx prisma db push      # kirim skema ke Neon
 npx prisma studio       # opsional
 ```
 
-> **Untuk proyek ini, ikuti versi Prisma yang benar-benar terpasang**,
-> cek dengan `npx prisma --version` sebelum menyalin salah satu contoh di
-> atas. Jangan campur keduanya. Bila ragu, pilih **Opsi 1** (Prisma 6)
-> karena lebih banyak contoh dan lebih sedikit bagian yang bergerak.
+> **Untuk proyek ini, Prisma yang terpasang adalah 7.x** (`package.json`:
+> `prisma: 7.10.0`), dan **Prisma 7 WAJIB memakai driver adapter**
+> (`@prisma/adapter-neon`) — `new PrismaClient()` polos akan gagal dengan
+> *"A driver adapter is required"*. Jangan mengikuti contoh Prisma 6 yang
+> tersebar di internet: di Prisma 7 `url` **tidak lagi** ditulis di blok
+> `datasource`, melainkan diberikan lewat `prisma.config.ts` (untuk CLI) dan
+> adapter (untuk runtime). Aturan lengkapnya ada di `AGENTS.md` §3 "Aturan
+> Prisma 7". Cek versi dengan `npx prisma --version` sebelum menyalin contoh.
 
 ### Tahap D, Saat deploy ke Vercel
 
