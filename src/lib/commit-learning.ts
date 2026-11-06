@@ -89,16 +89,28 @@ const POLA_JENIS: ReadonlyArray<{ kind: Exclude<ChangeKind, "OTHER">; pola: RegE
 /**
  * Kenali jenis perubahan dari pesan commit.
  *
- * Prefix Conventional Commits diperiksa lebih dulu (`fix:` / `feat(api):`)
- * karena itu penanda paling eksplisit. Bila tidak ada, jatuh ke kata di judul.
+ * Prefix diperiksa lebih dulu karena itu penanda paling eksplisit. Yang
+ * dikenali bukan hanya Conventional Commits (`fix:` / `feat(api):`), tetapi
+ * juga gaya kurung siku (`[FIX]:` / `[ADD] ...`) — gaya terakhir itulah yang
+ * dipakai repo nyata, dan tanpa dukungan ini judul `[FIX]: ... refactor ...`
+ * salah terbaca REFACTOR karena kata "refactor" lebih dulu cocok saat
+ * pencocokan jatuh ke judul.
+ *
+ * Bila tidak ada prefix yang dikenal, pencocokan jatuh ke kata di judul.
  */
 export function detectChangeKind(commit: GitCommit): ChangeKind {
   const mentah = (commit.title ?? "").trim();
 
-  // Prefix eksplisit: `type(scope)!: subject`
-  const prefiks = mentah.match(/^([a-z]+)(?:\([^)]*\))?!?:/i)?.[1]?.toLowerCase();
+  // Ambil prefix dari gaya mana pun: `type(scope)!:` atau `[TAG]`.
+  // `parsePrefixTag` sengaja tidak dipakai langsung agar modul ini tetap murni
+  // dan tidak bergantung pada urutan fungsi di `git-commits.ts`.
+  const prefiks =
+    mentah.match(/^[a-z]+(?:\([^)]*\))?!?:/i)?.[0]?.replace(/:$/, "").replace(/\(.*\)/, "") ??
+    mentah.match(/^\[([A-Za-z0-9]{1,16})\]/)?.[1];
+
   if (prefiks) {
-    const cocok = POLA_JENIS.find((p) => p.pola.test(prefiks === "perf" ? "feat" : prefiks));
+    const kunci = prefiks.toLowerCase();
+    const cocok = POLA_JENIS.find((p) => p.pola.test(kunci === "perf" ? "feat" : kunci));
     if (cocok) return cocok.kind;
   }
 

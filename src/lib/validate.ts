@@ -83,16 +83,23 @@ export const gitRepoSchema = z.object({
       (v) => v.split("/").every((seg) => seg.length > 0),
       "Owner dan nama repo tidak boleh kosong",
     ),
+  /**
+   * Branch yang dibaca.
+   *
+   * **Boleh kosong.** Kosong berarti "pakai default branch repo", yang ditentukan
+   * oleh penyedia git (bisa `main`, `master`, `develop`, dst). Menebak `main`
+   * salah untuk repo yang default-nya bukan main. Karena itu `.default("")`,
+   * BUKAN `.default("main")`.
+   */
   branch: z
     .string()
     .trim()
-    .min(1, "Nama branch wajib diisi")
     .max(200, "Nama branch terlalu panjang")
     .regex(
-      /^[A-Za-z0-9][A-Za-z0-9._/-]*$/,
+      /^([A-Za-z0-9][A-Za-z0-9._/-]*)?$/,
       "Nama branch mengandung karakter yang tidak diizinkan",
     )
-    .default("main"),
+    .default(""),
   /**
    * Token akses read-only. Batas minimumnya rendah (20) karena GitLab bisa
    * memakai token pendek; validasi bentuk sebenarnya dilakukan penyedia git,

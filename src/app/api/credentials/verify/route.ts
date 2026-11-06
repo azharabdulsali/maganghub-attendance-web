@@ -4,9 +4,9 @@
 //   1. Pengguna menempel `monev_refresh_token` dari DevTools.
 //   2. Kita simpan terenkripsi (AES-256-GCM), sama seperti password.
 //   3. Kita panggil `POST /auth/refresh` dengan token itu.
-//        - 200  â†’ ACTIVE  (sesi hidup)
-//        - 401  â†’ INVALID (sesi mati, pengguna harus login ulang)
-//        - lain â†’ jangan ubah apa pun, laporkan ERROR apa adanya
+//        - 200  → ACTIVE  (sesi hidup)
+//        - 401  → INVALID (sesi mati, pengguna harus login ulang)
+//        - lain → jangan ubah apa pun, laporkan ERROR apa adanya
 //
 // PENTING (SPEC.md §10): route ini TIDAK PERNAH mengirim laporan apa pun.
 // Hanya memperbarui/ memeriksa sesi. Fase uji koneksi berhenti di sini.
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
         authTag: saved.tokenAuthTag,
       });
     } catch {
-      // Data rusak/kunci berubah â†’ jangan diamkan; minta pengguna menempel ulang.
+      // Data rusak/kunci berubah → jangan diamkan; minta pengguna menempel ulang.
       return NextResponse.json(
         {
           error:

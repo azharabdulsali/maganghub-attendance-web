@@ -63,7 +63,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
   }
 
-  // Menulis rahasia = operasi sensitif â†’ batasi agar tidak dibrute-ubah.
+  // Menulis rahasia = operasi sensitif → batasi agar tidak dibrute-ubah.
   const gate = await enforceRateLimit(
     "credentials",
     rateLimitKey("credentials", userId),

@@ -56,6 +56,46 @@ describe("cleanCommitTitle", () => {
     // Tanpa titik dua, "fix" adalah kata biasa, bukan prefix.
     expect(cleanCommitTitle("fix bug login")).toBe("fix bug login");
   });
+
+  // Kasus nyata dari repo pemilik: gaya kurung siku. Sebelum diperbaiki,
+  // prefix-nya lolos ke laporan dan jenis pekerjaan salah terbaca REFACTOR
+  // hanya karena judulnya memuat kata "refactor".
+  it("membuang prefix gaya kurung siku dengan titik dua", () => {
+    expect(
+      cleanCommitTitle("[FIX]: delete External ID and refactor documentation"),
+    ).toBe("delete External ID and refactor documentation");
+  });
+
+  it("membuang prefix gaya kurung siku tanpa titik dua", () => {
+    expect(cleanCommitTitle("[ADD] Tambah tombol di email revisi")).toBe(
+      "Tambah tombol di email revisi",
+    );
+    expect(cleanCommitTitle("[UP] Ubah label password")).toBe(
+      "Ubah label password",
+    );
+  });
+
+  it("membuang prefix kurung siku yang dipisah tanda hubung", () => {
+    expect(cleanCommitTitle("[FIX] - perbaiki simpan laporan")).toBe(
+      "perbaiki simpan laporan",
+    );
+  });
+
+  it("membuang prefix campuran secara berulang", () => {
+    expect(cleanCommitTitle("[FIX]: feat: tambah filter")).toBe("tambah filter");
+  });
+
+  it("tidak membuang kurung siku yang bukan tag", () => {
+    // Tag harus ringkas (<=16 huruf/angka). Ini bukan tag, jadi dipertahankan.
+    expect(cleanCommitTitle("[catatan panjang sekali] isi laporan")).toBe(
+      "[catatan panjang sekali] isi laporan",
+    );
+  });
+
+  it("mengembalikan string kosong bila isinya hanya prefix", () => {
+    expect(cleanCommitTitle("[FIX]:")).toBe("[FIX]:");
+    expect(cleanCommitTitle("feat:")).toBe("feat:");
+  });
 });
 
 describe("isGenericCommitTitle", () => {

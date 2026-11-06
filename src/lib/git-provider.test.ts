@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   buildApiPath,
   fetchCommits,
+  normalizeBranch,
   normalizeGithubCommit,
   normalizeGitlabCommit,
   GitApiError,
@@ -70,6 +71,80 @@ describe("buildApiPath — pencegahan SSRF", () => {
     expect(() => buildApiPath("GITHUB", "a".repeat(201), "repo")).toThrow(
       /terlalu panjang/,
     );
+  });
+});
+
+describe("fetchCommits — branch yang dibaca", () => {
+  it("mengirim ref_name untuk GitLab bila branch diisi", async () => {
+    const spy = stubFetch([]);
+    await fetchCommits({ ...OPSI_DASAR, provider: "GITLAB", branch: "dev-zar" });
+
+    const [url] = spy.mock.calls[0] as unknown as [string, RequestInit];
+    expect(new URL(url).searchParams.get("ref_name")).toBe("dev-zar");
+  });
+
+  it("mengirim sha untuk GitHub bila branch diisi", async () => {
+    const spy = stubFetch([]);
+    await fetchCommits({ ...OPSI_DASAR, branch: "dev-zar" });
+
+    const [url] = spy.mock.calls[0] as unknown as [string, RequestInit];
+    expect(new URL(url).searchParams.get("sha")).toBe("dev-zar");
+  });
+
+  it("TIDAK mengirim parameter branch bila kosong (biar API pakai default branch)", async () => {
+    for (const provider of ["GITHUB", "GITLAB"] as const) {
+      const spy = stubFetch([]);
+      await fetchCommits({ ...OPSI_DASAR, provider, branch: "" });
+
+      const [url] = spy.mock.calls[0] as unknown as [string, RequestInit];
+      const q = new URL(url).searchParams;
+      // Ini inti perilaku "kosong = default branch repo", bukan default "main".
+      expect(q.get("ref_name")).toBeNull();
+      expect(q.get("sha")).toBeNull();
+    }
+  });
+
+  it("memperlakukan branch undefined/null sama seperti kosong", async () => {
+    for (const branch of [undefined, null]) {
+      const spy = stubFetch([]);
+      await fetchCommits({ ...OPSI_DASAR, branch: branch ?? undefined });
+      const [url] = spy.mock.calls[0] as unknown as [string, RequestInit];
+      expect(new URL(url).searchParams.get("sha")).toBeNull();
+    }
+  });
+
+  it("memangkas spasi di nama branch", async () => {
+    const spy = stubFetch([]);
+    await fetchCommits({ ...OPSI_DASAR, provider: "GITLAB", branch: "  dev-zar  " });
+
+    const [url] = spy.mock.calls[0] as unknown as [string, RequestInit];
+    expect(new URL(url).searchParams.get("ref_name")).toBe("dev-zar");
+  });
+
+  it.each(["main branch", "dev;rm -rf", "-danger", "a..b", "a//b", "x".repeat(201)])(
+    "menolak branch tidak sah %j tanpa memanggil jaringan",
+    async (branch) => {
+      const spy = stubFetch([]);
+      await expect(fetchCommits({ ...OPSI_DASAR, branch })).rejects.toThrow(
+        GitApiError,
+      );
+      expect(spy).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe("normalizeBranch", () => {
+  it("mengembalikan null untuk nilai kosong", () => {
+    expect(normalizeBranch("")).toBeNull();
+    expect(normalizeBranch("   ")).toBeNull();
+    expect(normalizeBranch(undefined)).toBeNull();
+    expect(normalizeBranch(null)).toBeNull();
+  });
+
+  it("menerima branch bertingkat dan mengembalikan bentuk terpangkas", () => {
+    expect(normalizeBranch("dev-zar")).toBe("dev-zar");
+    expect(normalizeBranch("feature/login-2")).toBe("feature/login-2");
+    expect(normalizeBranch(" dev-zar ")).toBe("dev-zar");
   });
 });
 

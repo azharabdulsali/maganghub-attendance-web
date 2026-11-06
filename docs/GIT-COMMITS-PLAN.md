@@ -127,7 +127,11 @@ model GitRepoConfig {
   /// "owner/nama-repo" (GitHub) atau "grup/sub/proyek" (GitLab).
   /// Divalidasi ketat; TIDAK dipakai membangun URL tanpa sanitasi.
   repoPath String
-  branch   String      @default("main")
+  /// Branch yang dibaca. KOSONG = default branch repo menurut penyedia.
+  /// Sengaja TIDAK lagi @default("main"): repo GitLab baru memakai "master",
+  /// dan menebak "main" membuat commit di branch kerja tak pernah terlihat.
+  /// Divalidasi sebelum masuk query string (lihat §16).
+  branch   String      @default("")
 
   /// Token akses, SELALU terenkripsi AES-256-GCM.
   /// Pola sama dengan MaganghubCredential: hanya ciphertext + iv + authTag
@@ -446,26 +450,30 @@ Sengaja dibatasi, sesuai `AGENTS.md` §2 dan SPEC §10:
       bila `GitRepoConfig` belum ada di DB Anda
 - [x] `npm run lint` bersih
 - [x] `npm run typecheck` bersih
-- [x] `npm test` hijau, termasuk tes baru (940 tes)
+- [x] `npm test` hijau, termasuk tes baru (1064 tes per 2026-11)
 - [x] `npm run build` sukses
 - [x] Dibuktikan bahwa tes baru **bisa gagal** (sengaja rusakkan kode -> merah
       -> kembalikan). Lihat AGENTS.md §7. Dilakukan pada `setRepoEnabled` dan
-      pada integrasi commit -> tombol Generate draf.
+      pada integrasi commit -> tombol Generate draf, serta pada pemakaian
+      `branch` (§16.1).
 - [x] Token tidak muncul di satu pun respons API (dikunci tes `toRepoView` /
       `resolveCommits`; endpoint sakelar tidak menerima token sama sekali)
 - [x] `/privacy` menyebut pengiriman commit ke Gemini
 - [ ] Pemilik meninjau `git diff` lalu commit sendiri (agent tidak commit)
-- [ ] **Uji nyata dengan token asli** — sudah dilakukan sampai pesan
-      "Tidak ada commit pada hari itu." Diterima sebagai bukti jalur baca
-      bekerja (repo + token + API lolos), walau belum ada commit yang tampil.
+- [x] **Uji nyata dengan token asli** — **selesai**. Sebelumnya hanya sampai
+      pesan "Tidak ada commit pada hari itu"; penyebabnya ternyata branch tidak
+      pernah dikirim ke API (§16.1). Setelah diperbaiki, commit nyata pada
+      branch `dev-zar` tertarik dan 3 kolom tersusun (§16).
 
-**Dua butir terbuka yang butuh keputusan pemilik:**
+**Butir terbuka yang butuh keputusan pemilik:**
 
-1. Kolom **"Pembelajaran yang Diperoleh"** tidak diisi otomatis dan ditandai
-   `learningNeedsReview: true`. Ini disengaja (lihat §8 Fase 3). Bila pemilik
-   ingin kolom ini diisi dari commit, itu perubahan keputusan, bukan bug.
-2. **Uji dengan commit sungguhan** belum dilakukan karena belum ada commit pada
-   tanggal uji. Lakukan pada hari pertama Anda commit sebelum menyatakan selesai.
+1. Kolom **"Pembelajaran yang Diperoleh"** — sudah diisi dari bukti commit sejak
+   §14.1, dan kini mengenali prefix `[TAG]:` (§16.2). Teksnya tetap ditandai
+   `learningNeedsReview: true`; pengguna wajib menyesuaikan.
+2. **Tanggal laporan mengikuti tanggal COMMIT**, bukan tanggal author. Commit
+   hasil rebase karena itu muncul di tanggal commit. Ini bukan bug (§16.3),
+   tetapi bila pemilik ingin mengikuti tanggal pengerjaan, itu keputusan produk
+   baru yang perlu dibahas terpisah.
 
 ## 13. Tinjauan Menyeluruh (setelah Fase 5)
 
@@ -479,7 +487,7 @@ bersih · lint bersih · **974 tes lulus** · build sukses.
 Kedua jalur kirim membaca `datedTemplates` **tanpa `where`**, sehingga tiap
 pemanggilan cron menarik *semua* baris bertanggal milik pengguna — bukan hanya
 tanggal hari ini. Karena draf commit disimpan sebagai baris bertanggal setiap
-hari, jumlahnya tumbuh terus (Â±90 baris/pengguna setelah 3 bulan), dan isinya
+hari, jumlahnya tumbuh terus (±90 baris/pengguna setelah 3 bulan), dan isinya
 teks panjang. Di dispatcher massal dampaknya berlipat: satu query untuk semua
 pengguna. Kini disaring `where: { date: hariIni }`, dengan tanggal WIB diturunkan
 dari `now` **satu kali** dan dipakai ulang (dua perhitungan terpisah bisa
@@ -487,18 +495,18 @@ berbeda bila melewati tengah malam WIB). Indeks `(userId, date)` sudah ada,
 jadi tidak perlu migrasi.
 
 Dikunci 2 tes di `cron-dispatch-run.test.ts`. Dibuktikan bisa gagal: menghapus
-`where` â†’ 2 tes merah â†’ dikembalikan.
+`where` → 2 tes merah → dikembalikan.
 
-**2. `SPEC.md` Â§5.6 bertentangan dengan kode.**
+**2. `SPEC.md` §5.6 bertentangan dengan kode.**
 
 Tertulis "buat dari **template pengguna**", padahal alurnya kini
-commit â†’ bertanggal â†’ harian. Diperbarui, dan Â§5.3b ditambahkan sebagai
+commit → bertanggal → harian. Diperbarui, dan §5.3b ditambahkan sebagai
 sumber kebenaran urutan tersebut.
 
 ### Diperiksa dan dinilai aman (tidak diubah)
 
 - **29 route API**: semuanya punya auth kecuali yang memang publik (`register`,
-  `cron/*`, `auth`). Route template/profile tanpa rate limit dinilai wajar â€”
+  `cron/*`, `auth`). Route template/profile tanpa rate limit dinilai wajar —
   operasi DB lokal milik sendiri, bukan aksi berisiko atau ke portal luar.
 - **DB produksi (Neon)**: `dated_report_templates` dan `git_repo_configs`
   **sudah ada** dengan kolom benar dan indeks `(userId, date)`; tak perlu
@@ -510,22 +518,23 @@ sumber kebenaran urutan tersebut.
 
 ## 14. Dua keputusan yang tadinya ditunda — kini dikerjakan
 
-Kedua butir yang di Â§13 dicatat "menunggu keputusan pemilik" sudah diputuskan
+Kedua butir yang di §13 dicatat "menunggu keputusan pemilik" sudah diputuskan
 dan diimplementasikan.
 
 ### 14.1 Kolom "Pembelajaran yang Diperoleh" diisi dari BUKTI commit
 
-Keputusan lama (Â§8 Fase 3) â€” *jangan isi otomatis karena commit menunjukkan
-apa yang dikerjakan, bukan apa yang dipelajari* â€” **tetap dihormati**. Yang
+Keputusan lama (§8 Fase 3) — *jangan isi otomatis karena commit menunjukkan
+apa yang dikerjakan, bukan apa yang dipelajari* — **tetap dihormati**. Yang
 ditambahkan bukan pengisian bebas, melainkan penurunan dari bukti:
 
 - Modul murni baru `src/lib/commit-learning.ts`: `detectChangeKind()` membaca
-  jenis perubahan dari prefix Conventional Commits atau kata di judul; lalu
+  jenis perubahan dari prefix commit — Conventional Commits (`fix:`) **maupun
+  kurung siku (`[FIX]:`, lihat §16.2)** — atau kata di judul; lalu
   `learningFromCommits()` merakit kalimat yang **hanya** merujuk pada jenis
   perubahan yang benar-benar ada + topik dari judul commit.
 - **Guard yang menentukan**: bila tidak ada satu pun JENIS perubahan yang
   dikenali, fungsi mengembalikan `null` dan kolom dibiarkan kosong. Topik saja
-  tidak cukup â€” judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada
+  tidak cukup — judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada
   yang dipelajari.
 - `DraftInput` menerima `learning?`. Penyusun memakainya bila lolos
   `checkReportField`, selain itu tetap menyusun sendiri. Drafter tidak tahu
@@ -539,12 +548,12 @@ secara kebetulan**: dengan guard dihapus tes tetap hijau karena teks kosong
 memang sudah ditolak `MIN_REPORT_LENGTH` (100). Tes seperti itu tidak menjaga
 apa pun. Setelah diperbaiki dengan bahan yang cukup panjang, tes langsung merah
 dan **menyingkap cacat desain nyata**: judul panjang tanpa sinyal jenis masih
-menghasilkan kalimat "saya mempelajari penerapannya" â€” persis karangan yang
+menghasilkan kalimat "saya mempelajari penerapannya" — persis karangan yang
 ingin dihindari. Guard diperketat dari `jenis === 0 && topik === 0` menjadi
 `jenis === 0`.
 
 Dikunci 12 tes di `commit-learning.test.ts`. Dibuktikan bisa gagal: menghapus
-guard â†’ 1 tes merah â†’ dikembalikan.
+guard → 1 tes merah → dikembalikan.
 
 ### 14.2 Panel admin: ubah peran (Hapus sudah ada sejak awal)
 
@@ -561,17 +570,17 @@ guard â†’ 1 tes merah â†’ dikembalikan.
 
 **Bug nyata yang tertangkap saat menulis.** Versi pertama `checkRoleChange`
 dibangun di atas `checkAdminTarget`, yang menolak **semua** sasaran ber-peran
-ADMIN tanpa melihat peran tujuan. Akibatnya promosi USER â†’ ADMIN mustahil dan
+ADMIN tanpa melihat peran tujuan. Akibatnya promosi USER → ADMIN mustahil dan
 fitur jadi tidak berguna. Aturan ditulis ulang agar memutuskan berdasarkan
 peran TUJUAN; ada tes regresi khusus.
 
-**Batas yang disengaja:** menurunkan ADMIN â†’ USER belum didukung. Tanpa
+**Batas yang disengaja:** menurunkan ADMIN → USER belum didukung. Tanpa
 jaminan "masih ada admin lain", menurunkan admin terakhir akan mengunci panel
 admin tanpa jalan masuk. Server menolak terang-terangan (403) dan UI tidak
 menawarkan tombolnya.
 
-Baseline setelah perubahan: typecheck âœ… Â· lint âœ… Â· **997 tes lulus** (+23) Â·
-build âœ… Â· `prisma db push` âœ… (enum tersinkron).
+Baseline setelah perubahan: typecheck ✅ · lint ✅ · **997 tes lulus** (+23) ·
+build ✅ · `prisma db push` ✅ (enum tersinkron).
 
 ## 15. Perbaikan setelah meninjau ulang hasil sendiri
 
@@ -631,3 +640,86 @@ peran). Cabang "turunkan ke USER" — termasuk pesan toast-nya — tidak akan pe
 tercapai. Diganti peran tujuan tetap `"ADMIN"` dengan komentar alasannya.
 
 Baseline akhir: typecheck ✅ · lint ✅ · **1005 tes lulus** (+31) · build ✅.
+
+---
+
+## 16. Dua cacat yang membuat commit nyata tidak terpakai (2026-11)
+
+Ditemukan saat menguji dengan repo sungguhan (`it-sigap/after-sales/laporan-bulanan`,
+branch `dev-zar`). Keduanya lolos dari tes karena tes memakai data palsu yang
+selalu "rapi".
+
+### 16.1 KRITIS — branch tersimpan tetapi tidak pernah dipakai
+
+`resolveCommits` membaca `row.branch` dari DB, tetapi `fetchCommits` tidak
+menerimanya sama sekali. Akibatnya API selalu memakai **default branch repo**,
+sehingga halaman `/repos` menampilkan branch `dev-zar` sementara commit yang
+ditarik berasal dari branch lain. Gejalanya menyesatkan: "Tidak ada commit pada
+hari itu", padahal commitnya ada.
+
+Perbaikan:
+
+- `FetchCommitsOptions` menerima `branch?`. Dipetakan ke nama parameter yang
+  benar per penyedia: **`ref_name`** (GitLab) dan **`sha`** (GitHub). Dihilangkan
+  sepenuhnya bila kosong, supaya default branch penyedia yang berlaku.
+- **Kosong = default branch penyedia.** Tidak ada tebakan `main` di mana pun:
+  skema, validasi, maupun form. Repo GitLab baru sering memakai `master`.
+- Branch masuk query string, jadi diperlakukan sebagai input tidak tepercaya:
+  `normalizeBranch` menolak selain `[A-Za-z0-9._/-]`, panjang >200, `..`, `//`,
+  dan awalan `-`; melanggar → `GitApiError("INVALID_REPO")` **sebelum** jaringan.
+- `branch` di skema kini `@default("")`, bukan `"main"`.
+
+Dikunci 17 tes baru (`git-provider.test.ts`, `validate-git-repo.test.ts`,
+`git-repo-service.test.ts`). Dibuktikan bisa gagal: mengembalikan kode lama →
+2 tes merah.
+
+### 16.2 Prefix `[FIX]:` tidak dikenali → jenis pekerjaan salah
+
+`cleanCommitTitle` hanya membuang prefix Conventional Commits (`fix:`,
+`feat(api):`), bukan gaya kurung siku. Judul nyata
+`[FIX]: delete External ID and refactor documentation` tetap utuh, lalu
+`detectChangeKind` jatuh ke pencocokan kata dan menemukan "refactor" lebih dulu
+→ dikira **REFACTOR**. Kolom Pembelajaran pun berbunyi tentang *penataan ulang
+kode*, padahal commitnya **perbaikan**.
+
+Perbaikan:
+
+- `cleanCommitTitle` membuang tiga gaya: `type(scope)!:`, `[TAG]:`, dan
+  `[TAG] -`. Prefix berulang (`[FIX]: feat: subject`) dibuang bertahap.
+- `detectChangeKind` mengenali `[TAG]` sebagai prefix, bukan hanya `type:`.
+- **Dua batas yang disengaja**, keduanya dikunci tes:
+  - Tag dibatasi 1–16 huruf/angka, agar kurung siku yang memang bagian judul
+    (`[catatan panjang sekali]`) tidak terpotong.
+  - Judul yang **seluruhnya** prefix (`[FIX]:`) dikembalikan utuh, bukan menjadi
+    `":"`. Versi pertama regex menyisakan `":"`, sisa yang lolos
+    `isGenericCommitTitle` dan bisa masuk laporan. Tes menangkapnya.
+
+### 16.3 Dugaan yang TERBUKTI SALAH — filter tanggal
+
+Catatan awal menduga GitLab memfilter `since`/`until` berdasarkan `authored_date`
+sehingga commit hasil rebase terlewat, sementara GitHub memakai `committer_date`.
+**Dugaan ini keliru dan tidak ada kode yang diubah karenanya.**
+
+Bukti dari repo nyata (16 dari 100 commit punya tanggal author ≠ tanggal commit).
+Tiga commit diuji pada rentang tanggal author dan tanggal commit-nya:
+
+| Commit | authored | committed | Filter tgl author | Filter tgl commit |
+| :--- | :--- | :--- | :--- | :--- |
+| `0bfc93d5` | 3 Nov | 5 Nov | tidak ikut | **ikut** |
+| `9cc8f68e` | 2 Nov | 5 Nov | tidak ikut | **ikut** |
+| `d14ef0c9` | 28 Okt | 2 Nov | tidak ikut | **ikut** |
+
+Ketiganya konsisten: GitLab memakai **tanggal commit**, sama seperti GitHub.
+Konfirmasi tambahan: menyaring 2 Nov ikut memunculkan `12f18a20` yang tanggal
+author-nya 30 Okt.
+
+Karena `committedAt` yang ditampilkan juga diambil dari `committed_date`
+(GitLab) / `committer.date` (GitHub), **tanggal yang ditarik dan yang ditampilkan
+selalu sama** — tidak ada ketidakcocokan yang perlu ditutup.
+
+**Konsekuensi yang perlu diketahui pengguna** (bukan bug): commit yang di-rebase
+akan muncul pada tanggal commit, bukan tanggal pengerjaan. Contoh `d14ef0c9`
+dikerjakan 28 Okt tetapi tercatat 2 Nov. Mengikuti tanggal pengerjaan adalah
+keputusan produk berbeda — belum diminta, jadi belum diubah.
+
+Baseline akhir: typecheck OK · lint OK · **1064 tes lulus**.

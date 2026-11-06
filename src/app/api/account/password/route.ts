@@ -93,7 +93,7 @@ export async function POST(request: Request) {
 
   const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST);
   // Menaikkan `sessionVersion` mencabut SEMUA sesi lain yang beredar (token
-  // lama tak lagi cocok dengan DB â†’ callback `jwt` mengembalikan null).
+  // lama tak lagi cocok dengan DB → callback `jwt` mengembalikan null).
   // `mustChangePassword` direset ke false: bila pengguna tadi dipaksa ganti
   // kata sandi oleh admin, kewajiban itu gugur begitu ia menggantinya sendiri.
   // Versi baru dikembalikan supaya klien bisa memperbarui sesinya sendiri

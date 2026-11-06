@@ -151,8 +151,47 @@ export interface FetchCommitsOptions {
   sinceIso: string;
   /** Batas akhir waktu (ISO), opsional. */
   untilIso?: string;
+  /**
+   * Branch yang dibaca. **Kosong = default branch repo** (bukan "main").
+   *
+   * KENAPA TIDAK `"main"` SAJA: banyak repo memakai `master`, `develop`, atau
+   * nama lain. Tanpa parameter ini, API git memakai default branch repo — itu
+   * perilaku yang benar. Menebak "main" justru menghasilkan 404 / daftar kosong
+   * pada repo yang default-nya bukan main.
+   */
+  branch?: string;
   /** Jumlah maksimum commit. */
   perPage?: number;
+}
+
+/**
+ * Pola nama branch yang boleh diteruskan ke query API.
+ *
+ * Branch masuk ke query string (`ref_name` / `sha`), jadi ia diperlakukan
+ * sebagai data tak tepercaya seperti `owner`/`repo`. Pola ini mengikuti aturan
+ * `git check-ref-format` secara ringkas: huruf/angka/titik/garis bawah/strip,
+ * boleh bertingkat dengan `/`, tidak boleh diawali `-` (bisa disalahartikan
+ * sebagai opsi), dan tidak boleh mengandung `..` atau `//`.
+ */
+const BRANCH_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+
+/**
+ * Validasi nama branch opsional.
+ *
+ * Mengembalikan `null` bila branch kosong/tidak diisi — pemanggil lalu
+ * membiarkan API memakai default branch repo. Melempar `GitApiError` bila
+ * bentuknya tidak sah, supaya nilai aneh tidak pernah sampai ke query.
+ */
+export function normalizeBranch(branch: string | undefined | null): string | null {
+  const b = (branch ?? "").trim();
+  if (!b) return null;
+  if (b.length > 200 || !BRANCH_PATTERN.test(b) || b.includes("..") || b.includes("//")) {
+    throw new GitApiError(
+      "INVALID_REPO",
+      "Nama branch tidak valid. Contoh yang benar: main, dev-zar, atau feature/login.",
+    );
+  }
+  return b;
 }
 
 /** Header per provider. Token HANYA masuk ke header, tidak ke URL. */
@@ -291,12 +330,16 @@ export async function fetchCommits(
     token,
     sinceIso,
     untilIso,
+    branch,
     perPage = 50,
   } = opts;
 
   if (!token?.trim()) {
     throw new GitApiError("AUTH", "Token git belum diisi.");
   }
+
+  // Divalidasi SEBELUM dipakai: nilai ini masuk query string.
+  const ref = normalizeBranch(branch);
 
   const apiPath = buildApiPath(provider, owner, repo);
   const url = new URL(PROVIDER_ENDPOINT[provider] + apiPath);
@@ -305,6 +348,15 @@ export async function fetchCommits(
   // interpolasi string, supaya nilai ISO yang aneh pun tidak merusak URL.
   url.searchParams.set("since", sinceIso);
   if (untilIso) url.searchParams.set("until", untilIso);
+  // Nama parameter berbeda per provider:
+  // - GitHub: `sha` (branch, tag, atau SHA — semuanya sah)
+  // - GitLab: `ref_name` (branch atau tag)
+  // Tanpa ini, API memakai DEFAULT BRANCH repo. Itu sebabnya commit di branch
+  // kerja tidak pernah terlihat walau branch sudah tersimpan di DB.
+  if (ref) {
+    if (provider === "GITHUB") url.searchParams.set("sha", ref);
+    else url.searchParams.set("ref_name", ref);
+  }
   url.searchParams.set("per_page", String(perPage));
 
   let res: Response;

@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   // Ambil commit hari itu sebagai bahan. Ini SENGAJA dibungkus try/catch di
   // sini meskipun `resolveCommits` sudah berjanji tidak melempar: janji itu
   // milik modul lain, dan tombol Susun draf tidak boleh ikut mati bila modul
-  // itu keliru di kemudian hari. SPEC �5.4a: kegagalan git tidak boleh
+  // itu keliru di kemudian hari. SPEC §5.4a: kegagalan git tidak boleh
   // menghalangi penyusunan laporan dengan cara biasa.
   const hasilGit = await resolveCommits(userId).catch(() => null);
   const bahanGit =

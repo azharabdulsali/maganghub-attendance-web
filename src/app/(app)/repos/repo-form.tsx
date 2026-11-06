@@ -165,7 +165,7 @@ export default function RepoForm({
     existingProvider ?? "GITHUB",
   );
   const [repoPath, setRepoPath] = useState(existingRepoPath ?? "");
-  const [branch, setBranch] = useState(existingBranch ?? "main");
+  const [branch, setBranch] = useState(existingBranch ?? "");
   const [token, setToken] = useState("");
 
   const [saving, setSaving] = useState(false);
@@ -204,7 +204,7 @@ export default function RepoForm({
         body: JSON.stringify({
           provider,
           repoPath: repoPath.trim(),
-          branch: branch.trim() || "main",
+          branch: branch.trim(),
           token: token.trim(),
         }),
       });
@@ -682,7 +682,10 @@ function KartuRepo({
               aria-describedby="branch-hint"
             />
             <p id="branch-hint" className="text-xs text-foreground/60">
-              Kosongkan untuk memakai <code>main</code>.
+              Kosongkan untuk memakai <strong>default branch</strong> repo (mis.{" "}
+              <code>main</code>, <code>master</code>, atau <code>develop</code> — sesuai
+              pengaturan repo). Isi bila commit Anda ada di branch lain, mis.{" "}
+              <code>dev-zar</code>.
             </p>
           </div>
 
