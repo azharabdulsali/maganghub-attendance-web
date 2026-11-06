@@ -685,7 +685,7 @@ function KartuRepo({
               Kosongkan untuk memakai <strong>default branch</strong> repo (mis.{" "}
               <code>main</code>, <code>master</code>, atau <code>develop</code> — sesuai
               pengaturan repo). Isi bila commit Anda ada di branch lain, mis.{" "}
-              <code>dev-zar</code>.
+              <code>feature/admin</code>.
             </p>
           </div>
 
