@@ -73,18 +73,74 @@ export function jakartaDayRange(plainDate: string): {
 }
 
 /**
- * Rapikan satu judul commit: buang prefix konvensional (`feat:`, `fix(api):`),
+ * Pola prefix Conventional Commits yang dibuang dari judul: `feat:`,
+ * `fix(api)!:`, `chore(deps):`.
+ *
+ * Gaya kurung siku (`[FIX]:`) ditangani `isiSetelahTagKurungSiku` karena punya
+ * dua bentuk pemisah (titik dua atau tanda hubung), sehingga lebih jelas dibaca
+ * sebagai kode daripada satu regex bercabang.
+ *
+ * KENAPA GAYA KURUNG SIKU PENTING: repo nyata memakainya (mis.
+ * `[FIX]: delete External ID ...`). Sebelum didukung, prefix-nya lolos ke
+ * laporan dan jenis pekerjaan salah terbaca: judul itu memuat kata "refactor",
+ * sehingga commit PERBAIKAN dikira REFACTOR dan kolom Pembelajaran memakai
+ * kalimat tentang penataan ulang kode.
+ */
+const PREFIX_CONVENTIONAL = /^[a-z]+(?:\([^)]*\))?!?:\s*(.+)$/i;
+
+/**
+ * Ambil isi judul setelah prefix kurung siku, atau `null` bila tidak berpola
+ * `[TAG]`.
+ *
+ * `[TAG]` dibatasi 1–16 huruf/angka tanpa spasi, supaya tanda kurung yang
+ * memang bagian judul (mis. `[catatan panjang]`) tidak ikut terpotong.
+ *
+ * `[FIX]:` tanpa subjek menghasilkan `""` — BUKAN sisa `":"`. Itu penting:
+ * sisa titik dua akan lolos `isGenericCommitTitle` dan masuk ke laporan.
+ */
+function isiSetelahTagKurungSiku(text: string): string | null {
+  const cocok = text.match(/^\[[A-Za-z0-9]{1,16}\](.*)$/);
+  if (!cocok) return null;
+  const sisa = cocok[1];
+  if (/^\s*:/.test(sisa)) return sisa.replace(/^\s*:\s*/, "");
+  if (/^\s*[-–—]\s+/.test(sisa)) return sisa.replace(/^\s*[-–—]\s+/, "");
+  return sisa.trim();
+}
+
+/**
+ * Rapikan satu judul commit: buang prefix (`feat:`, `fix(api):`, `[FIX]:`),
  * rapikan spasi, dan potong bila terlalu panjang.
  *
- * Prefix dibuang karena "feat" / "chore" bukan bahasa yang wajar muncul di
- * laporan magang; isinya yang penting.
+ * Prefix dibuang karena "feat" / "chore" / "FIX" bukan bahasa yang wajar muncul
+ * di laporan magang; isinya yang penting.
  */
 export function cleanCommitTitle(raw: string): string {
   let text = (raw ?? "").replace(/\s+/g, " ").trim();
 
-  // Conventional Commits: `type(scope)!: subject` -> `subject`
-  const conventional = text.match(/^[a-z]+(?:\([^)]*\))?!?:\s*(.+)$/i);
-  if (conventional?.[1]) text = conventional[1].trim();
+  // Buang prefix berulang, mis. `[FIX]: feat: subject` -> `subject`. Dibatasi
+  // 3 putaran: cukup untuk gaya campuran yang realistis, tanpa risiko loop
+  // panjang pada judul aneh.
+  //
+  // Prefix HANYA dibuang bila ada isi tersisa. Judul yang seluruhnya prefix
+  // (`[FIX]:`) dibiarkan utuh agar `isGenericCommitTitle` bisa membuangnya;
+  // mengubahnya menjadi `":"` justru meloloskan sampah ke laporan.
+  for (let i = 0; i < 3; i++) {
+    let berubah = false;
+
+    const conventional = text.match(PREFIX_CONVENTIONAL);
+    if (conventional?.[1]?.trim()) {
+      text = conventional[1].trim();
+      berubah = true;
+    } else {
+      const sisa = isiSetelahTagKurungSiku(text);
+      if (sisa !== null && sisa.trim()) {
+        text = sisa.trim();
+        berubah = true;
+      }
+    }
+
+    if (!berubah) break;
+  }
 
   // Buang tanda baca berlebih di ujung (titik berkali-kali dsb.).
   text = text.replace(/[.\s]+$/, "");

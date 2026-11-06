@@ -157,8 +157,13 @@ untuk mengambil commit sebagai bahan draf; lihat §5.4a dan
 - Draf setengah jadi (ada kolom kosong) tidak dipakai; dianggap tidak ada bahan.
 - **Kolom "Pembelajaran yang Diperoleh"** diturunkan dari **bukti** commit, bukan
   dikarang (`src/lib/commit-learning.ts`): jenis perubahan (perbaikan, fitur,
-  pengujian, dokumentasi, penataan ulang, konfigurasi) dibaca dari prefix
-  Conventional Commits atau kata di judul, lalu dirangkai bersama topiknya.
+  pengujian, dokumentasi, penataan ulang, konfigurasi) dibaca dari prefix commit
+  atau kata di judul, lalu dirangkai bersama topiknya. Prefix yang dikenali ada
+  dua gaya: **Conventional Commits** (`fix:`, `feat(api):`) dan **kurung siku**
+  (`[FIX]:`, `[ADD] ...`, `[FIX] - ...`) — gaya kedua lazim di repo nyata
+  pengguna. Kedua gaya dibuang dari judul sebelum dirangkai, sehingga
+  `[FIX]: delete External ID and refactor documentation` terbaca sebagai
+  perbaikan, bukan penataan ulang.
   Bila **tidak ada** jenis perubahan yang dapat dikenali, kolom dibiarkan kosong
   — judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada yang
   dipelajari. Pratinjau menandainya `learningNeedsReview: true` +
@@ -191,6 +196,22 @@ untuk mengambil commit sebagai bahan draf; lihat §5.4a dan
   menulis apa pun ke repo pengguna.
 - **Filter "hari itu" memakai zona Asia/Jakarta**, konsisten dengan §11B. Bukan
   UTC.
+- **Branch yang dibaca mengikuti isian pengguna.** Field `branch` di `/repos`
+  dikirim ke API sebagai `ref_name` (GitLab) atau `sha` (GitHub). **Kosong berarti
+  default branch repo** menurut penyedia — aplikasi tidak menebak `main`, karena
+  repo GitLab baru bisa memakai `master` atau nama lain. Tanpa ini API selalu
+  memakai default branch, sehingga commit di branch kerja tidak pernah terlihat
+  walau branch sudah tersimpan.
+- **Nama branch diperlakukan sebagai input tidak tepercaya.** Nilainya masuk
+  query string, jadi divalidasi sebelum ada panggilan jaringan: hanya huruf,
+  angka, `.`, `_`, `/`, `-`; maksimal 200 karakter; menolak `..`, `//`, dan awalan
+  `-`. Pelanggaran → `GitApiError("INVALID_REPO")` tanpa menyentuh jaringan.
+- **Filter tanggal memakai tanggal COMMIT, bukan tanggal author**, sama di kedua
+  penyedia (`committed_date` GitLab, `committer.date` GitHub). Ini dibuktikan
+  dengan repo nyata: commit hasil rebase punya tanggal author lebih awal daripada
+  tanggal commit, dan GitLab memasukkannya ke rentang **tanggal commit**. Karena
+  `committedAt` yang ditampilkan ke pengguna juga berasal dari field itu, tanggal
+  yang ditarik dan tanggal yang ditampilkan selalu sama.
 - **Fallback wajib:** API git gagal, token kedaluwarsa, atau tidak ada commit
   hari itu → draf tetap tersusun dari template/penyusun lokal. Form **tidak
   boleh** menampilkan error hanya karena fitur ini. Kegagalan dicatat di

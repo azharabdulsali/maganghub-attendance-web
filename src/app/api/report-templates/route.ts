@@ -3,7 +3,7 @@
 // Berbeda dari kredensial, isi template BUKAN rahasia: boleh dikembalikan penuh
 // ke klien supaya pengguna bisa melihat dan mengeditnya. Yang dijaga di sini:
 //   - Hanya pemilik sesi yang boleh menyentuh template-nya sendiri.
-//   - Teks diseragamkan (spasi tepi dipangkas, CRLF â†’ LF) sebelum disimpan,
+//   - Teks diseragamkan (spasi tepi dipangkas, CRLF → LF) sebelum disimpan,
 //     supaya yang dihitung sama dengan yang ditampilkan portal.
 //   - Penolakan di sini mencegah satu percobaan submit yang sia-sia: portal
 //     menuntut minimal 100 karakter per field.

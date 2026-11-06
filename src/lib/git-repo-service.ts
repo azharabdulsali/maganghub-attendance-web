@@ -187,6 +187,10 @@ export async function resolveCommits(
       token,
       sinceIso: rentang.sinceIso,
       untilIso: rentang.untilIso,
+      // Branch WAJIB diteruskan. Tanpa ini commit di branch kerja tidak pernah
+      // terlihat: API memakai default branch repo. Branch kosong sah — artinya
+      // "pakai default branch repo", bukan "main".
+      branch: row.branch,
     });
 
     // Catat keberhasilan & bersihkan galat lama. Kegagalan mencatat status

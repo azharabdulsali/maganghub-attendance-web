@@ -19,10 +19,24 @@ function valid(overrides: Record<string, unknown> = {}) {
 }
 
 describe("gitRepoSchema", () => {
-  it("menerima bentuk normal dan mengisi branch default 'main'", () => {
+  it("mengisi branch kosong bila tidak diberikan (artinya: pakai default branch repo)", () => {
     const hasil = gitRepoSchema.safeParse(valid());
     expect(hasil.success).toBe(true);
-    if (hasil.success) expect(hasil.data.branch).toBe("main");
+    // BUKAN "main": repo bisa default ke master/develop/apa pun. String kosong
+    // adalah sinyal eksplisit "jangan kirim parameter branch ke API".
+    if (hasil.success) expect(hasil.data.branch).toBe("");
+  });
+
+  it("mempertahankan nama branch yang diisi", () => {
+    const hasil = gitRepoSchema.safeParse(valid({ branch: "dev-zar" }));
+    expect(hasil.success).toBe(true);
+    if (hasil.success) expect(hasil.data.branch).toBe("dev-zar");
+  });
+
+  it("menerima branch bertingkat seperti feature/login", () => {
+    const hasil = gitRepoSchema.safeParse(valid({ branch: "feature/login" }));
+    expect(hasil.success).toBe(true);
+    if (hasil.success) expect(hasil.data.branch).toBe("feature/login");
   });
 
   it("menerima GitLab dengan namespace bertingkat", () => {

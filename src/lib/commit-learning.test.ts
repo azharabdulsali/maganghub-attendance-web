@@ -42,6 +42,18 @@ describe("detectChangeKind", () => {
     // "prefix" memuat "fix" sebagai potongan; \b mencegahnya terbaca sebagai FIX.
     expect(detectChangeKind(commit("menata ulang prefix"))).toBe("OTHER");
   });
+
+  // Kasus nyata: gaya kurung siku dipakai repo pemilik. Tanpa dukungan prefix
+  // ini, judul di bawah terbaca REFACTOR (kata "refactor" lebih dulu cocok saat
+  // pencocokan jatuh ke judul), padahal commit-nya PERBAIKAN.
+  it("membaca prefix gaya kurung siku", () => {
+    expect(
+      detectChangeKind(commit("[FIX]: delete External ID and refactor documentation")),
+    ).toBe("FIX");
+    expect(detectChangeKind(commit("[ADD] Tambah tombol di email revisi"))).toBe("FEATURE");
+    expect(detectChangeKind(commit("[UP] Ubah label password"))).toBe("OTHER");
+    expect(detectChangeKind(commit("[DOCS]: perbarui README"))).toBe("DOCS");
+  });
 });
 
 describe("learningFromCommits — tidak mengarang", () => {

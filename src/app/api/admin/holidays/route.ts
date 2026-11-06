@@ -10,10 +10,10 @@
 //   - Rate limit scope `adminUserAction` (sama kelas: aksi admin ke DB).
 //   - Validasi lewat `validateHolidayInput` (murni, teruji).
 //
-// GET  /api/admin/holidays        â†’ daftar semua libur (terurut).
-// POST /api/admin/holidays        â†’ tambah libur baru (body: date, name, kind).
-// PUT  /api/admin/holidays        â†’ ubah libur berdasarkan `id` di body.
-// DELETE /api/admin/holidays?id=  â†’ hapus libur (id di query, bukan body).
+// GET  /api/admin/holidays        → daftar semua libur (terurut).
+// POST /api/admin/holidays        → tambah libur baru (body: date, name, kind).
+// PUT  /api/admin/holidays        → ubah libur berdasarkan `id` di body.
+// DELETE /api/admin/holidays?id=  → hapus libur (id di query, bukan body).
 
 import { NextResponse } from "next/server";
 

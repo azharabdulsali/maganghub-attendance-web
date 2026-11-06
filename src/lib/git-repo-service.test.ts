@@ -261,6 +261,31 @@ describe("resolveCommits", () => {
     expect(arg.repo).toBe("proyek");
   });
 
+  // BUG NYATA (dilaporkan pemilik repo): field Branch ADA di form dan tersimpan
+  // benar di DB, tetapi `resolveCommits` tidak pernah meneruskannya ke
+  // `fetchCommits`. Akibatnya API memakai DEFAULT BRANCH repo, dan commit di
+  // branch kerja (mis. dev-zar) tidak pernah terlihat — pesannya
+  // "Tidak ada commit pada hari itu" padahal commit-nya ada.
+  it("meneruskan branch tersimpan ke provider", async () => {
+    findUniqueMock.mockResolvedValue(baris({ branch: "dev-zar" }));
+
+    await resolveCommits("u1", "2026-06-01");
+
+    const arg = fetchCommitsMock.mock.calls[0][0];
+    expect(arg.branch).toBe("dev-zar");
+  });
+
+  // Branch kosong BUKAN "main". Nilai kosong harus diteruskan apa adanya agar
+  // provider memakai default branch repo (bisa master/develop/apa pun).
+  it("meneruskan branch kosong apa adanya, tidak menebak 'main'", async () => {
+    findUniqueMock.mockResolvedValue(baris({ branch: "" }));
+
+    await resolveCommits("u1", "2026-06-01");
+
+    const arg = fetchCommitsMock.mock.calls[0][0];
+    expect(arg.branch).toBe("");
+  });
+
   // Tes ini sebelumnya mengharapkan owner="grup", repo="sub/proyek". Itu
   // MENGUNCI BUG: `buildApiPath` menolak repo yang mengandung "/", sehingga
   // setiap repo GitLab bertingkat gagal dengan "Nama owner/repo tidak valid".
