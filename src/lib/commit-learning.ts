@@ -21,8 +21,21 @@
 //
 // Modul ini MURNI: tanpa `fetch`, tanpa env, tanpa I/O, tanpa `Date.now()`.
 
-import { cleanCommitTitle, isGenericCommitTitle, type GitCommit } from "./git-commits";
-import { checkReportField, countReportLength, MIN_REPORT_LENGTH, normalizeReportText } from "./report-rules";
+import {
+  cleanCommitTitle,
+  isGenericCommitTitle,
+  sortCommitsAscending,
+  type GitCommit,
+} from "./git-commits";
+import {
+  checkReportField,
+  countReportLength,
+  MIN_REPORT_LENGTH,
+  normalizeReportText,
+  DRAFT_MAX_LENGTH,
+  DRAFT_MIN_LENGTH,
+} from "./report-rules";
+import { trimToChars } from "./text-trim";
 
 /** Jenis perubahan yang bisa dikenali dari sebuah commit. */
 export type ChangeKind =
@@ -123,11 +136,15 @@ export function detectChangeKind(commit: GitCommit): ChangeKind {
  * Ambil topik bermakna dari judul commit.
  *
  * Judul generik ("update", "wip") dibuang karena tidak memberi bahan apa pun.
+ *
+ * Urutannya kronologis NAIK (lihat `sortCommitsAscending`), bukan urutan balasan
+ * API. Tanpa ini, topik yang disebut adalah pekerjaan PALING AKHIR hari itu,
+ * padahal kalimat pembelajaran dibaca sebagai rangkuman hari.
  */
 function topikBermakna(commits: readonly GitCommit[], batas = 2): string[] {
   const hasil: string[] = [];
   const dilihat = new Set<string>();
-  for (const c of commits) {
+  for (const c of sortCommitsAscending(commits)) {
     if (isGenericCommitTitle(c.title)) continue;
     const judul = cleanCommitTitle(c.title);
     if (judul.length === 0) continue;
@@ -135,7 +152,13 @@ function topikBermakna(commits: readonly GitCommit[], batas = 2): string[] {
     if (dilihat.has(kunci)) continue;
     dilihat.add(kunci);
     // Judul panjang dipenggal supaya kalimatnya tetap wajar dibaca.
-    hasil.push(judul.length > 70 ? `${judul.slice(0, 69).trimEnd()}…` : judul);
+    //
+    // Dipotong di BATAS KATA, bukan `slice(0, 69)`: potongan mentah bisa
+    // mendarat di tengah kata dan menghasilkan `"...sah karena…"` — elipsis
+    // yang menempel pada penggal kata, yang justru terbaca seperti salah
+    // ketik. `trimToChars` dengan `min` rendah sudah menangani batas kata,
+    // pengutamaan akhir kalimat, dan jaminan `<= 70`.
+    hasil.push(judul.length > 70 ? trimToChars(judul, 70, 0) : judul);
     if (hasil.length >= batas) break;
   }
   return hasil;
@@ -200,6 +223,18 @@ export function learningFromCommits(commits: readonly GitCommit[]): string | nul
   if (countReportLength(teks) < MIN_REPORT_LENGTH) {
     teks = normalizeReportText(`${teks} ${PENUTUP_BERBUKTI}`);
   }
+
+  // Batas atas sama dengan drafter lain (keputusan pemilik: 100-200 karakter).
+  // Modul ini disusun dari pesan commit yang bisa sangat panjang -- tanpa
+  // pemotongan, kolom "Pembelajaran" bisa jauh melewati batas walau jenis
+  // perubahannya hanya satu. Pemotongan di batas kata oleh `trimToChars`.
+  //
+  // `min` diteruskan supaya potongan "rapi" tidak jatuh di bawah batas portal.
+  // Tanpa itu, judul commit yang diawali kalimat pendek lalu satu kata sangat
+  // panjang menghasilkan kolom < 100 karakter, `checkReportField` menolaknya,
+  // dan fungsi ini mengembalikan `null` -- pengguna kehilangan kolom
+  // "Pembelajaran" padahal commit-nya jelas ada.
+  teks = trimToChars(teks, DRAFT_MAX_LENGTH, DRAFT_MIN_LENGTH);
 
   // Hormati kontrak yang sama dengan penyusun lain: jangan kembalikan kolom
   // yang akan ditolak server. Lebih baik kosong (null) daripada draf buntu.

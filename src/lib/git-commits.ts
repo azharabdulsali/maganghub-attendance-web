@@ -182,10 +182,40 @@ export function isGenericCommitTitle(title: string): boolean {
 }
 
 /**
+ * Urutkan commit dari TERAWAL ke TERAKHIR (kronologis naik).
+ *
+ * KENAPA INI WAJIB (bug nyata, bukan preferensi)
+ * ----------------------------------------------
+ * GitHub dan GitLab mengembalikan commit dengan urutan **terbaru dulu**, dan
+ * `fetchCommits` meneruskannya apa adanya. Akibatnya `commitsToKeywords` --
+ * yang hanya mengambil 15 judul pertama -- memakai commit TERAKHIR hari itu
+ * dan **membuang commit pertama**, lalu menyusun kalimat mulai dari pekerjaan
+ * sore. Laporan jadi menceritakan hari secara terbalik, dan commit pembuka
+ * (sering justru pekerjaan terpenting) hilang sama sekali dari bahan.
+ *
+ * Commit tanpa `committedAt` yang sah diletakkan di AKHIR: nilainya tidak bisa
+ * dibandingkan, dan menaruhnya di awal akan mendorong commit bertanggal ke
+ * belakang. Urutan asli dipertahankan untuk nilai yang sama (sort stabil).
+ */
+export function sortCommitsAscending(
+  commits: readonly GitCommit[],
+): GitCommit[] {
+  const waktu = (c: GitCommit): number => {
+    const t = Date.parse(c.committedAt ?? "");
+    return Number.isNaN(t) ? Number.POSITIVE_INFINITY : t;
+  };
+  return [...commits].sort((a, b) => waktu(a) - waktu(b));
+}
+
+/**
  * Ubah daftar commit menjadi teks `keywords` untuk `DraftInput`.
  *
  * Hasil berupa kalimat yang enak dibaca penyusun, mis.:
  *   "Menambah validasi form login; Memperbaiki bug filter tanggal; ..."
+ *
+ * Urutannya **kronologis naik** (commit terawal lebih dulu), lihat
+ * `sortCommitsAscending`. Dengan begitu narasi laporan mengikuti alur hari itu,
+ * dan commit pertama tidak terbuang oleh batas `MAX_COMMITS_IN_KEYWORDS`.
  *
  * Mengembalikan string kosong HANYA bila tidak ada commit yang layak dipakai.
  * Pemanggil WAJIB menangani kasus itu dengan fallback (jangan membuat laporan
@@ -194,7 +224,7 @@ export function isGenericCommitTitle(title: string): boolean {
 export function commitsToKeywords(commits: readonly GitCommit[]): string {
   if (!commits || commits.length === 0) return "";
 
-  const judul = commits
+  const judul = sortCommitsAscending(commits)
     .map((c) => c.title)
     .filter((t) => !isGenericCommitTitle(t))
     .map((t) => cleanCommitTitle(t))

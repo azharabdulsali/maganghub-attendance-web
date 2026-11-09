@@ -7,7 +7,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { localDrafter, getDrafter } from "./report-draft";
-import { checkReportField, MIN_REPORT_LENGTH, countReportLength } from "./report-rules";
+import { checkReportField, MIN_REPORT_LENGTH, countReportLength, DRAFT_MAX_LENGTH } from "./report-rules";
+
+/**
+ * Batas atas draf otomatis, dibaca dari sumbernya (bukan angka 200 yang disalin)
+ * supaya tes ini ikut berubah bila keputusan produk berubah.
+ */
+const MAX_DRAFT_LENGTH_FOR_TEST = DRAFT_MAX_LENGTH;
 
 const KASUS = [
   { nama: "kata kunci biasa", input: { keywords: "migrasi skema Prisma" } },
@@ -73,6 +79,40 @@ describe("localDrafter", () => {
   it("menyisipkan kata kunci ke dalam hasil", async () => {
     const hasil = await localDrafter.draft({ keywords: "migrasi skema Prisma" });
     expect(`${hasil.activity} ${hasil.learning}`).toContain("migrasi skema Prisma");
+  });
+
+  // REGRESI: batas 200 karakter adalah aturan PEMBATAS AKHIR di penyusun lokal,
+  // bukan sesuatu yang diandalkan dari modul pemasok. Sebelumnya jalur
+  // `input.learning` (bahan bukti commit) dan jalur "tidak ada kendala" melewati
+  // `cukupkan` TANPA pemotongan, sehingga batas itu hanya terjaga selama
+  // `learningFromCommits` kebetulan ikut memotong.
+  it("memotong bahan bukti yang kepanjangan ke batas draf", async () => {
+    const panjang = "Memahami cara kerja migrasi basis data secara bertahap. ".repeat(20);
+    expect(countReportLength(panjang)).toBeGreaterThan(MAX_DRAFT_LENGTH_FOR_TEST);
+
+    const hasil = await localDrafter.draft({ keywords: "migrasi", learning: panjang });
+    expect(countReportLength(hasil.learning)).toBeLessThanOrEqual(MAX_DRAFT_LENGTH_FOR_TEST);
+    // Tetap kolom yang LAYAK disimpan, bukan kolom yang akan ditolak server.
+    expect(checkReportField(hasil.learning)).toBeNull();
+  });
+
+  it("memotong kolom kendala jalur 'tidak ada kendala' ke batas draf", async () => {
+    const hasil = await localDrafter.draft({ keywords: "tidak ada kendala" });
+    expect(countReportLength(hasil.obstacles)).toBeLessThanOrEqual(MAX_DRAFT_LENGTH_FOR_TEST);
+    expect(checkReportField(hasil.obstacles)).toBeNull();
+  });
+
+  it("semua kolom hasil lokal tidak pernah melebihi batas draf", async () => {
+    // Kata kunci panjang tanpa spasi (mis. URL) adalah kasus terburuk: ia tidak
+    // bisa dipotong di batas kata dan dulu bisa memaksa kolom melewati batas.
+    const panjang = "https://contoh.test/" + "a".repeat(400);
+    const hasil = await localDrafter.draft({ keywords: panjang, unit: "Tim Ops" });
+    for (const [nama, teks] of Object.entries(hasil)) {
+      expect(
+        countReportLength(teks),
+        `kolom ${nama} melebihi batas draf`,
+      ).toBeLessThanOrEqual(MAX_DRAFT_LENGTH_FOR_TEST);
+    }
   });
 });
 

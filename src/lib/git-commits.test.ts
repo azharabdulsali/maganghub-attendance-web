@@ -173,6 +173,42 @@ describe("commitsToKeywords", () => {
     ]);
     expect(hasil).not.toContain("@");
   });
+
+  // BUG YANG DIPERBAIKI: GitHub & GitLab mengembalikan commit TERBARU dulu,
+  // sehingga bahan laporan tersusun dari akhir hari ke awal. Karena ada batas
+  // `MAX_COMMITS_IN_KEYWORDS`, commit paling awal justru terbuang — padahal itu
+  // pekerjaan pertama yang seharusnya membuka narasi.
+  it("menyusun kata kunci dari commit TERAWAL dulu, apa pun urutan masuknya", () => {
+    const hasil = commitsToKeywords([
+      commit({ title: "memperbaiki filter tanggal", committedAt: "2027-02-10T09:00:00Z" }),
+      commit({ title: "menambah export CSV", committedAt: "2027-02-10T01:00:00Z" }),
+      commit({ title: "merapikan tampilan tabel", committedAt: "2027-02-10T05:00:00Z" }),
+    ]);
+    expect(hasil).toBe(
+      "menambah export CSV; merapikan tampilan tabel; memperbaiki filter tanggal",
+    );
+  });
+
+  it("batas jumlah commit menyimpan yang TERAWAL, bukan yang terbaru", () => {
+    // 40 commit berurutan jam ke atas; yang bertahan harus jam-jam awal.
+    const banyak = Array.from({ length: 40 }, (_, i) =>
+      commit({
+        title: `perubahan nomor ${i}`,
+        committedAt: `2027-02-10T${String(i % 24).padStart(2, "0")}:${String(i).padStart(2, "0")}:00Z`,
+      }),
+    );
+    const hasil = commitsToKeywords(banyak);
+    expect(hasil).toContain("perubahan nomor 0");
+    expect(hasil).not.toContain("perubahan nomor 39");
+  });
+
+  it("commit tanpa waktu tetap dipakai, diletakkan di akhir", () => {
+    const hasil = commitsToKeywords([
+      commit({ title: "tanpa waktu", committedAt: "" }),
+      commit({ title: "paling awal", committedAt: "2027-02-10T01:00:00Z" }),
+    ]);
+    expect(hasil).toBe("paling awal; tanpa waktu");
+  });
 });
 
 describe("jakartaDayRange", () => {

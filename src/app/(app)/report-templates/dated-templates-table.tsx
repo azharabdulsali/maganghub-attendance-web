@@ -11,6 +11,13 @@
 //     yang perlu ditinjau.
 //   - Kolom isi = ISI TEMPLATE yang berlaku di tanggal itu, bukan laporan yang
 //     terkirim. Ini daftar template, bukan riwayat.
+//   - **Urutan: tanggal TERBARU dulu** (keputusan pemilik). Yang dicari pengguna
+//     hampir selalu template kemarin/hari ini, bukan yang paling lama. Bahan draf
+//     commit memakai urutan sebaliknya (kronologis naik) karena itu menyusun
+//     narasi satu hari — dua kebutuhan berbeda, dua urutan berbeda.
+//   - **Teks panjang dipangkas + tombol "Selengkapnya".** Sebelumnya sel memakai
+//     `line-clamp-3` yang memotong teks TANPA cara membukanya, sehingga isi
+//     template tidak bisa diperiksa dari tabel ini sama sekali.
 //   - Aksi "Buka" memuat tanggal itu ke form di atas (`?date=YYYY-MM-DD`).
 //     Sejak perbaikan, ini pulau klien `OpenDatedButton`, bukan `<Link>`: `<Link>`
 //     ke rute yang sama dengan query baru tidak memasang ulang form, sehingga
@@ -29,6 +36,7 @@
 // (libur/di luar program) memakai lib/report-policy.ts yang sama dengan form,
 // supaya penandanya konsisten.
 
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { DeleteDatedButton } from "./delete-dated-button";
 import { OpenDatedButton } from "./open-dated-button";
@@ -37,17 +45,63 @@ import { isHoliday, isAfter, LAST_ACTIVE_DATE } from "@/lib/report-policy";
 import { Message } from "@/components/ui/message";
 import Pagination from "@/components/pagination";
 import type { Pagination as PaginationInfo } from "@/lib/audit-log";
+import { trimToChars } from "@/lib/text-trim";
 
 /**
- * Teks isi template dalam sel tabel. Dipangkas agar tabel tidak melebar liar;
- * teks utuh tetap tersedia lewat atribut `title` (tooltip). Nilai kosong
- * ditampilkan sebagai "," supaya tidak ada sel yang tampak rusak/kosong.
+ * Panjang teks yang ditampilkan saat sel TERTUTUP (karakter).
+ *
+ * Dipilih supaya teks yang sudah ringkas (100-200 karakter, hasil draf commit)
+ * tampil utuh tanpa tombol, sementara template lama yang panjang tetap ringkas.
  */
-function Cell({ text }: { text: string }) {
+const CELL_PREVIEW_CHARS = 120;
+
+/** Tanggal yang sedang dibuka "Selengkapnya"-nya (satu per tabel). */
+export type ExpandedDate = string | null;
+
+/**
+ * Teks isi template dalam sel tabel.
+ *
+ * Tiga keadaan, sengaja dibedakan:
+ *   - kosong -> ditampilkan sebagai "," agar tidak ada sel yang tampak rusak;
+ *   - pendek  -> tampil utuh, tanpa tombol (tombol untuk teks yang sudah
+ *     kelihatan seluruhnya hanya menambah bising);
+ *   - panjang -> dipangkas di batas kata + tautan "Selengkapnya" yang membuka
+ *     teks utuh.
+ *
+ * `expanded` membuka SEMUA kolom pada baris itu sekaligus, bukan per kolom:
+ * pengguna biasanya ingin memeriksa satu tanggal, bukan satu sel.
+ */
+function Cell({
+  text,
+  date,
+  expanded,
+  buildExpandHref,
+}: {
+  text: string;
+  date: string;
+  expanded: boolean;
+  buildExpandHref: (date: string | null) => string;
+}) {
   if (!text) return <span className="text-foreground/40">,</span>;
+
+  const terpotong = text.length > CELL_PREVIEW_CHARS;
+
+  if (expanded || !terpotong) {
+    return <span className="block whitespace-pre-line">{text}</span>;
+  }
+
   return (
-    <span className="line-clamp-3 block" title={text}>
-      {text}
+    <span className="block">
+      {trimToChars(text, CELL_PREVIEW_CHARS)}{" "}
+      <Link
+        href={buildExpandHref(date)}
+        // `scroll: false` tidak dipakai: halaman ini punya form di atas, dan
+        // tanpa menggulir pengguna tidak melihat bahwa barisnya berubah.
+        className="whitespace-nowrap font-heading text-foreground underline underline-offset-2"
+        aria-label={`Tampilkan teks lengkap template tanggal ${date}`}
+      >
+        Selengkapnya
+      </Link>
     </span>
   );
 }
@@ -57,7 +111,7 @@ function MobileField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-[0.7rem] font-heading text-foreground/50">{label}</dt>
-      <dd className="text-xs leading-relaxed text-foreground/80">
+      <dd className="whitespace-pre-line text-xs leading-relaxed text-foreground/80">
         {value || <span className="text-foreground/40">,</span>}
       </dd>
     </div>
@@ -109,6 +163,8 @@ export default async function DatedTemplatesTable({
   holidays,
   pageInfo,
   buildHref,
+  buildExpandHref,
+  expandedDate,
 }: {
   userId: string;
   /** Tanggal hari ini WIB (dihitung server) untuk label status. */
@@ -119,29 +175,45 @@ export default async function DatedTemplatesTable({
   pageInfo: PaginationInfo;
   /** Susun URL untuk nomor halaman tertentu (mempertahankan `?date=` aktif). */
   buildHref: (page: number) => string;
+  /** Susun URL yang membuka/menutup teks panjang (`?expand=YYYY-MM-DD`). */
+  buildExpandHref: (date: string | null) => string;
+  /** Tanggal yang teksnya sedang dibuka penuh, atau `null`. */
+  expandedDate: ExpandedDate;
 }) {
-  const rows = await prisma.datedReportTemplate.findMany({
-    where: { userId },
-    orderBy: { date: "asc" },
-    select: {
-      date: true,
-      activity: true,
-      learning: true,
-      obstacles: true,
-    },
-  });
+  // Hanya SATU halaman diambil dari database. Sebelumnya seluruh tabel ditarik
+  // tanpa `take` lalu dipotong di memori, dan `page.tsx` menarik daftar yang
+  // SAMA sekali lagi — dua query untuk data yang identik, dan pengguna dengan
+  // ratusan template mengangkut semuanya setiap kali halaman dibuka.
+  //
+  // `take` dihitung dari `end - start`. Saat tabel KOSONG hasilnya 0, dan
+  // Prisma memperlakukan `take: 0` sebagai "tanpa batas" — bukan nol baris.
+  // Hari ini itu tidak berbahaya (tidak ada baris untuk diambil), tapi arti
+  // diam-diamnya terlalu mudah berbalik jadi bug bila suatu saat `count` dan
+  // `findMany` tidak sinkron. `Math.max(0, ...)` menjaga maksudnya eksplisit.
+  const take = Math.max(0, pageInfo.end - pageInfo.start);
+  const rows =
+    take === 0
+      ? []
+      : await prisma.datedReportTemplate.findMany({
+          where: { userId },
+          // Terbaru dulu: yang dicari hampir selalu template hari ini/kemarin.
+          orderBy: { date: "desc" },
+          skip: pageInfo.start,
+          take,
+          select: {
+            date: true,
+            activity: true,
+            learning: true,
+            obstacles: true,
+          },
+        });
 
-  const allItems = rows.map((r) => ({
+  const items = rows.map((r) => ({
     date: toPlainDate(r.date),
     activity: r.activity,
     learning: r.learning,
     obstacles: r.obstacles,
   }));
-
-  // Hanya satu halaman yang dirender (sesuai `pageInfo`), bukan seluruh daftar.
-  // `start`/`end` dihitung `paginate()` di page.tsx dan sudah dijepit ke rentang
-  // sah, jadi `?tpage=999` tetap menampilkan halaman terakhir, bukan tabel kosong.
-  const items = allItems.slice(pageInfo.start, pageInfo.end);
 
   return (
     <section className="mt-10 border-2 border-border bg-secondary-background p-4 shadow-shadow sm:p-6">
@@ -161,35 +233,74 @@ export default async function DatedTemplatesTable({
         </p>
       ) : (
         <>
+          {/* Penanda baris yang sedang terbuka. Tanpa ini, pengguna yang membuka
+              satu baris lalu menggulir tidak tahu baris mana yang berubah. */}
+          {expandedDate ? (
+            <p className="mt-3 text-xs text-foreground/60">
+              Menampilkan teks lengkap tanggal{" "}
+              <span className="font-mono font-bold">{expandedDate}</span>.{" "}
+              <Link
+                href={buildExpandHref(null)}
+                className="font-heading underline underline-offset-2"
+              >
+                Ringkas kembali
+              </Link>
+            </p>
+          ) : null}
+
           {/* Mobile: kartu bertumpuk. */}
           <ul className="mt-4 space-y-2.5 sm:hidden">
-            {items.map((t) => (
-              <li
-                key={t.date}
-                className="space-y-2 border-2 border-border bg-background p-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-xs font-bold tabular-nums">
-                    {t.date}
-                  </span>
-                  <StatusChip date={t.date} today={today} holidays={holidays} />
-                </div>
+            {items.map((t) => {
+              const terbuka = expandedDate === t.date;
+              return (
+                <li
+                  key={t.date}
+                  className="space-y-2 border-2 border-border bg-background p-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-bold tabular-nums">
+                      {t.date}
+                    </span>
+                    <StatusChip date={t.date} today={today} holidays={holidays} />
+                  </div>
 
-                <dl className="space-y-1.5 border-t border-border/40 pt-2">
-                  <MobileField label="Uraian Aktivitas" value={t.activity} />
-                  <MobileField
-                    label="Pembelajaran yang Diperoleh"
-                    value={t.learning}
-                  />
-                  <MobileField label="Kendala yang Dialami" value={t.obstacles} />
-                </dl>
+                  <dl className="space-y-1.5 border-t border-border/40 pt-2">
+                    <MobileField label="Uraian Aktivitas" value={t.activity} />
+                    <MobileField
+                      label="Pembelajaran yang Diperoleh"
+                      value={t.learning}
+                    />
+                    <MobileField label="Kendala yang Dialami" value={t.obstacles} />
+                  </dl>
 
-                <div className="flex flex-wrap gap-2">
-                  <OpenDatedButton date={t.date} />
-                  <DeleteDatedButton date={t.date} />
-                </div>
-              </li>
-            ))}
+                  {/* Di kartu mobile teksnya sudah tampil penuh (tidak ada
+                      batas tinggi), jadi hanya tombol tutup yang berguna.
+                      Tombol buka tetap disediakan agar perilakunya sama
+                      dengan tabel desktop. */}
+                  {terbuka ? (
+                    <Link
+                      href={buildExpandHref(null)}
+                      className="inline-block font-heading text-xs underline underline-offset-2"
+                    >
+                      Ringkas kembali
+                    </Link>
+                  ) : (
+                    <Link
+                      href={buildExpandHref(t.date)}
+                      className="inline-block font-heading text-xs underline underline-offset-2"
+                      aria-label={`Tampilkan teks lengkap template tanggal ${t.date}`}
+                    >
+                      Selengkapnya
+                    </Link>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    <OpenDatedButton date={t.date} />
+                    <DeleteDatedButton date={t.date} />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
 
           {/* Desktop: tabel. */}
@@ -210,36 +321,62 @@ export default async function DatedTemplatesTable({
                 </tr>
               </thead>
               <tbody>
-                {items.map((t) => (
-                  <tr
-                    key={t.date}
-                    className="border-b border-border/40 align-top last:border-b-0"
-                  >
-                    <td className="whitespace-nowrap p-3">
-                      <span className="block font-mono text-xs font-bold tabular-nums">
-                        {t.date}
-                      </span>
-                      <span className="mt-1 block">
-                        <StatusChip date={t.date} today={today} holidays={holidays} />
-                      </span>
-                    </td>
-                    <td className="max-w-xs p-3 text-xs text-foreground/80">
-                      <Cell text={t.activity} />
-                    </td>
-                    <td className="max-w-xs p-3 text-xs text-foreground/80">
-                      <Cell text={t.learning} />
-                    </td>
-                    <td className="max-w-xs p-3 text-xs text-foreground/80">
-                      <Cell text={t.obstacles} />
-                    </td>
-                    <td className="whitespace-nowrap p-3 text-right">
-                      <div className="flex justify-end gap-2">
-                        <OpenDatedButton date={t.date} />
-                        <DeleteDatedButton date={t.date} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((t) => {
+                  const terbuka = expandedDate === t.date;
+                  return (
+                    <tr
+                      key={t.date}
+                      className="border-b border-border/40 align-top last:border-b-0"
+                    >
+                      <td className="whitespace-nowrap p-3">
+                        <span className="block font-mono text-xs font-bold tabular-nums">
+                          {t.date}
+                        </span>
+                        <span className="mt-1 block">
+                          <StatusChip date={t.date} today={today} holidays={holidays} />
+                        </span>
+                      </td>
+                      <td className="max-w-xs p-3 text-xs text-foreground/80">
+                        <Cell
+                          text={t.activity}
+                          date={t.date}
+                          expanded={terbuka}
+                          buildExpandHref={buildExpandHref}
+                        />
+                      </td>
+                      <td className="max-w-xs p-3 text-xs text-foreground/80">
+                        <Cell
+                          text={t.learning}
+                          date={t.date}
+                          expanded={terbuka}
+                          buildExpandHref={buildExpandHref}
+                        />
+                      </td>
+                      <td className="max-w-xs p-3 text-xs text-foreground/80">
+                        <Cell
+                          text={t.obstacles}
+                          date={t.date}
+                          expanded={terbuka}
+                          buildExpandHref={buildExpandHref}
+                        />
+                      </td>
+                      <td className="whitespace-nowrap p-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <OpenDatedButton date={t.date} />
+                          <DeleteDatedButton date={t.date} />
+                        </div>
+                        {terbuka ? (
+                          <Link
+                            href={buildExpandHref(null)}
+                            className="mt-2 inline-block font-heading text-xs underline underline-offset-2"
+                          >
+                            Ringkas kembali
+                          </Link>
+                        ) : null}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

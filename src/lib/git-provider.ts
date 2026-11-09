@@ -21,7 +21,7 @@
 // 4. **Timeout wajib.** Tanpa `AbortSignal`, form laporan bisa ikut macet bila
 //    GitHub lambat.
 
-import type { GitCommit } from "./git-commits";
+import { sortCommitsAscending, type GitCommit } from "./git-commits";
 
 /** Provider yang didukung. Harus sinkron dengan enum `GitProvider` di Prisma. */
 export type GitProviderName = "GITHUB" | "GITLAB";
@@ -395,5 +395,11 @@ export async function fetchCommits(
   const normalizer =
     provider === "GITHUB" ? normalizeGithubCommit : normalizeGitlabCommit;
 
-  return data.map(normalizer).filter((c): c is GitCommit => c !== null);
+  // Diurutkan NAIK di sini, bukan di pemanggil: baik GitHub maupun GitLab
+  // membalas "terbaru dulu" secara default, dan setiap pemanggil yang lupa
+  // mengurutkan akan menyusun laporan dari sore ke pagi. Menaruh perbaikannya
+  // di satu titik ini berarti semua pemakai (pratinjau, draf, cron) ikut benar.
+  return sortCommitsAscending(
+    data.map(normalizer).filter((c): c is GitCommit => c !== null),
+  );
 }
