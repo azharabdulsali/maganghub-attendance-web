@@ -17,6 +17,49 @@ export const MIN_REPORT_LENGTH = 100;
 export const MAX_REPORT_LENGTH = 5000;
 
 /**
+ * Batas panjang kolom DRAF yang disusun otomatis (commit / LLM / lokal).
+ *
+ * KENAPA ADA, PADAHAL `MAX_REPORT_LENGTH` 5000
+ * --------------------------------------------
+ * Keputusan pemilik (2026-11): draf yang dihasilkan otomatis harus **ringkas**,
+ * 100–200 karakter per kolom. Draf sepanjang 1000+ karakter memaksa pengguna
+ * menghapus lebih banyak daripada yang ia hemat, sehingga fitur "Susun draf"
+ * justru menambah pekerjaan.
+ *
+ * Beda dengan `MIN/MAX_REPORT_LENGTH`: keduanya aturan PIHAK KETIGA (portal).
+ * Angka di bawah ini selera produk dan **tidak boleh** dipakai untuk menolak
+ * laporan yang diketik manual — hanya untuk memotong hasil susunan otomatis.
+ *
+ * `DRAFT_MIN_LENGTH` SENGAJA lebih tinggi daripada `MIN_REPORT_LENGTH`.
+ *
+ * KENAPA ADA SELISIH 20 KARAKTER
+ * -----------------------------
+ * `trimToChars` memotong di batas kata dan mengutamakan akhir kalimat. Titik
+ * potong "rapi" itu bisa jatuh JAUH di bawah `DRAFT_MAX_LENGTH` — pada teks
+ * `"Ok. " + 300 huruf` hasilnya cuma 4 karakter. Bila batas bawah disamakan
+ * dengan `MIN_REPORT_LENGTH` (100), kolom seperti itu tidak punya ruang
+ * perbaikan sama sekali: `checkReportField` menolaknya, drafter mengembalikan
+ * `null`, dan pengguna melihat kolom kosong tanpa penjelasan.
+ *
+ * Selisih ini adalah margin untuk pemotongan kedua (lihat parameter `min`
+ * `trimToChars`), bukan target. Target yang diminta prompt LLM tetap batas
+ * bawah 100 karakter yang diterima portal.
+ */
+export const DRAFT_MIN_LENGTH = 120;
+
+/**
+ * Batas bawah yang benar-benar DIPAKSA saat memotong draf.
+ *
+ * Dipisah dari `MIN_REPORT_LENGTH` supaya penyusun otomatis bisa memakai
+ * margin 20 karakter di atas aturan portal: potongan yang jatuh antara 100
+ * dan 120 masih boleh "kurang rapi", asal tidak ditolak server.
+ */
+export const DRAFT_HARD_MIN_LENGTH = MIN_REPORT_LENGTH;
+
+/** Batas atas kolom draf otomatis (karakter, termasuk elipsis). */
+export const DRAFT_MAX_LENGTH = 200;
+
+/**
  * Menghitung panjang teks dengan aturan yang sama seperti bot Python
  * (`len(value.strip()) < 100`) dan seperti portal: spasi berlebih di tepi tidak
  * dihitung.

@@ -5,16 +5,28 @@
 import { describe, expect, it } from "vitest";
 
 import { detectChangeKind, learningFromCommits } from "./commit-learning";
-import { checkReportField, countReportLength, MIN_REPORT_LENGTH } from "./report-rules";
+import {
+  checkReportField,
+  countReportLength,
+  DRAFT_MAX_LENGTH,
+  MIN_REPORT_LENGTH,
+} from "./report-rules";
 import type { GitCommit } from "./git-commits";
 
-function commit(title: string, body?: string): GitCommit {
+function commit(
+  title: string,
+  bodyOrTime?: string,
+  committedAt = "2026-02-10T03:00:00.000Z",
+): GitCommit {
   return {
     shortId: "abc1234",
     title,
-    body,
+    // Argumen kedua boleh berupa waktu commit (string ISO) untuk tes urutan,
+    // atau isi pesan commit untuk tes lain.
+    body: bodyOrTime && !bodyOrTime.includes("T") ? bodyOrTime : undefined,
     author: "Peserta Magang",
-    committedAt: "2026-02-10T03:00:00.000Z",
+    committedAt:
+      bodyOrTime && bodyOrTime.includes("T") ? bodyOrTime : committedAt,
   };
 }
 
@@ -156,5 +168,100 @@ describe("learningFromCommits — berbasis bukti", () => {
     // Maksimal dua jenis (slice(0,2)), dan tiap jenis muncul paling banyak
     // sekali — bukan satu per commit, bukan satu tambahan dari kalimat topik.
     expect(jumlah).toBeLessThanOrEqual(2);
+  });
+
+  // BATAS ATAS 200 KARAKTER (keputusan pemilik: draf harus 100-200 karakter).
+  // Dua-duanya wajib: batas bawah dari `MIN_REPORT_LENGTH` (dipenuhi penutup
+  // netral), batas atas dari pemotongan di modul ini. Sebelum perbaikan, modul
+  // ini TIDAK punya batas atas sama sekali — pesan commit panjang menghasilkan
+  // kolom 400+ karakter yang ditolak portal, padahal drafter lain sudah dibatasi.
+  it("tidak pernah melewati batas atas 200 karakter", () => {
+    // Judul sangat panjang: satu commit saja sudah cukup membuat keluaran
+    // melewati batas bila tidak dipotong.
+    const judulPanjang =
+      "fix: perbaiki filter tanggal laporan bulanan agar rentang awal dan akhir " +
+      "dihitung ulang setiap kali pengguna mengganti bulan yang sedang dilihat, " +
+      "termasuk saat berpindah dari bulan dengan 31 hari ke bulan dengan 28 hari";
+    const hasil = learningFromCommits([
+      commit(judulPanjang),
+      commit("feat: tambah ekspor CSV dengan kolom lengkap untuk arsip"),
+    ]);
+    expect(hasil).not.toBeNull();
+    expect(countReportLength(hasil!)).toBeLessThanOrEqual(DRAFT_MAX_LENGTH);
+    // Tetap memenuhi batas bawah, jadi tidak perlu dipotong sampai kosong.
+    expect(countReportLength(hasil!)).toBeGreaterThanOrEqual(MIN_REPORT_LENGTH);
+  });
+
+  it("pemotongan di batas kata: tidak memotong di tengah kata yang terlihat", () => {
+    const hasil = learningFromCommits([
+      commit(
+        "fix: perbaiki validasi kolom uraian aktivitas yang menolak teks sah " +
+          "karena menghitung spasi ganda sebagai karakter tambahan",
+      ),
+    ]);
+    expect(hasil).not.toBeNull();
+    // Tidak berakhir dengan penggal kata + elipsis (mis. "aktivit…").
+    // `trimToChars` memotong di batas kata, jadi sebelum "…" selalu ada
+    // karakter utuh atau tanda baca.
+    expect(hasil!).not.toMatch(/[a-z]…$/);
+  });
+
+  // Regresi: dulu topik dipenggal dengan `judul.slice(0, 69) + "…"`, sehingga
+  // elipsis menempel langsung pada penggal kata ("…teks sah karena…").
+  // Pemotongan mentah tidak tahu batas kata; `trimToChars` tahu. Yang diperiksa
+  // di sini adalah DI DALAM tanda kutip topik, bukan hanya ujung kalimat, karena
+  // penggalan itu terjadi di tengah hasil gabungan.
+  it("topik yang dipenggal tidak berakhir dengan penggal kata", () => {
+    const hasil = learningFromCommits([
+      commit(
+        "fix: perbaiki validasi kolom uraian aktivitas yang menolak teks sah " +
+          "karena menghitung spasi ganda sebagai karakter tambahan",
+      ),
+    ]);
+    expect(hasil).not.toBeNull();
+    // Yang diperiksa BUKAN "tidak ada elipsis" (elipsis memang wajar), juga
+    // bukan "elipsis tidak didahului huruf" — `"…teks sah…"` didahului huruf
+    // "h" dan itu SAH, karena "sah" adalah kata utuh. Yang salah adalah
+    // elipsis yang menempel pada PENGGAL kata, dan itu tidak bisa dibedakan
+    // dari bentuk teksnya saja. Karena itu yang diperiksa adalah kata SEBELUM
+    // elipsis: ia harus muncul utuh di judul commit asli.
+    //
+    // Dibatasi pada isi tanda kutip (bagian TOPIK). Elipsis lain berasal dari
+    // pemotongan ekor kalimat, wilayah yang sudah diuji tes di atas.
+    const judul =
+      "perbaiki validasi kolom uraian aktivitas yang menolak teks sah " +
+      "karena menghitung spasi ganda sebagai karakter tambahan";
+    const topik = hasil!.match(/mencakup "([^"]*)"/)?.[1];
+    expect(topik).toBeDefined();
+    for (const cocok of topik!.matchAll(/(\S+)…/gu)) {
+      expect(judul.split(" ")).toContain(cocok[1]);
+    }
+  });
+
+  it("topik panjang tetap dipenggal, tidak dibiarkan utuh", () => {
+    const judul =
+      "fix: perbaiki pemrosesan berkas ekspor yang sebelumnya gagal ketika " +
+      "nama kolom mengandung spasi dan karakter khusus";
+    const hasil = learningFromCommits([commit(judul)]);
+    expect(hasil).not.toBeNull();
+    // Topiknya dipenggal (ada elipsis di dalam kutip)...
+    expect(hasil!).toContain("…");
+    // ...tapi total tetap dalam batas.
+    expect(countReportLength(hasil!)).toBeLessThanOrEqual(DRAFT_MAX_LENGTH);
+  });
+
+  // Urutan bahan: commit TERAWAL dulu. Ini yang membuat narasi "mulai dari X,
+  // lalu Y" masuk akal; urutan sebaliknya (default GitHub/GitLab) membuat
+  // kalimat pertama menyebut pekerjaan terakhir hari itu.
+  it("menyusun topik dari commit terlama dulu, bukan terbaru", () => {
+    const hasil = learningFromCommits([
+      // Sengaja diberi urutan terbaru-dulu seperti keluaran API git.
+      commit("fix: perbaiki filter tanggal laporan", "2026-04-10T15:00:00.000Z"),
+      commit("feat: tambah ekspor CSV", "2026-04-10T08:00:00.000Z"),
+    ]);
+    expect(hasil).not.toBeNull();
+    // Kalimat topik memakai topik commit TERAWAL (08:00), yaitu ekspor CSV.
+    const kalimatTopik = hasil!.split(/(?<=\\.)\\s+/)[0];
+    expect(kalimatTopik).toMatch(/ekspor csv/i);
   });
 });

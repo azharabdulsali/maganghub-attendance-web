@@ -17,7 +17,14 @@
 //      dipakai bersama semua pengguna; badai retry akan menghabiskan kuota
 //      orang lain.
 
-import { checkReportField, isIndonesianText, normalizeReportText } from "./report-rules";
+import {
+  checkReportField,
+  isIndonesianText,
+  normalizeReportText,
+  DRAFT_MAX_LENGTH,
+  DRAFT_MIN_LENGTH,
+} from "./report-rules";
+import { trimToChars } from "./text-trim";
 import { env } from "./env";
 import type { DraftInput, DraftResult } from "./report-draft";
 
@@ -93,7 +100,11 @@ function prompt(input: DraftInput): string {
     '{"activity": "...", "learning": "...", "obstacles": "..."}',
     "",
     "Aturan:",
-    "- Setiap kolom minimal 150 karakter, berupa kalimat mengalir, bukan poin-poin.",
+    // Batas panjang WAJIB disebut dua sisi. Sebelumnya prompt hanya meminta
+    // "minimal 150 karakter", sehingga model dengan patuh menulis sepanjang
+    // mungkin -- hasilnya draf 600-1000 karakter yang harus dihapus manual.
+    `- Setiap kolom antara ${DRAFT_MIN_LENGTH} dan ${DRAFT_MAX_LENGTH} karakter,`,
+    "  berupa kalimat mengalir, bukan poin-poin. Jangan melebihi batas atas:",
     "- WAJIB bahasa Indonesia. Jangan menjawab dalam bahasa Inggris, walau kata",
     "  kuncinya berbahasa Inggris. Istilah teknis (login, deploy, bug, React)",
     "  boleh tetap asing, tapi kalimatnya harus Indonesia.",
@@ -170,10 +181,23 @@ function validasiJawaban(teks: string): DraftResult | null {
   const ambil = (nilai: unknown): string =>
     typeof nilai === "string" ? normalizeReportText(nilai) : "";
 
+  // Model sering mengabaikan batas atas walau sudah disebut di prompt. Karena
+  // itu batasnya DIPAKSA di sini, bukan sekadar diminta: keputusan pemilik
+  // adalah HARD LIMIT 200 karakter, dan draf yang kepanjangan tidak berguna
+  // (pengguna harus menghapus manual). `trimToChars` memotong di batas kata,
+  // jadi tidak ada kata yang separuh.
+  //
+  // `min = DRAFT_MIN_LENGTH` juga wajib: model kadang membalas satu kalimat
+  // pendek lalu satu kata panjang, dan potongan "rapi"-nya bisa jauh di bawah
+  // 100 karakter -- kolom itu akan ditolak `checkReportField` di bawah, LLM
+  // dianggap gagal, dan pengguna turun ke penyusun lokal tanpa alasan jelas.
+  const potong = (teks: string): string =>
+    trimToChars(teks, DRAFT_MAX_LENGTH, DRAFT_MIN_LENGTH);
+
   const hasil: DraftResult = {
-    activity: ambil(mentah.activity),
-    learning: ambil(mentah.learning),
-    obstacles: ambil(mentah.obstacles),
+    activity: potong(ambil(mentah.activity)),
+    learning: potong(ambil(mentah.learning)),
+    obstacles: potong(ambil(mentah.obstacles)),
   };
 
   // Semua kolom wajib ada dan lulus aturan yang sama dengan server.

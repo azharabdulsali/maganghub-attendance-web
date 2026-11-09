@@ -21,7 +21,10 @@ import {
   countReportLength,
   checkReportField,
   normalizeReportText,
+  DRAFT_MAX_LENGTH,
+  DRAFT_MIN_LENGTH,
 } from "./report-rules";
+import { trimToChars } from "./text-trim";
 
 /** Kata kunci + konteks opsional yang diketik pengguna sebagai bahan draf. */
 export interface DraftInput {
@@ -138,6 +141,22 @@ const NO_OBSTACLE = [
 // Perakitan murni
 // ---------------------------------------------------------------------------
 
+/**
+ * Pangkas satu kolom draf ke `DRAFT_MAX_LENGTH` di batas kata.
+ *
+ * Dipakai SETELAH perakitan, bukan sebagai pengganti: tujuannya memastikan
+ * kolom tidak melewati batas atas yang diputuskan pemilik, tanpa pernah
+ * memotong kata di tengah (lihat `text-trim.ts`).
+ *
+ * `min = DRAFT_MIN_LENGTH` WAJIB diteruskan. Tanpa itu, titik potong "rapi"
+ * bisa mendarat di 4 karakter (mis. teks diawali "Ok." lalu satu kata sangat
+ * panjang), kolom ditolak `checkReportField`, dan pengguna menerima kolom
+ * kosong padahal ia menekan "Susun draf".
+ */
+function potongDraf(teks: string): string {
+  return trimToChars(teks, DRAFT_MAX_LENGTH, DRAFT_MIN_LENGTH);
+}
+
 /** Pilih satu frasa secara deterministik dari `benih` (stabil antar-render). */
 function pilih(stok: readonly string[], benih: string, geser = 0): string {
   if (stok.length === 0) return "";
@@ -179,7 +198,13 @@ function cukupkan(
  *
  * Jaring pengaman terakhir di sini penting: bila karena suatu hal hasil masih
  * kurang, kita menambah kalimat daripada mengembalikan kolom yang membuat
- * tombol Simpan tetap mati. Lebih baik draf "bertele-tele" daripada buntu.
+ * tombol Simpan tetap mati.
+ *
+ * Batas ATAS juga dijaga (`DRAFT_MAX_LENGTH`): keputusan pemilik adalah draf
+ * otomatis 100-200 karakter per kolom. Pengguna tidak boleh diminta menghapus
+ * kelebihan yang ia tidak minta. Pemotongan dilakukan di batas kata oleh
+ * `trimToChars`, lalu divalidasi ulang — memotong bisa membuat kolom kembali
+ * di bawah MIN_REPORT_LENGTH, dan itu harus ketahuan di sini, bukan di server.
  */
 function bangunKolom(
   pembuka: readonly string[],
@@ -189,11 +214,13 @@ function bangunKolom(
   benih: string,
 ): string {
   const pembukaTerpilih = isi(pilih(pembuka, benih), kw, unit);
-  const hasil = cukupkan(pembukaTerpilih, penutup, benih);
+  const hasil = potongDraf(cukupkan(pembukaTerpilih, penutup, benih));
 
   if (checkReportField(hasil) === null) return normalizeReportText(hasil);
 
-  const cadangan = `${hasil} ${pilih(penutup, benih, 1)} ${pilih(penutup, benih, 2)}`;
+  const cadangan = potongDraf(
+    `${hasil} ${pilih(penutup, benih, 1)} ${pilih(penutup, benih, 2)}`,
+  );
   return normalizeReportText(cadangan);
 }
 
@@ -226,11 +253,19 @@ export const localDrafter: ReportDrafter = {
     // perubahan pada commit), pakai itu. Mengarang kalimat generik padahal ada
     // bukti nyata hanya membuat laporan kurang jujur. Validasi tetap dijalankan
     // supaya bahan dari luar tidak bisa menyelipkan kolom yang ditolak server.
+    //
+    // `potongDraf` dipakai juga untuk jalur bukti: bahan dari modul lain (mis.
+    // `learningFromCommits`) boleh saja nanti berubah dan mengembalikan teks
+    // lebih panjang. Batas 200 karakter adalah aturan PEMBATAS AKHIR di sini,
+    // bukan sesuatu yang boleh diandalkan dari kedisiplinan modul pemasok.
     const bukti = input.learning?.trim();
-    const learning =
+    const buktiSah =
       bukti && checkReportField(bukti) === null
         ? normalizeReportText(bukti)
-        : bangunKolom(OPENERS_LEARNING, PADDING_LEARNING, kw, unit, benih);
+        : null;
+    const learning = buktiSah
+      ? potongDraf(buktiSah)
+      : bangunKolom(OPENERS_LEARNING, PADDING_LEARNING, kw, unit, benih);
 
     // Kolom kendala diperlakukan khusus: bila pengguna menandai tidak ada
     // kendala (kata kunci kosong / memuat "tidak ada"), jangan mengarang
@@ -240,7 +275,7 @@ export const localDrafter: ReportDrafter = {
       input.keywords.trim() === "" ||
       /tidak ada|tanpa kendala|lancar/i.test(input.keywords);
     const obstacles = tanpaKendala
-      ? cukupkan(pilih(NO_OBSTACLE, benih), PADDING_NO_OBSTACLE, benih)
+      ? potongDraf(cukupkan(pilih(NO_OBSTACLE, benih), PADDING_NO_OBSTACLE, benih))
       : bangunKolom(OPENERS_OBSTACLES, PADDING_OBSTACLES, kw, unit, benih);
 
     return {
