@@ -35,7 +35,7 @@ import {
   DRAFT_MAX_LENGTH,
   DRAFT_MIN_LENGTH,
 } from "./report-rules";
-import { trimToChars } from "./text-trim";
+import { trimToChars, AKHIRAN_GANTUNG } from "./text-trim";
 
 /** Jenis perubahan yang bisa dikenali dari sebuah commit. */
 export type ChangeKind =
@@ -154,14 +154,95 @@ function topikBermakna(commits: readonly GitCommit[], batas = 2): string[] {
     // Judul panjang dipenggal supaya kalimatnya tetap wajar dibaca.
     //
     // Dipotong di BATAS KATA, bukan `slice(0, 69)`: potongan mentah bisa
-    // mendarat di tengah kata dan menghasilkan `"...sah karena…"` — elipsis
-    // yang menempel pada penggal kata, yang justru terbaca seperti salah
-    // ketik. `trimToChars` dengan `min` rendah sudah menangani batas kata,
-    // pengutamaan akhir kalimat, dan jaminan `<= 70`.
-    hasil.push(judul.length > 70 ? trimToChars(judul, 70, 0) : judul);
+    // mendarat di tengah kata dan menghasilkan penggal kata yang terbaca seperti
+    // salah ketik.
+    //
+    // PENANDA POTONG DIBUANG dari topik (`...` dan elipsis). Topik ini ditaruh
+    // di dalam tanda kutip di kalimat pembuka; penanda di situ terbaca sebagai
+    // salah ketik, dan elipsis yang tersisa membuat laporan berakhir "…" setelah
+    // titik kutip ditambahkan. Judul yang dipenggal cukup berhenti di kata
+    // terakhir yang utuh.
+    const ringkas =
+      judul.length > 70
+        ? trimToChars(judul, 70, 0)
+            .replace(/(?:\u2026|\.{2,})$/, "")
+            .replace(/[.!?]+$/, "")
+            .trimEnd()
+        : judul;
+    hasil.push(ringkas);
     if (hasil.length >= batas) break;
   }
   return hasil;
+}
+
+/**
+ * Buang KALIMAT UTUH dari belakang sampai teks muat dalam `max`.
+ *
+ * KENAPA BUKAN `trimToChars` SAJA: memotong di tengah kalimat lalu menempelkan
+ * elipsis menghasilkan laporan yang berakhir "…" -- terbaca seperti tulisan
+ * belum selesai, dan itu persis yang dilaporkan pengguna sebagai bug. Membuang
+ * satu kalimat penuh menghasilkan teks yang setiap kalimatnya selesai.
+ *
+ * Batas bawah `min` dihormati: kalimat TIDAK dibuang bila hasilnya jadi lebih
+ * pendek dari `min`, sebab kolom seperti itu akan DITOLAK `checkReportField`
+ * dan pengguna kehilangan kolom "Pembelajaran" sama sekali. Dalam kasus itu
+ * teks dikembalikan apa adanya (masih > `max`) dan pemanggil memotongnya
+ * dengan jaring terakhir.
+ *
+ * Kalimat pertama SELALU dipertahankan, walau ia sendiri sudah melebihi `max`
+ * (mis. judul commit tanpa spasi).
+ */
+function potongKalimatUtuh(teks: string, max: number, min: number): string {
+  if (teks.length <= max) return teks;
+
+  // Pecah pada batas kalimat, tetap menyertakan tanda bacanya.
+  const kalimat = teks.match(/[^.!?]+[.!?]+/g) ?? [teks];
+  if (kalimat.length <= 1) return teks;
+
+  const kandidat: string[] = [];
+  for (const k of kalimat) {
+    const coba = [...kandidat, k].join(" ").trim();
+    // Berhenti menambah kalimat begitu melewati `max`: `kandidat` saat itu
+    // adalah versi terpanjang yang masih muat.
+    if (coba.length > max) break;
+    kandidat.push(k);
+  }
+
+  if (kandidat.length === 0) return teks;
+  const hasil = kandidat.join(" ").trim();
+  if (hasil.length >= min) return hasil;
+
+  // Kalimat yang muat pun masih di bawah `min` (mis. pembuka 95 karakter +
+  // satu kalimat pelajaran yang membuat totalnya melewati `max`). Membuangnya
+  // membuat kolom ditolak server, jadi kita pertahankan kalimat pertama dan
+  // potong kalimat berikutnya di BATAS KATA, lalu tutup dengan titik. Hasilnya
+  // tetap kalimat selesai tanpa elipsis menggantung.
+  const pertama = kalimat[0].trim();
+  const sisa = teks.slice(pertama.length).trim();
+  if (sisa.length === 0) return teks;
+
+  const ruang = max - pertama.length - 1; // -1 untuk spasi pemisah
+  if (ruang <= 0) return pertama;
+
+  const potong = sisa.slice(0, ruang);
+  const spasi = potong.lastIndexOf(" ");
+  const badan = (spasi > 0 ? potong.slice(0, spasi) : potong).trimEnd();
+
+  // Buang kata sambung/preposisi di ujung supaya kalimatnya tidak menggantung
+  // ("...pekerjaan menjadi."). Mundur selama hasilnya masih memenuhi `min`.
+  let badan2 = badan;
+  while (badan2.length > 0 && AKHIRAN_GANTUNG.has(badan2.slice(badan2.lastIndexOf(" ") + 1))) {
+    const sebelum = badan2.slice(0, badan2.lastIndexOf(" ")).trimEnd();
+    if (sebelum.length === 0 || `${pertama} ${sebelum}.`.length < min) break;
+    badan2 = sebelum;
+  }
+
+  const gabung = `${pertama} ${badan2}`.trimEnd();
+  // Titik potong bisa mendarat tepat setelah koma ("...mengubah kode,."),
+  // sehingga jangan tambahkan titik mentah: buang tanda penggantung dulu.
+  const rapi = gabung.replace(/[,;:]+$/, "").trimEnd();
+  const akhir = /[.!?]$/.test(rapi) ? rapi : `${rapi}.`;
+  return akhir.length <= max ? akhir : pertama;
 }
 
 /** Panjang minimum kalimat yang layak ditambahkan sebagai penutup berbukti. */
@@ -205,9 +286,13 @@ export function learningFromCommits(commits: readonly GitCommit[]): string | nul
   // tertulis "saya mempelajari penerapannya ..." yang muncul untuk semua
   // commit — persis klaim tanpa dasar yang ingin dihindari.
   if (topik.length > 0) {
-    bagian.push(
-      `Pekerjaan hari ini mencakup ${topik.map((t) => `"${t}"`).join(" dan ")}.`,
-    );
+    // Topik dipakai TANPA penanda potong. Ia berada di dalam tanda kutip, jadi
+    // elipsis di situ ("...impor peserta…") terbaca sebagai salah ketik, bukan
+    // sebagai tanda bahwa kutipannya dipendekkan. Panjangnya sudah dibatasi di
+    // `topikBermakna`, dan bila masih kepanjangan kita buang kata terakhirnya
+    // (lihat di bawah), bukan mengganjalnya dengan elipsis.
+    const kutip = topik.map((t) => `"${t.replace(/(?:\u2026|\.{2,})$/, "").trimEnd()}"`);
+    bagian.push(`Pekerjaan hari ini mencakup ${kutip.join(" dan ")}.`);
   }
 
   // Maksimal dua jenis agar kolom tidak bertele-tele.
@@ -227,14 +312,24 @@ export function learningFromCommits(commits: readonly GitCommit[]): string | nul
   // Batas atas sama dengan drafter lain (keputusan pemilik: 100-200 karakter).
   // Modul ini disusun dari pesan commit yang bisa sangat panjang -- tanpa
   // pemotongan, kolom "Pembelajaran" bisa jauh melewati batas walau jenis
-  // perubahannya hanya satu. Pemotongan di batas kata oleh `trimToChars`.
+  // perubahannya hanya satu.
   //
-  // `min` diteruskan supaya potongan "rapi" tidak jatuh di bawah batas portal.
-  // Tanpa itu, judul commit yang diawali kalimat pendek lalu satu kata sangat
-  // panjang menghasilkan kolom < 100 karakter, `checkReportField` menolaknya,
-  // dan fungsi ini mengembalikan `null` -- pengguna kehilangan kolom
-  // "Pembelajaran" padahal commit-nya jelas ada.
-  teks = trimToChars(teks, DRAFT_MAX_LENGTH, DRAFT_MIN_LENGTH);
+  // Pemotongan dilakukan dengan MEMBUANG KALIMAT UTUH dari belakang, bukan
+  // memotong di tengah kalimat lalu menempelkan elipsis. Alasan: laporan magang
+  // yang berakhir "…" terbaca seperti tulisan yang belum selesai, dan pengguna
+  // memang melaporkannya sebagai bug. Kalimat pembuka ("Pekerjaan hari ini
+  // mencakup ...") selalu dipertahankan karena itu satu-satunya bagian yang
+  // menyebut pekerjaan nyata; kalimat pelajaran yang dipotong lebih baik hilang
+  // seluruhnya daripada berdiri sebagai potongan menggantung.
+  teks = potongKalimatUtuh(teks, DRAFT_MAX_LENGTH, DRAFT_MIN_LENGTH);
+
+  // `trimToChars` tetap dipakai sebagai jaring terakhir: kalimat pembuka yang
+  // SANGAT panjang (satu judul tanpa spasi) tidak bisa dipotong per kalimat,
+  // dan kolom harus tetap <= 200. `min` diteruskan supaya potongan rapi tidak
+  // jatuh di bawah batas portal.
+  if (teks.length > DRAFT_MAX_LENGTH) {
+    teks = trimToChars(teks, DRAFT_MAX_LENGTH, DRAFT_MIN_LENGTH);
+  }
 
   // Hormati kontrak yang sama dengan penyusun lain: jangan kembalikan kolom
   // yang akan ditolak server. Lebih baik kosong (null) daripada draf buntu.

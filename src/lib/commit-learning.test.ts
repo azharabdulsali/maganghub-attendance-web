@@ -233,20 +233,60 @@ describe("learningFromCommits — berbasis bukti", () => {
       "karena menghitung spasi ganda sebagai karakter tambahan";
     const topik = hasil!.match(/mencakup "([^"]*)"/)?.[1];
     expect(topik).toBeDefined();
-    for (const cocok of topik!.matchAll(/(\S+)…/gu)) {
-      expect(judul.split(" ")).toContain(cocok[1]);
-    }
+    // Topik TIDAK boleh membawa penanda potong sama sekali. Penanda di dalam
+    // kutip terbaca sebagai salah ketik, dan elipsis yang tertinggal di situ
+    // membuat laporan berakhir menggantung -- bug yang dilaporkan pengguna.
+    // Topik yang dipenggal cukup berhenti di kata utuh.
+    expect(topik!).not.toContain("\u2026");
+    expect(topik!).not.toContain("...");
+
+    // Kata terakhir topik harus kata UTUH dari judul asli, bukan penggal.
+    const kataTerakhir = topik!.split(" ").pop()!;
+    expect(judul.split(" ")).toContain(kataTerakhir);
   });
 
-  it("topik panjang tetap dipenggal, tidak dibiarkan utuh", () => {
+  // Bug yang dilaporkan pengguna: template hasil generate dari commit berakhir
+  // dengan titik-titik ("…" atau "..."), sehingga laporan terbaca belum selesai.
+  // Kasus di bawah adalah judul asli dari laporan bug tersebut.
+  it("REGRESI: judul panjang tidak menghasilkan laporan berakhir titik-titik", () => {
+    const hasil = learningFromCommits([
+      commit(
+        "feat: implementasikan unduhan templat untuk impor dan ekspor peserta " +
+          "dengan mengganti rute web content menjadi rute baru",
+      ),
+    ]);
+
+    expect(hasil).not.toBeNull();
+    // Inti keluhan: TIDAK boleh berakhir elipsis atau tiga titik.
+    expect(hasil!.endsWith("\u2026")).toBe(false);
+    expect(hasil!.endsWith("...")).toBe(false);
+    // Laporan harus selesai sebagai kalimat.
+    expect(/[.!?"]$/.test(hasil!)).toBe(true);
+    // Tidak ada elipsis di mana pun, termasuk di dalam tanda kutip topik.
+    expect(hasil!).not.toContain("\u2026");
+    expect(hasil!).not.toContain("...");
+    // Dan tetap memenuhi batas portal.
+    expect(countReportLength(hasil!)).toBeGreaterThanOrEqual(MIN_REPORT_LENGTH);
+    expect(countReportLength(hasil!)).toBeLessThanOrEqual(DRAFT_MAX_LENGTH);
+  });
+
+  it("topik panjang dipenggal di batas kata, dan laporan TIDAK berakhir elipsis", () => {
     const judul =
       "fix: perbaiki pemrosesan berkas ekspor yang sebelumnya gagal ketika " +
       "nama kolom mengandung spasi dan karakter khusus";
     const hasil = learningFromCommits([commit(judul)]);
     expect(hasil).not.toBeNull();
-    // Topiknya dipenggal (ada elipsis di dalam kutip)...
-    expect(hasil!).toContain("…");
-    // ...tapi total tetap dalam batas.
+    // Topiknya dipenggal: tidak lagi memuat sisa judul setelah kata ke sekian.
+    expect(hasil!).not.toContain("karakter khusus");
+    // Laporan selesai sebagai kalimat, bukan menggantung dengan elipsis/titik-titik.
+    // Ini bug yang dilaporkan pengguna: template berakhir "…" atau "...".
+    expect(hasil!.endsWith("\u2026")).toBe(false);
+    expect(hasil!.endsWith("...")).toBe(false);
+    expect(/[.!?]$/.test(hasil!)).toBe(true);
+    // Setiap kalimat selesai dengan tanda baca dan tidak ada tanda penggantung
+    // yang dobel: "kode,." atau "peserta,." tidak boleh muncul.
+    expect(hasil!).not.toMatch(/[,;:]\./);
+    // Total tetap dalam batas.
     expect(countReportLength(hasil!)).toBeLessThanOrEqual(DRAFT_MAX_LENGTH);
   });
 
