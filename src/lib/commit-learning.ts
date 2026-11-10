@@ -141,7 +141,7 @@ export function detectChangeKind(commit: GitCommit): ChangeKind {
  * API. Tanpa ini, topik yang disebut adalah pekerjaan PALING AKHIR hari itu,
  * padahal kalimat pembelajaran dibaca sebagai rangkuman hari.
  */
-function topikBermakna(commits: readonly GitCommit[], batas = 2): string[] {
+function topikBermakna(commits: readonly GitCommit[], batas = 3): string[] {
   const hasil: string[] = [];
   const dilihat = new Set<string>();
   for (const c of sortCommitsAscending(commits)) {
@@ -173,6 +173,145 @@ function topikBermakna(commits: readonly GitCommit[], batas = 2): string[] {
     if (hasil.length >= batas) break;
   }
   return hasil;
+}
+
+/**
+ * Rangkai daftar topik menjadi satu klausa kalimat.
+ *
+ * Topik berasal dari judul commit ("implementasikan unduhan templat ..."), jadi
+ * ia dipakai apa adanya tanpa pembuka "hari ini saya". Yang ditambahkan hanya
+ * dua hal supaya kalimatnya wajar: imbuhan `me-` (lihat `imbuh`) dan tanda
+ * hubung antar topik.
+ *
+ * Pemisah antar topik: dua topik dirangkai "dan" tanpa koma ("A dan B"), tiga
+ * topik atau lebih memakai deret baku "A, B, dan C". Tanpa koma sebelum "dan"
+ * pada dua topik, kalimatnya lebih enak dibaca sebagai laporan; untuk tiga
+ * topik, koma itu justru yang membuat deretnya jelas.
+ */
+function gabungTopik(daftar: readonly string[]): string {
+  if (daftar.length === 0) return "";
+  // SEMUA topik disamakan bentuknya, bukan hanya yang pertama: klausa ini
+  // adalah satu deret sejajar ("Mengimplementasikan X dan memperbaiki Y").
+  // Membiarkan topik kedua apa adanya menghasilkan "Menambahkan ekspor CSV dan
+  // perbaiki filter" -- setengah berimbuhan, setengah tidak.
+  //
+  // Huruf kapital HANYA untuk topik pertama: ia awal kalimat. Topik berikutnya
+  // berada di tengah kalimat, jadi "dan Memperbaiki" justru salah.
+  const rata = daftar.map((t, i) => ubahKataKerja(t.trim(), i === 0));
+  const [pertama, ...sisanya] = rata;
+  if (sisanya.length === 0) return pertama;
+  // Dua topik: "A dan B". Tiga topik atau lebih: "A, B, dan C" -- koma sebelum
+  // "dan" memang bentuk baku untuk deret tiga unsur ke atas, dan contoh laporan
+  // yang diminta pengguna memakai bentuk ini ("..., menambahkan fitur ...").
+  if (sisanya.length === 1) return `${pertama} dan ${sisanya[0]}`;
+  return `${pertama}, ${sisanya.slice(0, -1).join(", ")}, dan ${sisanya[sisanya.length - 1]}`;
+}
+
+/**
+ * Bentuk `me-` dari kata kerja di depan topik.
+ *
+ * Dipakai daftar bentuk yang sudah benar, bukan kaidah huruf awal: imbuhan
+ * `me-` bergantung pada huruf pertama (me-, mem-, men-, meng-, menge-), dan
+ * kaidah yang salah menghasilkan bentuk yang terbaca asing bagi pembaca
+ * Indonesia. Kata yang tidak ada di daftar dibiarkan, hanya dikapitalkan.
+ *
+ * Bentuk dasar dan bentuk berimbuhan sama-sama dipetakan supaya judul yang
+ * sudah ditulis "menambahkan X" tidak menjadi "menmenambahkan X".
+ */
+const BENTUK_ME: Readonly<Record<string, string>> = {
+  implementasikan: "mengimplementasikan",
+  implementasi: "mengimplementasikan",
+  tambah: "menambahkan",
+  menambah: "menambahkan",
+  menambahkan: "menambahkan",
+  buat: "membuat",
+  membuat: "membuat",
+  perbaiki: "memperbaiki",
+  memperbaiki: "memperbaiki",
+  betulkan: "membetulkan",
+  ganti: "mengganti",
+  mengganti: "mengganti",
+  hapus: "menghapus",
+  menghapus: "menghapus",
+  pindahkan: "memindahkan",
+  memindahkan: "memindahkan",
+  rapikan: "merapikan",
+  merapikan: "merapikan",
+  susun: "menyusun",
+  menyusun: "menyusun",
+  uji: "menguji",
+  menguji: "menguji",
+  dokumentasikan: "mendokumentasikan",
+  selesaikan: "menyelesaikan",
+  menyelesaikan: "menyelesaikan",
+  tingkatkan: "meningkatkan",
+  meningkatkan: "meningkatkan",
+  sesuaikan: "menyesuaikan",
+  menyesuaikan: "menyesuaikan",
+  sederhanakan: "menyederhanakan",
+  menyederhanakan: "menyederhanakan",
+  pisahkan: "memisahkan",
+  memisahkan: "memisahkan",
+  gabungkan: "menggabungkan",
+  menggabungkan: "menggabungkan",
+  perbarui: "memperbarui",
+  memperbarui: "memperbarui",
+  validasi: "memvalidasi",
+  tambahkan: "menambahkan",
+  turunkan: "menurunkan",
+  naikkan: "menaikkan",
+  pangkas: "memangkas",
+};
+
+/**
+ * Ubah kata kerja pembuka topik ke bentuk `me-`.
+ *
+ * `diAwalKalimat` menentukan kapitalisasi: topik pertama membuka laporan, topik
+ * berikutnya berada di tengah kalimat setelah " dan ".
+ *
+ * Kata yang tidak dikenal tetap dipakai (hanya dikapitalkan bila di awal
+ * kalimat): ia mungkin nama modul atau nomina ("ekspor CSV"), dan menambahkan
+ * `me-` di depannya merusak ejaan. Judul yang pembukanya bukan kata kerja
+ * memang lazim di commit nyata.
+ */
+function ubahKataKerja(kata: string, diAwalKalimat: boolean): string {
+  // Hanya kata pertama yang diubah; sisa judul dibiarkan utuh.
+  const [kepala, ...sisa] = kata.split(" ");
+  const bentuk = BENTUK_ME[kepala.toLowerCase()] ?? kepala;
+  const hasil = diAwalKalimat ? kapitalkan(bentuk) : bentuk;
+  return [hasil, ...sisa].join(" ");
+}
+
+function kapitalkan(teks: string): string {
+  return teks.length === 0 ? teks : teks[0].toUpperCase() + teks.slice(1);
+}
+
+/**
+ * Buang ekor klausa yang menggantung di belakang kata sambung.
+ *
+ * Potongan di batas kata bisa mendarat di TENGAH anak kalimat: "… memecah
+ * pekerjaan menjadi bagian kecil yang bisa diuji sendiri-sendiri sehingga
+ * kesalahan" ditutup menjadi "… sehingga kesalahan." — kata "kesalahan" adalah
+ * subjek yang predikatnya ikut terpotong, jadi kalimatnya tidak selesai walau
+ * tanda titiknya ada.
+ *
+ * Perbaikannya: cari kata sambung TERAKHIR, lalu buang kata sambung itu beserta
+ * semua kata sesudahnya. Hasilnya berhenti di klausa yang utuh ("… menjadi
+ * bagian kecil yang bisa diuji sendiri-sendiri"). Bila hasilnya jadi terlalu
+ * pendek (< `min`), teks dibiarkan apa adanya — lebih baik agak menggantung
+ * daripada kolom ditolak server karena kurang panjang.
+ */
+function pangkasKlausaBuntu(badan: string, kalimatPertama: string, min: number): string {
+  const kata = badan.split(" ");
+  for (let i = kata.length - 1; i > 0; i--) {
+    if (!AKHIRAN_GANTUNG.has(kata[i].toLowerCase())) continue;
+    // Kata sambung di posisi terakhir sudah ditangani pengulangan di atas.
+    if (i === kata.length - 1) return badan;
+    const calon = kata.slice(0, i).join(" ").trimEnd();
+    if (`${kalimatPertama} ${calon}.`.length < min) return badan;
+    return calon;
+  }
+  return badan;
 }
 
 /**
@@ -228,14 +367,32 @@ function potongKalimatUtuh(teks: string, max: number, min: number): string {
   const spasi = potong.lastIndexOf(" ");
   const badan = (spasi > 0 ? potong.slice(0, spasi) : potong).trimEnd();
 
-  // Buang kata sambung/preposisi di ujung supaya kalimatnya tidak menggantung
-  // ("...pekerjaan menjadi."). Mundur selama hasilnya masih memenuhi `min`.
+  // Mundur bertahap sampai potongan berhenti di tempat yang layak jadi akhir
+  // kalimat. Dua hal yang harus dihindari:
+  //
+  //  1. Kata sambung/preposisi di ujung ("...pekerjaan menjadi." / "...menguji
+  //     sehingga."). Kalimatnya runtuh tata bahasanya.
+  //  2. KLAUSA BUNTU di belakang kata sambung. Contoh nyata: potongan mendarat
+  //     setelah "sehingga kesalahan", menghasilkan "sehingga kesalahan." yang
+  //     menggantung -- "kesalahan" di situ sebenarnya induk kalimat yang
+  //     lanjutannya ("lebih mudah ditemukan") ikut terpotong.
+  //
+  // Untuk (2) kita potong DI DEPAN kata sambung, bukan membuang kata
+  // sesudahnya, sebab membuang "kesalahan" saja tetap menyisakan "sehingga.".
+  // Mundur berhenti bila hasilnya jadi lebih pendek dari `min`.
   let badan2 = badan;
-  while (badan2.length > 0 && AKHIRAN_GANTUNG.has(badan2.slice(badan2.lastIndexOf(" ") + 1))) {
+  for (;;) {
+    const kata = badan2.slice(badan2.lastIndexOf(" ") + 1).toLowerCase();
+    if (!AKHIRAN_GANTUNG.has(kata)) break;
     const sebelum = badan2.slice(0, badan2.lastIndexOf(" ")).trimEnd();
     if (sebelum.length === 0 || `${pertama} ${sebelum}.`.length < min) break;
     badan2 = sebelum;
   }
+
+  // Klausa buntu: buang ekor SETELAH kata sambung terakhir, dan biarkan kata
+  // sambungnya ikut hilang. Hanya dilakukan bila masih ada sisa klausa yang
+  // layak ("... menguji" -> "... memecah pekerjaan"), dan tidak di bawah `min`.
+  badan2 = pangkasKlausaBuntu(badan2, pertama, min);
 
   const gabung = `${pertama} ${badan2}`.trimEnd();
   // Titik potong bisa mendarat tepat setelah koma ("...mengubah kode,."),
@@ -279,20 +436,22 @@ export function learningFromCommits(commits: readonly GitCommit[]): string | nul
 
   const bagian: string[] = [];
 
-  // Kalimat pembuka HANYA menyebut pekerjaan yang benar-benar ada di commit
-  // ("hari ini mengerjakan X"). Ia sengaja TIDAK memakai kata "mempelajari":
-  // klaim tentang apa yang dipelajari hanya boleh datang dari
-  // `PELAJARAN_PER_JENIS`, yang punya dasar jenis perubahan. Sebelumnya di sini
-  // tertulis "saya mempelajari penerapannya ..." yang muncul untuk semua
-  // commit — persis klaim tanpa dasar yang ingin dihindari.
+  // Kalimat pembuka LANGSUNG menyebut pekerjaan yang benar-benar ada di commit,
+  // bukan dibungkus basa-basi. Dulu bunyinya "Pekerjaan hari ini mencakup
+  // "..."." -- pengguna meminta bentuk langsung ("Mengimplementasikan unduhan
+  // templat ..."), karena pembuka "Hari ini saya ..." boros karakter dan
+  // terbaca seperti template.
+  //
+  // Ia sengaja TIDAK memakai kata "mempelajari": klaim tentang apa yang
+  // dipelajari hanya boleh datang dari `PELAJARAN_PER_JENIS`, yang punya dasar
+  // jenis perubahan.
   if (topik.length > 0) {
-    // Topik dipakai TANPA penanda potong. Ia berada di dalam tanda kutip, jadi
-    // elipsis di situ ("...impor peserta…") terbaca sebagai salah ketik, bukan
-    // sebagai tanda bahwa kutipannya dipendekkan. Panjangnya sudah dibatasi di
-    // `topikBermakna`, dan bila masih kepanjangan kita buang kata terakhirnya
-    // (lihat di bawah), bukan mengganjalnya dengan elipsis.
-    const kutip = topik.map((t) => `"${t.replace(/(?:\u2026|\.{2,})$/, "").trimEnd()}"`);
-    bagian.push(`Pekerjaan hari ini mencakup ${kutip.join(" dan ")}.`);
+    // Topik dipakai TANPA penanda potong. Elipsis di situ terbaca sebagai salah
+    // ketik, bukan sebagai tanda kutipan dipendekkan. Panjangnya sudah dibatasi
+    // di `topikBermakna`, dan bila masih kepanjangan kita buang kata
+    // terakhirnya, bukan mengganjalnya dengan elipsis.
+    const daftar = topik.map((t) => t.replace(/(?:\u2026|\.{2,})$/, "").trimEnd());
+    bagian.push(`${gabungTopik(daftar)}.`);
   }
 
   // Maksimal dua jenis agar kolom tidak bertele-tele.
