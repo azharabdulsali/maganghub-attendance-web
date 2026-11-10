@@ -231,7 +231,7 @@ describe("learningFromCommits — berbasis bukti", () => {
     const judul =
       "perbaiki validasi kolom uraian aktivitas yang menolak teks sah " +
       "karena menghitung spasi ganda sebagai karakter tambahan";
-    const topik = hasil!.match(/mencakup "([^"]*)"/)?.[1];
+    const topik = hasil!.match(/^([^.]+)\./)?.[1];
     expect(topik).toBeDefined();
     // Topik TIDAK boleh membawa penanda potong sama sekali. Penanda di dalam
     // kutip terbaca sebagai salah ketik, dan elipsis yang tertinggal di situ
@@ -243,6 +243,72 @@ describe("learningFromCommits — berbasis bukti", () => {
     // Kata terakhir topik harus kata UTUH dari judul asli, bukan penggal.
     const kataTerakhir = topik!.split(" ").pop()!;
     expect(judul.split(" ")).toContain(kataTerakhir);
+  });
+
+  // Pengguna meminta laporan TIDAK dibuka dengan basa-basi ("Hari ini saya ..."
+  // atau "Pekerjaan hari ini mencakup ..."), melainkan langsung pada
+  // pekerjaannya: "Mengimplementasikan unduhan templat ...".
+  it("kalimat pembuka langsung menyebut pekerjaan, tanpa 'Hari ini saya'", () => {
+    const hasil = learningFromCommits([
+      commit(
+        "feat: implementasikan unduhan templat untuk impor dan ekspor peserta " +
+          "dengan mengganti rute web content",
+      ),
+    ]);
+    expect(hasil).not.toBeNull();
+
+    const kalimatTopik = hasil!.split(/(?<=\.)\s+/)[0];
+    // Tidak ada pembuka basa-basi di awal laporan.
+    expect(kalimatTopik).not.toMatch(/^(hari ini|pada hari ini|pekerjaan hari ini)/i);
+    expect(kalimatTopik).not.toMatch(/^(saya|kami)\b/i);
+    expect(hasil!).not.toMatch(/pekerjaan hari ini/i);
+
+    // Langsung dimulai dari kata kerja pekerjaannya (judul commit sudah
+    // kehilangan prefix "feat:"), jadi huruf pertamanya kapital.
+    expect(kalimatTopik).toMatch(/^Mengimplementasikan /);
+    // Tanpa tanda kutip pembungkus: ini kalimat laporan, bukan kutipan judul.
+    expect(kalimatTopik).not.toContain('"');
+  });
+
+  it("beberapa topik dirangkai wajar tanpa koma sebelum 'dan'", () => {
+    const hasil = learningFromCommits([
+      commit("feat: tambah ekspor CSV", "2026-04-10T08:00:00.000Z"),
+      commit("fix: perbaiki filter tanggal laporan", "2026-04-10T09:00:00.000Z"),
+    ]);
+    expect(hasil).not.toBeNull();
+
+    const kalimatTopik = hasil!.split(/(?<=\.)\s+/)[0];
+    // Kedua topik sejajar bentuknya ("me-"), bukan "Menambahkan X dan perbaiki Y".
+    expect(kalimatTopik).toMatch(/^Menambahkan ekspor CSV dan memperbaiki filter tanggal laporan\.$/);
+    // "a, dan b" terasa kaku untuk dua topik; yang dipakai hanya " dan ".
+    expect(kalimatTopik).not.toMatch(/,\s*dan\b/i);
+    expect(kalimatTopik).not.toContain('"');
+  });
+
+  it("tiga topik memakai deret baku 'A, B, dan C'", () => {
+    const hasil = learningFromCommits([
+      commit("feat: implementasikan unduhan templat untuk impor dan ekspor peserta", "2026-04-10T08:00:00.000Z"),
+      commit("feat: menambahkan fitur impor pertanyaan kuis", "2026-04-10T09:00:00.000Z"),
+      commit("fix: perbaiki rute web content agar terhindar dari galat", "2026-04-10T10:00:00.000Z"),
+    ]);
+    expect(hasil).not.toBeNull();
+
+    const kalimatTopik = hasil!.split(/(?<=\.)\s+/)[0];
+    expect(kalimatTopik).toBe(
+      "Mengimplementasikan unduhan templat untuk impor dan ekspor peserta, " +
+        "menambahkan fitur impor pertanyaan kuis, dan memperbaiki rute web content " +
+        "agar terhindar dari galat.",
+    );
+    // Judul yang sudah berimbuhan tidak diimbuhkan dua kali.
+    expect(hasil!).not.toMatch(/menmenambahkan/i);
+  });
+
+  // Topik yang pembukanya BUKAN kata kerja (nama modul, nomina) tidak boleh
+  // diimbuhkan `me-`: "Laporan mingguan" bukan "Melaporan mingguan".
+  it("topik non-kata-kerja dibiarkan, hanya dikapitalkan", () => {
+    const hasil = learningFromCommits([commit("fix: bug simpan data")]);
+    expect(hasil).not.toBeNull();
+    expect(hasil!.split(/(?<=\.)\s+/)[0]).toMatch(/^Bug simpan data\.$/);
   });
 
   // Bug yang dilaporkan pengguna: template hasil generate dari commit berakhir
