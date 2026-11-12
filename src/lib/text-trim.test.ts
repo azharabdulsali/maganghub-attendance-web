@@ -34,9 +34,9 @@ describe("trimToChars", () => {
 
   it("tidak memotong kata di tengah", () => {
     const hasil = trimToChars(KALIMAT, 40);
-    // Kata terakhir sebelum elipsis harus kata utuh dari teks asli.
-    const tanpaElipsis = hasil.replace(/…$/, "").trim();
-    const kataTerakhir = tanpaElipsis.split(" ").pop()!;
+    // Kata terakhir sebelum tanda baca harus kata utuh dari teks asli.
+    const tanpaPenutup = hasil.replace(/[.!?]$/, "").trim();
+    const kataTerakhir = tanpaPenutup.split(" ").pop()!;
     expect(KALIMAT).toContain(kataTerakhir);
     // Bukan penggalan: karakter sesudahnya di teks asli bukan huruf.
     const idx = KALIMAT.indexOf(kataTerakhir);
@@ -46,8 +46,8 @@ describe("trimToChars", () => {
 
   it("mengutamakan akhir kalimat bila ada di separuh terakhir", () => {
     const hasil = trimToChars(KALIMAT, 140);
-    // Berakhir dengan titik (kalimat selesai) tanpa elipsis menggantung.
-    expect(hasil.endsWith(".") || hasil.endsWith("…")).toBe(true);
+    // Berakhir dengan titik, bukan elipsis menggantung.
+    expect(hasil.endsWith(".")).toBe(true);
     expect(hasil.length).toBeLessThanOrEqual(140);
   });
 
@@ -55,7 +55,7 @@ describe("trimToChars", () => {
     const url = "https://contoh.test/" + "a".repeat(300);
     const hasil = trimToChars(url, 20);
     expect(hasil.length).toBeLessThanOrEqual(20);
-    expect(hasil.endsWith("…")).toBe(true);
+    expect(hasil.endsWith(".")).toBe(true);
   });
 
   it("max <= 0 menghasilkan string kosong", () => {

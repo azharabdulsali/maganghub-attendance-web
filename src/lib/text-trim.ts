@@ -32,8 +32,8 @@
 //    TERAKHIR; jalur normal menutup kalimat dengan `.`.
 // 5. **Murni.** Tanpa I/O, tanpa `Date`, tanpa env — bisa dites tanpa stub.
 
-/** Elipsis satu karakter. Upaya terakhir, bukan penutup utama. */
-const ELIPSIS = "…";
+/** Tanda baca penutup agar draf tidak menggantung. */
+const PENUTUP = ".";
 
 /**
  * Elipsis plus tanda titik di belakangnya, untuk membersihkan teks yang SUDAH
@@ -212,8 +212,8 @@ export function trimToChars(text: string, max: number, min = 0): string {
   // Jendela selalu `max - 1` supaya ada tempat untuk penutup 1 karakter. Bila
   // sebuah kalimat utuh ditemukan LEBIH PENDEK dari itu, kalimat itu dipakai
   // apa adanya (sudah berakhir `.`/`!`/`?`) sehingga tidak perlu ruang penutup.
-  const jendelaPenuh = max > ELIPSIS.length;
-  const jendela = bersih.slice(0, jendelaPenuh ? max - ELIPSIS.length : max);
+  const jendelaPenuh = max > PENUTUP.length;
+  const jendela = bersih.slice(0, jendelaPenuh ? max - PENUTUP.length : max);
 
   // Titik akhir kalimat TERAKHIR di dalam jendela = isi paling banyak, dan
   // paling dekat dengan batas atas. Ambang "separuh jendela" yang dulu dipakai
@@ -246,7 +246,7 @@ export function trimToChars(text: string, max: number, min = 0): string {
   // penanda hasilnya terbaca seperti URL/ID yang sah padahal terpotong.
   if (spasiTerakhir <= 0) {
     const keras = jendela.trimEnd();
-    return `${keras}${jendelaPenuh ? ELIPSIS : ""}`;
+    return `${keras}${jendelaPenuh ? PENUTUP : ""}`;
   }
   const potongMentah = jendela.slice(0, spasiTerakhir);
 
@@ -268,13 +268,13 @@ export function trimToChars(text: string, max: number, min = 0): string {
   // Potongan ini berada di TENGAH kalimat, jadi penanda potong wajib ada:
   // elipsis, bukan titik. Memberi titik akan mengarang akhir kalimat yang tidak
   // pernah ditulis sumbernya.
-  const akhir = `${isi}${jendelaPenuh ? ELIPSIS : ""}`;
+  const akhir = `${isi}${jendelaPenuh ? PENUTUP : ""}`;
 
   // Jaring pengaman `min`: bila mundur tadi membuat hasil lebih pendek dari
   // batas bawah, ambil jendela penuh. Hasilnya mungkin memotong satu kata di
   // tengah, tetapi itu jauh lebih baik daripada kolom yang ditolak server.
   if (min > 0 && akhir.length < min) {
-    return `${jendela.trimEnd()}${jendelaPenuh ? ELIPSIS : ""}`;
+    return `${jendela.trimEnd()}${jendelaPenuh ? PENUTUP : ""}`;
   }
   return akhir;
 }
