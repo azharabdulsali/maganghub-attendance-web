@@ -45,11 +45,11 @@ describe("cleanCommitTitle", () => {
     );
   });
 
-  it("memotong judul yang kepanjangan dan menandainya dengan elipsis", () => {
+  it("memotong judul yang kepanjangan dan menutupnya dengan titik", () => {
     const panjang = "a".repeat(300);
     const hasil = cleanCommitTitle(panjang);
     expect(hasil.length).toBe(120);
-    expect(hasil.endsWith("…")).toBe(true);
+    expect(hasil.endsWith(".")).toBe(true);
   });
 
   it("tidak menganggap 'fix bug login' sebagai prefix", () => {
@@ -160,11 +160,13 @@ describe("commitsToKeywords", () => {
   });
 
   it("membatasi panjang total keluaran", () => {
-    const banyak = Array.from({ length: 15 }, () =>
-      commit({ title: "x".repeat(115) }),
+    const banyak = Array.from({ length: 15 }, (_, i) =>
+      commit({ title: `${"x".repeat(110)} ${i}` }),
     );
     const hasil = commitsToKeywords(banyak);
     expect(hasil.length).toBeLessThanOrEqual(MAX_KEYWORDS_LENGTH);
+    expect(hasil.endsWith("…")).toBe(false);
+    expect(hasil.endsWith(".")).toBe(true);
   });
 
   it("tidak membocorkan email penulis (hanya judul yang dipakai)", () => {

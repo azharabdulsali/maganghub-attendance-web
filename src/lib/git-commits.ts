@@ -146,7 +146,7 @@ export function cleanCommitTitle(raw: string): string {
   text = text.replace(/[.\s]+$/, "");
 
   if (text.length > MAX_TITLE_LENGTH) {
-    text = `${text.slice(0, MAX_TITLE_LENGTH - 1).trimEnd()}…`;
+    text = `${text.slice(0, MAX_TITLE_LENGTH - 1).trimEnd()}.`;
   }
   return text;
 }
@@ -247,7 +247,7 @@ export function commitsToKeywords(commits: readonly GitCommit[]): string {
   let hasil = unik.join("; ");
 
   if (hasil.length > MAX_KEYWORDS_LENGTH) {
-    hasil = `${hasil.slice(0, MAX_KEYWORDS_LENGTH - 1).trimEnd()}…`;
+    hasil = `${hasil.slice(0, MAX_KEYWORDS_LENGTH - 1).trimEnd()}.`;
   }
   return hasil;
 }
