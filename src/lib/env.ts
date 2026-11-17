@@ -46,6 +46,14 @@ const schema = z.object({
   // Nilai berasal dari Google Cloud Console (docs/GOOGLE-LOGIN.md).
   GOOGLE_CLIENT_ID: z.string().optional().or(z.literal("")),
   GOOGLE_CLIENT_SECRET: z.string().optional().or(z.literal("")),
+  // CAPTCHA Cloudflare Turnstile (OPSIONAL). Bila keduanya kosong, widget tidak
+  // dirender dan server tidak memeriksa apa pun: pendaftaran & login tetap
+  // berjalan (dengan rate limit seperti sebelumnya). Pemeriksaan HANYA aktif
+  // bila dua-duanya terisi, supaya tidak mungkin ada deployment yang menuntut
+  // CAPTCHA tanpa bisa menampilkan widget-nya (pengguna akan terkunci).
+  // SECRET hanya untuk server; SITE_KEY memang publik (ikut ke peramban).
+  TURNSTILE_SECRET_KEY: z.string().optional().or(z.literal("")),
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional().or(z.literal("")),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -67,6 +75,17 @@ export const env = parsed.data;
  */
 export function googleOAuthConfigured(): boolean {
   return Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+}
+
+/**
+ * True bila CAPTCHA Turnstile siap dipakai. Kedua nilai wajib ada: site key
+ * saja tidak bisa diverifikasi server, dan secret saja akan mengunci pengguna
+ * karena widget tidak pernah dirender.
+ */
+export function turnstileConfigured(): boolean {
+  return Boolean(
+    env.TURNSTILE_SECRET_KEY && env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+  );
 }
 
 /** True bila email ini adalah admin pertama yang ditentukan pemilik. */

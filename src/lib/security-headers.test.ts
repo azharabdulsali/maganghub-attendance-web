@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   HSTS_HEADER_VALUE,
   SECURITY_HEADERS,
+  TURNSTILE_ORIGIN,
   VERCEL_ANALYTICS_CONNECT_SRC,
   buildContentSecurityPolicy,
   securityHeaders,
@@ -40,6 +41,26 @@ describe("buildContentSecurityPolicy", () => {
       expect(csp).toContain(`connect-src 'self' ${VERCEL_ANALYTICS_CONNECT_SRC}`);
       expect(csp).toContain("vitals.vercel-insights.com");
     }
+  });
+
+  it("mengizinkan Cloudflare Turnstile di script-src, frame-src, connect-src", () => {
+    // Tanpa ketiganya, widget CAPTCHA tidak muncul (skrip diblokir, iframe
+    // ditolak, atau laporan hasil pemeriksaan tidak terkirim).
+    for (const isDev of [true, false]) {
+      const csp = buildContentSecurityPolicy(isDev);
+      expect(csp).toContain(`script-src 'self' 'unsafe-inline'`);
+      expect(csp).toContain(TURNSTILE_ORIGIN);
+      expect(csp).toContain(`frame-src ${TURNSTILE_ORIGIN}`);
+      expect(csp).toContain(`connect-src 'self' ${VERCEL_ANALYTICS_CONNECT_SRC} ${TURNSTILE_ORIGIN}`);
+    }
+  });
+
+  it("TIDAK membuka script-src ke domain lain selain Cloudflare", () => {
+    const csp = buildContentSecurityPolicy(false);
+    const scriptSrc = csp.split("; ").find((d) => d.startsWith("script-src"));
+    expect(scriptSrc).toBe(
+      `script-src 'self' 'unsafe-inline' ${TURNSTILE_ORIGIN}`,
+    );
   });
 
   it("produksi memuat upgrade-insecure-requests, dev tidak", () => {

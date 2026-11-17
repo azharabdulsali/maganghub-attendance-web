@@ -18,8 +18,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { kodeErrorDari, pesanUntukKode } from "@/lib/login-messages";
+import { kodeDetailDari, kodeErrorDari, pesanUntukLogin } from "@/lib/login-messages";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -30,12 +31,20 @@ export default function LoginForm() {
   // itu tidak pernah tampil, karena form hanya memproses error dari fetch-nya
   // sendiri.
   const kodeAwal = params.get("error");
-  const pesanAwal = kodeAwal ? pesanUntukKode(kodeAwal) : null;
+  const kodeDetailAwal = params.get("code");
+  const pesanAwal =
+    kodeAwal || kodeDetailAwal
+      ? pesanUntukLogin(kodeAwal, kodeDetailAwal)
+      : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Token CAPTCHA (null = widget belum selesai / fitur tidak aktif).
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Naikkan angka ini untuk membuang widget lama: token Turnstile sekali pakai.
+  const [captchaReset, setCaptchaReset] = useState(0);
 
   /**
    * Tampilkan kegagalan login di DUA tempat sekaligus:
@@ -49,10 +58,13 @@ export default function LoginForm() {
    * `res.ok` true dan `target` jatuh ke `/dashboard`: tidak ada pesan, lalu
    * `router.push` memantul balik ke login tanpa penjelasan.
    */
-  function gagal(kode: string | null) {
-    const { judul, detail } = pesanUntukKode(kode);
-    setError(detail);
-    toast.error(judul, detail);
+  function gagal(kode: string | null, kodeDetail: string | null = null) {
+    const pesan = pesanUntukLogin(kode, kodeDetail);
+    setError(pesan.detail);
+    toast.error(pesan.judul, pesan.detail);
+    // Token CAPTCHA sudah terpakai (atau ditolak). Buang widget lama supaya
+    // pengguna mendapat token baru untuk percobaan berikutnya.
+    setCaptchaReset((n) => n + 1);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -94,6 +106,7 @@ export default function LoginForm() {
         body: new URLSearchParams({
           email,
           password,
+          turnstileToken: captchaToken ?? "",
           csrfToken,
           callbackUrl: "/dashboard",
           json: "true",
@@ -108,13 +121,17 @@ export default function LoginForm() {
 
       // Sumber penanda error, dari paling andal ke paling lemah. Header
       // `Location` dari 302 adalah yang paling eksplisit; `res.url` sebagai
-      // cadangan.
+      // cadangan. `code=` dibaca juga karena Auth.js memakai `error` umum
+      // (CredentialsSignin) + `code` rinci untuk kegagalan CAPTCHA.
       const lokasi = res.headers.get("location") ?? "";
+      const sumber = [lokasi, res.url];
       const kode =
-        [lokasi, res.url].map(kodeErrorDari).find((k) => k !== null) ?? null;
+        sumber.map(kodeErrorDari).find((k) => k !== null) ?? null;
+      const kodeDetail =
+        sumber.map(kodeDetailDari).find((k) => k !== null) ?? null;
 
-      if (kode) {
-        gagal(kode);
+      if (kode || kodeDetail) {
+        gagal(kode, kodeDetail);
         return;
       }
 
@@ -196,6 +213,12 @@ export default function LoginForm() {
                 {error}
               </Message>
             )}
+
+            <TurnstileWidget
+              onToken={setCaptchaToken}
+              resetSignal={captchaReset}
+              className="flex justify-center"
+            />
 
             <Button
               type="submit"

@@ -951,6 +951,18 @@ pendaftaran langsung aktif tanpa verifikasi email.
     orang lain dan mengirim data atas nama mereka. Tanggung jawab ini nyata.
     Karena itu: enkripsi benar, scope sesempit mungkin, dan jangan pernah
     membagikan data ke pihak ketiga.
+13. **CAPTCHA (opsional)**: Cloudflare Turnstile di `/api/register` dan
+    `authorize` login kata sandi. Dua aturan yang mengikat:
+    (a) **dua env wajib terisi** — secret saja akan mengunci pengguna karena
+    widget tidak pernah muncul;
+    (b) **gangguan Cloudflare = tolak**, jangan pernah meloloskan permintaan
+    saat verifikasi tidak bisa dilakukan; kalau tidak, CAPTCHA bisa dilewati
+    hanya dengan memutus koneksi server ke Cloudflare.
+    Pemeriksaan dipasang **sebelum** bcrypt dan sebelum query DB agar percobaan
+    bot tidak membakar CPU. Kegagalan di jalur login memakai kode rinci
+    `CaptchaGagal`, bukan "email atau password salah". CSP wajib memuat
+    `https://challenges.cloudflare.com` di `script-src`, `frame-src`, dan
+    `connect-src`. Detail: `docs/TURNSTILE.md`.
 
 ---
 
@@ -1199,6 +1211,7 @@ Semua sudah diputuskan pemilik. Berikut ringkasannya.
 | 7 | Sumber commit GitHub | **DIIZINKAN sejak 2026-06 (mencabut keputusan lama "DIBATALKAN")**. Commit dari satu repo GitHub **atau** GitLab boleh dipakai sebagai bahan draf, opt-in, token read-only terenkripsi. Detail & batas: §5.4a + `docs/GIT-COMMITS-PLAN.md`. Template tetap jadi jalur default |
 | 8 | Admin pertama | **`ADMIN_EMAIL` di env** (opsi 1), lihat di bawah |
 | 9 | Isi laporan | **3 template sama setiap hari**, persis bot Python. Bisa diedit manual sebelum submit bila perlu |
+| 10 | CAPTCHA | **Cloudflare Turnstile (opsional, 2026-11)** pada pendaftaran dan login kata sandi. Aktif hanya bila `TURNSTILE_SECRET_KEY` **dan** `NEXT_PUBLIC_TURNSTILE_SITE_KEY` terisi; salah satu kosong = fitur mati total (widget tidak dirender, server tidak memeriksa), supaya tidak ada deployment yang menuntut CAPTCHA tanpa bisa menampilkannya. Kegagalan jaringan ke Cloudflare **menolak** permintaan, bukan meloloskan. Login Google tidak bisa diberi CAPTCHA karena alurnya keluar ke Google. Tanpa dependensi baru (`fetch`). Detail: `docs/TURNSTILE.md` |
 
 ### Cara Membuat Admin Pertama (sudah diputuskan: `ADMIN_EMAIL`)
 
