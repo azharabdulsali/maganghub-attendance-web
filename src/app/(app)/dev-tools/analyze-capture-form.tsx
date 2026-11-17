@@ -159,10 +159,10 @@ export default function AnalyzeCaptureForm() {
                 key={i}
                 className="rounded-base border-2 border-border p-4 text-sm"
               >
-                <p className="font-heading">
+                <p className="break-all font-heading">
                   {c.method} {c.path}
                 </p>
-                <dl className="mt-2 space-y-1 text-foreground/80">
+                <dl className="mt-2 space-y-1 break-all text-foreground/80">
                   <div>
                     <dt className="inline font-heading">Status respons: </dt>
                     <dd className="inline">{c.responseStatus ?? ","}</dd>
@@ -200,8 +200,8 @@ export default function AnalyzeCaptureForm() {
               </div>
             ))}
             <p className="text-xs text-foreground/60">
-              Salin hasil di atas ke dokumen proyek (docs/MONEV-API.md §8) untuk
-              melengkapi kontrak submit.
+              Salin hasil di atas ke dokumen proyek untuk melengkapi catatan
+              integrasi.
             </p>
           </CardContent>
         </Card>

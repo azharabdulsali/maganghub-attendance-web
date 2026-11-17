@@ -36,7 +36,7 @@ export default function PanduanPage() {
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
             <CalendarCheck className="size-4" />
           </span>
-          <span className="flex flex-col">
+          <span className="hidden flex-col sm:flex">
             <span className="font-heading text-sm leading-tight">
               {SITE_NAME}
             </span>

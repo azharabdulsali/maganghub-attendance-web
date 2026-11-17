@@ -132,13 +132,11 @@ export default async function ReportTemplatesPage({
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl">Template Laporan</h1>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="font-heading text-2xl sm:text-3xl">Template Laporan</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Isi ini dipakai berulang setiap hari absensi. Portal Maganghub menuntut
-          minimal 100 karakter per kolom. Ingin laporan berbeda pada satu tanggal
-          tertentu? Isi kolom tanggal di bawah, isi template akan berganti.
+          Template laporan harian (min. 100 karakter per kolom)
         </p>
       </div>
 

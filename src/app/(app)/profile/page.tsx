@@ -60,10 +60,10 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="mb-6">
-        <h1 className="font-heading text-3xl">Profil</h1>
+      <header className="mb-6 sm:mb-8">
+        <h1 className="font-heading text-2xl sm:text-3xl">Profil</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Informasi akun aplikasi ini. Kredensial portal Monev diatur terpisah.
+          Informasi akun Anda
         </p>
       </header>
 
@@ -76,7 +76,7 @@ export default async function ProfilePage() {
             <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">
               Email
             </span>
-            <span className="text-sm">{user.email}</span>
+            <span className="break-all text-sm">{user.email}</span>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -138,7 +138,7 @@ export default async function ProfilePage() {
                 <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">
                   Email Monev
                 </span>
-                <span>{user.credential.emailMonev}</span>
+                <span className="break-all">{user.credential.emailMonev}</span>
               </div>
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">

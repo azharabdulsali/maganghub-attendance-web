@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
+import { InfoHint } from "@/components/ui/tooltip";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -441,17 +442,24 @@ export default function ReportTemplatesForm({
             berpindah-pindah mengikuti panjang teks. Teks bantuan kini dipindah
             ke baris penuh di bawah agar posisi tombol tidak lagi bergeser. */}
         <div className="flex flex-wrap items-end gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="tanggal-target" className="text-xs">
-              Tanggal khusus <span className="text-foreground/50">(opsional)</span>
-            </Label>
+          <div className="flex w-full flex-col gap-1.5 sm:w-auto">
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="tanggal-target" className="text-xs">
+                Tanggal khusus{" "}
+                <span className="text-foreground/50">(opsional)</span>
+              </Label>
+              <InfoHint>
+                Tanggal libur (Sabtu, Minggu, dan hari libur nasional) tidak bisa
+                dipilih karena otomasi tidak mengirim laporan pada hari itu.
+              </InfoHint>
+            </div>
             <DatePicker
               id="tanggal-target"
               value={tanggal}
               disabled={saving || deleting}
               onChange={(v) => pindah(v)}
               placeholder="Semua tanggal (default)"
-              className="w-60"
+              className="w-full sm:w-60"
               holidays={holidays}
             />
           </div>
@@ -472,22 +480,14 @@ export default function ReportTemplatesForm({
           ) : null}
         </div>
 
-        <p className="mt-1.5 text-[0.7rem] text-foreground/50">
-          Tanggal libur (Sabtu, Minggu, dan hari libur nasional) tidak bisa
-          dipilih karena otomasi tidak mengirim laporan pada hari itu.
-        </p>
-
         <p className="mt-2 text-xs text-foreground/70">
           {tanggal === null ? (
             <>
-              Sedang mengedit <b>template default</b>. Isi ini dipakai untuk semua
-              tanggal yang tidak punya template khusus.
+              Mengedit <b>template default</b> (berlaku untuk semua tanggal).
             </>
           ) : (
             <>
-              Sedang mengedit <b>template untuk {tanggal}</b>. Isi ini{" "}
-              <b>hanya</b> dipakai untuk tanggal itu; tanggal lain tetap memakai
-              template default.
+              Mengedit <b>template untuk {tanggal}</b> (hanya tanggal ini).
             </>
           )}
         </p>
@@ -532,8 +532,8 @@ export default function ReportTemplatesForm({
           <TriangleAlert className="size-4 shrink-0" aria-hidden />
           <span>
             {tanggal === null
-              ? "Belum ada template default tersimpan. Isi ketiga kolom di bawah lalu tekan Simpan agar absensi bisa berjalan."
-              : `Belum ada template untuk ${tanggal}. Isi ketiga kolom di bawah lalu tekan Simpan.`}
+              ? "Belum ada template default. Isi ketiga kolom lalu Simpan."
+              : `Belum ada template untuk ${tanggal}. Isi ketiga kolom lalu Simpan.`}
           </span>
         </Message>
       )}
@@ -546,28 +546,26 @@ export default function ReportTemplatesForm({
           <h2 className="font-heading text-base">
             Isi otomatis 3 kolom laporan
           </h2>
+          <InfoHint>
+            Bila penyusun AI aktif, kata kunci dikirim ke penyusun luar (Google).
+            Jangan cantumkan data rahasia.
+          </InfoHint>
         </div>
         <p className="mt-1 text-xs text-foreground/70">
-          Tulis singkat apa yang Anda kerjakan hari itu, lalu biarkan sistem
-          mengisi ketiga kolom. Hasilnya hanya draf, bisa Anda ubah dulu sebelum
-          disimpan.
-        </p>
-        {/* Pengungkapan lokasi pemrosesan sengaja TIDAK diklaim di sini: server
-            memakai LLM (Gemini) bila `GEMINI_API_KEY` diisi, dan itu mengirim
-            kata kunci ke penyusun luar. Klaim statis "tanpa layanan AI luar"
-            dulu berpotensi bohong. Pengungkapan sebenarnya muncul SETELAH
-            menekan "Generate", saat sumbernya benar-benar diketahui. */}
-        <p className="mt-1 text-xs text-foreground/60">
-          Draf disusun oleh server. Bila admin mengaktifkan penyusun AI, kata
-          kunci Anda dikirim ke penyusun luar; keterangannya muncul setelah draf
-          jadi di bawah.
+          Tulis kata kunci aktivitas, sistem mengisi ketiga kolom sebagai draf.
         </p>
 
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex flex-1 flex-col gap-1.5">
-            <Label htmlFor="draft-keywords" className="text-xs">
-              Kata kunci aktivitas
-            </Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="draft-keywords" className="text-xs">
+                Kata kunci aktivitas
+              </Label>
+              <InfoHint>
+                Bila repo git terhubung dan aktif, commit hari ini dipakai
+                sebagai bahan. Kosongkan kata kunci untuk memakainya.
+              </InfoHint>
+            </div>
             <Input
               id="draft-keywords"
               value={keywords}
@@ -608,18 +606,11 @@ export default function ReportTemplatesForm({
           </Button>
         </div>
 
-        <p className="mt-2 text-xs text-foreground/60">
-          Bila repo git sudah terhubung dan aktif, commit Anda hari ini otomatis
-          dipakai sebagai bahan. Kosongkan kata kunci untuk memakainya; isi kata
-          kunci bila ingin menyusun dari aktivitas lain.
-        </p>
-
         {learningPerluDitinjau ? (
           <div className="mt-2">
             <Message tone="neutral">
-              Kolom &ldquo;Pembelajaran yang Diperoleh&rdquo; tidak diisi dari
-              commit — commit menunjukkan apa yang dikerjakan, bukan apa yang
-              dipelajari. Sunting kolom itu sebelum menyimpan.
+              Kolom &ldquo;Pembelajaran&rdquo; tidak diisi dari commit. Sunting
+              kolom itu sebelum menyimpan.
             </Message>
           </div>
         ) : null}
@@ -635,9 +626,8 @@ export default function ReportTemplatesForm({
                 lokal "Lokal 0-Token" tidak pernah memicu ini. */}
             {/gemini/i.test(draftSource) ? (
               <p className="text-xs text-foreground/60">
-                Kata kunci tadi dikirim ke penyusun luar (Google) untuk diolah.
-                Jangan cantumkan data rahasia; hindari juga bila hal itu tidak
-                Anda inginkan.
+                Kata kunci dikirim ke Google untuk diolah. Jangan cantumkan data
+                rahasia.
               </p>
             ) : null}
           </div>
@@ -767,8 +757,7 @@ export default function ReportTemplatesForm({
 
       {!semuaValid ? (
         <p className="text-xs text-foreground/60">
-          Tombol simpan aktif setelah ketiga kolom memenuhi minimal{" "}
-          {MIN_REPORT_LENGTH} karakter.
+          Simpan aktif setelah ketiga kolom ≥ {MIN_REPORT_LENGTH} karakter.
         </p>
       ) : null}
 

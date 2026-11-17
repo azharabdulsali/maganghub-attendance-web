@@ -53,15 +53,14 @@ export default async function AdminFeedbackPage() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-      <div className="mb-8">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 sm:mb-8">
         <span className="inline-flex items-center rounded-base border-2 border-border bg-main px-3 py-1 text-xs font-heading text-main-foreground">
           ADMIN
         </span>
-        <h1 className="mt-3 font-heading text-3xl">Kritik &amp; Saran</h1>
+        <h1 className="mt-3 font-heading text-2xl sm:text-3xl">Kritik &amp; Saran</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Masukan dari pengguna aplikasi. Tandai sudah dibaca setelah ditangani,
-          atau hapus bila isinya tidak layak disimpan.
+          Masukan dari pengguna aplikasi
         </p>
       </div>
 

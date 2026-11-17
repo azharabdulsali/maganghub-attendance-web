@@ -115,11 +115,11 @@ function AttendanceReminder() {
           <AlertDialogMedia aria-hidden="true">
             <BellRing />
           </AlertDialogMedia>
-          <AlertDialogTitle>Kamu belum absen hari ini</AlertDialogTitle>
+          <AlertDialogTitle>Anda belum absen hari ini</AlertDialogTitle>
           <AlertDialogDescription>
-            Absensi harianmu belum terkirim
+            Absensi harian Anda belum terkirim
             {labelJam ? ` padahal sudah lewat ${labelJam}` : ""}. Segera isi
-            laporan harianmu dari halaman Beranda agar tidak terlewat.
+            laporan harian dari halaman Dashboard agar tidak terlewat.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

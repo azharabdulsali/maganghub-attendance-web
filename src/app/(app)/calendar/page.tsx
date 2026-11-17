@@ -169,7 +169,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         </p>
       </div>
 
-      <Card>
+      <Card className="[--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
         <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
           <CardTitle className="text-base">
             {MONTH_LABELS[month.month]} {month.year}
@@ -341,11 +341,8 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       </Card>
 
       <p className="mt-4 text-xs text-foreground/50">
-        Tanggal dihitung memakai zona Asia/Jakarta. Hanya pengiriman{" "}
-        <strong>sukses</strong> yang ditandai terkirim; percobaan duplikat saja
-        tetap tampil sebagai draft/belum diisi. Sel bergaris putus-putus adalah{" "}
-        <strong>akhir pekan atau libur nasional</strong>, pada hari itu laporan
-        tidak perlu dikirim.
+        Zona waktu Asia/Jakarta. Hanya kiriman <strong>sukses</strong> yang
+        ditandai terkirim. Sel bergaris putus-putus = akhir pekan atau libur.
       </p>
     </div>
   );

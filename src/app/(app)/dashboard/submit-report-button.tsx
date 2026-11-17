@@ -27,6 +27,34 @@ type Hasil = {
  */
 const BUTUH_TOKEN_BARU = new Set(["SESSION_DEAD", "INVALID", "TOKEN_UNREADABLE"]);
 
+/**
+ * Label manusia untuk kode status hasil pengiriman.
+ *
+ * Kode mentah (`SUCCESS`, `ALREADY_SUBMITTED`, `DRY_RUN`, …) adalah kosakata
+ * internal; menampilkannya sebagai judul pesan membuat pengguna membaca jargon.
+ * Pesan rinci tetap datang dari server (`hasil.message`), label ini hanya
+ * ringkasan satu baris.
+ */
+const STATUS_LABEL: Record<string, string> = {
+  SUCCESS: "Berhasil dikirim",
+  ALREADY_SUBMITTED: "Sudah pernah dikirim",
+  DUPLICATE: "Sudah pernah dikirim",
+  ERROR: "Gagal dikirim",
+  FAILED: "Gagal dikirim",
+  DRY_RUN: "Mode latihan",
+  SKIPPED_ALREADY_DONE: "Sudah dikirim hari ini",
+  EXCHANGE_FAILED: "Sesi Monev bermasalah",
+  NOT_READY: "Belum siap dikirim",
+  PROGRAM_ENDED: "Program sudah berakhir",
+  POLICY_SKIPPED: "Dilewati (libur/akhir pekan)",
+};
+
+/** Nada pesan hasil: sukses hijau, latihan netral, sisanya merah. */
+function toneForStatus(status: string, ok: boolean): "good" | "bad" | "neutral" {
+  if (status === "DRY_RUN") return "neutral";
+  return ok ? "good" : "bad";
+}
+
 export default function SubmitReportButton() {
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +91,7 @@ export default function SubmitReportButton() {
         onClick={kirim}
         disabled={loading}
         variant="success"
+        className="w-full sm:w-auto"
         title={loading ? "Mengirim…" : "Kirim Absen Hari Ini"}
         aria-label={loading ? "Mengirim absen" : "Kirim Absen Hari Ini"}
       >
@@ -77,8 +106,10 @@ export default function SubmitReportButton() {
       {error && <Message tone="bad">{error}</Message>}
 
       {hasil && (
-        <Message tone="neutral" as="div">
-          <p className="font-heading">{hasil.status}</p>
+        <Message tone={toneForStatus(hasil.status, hasil.ok)} as="div">
+          <p className="font-heading">
+            {STATUS_LABEL[hasil.status] ?? "Hasil pengiriman"}
+          </p>
           <p className="mt-1 text-foreground/80">{hasil.message}</p>
           {hasil.date && (
             <p className="mt-1 text-xs text-foreground/60">

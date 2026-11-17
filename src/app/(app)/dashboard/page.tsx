@@ -1,15 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
+  Circle,
   CircleAlert,
   CircleCheck,
-  FileCheck,
   KeyRound,
   RefreshCw,
-  Square,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { refreshTokenHealth } from "@/lib/credential-session";
 import { checkReportField } from "@/lib/report-rules";
@@ -21,13 +19,14 @@ import {
 } from "@/lib/audit-log";
 import SubmitReportButton from "./submit-report-button";
 import StatsCards from "./stats-cards";
-import TrendChart from "./trend-chart";
+import StatusStrip from "./status-strip";
 import FilterBar from "@/components/filter-bar";
 import { getDashboardStats, todayJakartaISODate } from "./stats-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Message } from "@/components/ui/message";
+import { Disclosure } from "@/components/ui/collapsible";
 
 // Dashboard, halaman utama setelah login, di URL /dashboard.
 // Pemeriksaan sesi juga dilakukan di layout (app)/dashboard, tapi kita ulangi
@@ -53,9 +52,6 @@ export default async function DashboardPage({
     redirect("/login");
   }
 
-  const role = (session.user as { role?: string }).role ?? "USER";
-  const isAdmin = role === "ADMIN";
-
   const params = await searchParams;
   const range = parseRangeFilter(params.range);
 
@@ -70,7 +66,7 @@ export default async function DashboardPage({
   // Status kredensial nyata, supaya kartu di bawah jujur saat sesi Monev mati,
   // bukan selalu menyuruh "Atur kredensial" walau semuanya sehat.
   // Statistik ringkas, dihitung di server, hanya membaca data milik pengguna.
-  const [credential, { stats, trend, chartDays }, tokenHealth, template] =
+  const [credential, { stats, trend }, tokenHealth, template] =
     await Promise.all([
       prisma.maganghubCredential.findUnique({
         where: { userId },
@@ -101,18 +97,21 @@ export default async function DashboardPage({
       checkReportField(template.obstacles) === null,
   );
 
-  // Status template default untuk panel "Status Hari Ini". Dibedakan tiga
+  // Status template default untuk kartu "Kesiapan akun". Dibedakan tiga
   // keadaan supaya pesannya jujur, bukan sekadar "belum lengkap":
   //   - belumAdaTemplate: belum pernah disimpan sama sekali.
   //   - templateLengkap: ketiga kolom terisi & lolos syarat panjang portal.
   //   - sisanya: sudah ada isinya, tapi masih ada kolom yang kurang/terlalu pendek.
   const belumAdaTemplate = !template;
-  const templateKurang = !templateLengkap; // mencakup belumAdaTemplate
-  const labelTemplate = belumAdaTemplate
-    ? "Template default belum diisi"
-    : templateLengkap
-      ? "Template default siap"
-      : "Template default belum lengkap";
+
+  // Empat syarat "Kesiapan akun". Poin keempat adalah ringkasan: ia baru hijau
+  // bila ketiga syarat sebelumnya terpenuhi, jadi tidak pernah hijau palsu.
+  const kredensialSiap = Boolean(credential);
+  const tokenSiap = punyaToken && !perluPerhatian;
+  const siapKirim = kredensialSiap && tokenSiap && templateLengkap;
+  const siapCount = [kredensialSiap, tokenSiap, templateLengkap, siapKirim].filter(
+    Boolean,
+  ).length;
 
   // Tanggal hari ini di zona Asia/Jakarta (YYYY-MM-DD), dipakai panel
   // "Status Hari Ini". Memakai helper yang sama dengan penghitung tren supaya
@@ -139,12 +138,9 @@ export default async function DashboardPage({
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <div className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">
-          Ringkasan &amp; Dashboard
-        </h1>
+        <h1 className="font-heading text-2xl sm:text-3xl">Dashboard</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Pantau status absensi harian dan kirim laporan ke portal Monev dari
-          satu tempat.
+          Ringkasan absensi Anda
         </p>
       </div>
 
@@ -167,15 +163,15 @@ export default async function DashboardPage({
                 </p>
                 <p className="mt-1 text-xs text-foreground/80">
                   {belumAdaKredensial
-                    ? "Simpan email & password portal Maganghub untuk mengaktifkan absensi otomatis. Password disimpan terenkripsi."
+                    ? "Simpan kredensial Monev untuk melanjutkan."
                     : perluPerhatian
-                      ? "Login ulang di portal, lalu tempel token baru agar absensi otomatis bisa jalan lagi."
-                      : "Kredensial sudah tersimpan, tetapi token sesi belum ditempel, pengiriman belum bisa jalan."}
+                      ? "Token ditolak. Perbarui kredensial Anda."
+                      : "Token sesi belum tersedia."}
                 </p>
               </div>
             </div>
             <Button
-              className="shrink-0"
+              className="w-full shrink-0 sm:w-auto"
               render={<Link href="/credentials" />}
               title={perluPerhatian ? "Perbarui token" : "Atur kredensial"}
               aria-label={perluPerhatian ? "Perbarui token" : "Atur kredensial"}
@@ -203,12 +199,12 @@ export default async function DashboardPage({
               <div>
                 <p className="font-heading">Sesi Monev segera berakhir</p>
                 <p className="mt-1 text-xs text-foreground/80">
-                  {`Sesi otomatis berakhir dalam ±${tokenHealth.daysLeft} hari. Login ulang di portal lalu tempel token baru sebelum itu supaya absensi otomatis tidak terhenti.`}
+                  {`Sesi berakhir dalam ±${tokenHealth.daysLeft} hari. Perbarui sebelum habis.`}
                 </p>
               </div>
             </div>
             <Button
-              className="shrink-0"
+              className="w-full shrink-0 sm:w-auto"
               render={<Link href="/credentials" />}
               title="Perbarui sesi Monev"
               aria-label="Perbarui sesi Monev"
@@ -241,10 +237,10 @@ export default async function DashboardPage({
 
       <StatsCards stats={stats} />
 
-      {/* Panel "Status Hari Ini", ringkasan satu baris yang menjawab
-          pertanyaan utama pengguna: hari ini sudah kirim belum, dan apa yang
-          menghalangi kalau belum. Menggabungkan status kirim + status
-          kredensial yang tadinya terpisah di dua kartu. */}
+      {/* Panel "Status Hari Ini": jawaban singkat untuk pertanyaan utama
+          pengguna — hari ini sudah kirim belum. Rincian SYARAT (kredensial,
+          token, template) sengaja tidak diulang di sini; itu tugas kartu
+          "Kesiapan akun" di bawah, supaya satu fakta hanya muncul sekali. */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Status Hari Ini</CardTitle>
@@ -257,128 +253,173 @@ export default async function DashboardPage({
             <Badge tone={sudahKirimHariIni ? "good" : "neutral"}>
               {sudahKirimHariIni ? "Sudah dikirim" : "Belum dikirim"}
             </Badge>
-            <Badge tone={adaMasalah ? "bad" : "good"}>
-              <KeyRound className="mr-1 size-3" aria-hidden />
-              {adaMasalah ? "Kredensial perlu diatur" : "Kredensial siap"}
-            </Badge>
-            <Badge tone={templateLengkap ? "good" : "neutral"}>
-              <FileCheck className="mr-1 size-3" aria-hidden />
-              {labelTemplate}
-            </Badge>
           </div>
           <p className="text-sm text-foreground/70">
             {sudahKirimHariIni
-              ? "Laporan hari ini sudah terkirim ke portal Monev."
-              : adaMasalah
-                ? "Laporan hari ini belum terkirim, dan masih ada yang perlu diatur sebelum bisa mengirim."
-                : "Belum ada laporan terkirim hari ini. Kredensial siap, kamu bisa langsung mengirim di bawah."}
+              ? "Laporan hari ini sudah terkirim."
+              : siapKirim
+                ? "Siap dikirim hari ini."
+                : "Lengkapi kesiapan akun di bawah sebelum mengirim."}
           </p>
-          {templateKurang && (
-            <p className="text-xs text-foreground/60">
-              {belumAdaTemplate
-                ? "Laporan default belum diisi, jadi tidak ada isi yang dikirim."
-                : "Laporan default masih ada kolom yang kosong atau kurang dari 100 karakter."}{" "}
-              <Link
-                href="/report-templates"
-                className="text-foreground underline underline-offset-4"
-              >
-                Isi template laporan
-              </Link>
-            </p>
-          )}
         </CardContent>
       </Card>
 
-      <TrendChart trend={trend} range={range} chartDays={chartDays} />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Kirim Absen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-foreground/70">
-              Kirim laporan untuk <strong>hari ini</strong> (zona Asia/Jakarta)
-              memakai tiga template yang sudah diisi. Hari libur dan akhir
-              program otomatis dilewati.
-            </p>
-            <SubmitReportButton />
-          </CardContent>
-        </Card>
-
-        <Card className="border-dashed">
-          <CardHeader>
+      {/* Kesiapan akun: 4 syarat sebelum absensi bisa dikirim. Dulu berupa
+          daftar centang sederhana; sekarang punya progres + tautan perbaikan
+          per poin, sehingga pengguna tahu PERSIS apa yang kurang dan ke mana
+          harus pergi. Poin keempat adalah ringkasan dari ketiga poin di atas. */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle>Kesiapan akun</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-foreground/70">
-              <ReadinessItem ok={Boolean(credential)}>
-                Kredensial Monev tersimpan
-              </ReadinessItem>
-              <ReadinessItem ok={punyaToken}>
-                Token sesi Monev aktif
-              </ReadinessItem>
-              <ReadinessItem ok={templateLengkap}>
-                3 laporan sudah disimpan
-              </ReadinessItem>
-              <ReadinessItem ok={punyaToken && !perluPerhatian}>
-                Siap mengirim absensi harian
-              </ReadinessItem>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+            <Badge tone={siapCount === 4 ? "good" : "neutral"}>
+              {siapCount}/4 siap
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div
+            className="h-2.5 w-full overflow-hidden rounded-full border-2 border-border bg-secondary-background"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={4}
+            aria-valuenow={siapCount}
+            aria-label={`Kesiapan akun: ${siapCount} dari 4 syarat terpenuhi`}
+          >
+            <div
+              className="h-full bg-success transition-[width] duration-300"
+              style={{ width: `${(siapCount / 4) * 100}%` }}
+            />
+          </div>
 
-      <Card className="mt-6">
-        <CardContent className="flex flex-wrap items-center gap-3">
-          <span className="text-sm text-foreground/70">Peran akun:</span>
-          <Badge tone={isAdmin ? "good" : "neutral"}>
-            <FileCheck className="mr-1 size-3" aria-hidden />
-            {role}
-          </Badge>
-          <span className="w-full text-xs text-foreground/50">
-            Masuk sebagai {session.user.email}
-          </span>
-          {!env.ADMIN_EMAIL && (
-            <p className="w-full text-xs text-foreground/60">
-              Catatan: <code>ADMIN_EMAIL</code> belum diisi, jadi tidak ada
-              admin yang dibuat otomatis.
-            </p>
-          )}
+          <ul className="grid gap-3 sm:grid-cols-2">
+            <ReadinessItem
+              ok={kredensialSiap}
+              label="Kredensial Monev tersimpan"
+              hint={kredensialSiap ? "Siap dipakai" : "Belum diisi"}
+              href="/credentials"
+              actionLabel="Atur"
+            />
+            <ReadinessItem
+              ok={tokenSiap}
+              label="Token sesi Monev aktif"
+              hint={
+                perluPerhatian
+                  ? "Token ditolak, perlu diperbarui"
+                  : punyaToken
+                    ? "Aktif"
+                    : "Belum ada token"
+              }
+              href="/credentials"
+              actionLabel="Perbarui"
+            />
+            <ReadinessItem
+              ok={templateLengkap}
+              label="3 laporan sudah disimpan"
+              hint={
+                templateLengkap
+                  ? "Ketiga kolom memenuhi syarat"
+                  : belumAdaTemplate
+                    ? "Template default belum diisi"
+                    : "Ada kolom yang kurang dari 100 karakter"
+              }
+              href="/report-templates"
+              actionLabel="Isi"
+            />
+            <ReadinessItem
+              ok={siapKirim}
+              label="Siap mengirim absensi harian"
+              hint={
+                siapKirim
+                  ? "Semua syarat terpenuhi"
+                  : "Lengkapi poin di atas"
+              }
+            />
+          </ul>
         </CardContent>
       </Card>
+
+      {/* Aksi utama halaman ditaruh SEBELUM grafik: pengguna yang buru-buru
+          tidak perlu menggulir melewati analitik untuk menemukan tombol kirim.
+          Satu kartu penuh + border aksen supaya jelas ini tindakan utama. */}
+      <Card className="mb-6 border-main">
+        <CardHeader>
+          <CardTitle>Kirim Absen Hari Ini</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <SubmitReportButton />
+          <Disclosure summary="Kapan laporan tidak dikirim?">
+            Akhir pekan, hari libur nasional, dan tanggal setelah akhir program
+            otomatis dilewati. Laporan hanya untuk hari ini (zona Asia/Jakarta).
+          </Disclosure>
+        </CardContent>
+      </Card>
+
+      <StatusStrip trend={trend} range={range} />
     </div>
   );
 }
 
 /**
- * Satu baris daftar "Kesiapan akun".
+ * Satu poin "Kesiapan akun".
  *
- * Ikon menggantikan emoji ✅/⬜: emoji dirender berbeda di tiap OS (Windows,
- * Android, iOS) dan tidak mewarisi warna teks, sehingga tampilannya tidak
- * konsisten dengan garis tebal neo-brutal yang dipakai sekitarnya. lucide
- * memberi ikon vektor yang warnanya ikut token tema.
+ * Ikon menggantikan emoji ✅/⬜: emoji dirender berbeda di tiap OS dan tidak
+ * mewarisi warna teks, sehingga tidak konsisten dengan garis tebal neo-brutal
+ * di sekitarnya. Saat poin belum siap, baris diberi garis putus-putus + tautan
+ * perbaikan langsung, supaya pengguna tidak perlu menebak ke mana harus pergi.
  */
 function ReadinessItem({
   ok,
-  children,
+  label,
+  hint,
+  href,
+  actionLabel,
 }: {
   ok: boolean;
-  children: React.ReactNode;
+  label: string;
+  hint?: string;
+  href?: string;
+  actionLabel?: string;
 }) {
-  const Icon = ok ? CircleCheck : Square;
+  const Icon = ok ? CircleCheck : Circle;
   return (
-    <li className="flex items-center gap-2">
+    <li
+      className={cn(
+        "flex items-start gap-3 rounded-base border-2 p-3",
+        ok
+          ? "border-border bg-background"
+          : "border-dashed border-border bg-secondary-background",
+      )}
+    >
       <Icon
         className={cn(
-          "size-4 shrink-0",
+          "mt-0.5 size-5 shrink-0",
           ok ? "text-success" : "text-foreground/40",
         )}
         aria-hidden
       />
-      <span className={ok ? "text-foreground" : "text-foreground/60"}>
-        {children}
-      </span>
+      <div className="min-w-0 flex-1">
+        <p
+          className={cn(
+            "text-sm font-heading",
+            ok ? "text-foreground" : "text-foreground/80",
+          )}
+        >
+          {label}
+        </p>
+        {hint && (
+          <p className="mt-0.5 text-xs text-foreground/60">{hint}</p>
+        )}
+      </div>
+      {!ok && href && actionLabel && (
+        <Link
+          href={href}
+          className="shrink-0 text-xs font-heading underline underline-offset-4"
+        >
+          {actionLabel}
+        </Link>
+      )}
     </li>
   );
 }
+

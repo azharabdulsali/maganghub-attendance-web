@@ -80,11 +80,9 @@ export function DispatchPanel() {
       <CardHeader>
         <CardTitle>Pengiriman massal (semua user)</CardTitle>
         <CardDescription>
-          Menjalankan pengiriman untuk <strong>semua</strong> user yang jam
-          jadwalnya sama dengan jam sekarang (WIB). Jalur normal sudah otomatis
-          lewat cron tiap jam; tombol ini untuk menguji atau mengejar
-          ketertinggalan. Setiap percobaan tetap tercatat di audit log dengan
-          pemicu <code>CRON</code>.
+          Jalankan pengiriman untuk <strong>semua</strong> user yang jadwalnya
+          sama dengan jam sekarang (WIB). Untuk menguji atau mengejar
+          ketertinggalan; setiap percobaan tetap tercatat.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

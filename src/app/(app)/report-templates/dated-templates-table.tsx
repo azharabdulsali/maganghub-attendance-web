@@ -111,7 +111,7 @@ function MobileField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-[0.7rem] font-heading text-foreground/50">{label}</dt>
-      <dd className="whitespace-pre-line text-xs leading-relaxed text-foreground/80">
+      <dd className="whitespace-pre-line break-words text-xs leading-relaxed text-foreground/80">
         {value || <span className="text-foreground/40">,</span>}
       </dd>
     </div>

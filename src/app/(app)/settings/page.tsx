@@ -37,70 +37,79 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="mb-6">
-        <h1 className="font-heading text-3xl">Pengaturan</h1>
+      <header className="mb-6 sm:mb-8">
+        <h1 className="font-heading text-2xl sm:text-3xl">Pengaturan</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Ubah identitas dan keamanan akun aplikasi ini. Kredensial portal Monev
-          diatur terpisah.
+          Kelola akun dan keamanan
         </p>
       </header>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Email</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4 text-sm text-foreground/70">
-            Email ini dipakai untuk masuk. Saat ini:{" "}
-            <span className="font-heading">{user.email}</span>
-          </p>
-          {punyaSandi ? (
-            <EmailForm currentEmail={user.email} />
-          ) : (
-            <Message tone="neutral">
-              Akun ini masuk lewat Google dan belum punya kata sandi. Buat kata
-              sandi dulu di kartu Kata sandi, lalu email bisa diubah di sini.
-            </Message>
-          )}
-        </CardContent>
-      </Card>
+      <section className="mb-8">
+        <h2 className="mb-3 text-xs font-heading uppercase tracking-wide text-foreground/50">
+          Akun
+        </h2>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Nama tampilan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProfileForm initialName={user.name ?? ""} />
-        </CardContent>
-      </Card>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Email</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm text-foreground/70">
+              Email saat ini:{" "}
+              <span className="break-all font-heading">{user.email}</span>
+            </p>
+            {punyaSandi ? (
+              <EmailForm currentEmail={user.email} />
+            ) : (
+              <Message tone="neutral">
+                Akun ini masuk lewat Google dan belum punya kata sandi. Buat kata
+                sandi dulu di kartu Kata sandi, lalu email bisa diubah di sini.
+              </Message>
+            )}
+          </CardContent>
+        </Card>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Kata sandi</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4 text-sm text-foreground/70">
-            {punyaSandi
-              ? "Ubah kata sandi akun ini. Anda perlu memasukkan kata sandi saat ini untuk mengonfirmasi. Mengubah kata sandi mengeluarkan Anda dari perangkat lain; perangkat ini tetap aktif."
-              : "Akun ini masuk lewat Google dan belum punya kata sandi. Buat kata sandi di sini supaya akun juga bisa masuk tanpa Google."}
-          </p>
-          <PasswordForm hasPassword={punyaSandi} />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Nama tampilan</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProfileForm initialName={user.name ?? ""} />
+          </CardContent>
+        </Card>
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Perangkat lain</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-foreground/70">
-            Keluarkan semua sesi di perangkat lain tanpa mengubah kata sandi.
-            Berguna bila Anda lupa keluar di komputer bersama atau perangkat
-            yang hilang. Perangkat ini tetap aktif.
-          </p>
-          <RevokeSessionsButton />
-        </CardContent>
-      </Card>
+      <section>
+        <h2 className="mb-3 text-xs font-heading uppercase tracking-wide text-foreground/50">
+          Keamanan
+        </h2>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Kata sandi</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm text-foreground/70">
+              {punyaSandi
+                ? "Ubah kata sandi. Perangkat lain akan keluar otomatis."
+                : "Buat kata sandi agar akun bisa masuk tanpa Google."}
+            </p>
+            <PasswordForm hasPassword={punyaSandi} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Perangkat lain</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <p className="text-sm text-foreground/70">
+              Keluarkan semua sesi di perangkat lain. Perangkat ini tetap aktif.
+            </p>
+            <RevokeSessionsButton />
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }

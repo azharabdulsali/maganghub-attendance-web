@@ -418,8 +418,7 @@ export default function RepoForm({
                 </div>
               )}
               <p className="mt-3 text-xs text-foreground/60">
-                Perubahan sakelar berlaku langsung — tidak perlu menempel ulang
-                token atau menekan tombol simpan di atas.
+                Berlaku langsung, tanpa perlu simpan ulang.
               </p>
             </CardContent>
           </Card>
@@ -531,7 +530,7 @@ function KartuHasilUji({ preview }: { preview: PreviewState }) {
         {preview.commits.length > 0 && (
           <ul className="divide-y-2 divide-border rounded-base border-2 border-border">
             {preview.commits.map((c) => (
-              <li key={c.shortId} className="p-2 text-xs">
+              <li key={c.shortId} className="break-words p-2 text-xs">
                 <code className="text-foreground/60">{c.shortId}</code>{" "}
                 {c.url ? (
                   <a
@@ -556,15 +555,14 @@ function KartuHasilUji({ preview }: { preview: PreviewState }) {
             {preview.learningSource === "DERIVED" ? (
               <>
                 {" "}
-                disarankan dari <em>jenis pekerjaan</em> di commit Anda, jadi
-                masih perlu Anda sesuaikan dengan apa yang benar-benar Anda
-                pelajari.
+                disarankan dari jenis pekerjaan di commit; sesuaikan dengan yang
+                benar-benar Anda pelajari.
               </>
             ) : (
               <>
                 {" "}
-                belum bisa disarankan karena commit hari itu tidak menunjukkan
-                jenis pekerjaan yang jelas, jadi perlu Anda tulis sendiri.
+                perlu Anda tulis sendiri karena commit tidak menunjukkan jenis
+                pekerjaan yang jelas.
               </>
             )}
           </p>
@@ -682,10 +680,8 @@ function KartuRepo({
               aria-describedby="branch-hint"
             />
             <p id="branch-hint" className="text-xs text-foreground/60">
-              Kosongkan untuk memakai <strong>default branch</strong> repo (mis.{" "}
-              <code>main</code>, <code>master</code>, atau <code>develop</code> — sesuai
-              pengaturan repo). Isi bila commit Anda ada di branch lain, mis.{" "}
-              <code>feature/admin</code>.
+              Kosongkan untuk memakai default branch repo. Isi bila commit Anda
+              ada di branch lain, mis. <code>feature/admin</code>.
             </p>
           </div>
 
@@ -706,13 +702,13 @@ function KartuRepo({
               required
             />
             <p id="token-hint" className="text-xs text-foreground/60">
-              Disimpan terenkripsi dan tidak pernah ditampilkan lagi, bahkan
-              kepada Anda. Hanya dipakai untuk membaca commit.
+              Disimpan terenkripsi dan tidak pernah ditampilkan lagi. Hanya
+              dipakai untuk membaca commit.
               {hasExisting && (
                 <>
                   {" "}
                   <strong>Menyimpan wajib menempel ulang token</strong> — sama
-                  atau baru — karena token lama tidak dipakai ulang otomatis.
+                  atau baru.
                 </>
               )}
             </p>

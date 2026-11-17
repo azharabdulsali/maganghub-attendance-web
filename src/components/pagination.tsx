@@ -28,11 +28,11 @@ export default function Pagination({
   if (pageCount <= 1) return null;
 
   const linkClass =
-    "inline-flex items-center rounded-base border-2 border-border bg-secondary-background px-3 py-1 text-sm font-heading";
+    "inline-flex min-h-10 items-center rounded-base border-2 border-border bg-secondary-background px-3 py-2 text-sm font-heading";
 
   return (
     <nav
-      className="mt-4 flex items-center justify-between gap-3"
+      className="mt-4 flex flex-wrap items-center justify-between gap-2"
       aria-label={label}
     >
       {page > 1 ? (

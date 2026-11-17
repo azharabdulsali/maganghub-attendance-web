@@ -32,16 +32,14 @@ export default async function AdminHolidaysPage() {
   const rows = await loadHolidayRows();
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-      <div className="mb-8">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 sm:mb-8">
         <span className="inline-flex items-center rounded-base border-2 border-border bg-main px-3 py-1 text-xs font-heading text-main-foreground">
           ADMIN
         </span>
-        <h1 className="mt-3 font-heading text-3xl">Hari Libur &amp; Tanggal Merah</h1>
+        <h1 className="mt-3 font-heading text-2xl sm:text-3xl">Hari Libur &amp; Tanggal Merah</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Tanggal yang didaftarkan di sini akan <strong>dilewati</strong> oleh
-          otomasi pengiriman laporan, sama seperti Sabtu &amp; Minggu. Akhir
-          pekan sudah otomatis libur dan tidak perlu didaftarkan.
+          Tanggal ini dilewati otomasi, sama seperti Sabtu &amp; Minggu.
         </p>
       </div>
 

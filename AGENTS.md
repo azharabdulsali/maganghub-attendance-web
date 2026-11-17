@@ -253,9 +253,11 @@ Keputusan pemilik 2026-11: CAPTCHA **boleh** dipasang pada **pendaftaran** dan
   `native-select`, `pagination`, `popover`, `select`, `switch`, `textarea`,
   `toast`). Yang ditulis tangan hanya **komposisi** di atasnya:
   `date-picker.tsx` (Popover + Calendar), `confirm-dialog.tsx` (alert-dialog
-  resmi + API tetap), plus komponen domain yang tidak punya padanan registry:
-  `badge.tsx` (peta `Tone`), `message.tsx`, `field-error.tsx`,
-  `password-input.tsx`, `password-strength.tsx`.
+  resmi + API tetap), `tooltip.tsx` (`InfoHint`: Tooltip Base UI untuk
+  penjelasan singkat), `collapsible.tsx` (`Disclosure`: Collapsible Base UI
+  untuk detail yang bisa dilipat), plus komponen domain yang tidak punya
+  padanan registry: `badge.tsx` (peta `Tone`), `message.tsx`,
+  `field-error.tsx`, `password-input.tsx`, `password-strength.tsx`.
   **Jangan menjalankan ulang CLI `add` untuk komponen yang sudah ada tanpa
   meninjau diff-nya** — `button.tsx` pernah tertimpa dan kehilangan kustomisasi
   proyek. Jangan menulis ulang primitif dari nol; susun dari registry.
@@ -617,9 +619,11 @@ Prioritas test:
   libur tetap memakai `isHoliday` yang SAMA dengan jalur kirim, jadi tanggal yang
   dinonaktifkan tidak mungkin berbeda dari yang benar-benar dilewati otomasi.
   **Pengecualian:** halaman `/admin/holidays` (yang justru MENGELOLA daftar
-  libur) memakai `<DatePicker unrestricted>` — semua pembatas dilepas (tanggal
-  lampau, Sabtu/Minggu, libur, dan batas bulan), karena di sana justru tanggal
-  itulah yang mau didaftarkan. Karena `<DatePicker>` bukan kontrol form asli,
+  libur) memakai `<DatePicker unrestricted>` — pembatas tanggal lampau, daftar
+  libur, dan batas bulan dilepas, karena di sana justru tanggal itulah yang mau
+  didaftarkan. **Sabtu/Minggu tetap nonaktif** karena server menolak
+  mendaftarkan akhir pekan (`validateHolidayInput`); membiarkannya dipilih hanya
+  menghasilkan kegagalan simpan. Karena `<DatePicker>` bukan kontrol form asli,
   `required` bawaan peramban tak berlaku; form di sana memeriksa "tanggal wajib
   dipilih" sendiri di `simpan()`.
 - **Kisi picker TIDAK mengosongkan sel padding** (berbeda dari `/calendar`):
