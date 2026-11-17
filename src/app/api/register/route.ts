@@ -11,9 +11,14 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import { env, isAdminEmail } from "@/lib/env";
+import { env, isAdminEmail, turnstileConfigured } from "@/lib/env";
 import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
+import {
+  TURNSTILE_TOKEN_MAX_LENGTH,
+  pesanCaptcha,
+  verifyTurnstileToken,
+} from "@/lib/turnstile";
 
 const BCRYPT_COST = 12;
 
@@ -24,6 +29,8 @@ const registerSchema = z.object({
     .string()
     .min(8, "Password minimal 8 karakter")
     .max(200, "Password terlalu panjang"),
+  // Token CAPTCHA (opsional). Hanya diperiksa bila Turnstile dikonfigurasi.
+  turnstileToken: z.string().max(TURNSTILE_TOKEN_MAX_LENGTH).optional(),
 });
 
 export async function POST(request: Request) {
@@ -58,6 +65,23 @@ export async function POST(request: Request) {
   }
 
   const { name, email, password } = parsed.data;
+
+  // CAPTCHA diperiksa SEBELUM bcrypt dan sebelum menyentuh tabel User:
+  // percobaan bot tidak boleh membakar CPU untuk hashing, dan pemeriksaan
+  // email-terdaftar tidak boleh bisa ditebak lewat respons berbeda.
+  if (turnstileConfigured()) {
+    const verdict = await verifyTurnstileToken({
+      token: parsed.data.turnstileToken,
+      secretKey: env.TURNSTILE_SECRET_KEY ?? "",
+      remoteIp: ip,
+    });
+    if (!verdict.ok) {
+      return NextResponse.json(
+        { error: pesanCaptcha(verdict.kind) },
+        { status: 400 },
+      );
+    }
+  }
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {

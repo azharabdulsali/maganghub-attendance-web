@@ -31,7 +31,7 @@ Tahap 6 dan **sudah aktif**: penyusun draf Gemini + fallback lokal, bahan draf
 dari commit git (GitHub/GitLab), panel admin lengkap (hapus/atur ulang sandi/
 ubah peran/uji login), hari libur, kritik & saran, pengingat "belum absen",
 kalender kehadiran, dan halaman legal/panduan. Baseline verifikasi saat ini:
-`npm run typecheck` ✅ · `npm run lint` ✅ · `npm test` (**1109 tes**) ✅ ·
+`npm run typecheck` ✅ · `npm run lint` ✅ · `npm test` (**1128 tes**) ✅ ·
 `npm run build` ✅. Lihat `SPEC.md` §12 untuk tahapan dan §13 untuk keputusan
 yang mengikat.
 
@@ -133,7 +133,7 @@ yang mengikat.
   ingin menyimpang, tulis alasannya di `SPEC.md`, jangan diam-diam.
 - **Jalankan `npm run lint`, `npm run typecheck`, `npm run build`, dan
   `npm test`** sebelum menyatakan selesai. Empat-empatnya wajib hijau; tes
-  (`vitest`, 1109 tes) adalah jaring pengaman utama proyek ini — lihat §7 untuk
+  (`vitest`, 1128 tes) adalah jaring pengaman utama proyek ini — lihat §7 untuk
   aturan menulis tes yang benar-benar bisa gagal.
 - **Balas dalam Bahasa Indonesia.** Seluruh komunikasi ke pemilik proyek
   memakai Bahasa Indonesia, konsisten sampai akhir — jangan berganti bahasa di
@@ -179,6 +179,34 @@ Yang tidak boleh dilanggar:
   yang pasti gagal).
 - **`ADMIN_EMAIL` tetap sumber peran admin**, termasuk login Google pertama
   (ditulis ke DB saat itu juga agar peran dari DB konsisten).
+
+### Aturan CAPTCHA Cloudflare Turnstile (opsional)
+
+Keputusan pemilik 2026-11: CAPTCHA **boleh** dipasang pada **pendaftaran** dan
+**login kata sandi**. Panduan: `docs/TURNSTILE.md`. Yang tidak boleh dilanggar:
+
+- **Aktif hanya bila DUA env terisi** (`TURNSTILE_SECRET_KEY` dan
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY`). Salah satu kosong = fitur mati total.
+  Jangan mengubah ini menjadi "secret saja cukup": widget tidak akan muncul dan
+  semua pengguna terkunci.
+- **Verifikasi gagal karena jaringan = TOLAK**, bukan lolos diam-diam. Kalau
+  Cloudflare tidak terjangkau lalu permintaan diloloskan, CAPTCHA bisa dilewati
+  hanya dengan memutus koneksi server ke Cloudflare.
+- **Periksa SEBELUM bcrypt dan sebelum query DB.** Tujuannya agar percobaan bot
+  tidak membakar CPU dan tidak bisa dipakai menebak email terdaftar.
+- **Token sekali pakai (5 menit).** Setiap submit gagal WAJIB mereset widget
+  (`resetSignal`), kalau tidak percobaan berikutnya selalu gagal.
+- **CSP wajib memuat `https://challenges.cloudflare.com`** di `script-src`,
+  `frame-src`, dan `connect-src` (`src/lib/security-headers.ts`, diuji). Tanpa
+  itu widget tidak dirender sama sekali.
+- **Tanpa dependensi baru**: verifikasi memakai `fetch` ke `/siteverify`.
+- **Login Google tidak bisa diberi CAPTCHA** (alur keluar ke Google); rate limit
+  tetap menjadi pagar di sana.
+- Pesan gagal memakai kode rinci `CaptchaGagal` → "Pemeriksaan keamanan belum
+  selesai…", **bukan** "email atau password salah". Jangan menyalahkan
+  kredensial pengguna untuk kegagalan sistem.
+- Data yang dikirim ke Cloudflare (IP + info peramban) wajib disebut di
+  `/privacy`.
 
 ### Aturan Prisma 7 (penting)
 

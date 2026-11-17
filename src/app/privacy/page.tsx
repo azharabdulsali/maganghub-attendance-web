@@ -86,6 +86,14 @@ export default function PrivacyPage() {
             beserta kunci tautan otomatis pribadi Anda.
           </li>
           <li>
+            <strong>Pemeriksaan keamanan (Cloudflare Turnstile):</strong> saat
+            Anda mendaftar atau masuk dengan kata sandi, peramban memuat
+            pemeriksaan anti-bot dari Cloudflare. Untuk itu Cloudflare menerima
+            alamat IP dan informasi teknis peramban Anda, dan dapat menaruh
+            cookie keamanan. Pemeriksaan ini tidak berjalan bila Anda masuk
+            lewat Google.
+          </li>
+          <li>
             <strong>Repo git (opsional):</strong> bila Anda sendiri
             menghubungkannya, kami menyimpan penyedia (GitHub/GitLab), nama repo
             (mis. <code>nama/repo</code>), nama branch, dan token akses

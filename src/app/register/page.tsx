@@ -13,6 +13,7 @@ import { FieldError } from "@/components/ui/field-error";
 import { Message } from "@/components/ui/message";
 import { hitungKekuatan } from "@/lib/password-strength";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import {
   Card,
   CardContent,
@@ -35,6 +36,9 @@ export default function RegisterPage() {
   const [konfirmasiTersentuh, setKonfirmasiTersentuh] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Token Turnstile sekali pakai; setiap kegagalan butuh widget baru.
+  const [captchaReset, setCaptchaReset] = useState(0);
   const kekuatan = hitungKekuatan(password);
 
   const tidakCocok = konfirmasiTersentuh && konfirmasi !== password;
@@ -57,13 +61,14 @@ export default function RegisterPage() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, turnstileToken: captchaToken ?? "" }),
       });
 
       const data = (await res.json()) as { error?: string };
 
       if (!res.ok) {
         setError(data.error ?? "Pendaftaran gagal");
+        setCaptchaReset((n) => n + 1);
         return;
       }
 
@@ -185,6 +190,12 @@ export default function RegisterPage() {
                 {error}
               </Message>
             )}
+
+            <TurnstileWidget
+              onToken={setCaptchaToken}
+              resetSignal={captchaReset}
+              className="flex justify-center"
+            />
 
             <Button
               type="submit"

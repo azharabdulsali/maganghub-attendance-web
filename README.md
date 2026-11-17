@@ -19,6 +19,7 @@ desain dan aturan teknis, lihat:
 | [`docs/MONEV-API.md`](./docs/MONEV-API.md) | Catatan integrasi API Monev |
 | [`docs/GIT-COMMITS-PLAN.md`](./docs/GIT-COMMITS-PLAN.md) | Rencana fitur auto laporan dari commit GitHub/GitLab |
 | [`docs/GOOGLE-LOGIN.md`](./docs/GOOGLE-LOGIN.md) | Mengaktifkan login dengan Google (opsional) |
+| [`docs/TURNSTILE.md`](./docs/TURNSTILE.md) | Mengaktifkan CAPTCHA Cloudflare Turnstile (opsional) |
 
 ## Tumpukan teknologi
 
@@ -71,6 +72,7 @@ Yang **opsional**:
 | `CRON_SECRET` | Dispatcher massal `/api/cron/run-all` nonaktif (balas 503) |
 | `GIT_COMMITS_ENABLED` | Jaring darurat fitur bahan draf dari commit git. **Bila kosong = fitur AKTIF** (default), karena fitur ini sudah opt-in per pengguna lewat `/repos` + sakelar di `/automation`. Isi `0` untuk mematikan fitur bagi SEMUA pengguna. Lihat [`docs/GIT-COMMITS-PLAN.md`](docs/GIT-COMMITS-PLAN.md) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Login dengan Google. **Bila salah satu kosong, tombol Google tidak muncul** dan login kata sandi tetap jalan. Panduan: [`docs/GOOGLE-LOGIN.md`](docs/GOOGLE-LOGIN.md) |
+| `TURNSTILE_SECRET_KEY` / `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | CAPTCHA Cloudflare Turnstile pada daftar & login. **Bila salah satu kosong, CAPTCHA tidak aktif sama sekali** (widget tidak tampil, server tidak memeriksa). Panduan: [`docs/TURNSTILE.md`](docs/TURNSTILE.md) |
 
 > **`ENCRYPTION_KEY` jangan pernah diganti** setelah ada kredensial tersimpan —
 > data lama akan tidak bisa didekripsi. Simpan baik-baik.

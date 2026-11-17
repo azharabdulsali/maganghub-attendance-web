@@ -7,7 +7,7 @@
 //   - Email yang cocok dengan ADMIN_EMAIL otomatis jadi ADMIN (§13 baris 8),
 //     termasuk saat pertama kali masuk lewat Google.
 
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -16,11 +16,29 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import { env, googleOAuthConfigured, isAdminEmail } from "@/lib/env";
+import {
+  env,
+  googleOAuthConfigured,
+  isAdminEmail,
+  turnstileConfigured,
+} from "@/lib/env";
 import { effectiveRoleForEmail } from "@/lib/auth-accounts";
 import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import { sesiMasihSah, versiSesiDariKlien, wajibGantiDariKlien, peranSesiEfektif } from "@/lib/session-version";
+
+/**
+ * Kegagalan CAPTCHA di jalur login kata sandi.
+ *
+ * Sengaja BUKAN `null`: null akan diterjemahkan Auth.js menjadi "email atau
+ * password salah", padahal email & sandi pengguna belum tentu salah. Dengan
+ * kode sendiri, halaman login menampilkan pesan yang jujur dan pengguna tahu
+ * yang perlu dilakukan hanyalah memuat ulang lalu mencoba lagi.
+ */
+class CaptchaSigninError extends CredentialsSignin {
+  code = "CaptchaGagal";
+}
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -78,6 +96,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           rateLimitKey("login", limitKey),
         );
         if (!gate.decision.allowed) return null;
+
+        // CAPTCHA diperiksa SETELAH rate limit (murah) dan SEBELUM query DB
+        // serta bcrypt (mahal). Bila Turnstile tidak dikonfigurasi, langkah ini
+        // dilewati sepenuhnya sehingga deployment lama tidak berubah perilaku.
+        if (turnstileConfigured()) {
+          const verdict = await verifyTurnstileToken({
+            token: (raw as { turnstileToken?: unknown }).turnstileToken,
+            secretKey: env.TURNSTILE_SECRET_KEY ?? "",
+            remoteIp: limitKey,
+          });
+          if (!verdict.ok) throw new CaptchaSigninError();
+        }
 
         const user = await prisma.user.findUnique({
           where: { email: email.trim().toLowerCase() },

@@ -43,10 +43,19 @@ export const HSTS_HEADER_VALUE =
  * Kalau nanti beralih ke Vercel Speed Insights, domain tambahannya
  * `vitals.vercel-insights.com` (sama) — cukup pakai konstanta ini.
  *
- * Catatan privasi: ini satu-satunya koneksi keluar yang kita izinkan, dan itu
- * keputusan sadar (lihat README → "Analytics").
+ * Catatan privasi: ini satu-satunya koneksi keluar yang kita izinkan untuk
+ * ANALITIK, dan itu keputusan sadar (lihat README → "Analytics"). Satu-satunya
+ * pengecualian lain adalah CAPTCHA Cloudflare (`TURNSTILE_ORIGIN`).
  */
 export const VERCEL_ANALYTICS_CONNECT_SRC = "https://vitals.vercel-insights.com";
+
+/**
+ * Asal skrip & iframe CAPTCHA Cloudflare Turnstile (OPSIONAL, lihat
+ * `src/lib/turnstile.ts`). Tanpa tiga pengecualian ini widget tidak akan
+ * muncul sama sekali: skripnya di `script-src`, bingkainya di `frame-src`, dan
+ * laporan hasil pemeriksaan di `connect-src`.
+ */
+export const TURNSTILE_ORIGIN = "https://challenges.cloudflare.com";
 
 /**
  * Content-Security-Policy.
@@ -56,10 +65,14 @@ export const VERCEL_ANALYTICS_CONNECT_SRC = "https://vitals.vercel-insights.com"
  *   - `script-src`               → 'unsafe-inline' DIPERLUKAN Next untuk
  *                                  bootstrap; tanpa itu app tidak render.
  *                                  'unsafe-eval' hanya di dev (react-refresh).
+ *                                  Ditambah `TURNSTILE_ORIGIN` agar skrip
+ *                                  CAPTCHA boleh dimuat.
  *   - `style-src 'unsafe-inline'` → Tailwind/style dinamis Next.
  *   - `connect-src`              → 'self' + endpoint Vercel Analytics
- *                                  (`VERCEL_ANALYTICS_CONNECT_SRC`). Satu-satunya
- *                                  koneksi keluar yang diizinkan aplikasi.
+ *                                  (`VERCEL_ANALYTICS_CONNECT_SRC`) + Cloudflare
+ *                                  Turnstile. Hanya ini koneksi keluar yang
+ *                                  diizinkan aplikasi.
+ *   - `frame-src`                → iframe CAPTCHA Cloudflare.
  *   - `frame-ancestors 'none'`   → pengganti modern X-Frame-Options.
  *   - `object-src 'none'`        → larang plugin.
  *   - `base-uri 'self'`          → cegah pembajakan <base>.
@@ -70,8 +83,8 @@ export const VERCEL_ANALYTICS_CONNECT_SRC = "https://vitals.vercel-insights.com"
  */
 export function buildContentSecurityPolicy(isDev: boolean): string {
   const scriptSrc = isDev
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : "script-src 'self' 'unsafe-inline'";
+    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${TURNSTILE_ORIGIN}`
+    : `script-src 'self' 'unsafe-inline' ${TURNSTILE_ORIGIN}`;
 
   return [
     "default-src 'self'",
@@ -79,7 +92,8 @@ export function buildContentSecurityPolicy(isDev: boolean): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    `connect-src 'self' ${VERCEL_ANALYTICS_CONNECT_SRC}`,
+    `connect-src 'self' ${VERCEL_ANALYTICS_CONNECT_SRC} ${TURNSTILE_ORIGIN}`,
+    `frame-src ${TURNSTILE_ORIGIN}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",

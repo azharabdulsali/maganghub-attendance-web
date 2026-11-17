@@ -4,8 +4,10 @@ import { describe, it, expect } from "vitest";
 
 import {
   PESAN_CADANGAN,
+  kodeDetailDari,
   kodeErrorDari,
   pesanUntukKode,
+  pesanUntukLogin,
 } from "./login-messages";
 
 describe("kodeErrorDari", () => {
@@ -44,8 +46,7 @@ describe("kodeErrorDari", () => {
   });
 });
 
-describe("pesanUntukKode", () => {
-  it("memetakan kode yang dikenal ke pesan spesifik", () => {
+describe("pesanUntukKode", () => {  it("memetakan kode yang dikenal ke pesan spesifik", () => {
     expect(pesanUntukKode("CredentialsSignin").judul).toBe(
       "Email atau password salah",
     );
@@ -75,5 +76,41 @@ describe("pesanUntukKode", () => {
       expect(p.judul.length).toBeGreaterThan(0);
       expect(p.detail.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("kodeDetailDari", () => {
+  it("membaca `code=` yang menyertai CredentialsSignin", () => {
+    expect(
+      kodeDetailDari("https://app.test/login?error=CredentialsSignin&code=CaptchaGagal"),
+    ).toBe("CaptchaGagal");
+  });
+
+  it("mengembalikan null bila tidak ada", () => {
+    expect(kodeDetailDari("https://app.test/login?error=CredentialsSignin")).toBeNull();
+  });
+
+  it("tidak tertukar dengan parameter lain yang mengandung 'code'", () => {
+    expect(kodeDetailDari("https://app.test/login?barcode=abc")).toBeNull();
+  });
+});
+
+describe("pesanUntukLogin", () => {
+  it("kode rinci menang atas kode umum (tidak menyalahkan password)", () => {
+    const p = pesanUntukLogin("CredentialsSignin", "CaptchaGagal");
+    expect(p.judul).toBe("Pemeriksaan keamanan belum selesai");
+    expect(p.detail).toContain("bukan salah email atau kata sandi");
+  });
+
+  it("tanpa kode rinci, kembali ke pesan kode umum", () => {
+    expect(pesanUntukLogin("CredentialsSignin", null).judul).toBe(
+      "Email atau password salah",
+    );
+  });
+
+  it("kode rinci tak dikenal diabaikan, bukan jadi cadangan", () => {
+    expect(pesanUntukLogin("MissingCSRF", "Aneh")).toEqual(
+      pesanUntukKode("MissingCSRF"),
+    );
   });
 });
