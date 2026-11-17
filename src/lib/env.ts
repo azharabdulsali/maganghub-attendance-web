@@ -41,6 +41,11 @@ const schema = z.object({
   // bagi operator untuk mematikan seluruh fitur tanpa deploy. Karena opsional,
   // build lama yang belum mengisinya tetap jalan.
   GIT_COMMITS_ENABLED: z.string().optional().or(z.literal("")),
+  // Login dengan Google (OPSIONAL). Bila keduanya kosong, tombol Google tidak
+  // muncul dan provider tidak dipasang; aplikasi tetap jalan dengan kata sandi.
+  // Nilai berasal dari Google Cloud Console (docs/GOOGLE-LOGIN.md).
+  GOOGLE_CLIENT_ID: z.string().optional().or(z.literal("")),
+  GOOGLE_CLIENT_SECRET: z.string().optional().or(z.literal("")),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -55,6 +60,14 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+
+/**
+ * True bila login Google siap dipakai. Kedua nilai wajib ada: client ID saja
+ * tidak cukup untuk menukar kode otorisasi di server.
+ */
+export function googleOAuthConfigured(): boolean {
+  return Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+}
 
 /** True bila email ini adalah admin pertama yang ditentukan pemilik. */
 export function isAdminEmail(email: string): boolean {

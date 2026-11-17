@@ -31,7 +31,7 @@ Tahap 6 dan **sudah aktif**: penyusun draf Gemini + fallback lokal, bahan draf
 dari commit git (GitHub/GitLab), panel admin lengkap (hapus/atur ulang sandi/
 ubah peran/uji login), hari libur, kritik & saran, pengingat "belum absen",
 kalender kehadiran, dan halaman legal/panduan. Baseline verifikasi saat ini:
-`npm run typecheck` ✅ · `npm run lint` ✅ · `npm test` (**1040 tes**) ✅ ·
+`npm run typecheck` ✅ · `npm run lint` ✅ · `npm test` (**1109 tes**) ✅ ·
 `npm run build` ✅. Lihat `SPEC.md` §12 untuk tahapan dan §13 untuk keputusan
 yang mengikat.
 
@@ -133,7 +133,7 @@ yang mengikat.
   ingin menyimpang, tulis alasannya di `SPEC.md`, jangan diam-diam.
 - **Jalankan `npm run lint`, `npm run typecheck`, `npm run build`, dan
   `npm test`** sebelum menyatakan selesai. Empat-empatnya wajib hijau; tes
-  (`vitest`, 1040 tes) adalah jaring pengaman utama proyek ini — lihat §7 untuk
+  (`vitest`, 1109 tes) adalah jaring pengaman utama proyek ini — lihat §7 untuk
   aturan menulis tes yang benar-benar bisa gagal.
 - **Balas dalam Bahasa Indonesia.** Seluruh komunikasi ke pemilik proyek
   memakai Bahasa Indonesia, konsisten sampai akhir — jangan berganti bahasa di
@@ -150,13 +150,35 @@ yang mengikat.
 | UI base   | **Base UI** (`@base-ui/react`), komponen neobrutalism memakai ini |
 | Database  | PostgreSQL (Neon)                                                 |
 | ORM       | Prisma 7 (driver adapter `@prisma/adapter-neon`)                  |
-| Auth      | NextAuth.js v5 (**email/password saja**, tanpa OAuth)             |
+| Auth      | NextAuth.js v5 (**email/password + Google opsional**)              |
 | Enkripsi  | AES-256-GCM (`node:crypto`)                                       |
 | AI        | **Gemini opsional** (`gemini-flash-lite-latest`, key admin bersama) **+ fallback lokal wajib** |
 | Test      | Vitest 3.2.7 (environment `node`)                                 |
 | Deploy    | Vercel (serverless, paket gratis)                                 |
 
 Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
+
+### Aturan login dengan Google (opsional)
+
+Keputusan pemilik 2026-11: login Google **boleh**, provider lain (GitHub, dsb)
+**tidak**. Detail & panduan setup: `docs/GOOGLE-LOGIN.md`, SPEC §5.1a.
+Yang tidak boleh dilanggar:
+
+- **Provider hanya dipasang bila `GOOGLE_CLIENT_ID` DAN `GOOGLE_CLIENT_SECRET`
+  terisi.** Jangan pernah menaruh client secret di kode, jangan pakai nilai
+  contoh. Salah satu kosong = tombol Google tidak muncul (bukan tombol mati).
+  Tidak ada dependensi baru; provider Google sudah ada di `next-auth`.
+- **`User.passwordHash` boleh NULL** (akun Google). Login kata sandi **wajib**
+  menolak hash NULL — `bcrypt.compare` dengan null melempar galat. Aturan murni
+  di `src/lib/auth-accounts.ts` (`hasPassword`), dipakai juga oleh
+  `/api/account/password` dan `/api/account/email`.
+- **Jangan menghapus pemeriksaan `deletedAt` di callback `signIn`.** Tanpa itu
+  akun yang di-soft-delete admin bisa masuk lagi lewat Google.
+- **Pembuatan kata sandi pertama** (akun Google) tidak boleh meminta sandi
+  lama; **ubah email tetap butuh sandi** (pesan "buat sandi dulu", bukan form
+  yang pasti gagal).
+- **`ADMIN_EMAIL` tetap sumber peran admin**, termasuk login Google pertama
+  (ditulis ke DB saat itu juga agar peran dari DB konsisten).
 
 ### Aturan Prisma 7 (penting)
 

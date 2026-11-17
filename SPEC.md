@@ -74,7 +74,7 @@ Pemilik hanya boleh mengaktifkan salah satu per hari.
 | Styling | Tailwind CSS v4 | Cepat, tanpa file CSS besar |
 | Database | PostgreSQL di Neon (serverless) | Serverless-friendly, gratis untuk skala awal |
 | ORM | Prisma | Migrasi terkontrol, tipe aman |
-| Auth | NextAuth.js v5 (email/password) | Sesi tersimpan di DB, bukan cookie rapuh |
+| Auth | NextAuth.js v5 (email/password + **Google opsional**) | Sesi tersimpan di DB, bukan cookie rapuh |
 | Enkripsi | AES-256-GCM (`node:crypto`) | Standar untuk data rahasia at-rest |
 | State client | Zustand | Ringan, tanpa boilerplate Redux |
 | Mesin submit | **Direct REST API (tanpa browser)** | Lihat §6 |
@@ -103,6 +103,40 @@ untuk mengambil commit sebagai bahan draf; lihat §5.4a dan
 - Login email + password, hash `bcryptjs`.
 - Sesi tersimpan di database melalui Prisma adapter.
 - Wajib HTTPS di produksi, cookie sesi tidak boleh lewat HTTP polos.
+
+### 5.1a Login dengan Google (opsional)
+
+**Keputusan pemilik (2026-11):** login dengan akun Google boleh ditambahkan.
+Sebelumnya §13 baris 6 menyebut "email + password (tanpa OAuth)"; kalimat itu
+**dicabut** khusus untuk Google. GitHub OAuth tetap tidak ada dan bukan tujuan.
+
+- **Opt-in lewat environment.** `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`
+  (keduanya wajib). Bila salah satu kosong, provider Google **tidak dipasang**,
+  tombolnya tidak dirender, dan aplikasi tetap berjalan dengan kata sandi.
+  Panduan: `docs/GOOGLE-LOGIN.md`.
+- **Akun baru dibuat otomatis.** Email Google sudah diverifikasi Google, jadi
+  mengisi form pendaftaran tidak diperlukan. Nama diambil dari profil Google.
+- **Email yang sudah terdaftar dihubungkan otomatis** ke akun lama
+  (`allowDangerousEmailAccountLinking`). Pengguna lama bisa masuk lewat Google
+  **atau** kata sandi; riwayat, template, dan kredensialnya tidak berubah.
+- **`User.passwordHash` boleh NULL** karena akun Google tidak punya kata sandi.
+  Login kata sandi menolak akun tanpa hash (bukan membandingkan bcrypt dengan
+  NULL). Aturan murninya di `src/lib/auth-accounts.ts` (`hasPassword`,
+  `effectiveRoleForEmail`), diuji tanpa DB.
+- **Membuat kata sandi pertama** (`POST /api/account/password`) tidak meminta
+  kata sandi lama — tidak ada yang bisa dibuktikan, dan sesi yang sah sudah
+  cukup. Setelah itu akun bisa masuk dua cara.
+- **Ubah email tetap butuh kata sandi.** Akun Google yang belum punya sandi
+  mendapat pesan "Buat kata sandi dulu" dan kartu email diganti keterangan di
+  `/settings`, bukan formulir yang pasti gagal.
+- **Soft delete tetap menang.** Callback `signIn` menolak akun dengan
+  `deletedAt` terisi sebelum sesi dibuat.
+- **`ADMIN_EMAIL` tetap berlaku**: login Google pertama dengan email itu
+  menaikkan peran menjadi ADMIN, ditulis ke DB saat itu juga.
+- **Rate limit login kata sandi tidak relevan** di jalur ini (tidak ada sandi
+  yang bisa ditebak); pembuatan akun dibatasi Google sendiri.
+- **Gambar profil Google tidak dipakai** di UI, jadi tidak ada permintaan ke
+  domain Google lain dan CSP `img-src` tidak berubah.
 
 ### 5.2 Manajemen Kredensial Monev
 - Input email + password Monev.
@@ -792,7 +826,7 @@ Ringkas; nama field dapat menyesuaikan saat implementasi.
 
 | Model | Isi penting |
 | :--- | :--- |
-| `User` | email, nama, role, hash password, waktu dibuat |
+| `User` | email, nama, role, hash password (**boleh NULL untuk akun Google**), waktu dibuat |
 | `Account` / `Session` | tabel bawaan NextAuth |
 | `MaganghubCredential` | userId, email Monev, `ciphertext`, `iv`, `authTag`, status |
 | `ReportTemplate` | userId, `activity`, `learning`, `obstacles`, waktu diubah |
@@ -943,7 +977,7 @@ Karena pemilik memilih jalur Direct REST API, bagian ini dipecah dua.
 | **Penyusun draf LOKAL** (`report-draft.ts`, 0 token) | **DIPERTAHANKAN sebagai fallback wajib.** Merakit 3 kolom dari kata kunci + pustaka frasa. Selalu tersedia, tanpa provider luar. Dipakai bila `GEMINI_API_KEY` kosong ATAU LLM gagal (kuota habis / timeout / jaringan putus / jawaban tidak lolos validasi). |
 | **Penyusun draf LLM** (`report-draft-llm.ts`, Gemini) | **DITAMBAHKAN atas keputusan pemilik.** Gratis, key milik admin dipakai bersama semua pengguna. ⚠️ Kata kunci aktivitas pengguna dikirim ke Google saat aktif; jangan pasang billing agar kuota habis = ditolak, bukan menagih otomatis. |
 | Tabel `GithubRepo`, `AiConfig`, endpoint `/api/github/*` | Ikut terhapus bersama dua di atas |
-| Login GitHub OAuth | Cukup email + password |
+| Login GitHub OAuth | Tetap tidak ada. Yang ditambahkan hanya **Google** (keputusan 2026-11, §5.1a) |
 
 ### Tetap TIDAK diambil (batas etika & ketahanan)
 
@@ -1161,7 +1195,7 @@ Semua sudah diputuskan pemilik. Berikut ringkasannya.
 | 3 | Pemicu jadwal | **cron-job.org** |
 | 4 | Domain | **`maganghub-autoabsen.my.id`** (aktif). Awalnya pakai domain Vercel (`*.vercel.app`); kini domain khusus, jadi URL produksi berbentuk `https://maganghub-autoabsen.my.id` |
 | 5 | Akses pendaftaran | **Terbuka bebas**, siapa pun boleh daftar, **langsung aktif, tanpa verifikasi email** |
-| 6 | Cara login | **Email + password** (tanpa OAuth) |
+| 6 | Cara login | **Email + password**, ditambah **Google (opsional, 2026-11)** — §5.1a. Tombol Google hanya muncul bila `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` diisi. Provider lain (GitHub, dsb.) tetap tidak ada |
 | 7 | Sumber commit GitHub | **DIIZINKAN sejak 2026-06 (mencabut keputusan lama "DIBATALKAN")**. Commit dari satu repo GitHub **atau** GitLab boleh dipakai sebagai bahan draf, opt-in, token read-only terenkripsi. Detail & batas: §5.4a + `docs/GIT-COMMITS-PLAN.md`. Template tetap jadi jalur default |
 | 8 | Admin pertama | **`ADMIN_EMAIL` di env** (opsi 1), lihat di bawah |
 | 9 | Isi laporan | **3 template sama setiap hari**, persis bot Python. Bisa diedit manual sebelum submit bila perlu |

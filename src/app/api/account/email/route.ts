@@ -23,6 +23,7 @@ import bcrypt from "bcryptjs";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasPassword } from "@/lib/auth-accounts";
 import { changeEmailSchema } from "@/lib/validate";
 import { isAdminEmail } from "@/lib/env";
 import { bolehUbahKeEmail, normalisasiEmail } from "@/lib/email-change-policy";
@@ -85,10 +86,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
   }
 
+  // Akun yang dibuat lewat Google belum punya kata sandi, sedangkan endpoint ini
+  // memakai kata sandi sebagai bukti (pengganti verifikasi email). Jangan
+  // membandingkan bcrypt dengan NULL; arahkan pengguna membuat sandi dulu.
+  if (!hasPassword(user)) {
+    return NextResponse.json(
+      {
+        error:
+          "Akun ini belum punya kata sandi. Buat kata sandi dulu di kartu Kata sandi, lalu ubah email di sini.",
+        field: "currentPassword",
+      },
+      { status: 400 },
+    );
+  }
+
   // Kata sandi diperiksa LEBIH DULU, baru peran. Urutan ini disengaja agar
   // pesan kegagalan tidak membocorkan apakah kata sandi benar (jika guard peran
   // jalan duluan, penyerang bisa menyimpulkan sesuatu dari pesan yang berbeda).
-  const cocok = await bcrypt.compare(currentPassword, user.passwordHash);
+  const cocok = await bcrypt.compare(currentPassword, user.passwordHash!);
   if (!cocok) {
     return NextResponse.json(
       { error: "Kata sandi saat ini salah", field: "currentPassword" },

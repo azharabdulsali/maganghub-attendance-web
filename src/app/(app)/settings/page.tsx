@@ -10,7 +10,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasPassword } from "@/lib/auth-accounts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Message } from "@/components/ui/message";
 import ProfileForm from "./profile-form";
 import PasswordForm from "./password-form";
 import RevokeSessionsButton from "./revoke-sessions-button";
@@ -24,12 +26,14 @@ export default async function SettingsPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, email: true },
+    select: { name: true, email: true, passwordHash: true },
   });
 
   if (!user) {
     redirect("/login");
   }
+
+  const punyaSandi = hasPassword(user);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -50,7 +54,14 @@ export default async function SettingsPage() {
             Email ini dipakai untuk masuk. Saat ini:{" "}
             <span className="font-heading">{user.email}</span>
           </p>
-          <EmailForm currentEmail={user.email} />
+          {punyaSandi ? (
+            <EmailForm currentEmail={user.email} />
+          ) : (
+            <Message tone="neutral">
+              Akun ini masuk lewat Google dan belum punya kata sandi. Buat kata
+              sandi dulu di kartu Kata sandi, lalu email bisa diubah di sini.
+            </Message>
+          )}
         </CardContent>
       </Card>
 
@@ -69,11 +80,11 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <p className="mb-4 text-sm text-foreground/70">
-            Ubah kata sandi akun ini. Anda perlu memasukkan kata sandi saat ini
-            untuk mengonfirmasi. Mengubah kata sandi mengeluarkan Anda dari
-            perangkat lain; perangkat ini tetap aktif.
+            {punyaSandi
+              ? "Ubah kata sandi akun ini. Anda perlu memasukkan kata sandi saat ini untuk mengonfirmasi. Mengubah kata sandi mengeluarkan Anda dari perangkat lain; perangkat ini tetap aktif."
+              : "Akun ini masuk lewat Google dan belum punya kata sandi. Buat kata sandi di sini supaya akun juga bisa masuk tanpa Google."}
           </p>
-          <PasswordForm />
+          <PasswordForm hasPassword={punyaSandi} />
         </CardContent>
       </Card>
 

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { FieldError } from "@/components/ui/field-error";
 import { Message } from "@/components/ui/message";
 import { hitungKekuatan } from "@/lib/password-strength";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import {
   Card,
   CardContent,
@@ -201,6 +202,8 @@ export default function RegisterPage() {
               {loading ? "Memproses..." : "Daftar"}
             </Button>
           </form>
+
+          <GoogleSignInButton label="Daftar dengan Google" />
         </CardContent>
 
         <CardFooter className="justify-center">

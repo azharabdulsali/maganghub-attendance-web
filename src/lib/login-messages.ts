@@ -38,6 +38,26 @@ export const PESAN_ERROR: Record<string, PesanLogin> = {
     judul: "Verifikasi gagal",
     detail: "Tautan verifikasi sudah tidak berlaku. Minta tautan baru.",
   },
+  OAuthAccountNotLinked: {
+    judul: "Email sudah terdaftar",
+    detail:
+      "Email ini sudah punya akun dengan kata sandi. Masuk dengan kata sandi dulu, lalu coba lagi dengan Google.",
+  },
+  OAuthSignin: {
+    judul: "Gagal masuk dengan Google",
+    detail:
+      "Google belum bisa dihubungi dari halaman ini. Coba lagi sebentar, atau masuk dengan kata sandi.",
+  },
+  OAuthCallback: {
+    judul: "Gagal masuk dengan Google",
+    detail:
+      "Jawaban dari Google tidak lengkap. Coba lagi sebentar, atau masuk dengan kata sandi.",
+  },
+  OAuthCallbackError: {
+    judul: "Gagal masuk dengan Google",
+    detail:
+      "Proses masuk lewat Google terhenti. Coba lagi sebentar, atau masuk dengan kata sandi.",
+  },
 };
 
 /** Pesan cadangan untuk kode error yang belum dipetakan. */

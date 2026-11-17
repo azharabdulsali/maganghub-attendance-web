@@ -19,12 +19,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { kodeErrorDari, pesanUntukKode } from "@/lib/login-messages";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 export default function LoginForm() {
   const router = useRouter();
   const toast = useToast();
   const params = useSearchParams();
   const justRegistered = params.get("registered") === "1";
+  // Kegagalan jalur Google kembali sebagai `/login?error=...`. Tanpa ini pesan
+  // itu tidak pernah tampil, karena form hanya memproses error dari fetch-nya
+  // sendiri.
+  const kodeAwal = params.get("error");
+  const pesanAwal = kodeAwal ? pesanUntukKode(kodeAwal) : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -153,6 +159,12 @@ export default function LoginForm() {
             </Message>
           )}
 
+          {pesanAwal && !error && (
+            <Message tone="bad" className="mb-4">
+              {pesanAwal.detail}
+            </Message>
+          )}
+
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -201,6 +213,8 @@ export default function LoginForm() {
               {loading ? "Memproses..." : "Masuk"}
             </Button>
           </form>
+
+          <GoogleSignInButton label="Masuk dengan Google" />
         </CardContent>
 
         <CardFooter className="justify-center">

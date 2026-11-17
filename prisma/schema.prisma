@@ -92,7 +92,10 @@ enum AdminActionType {
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
-  passwordHash  String
+  // Boleh NULL: akun yang dibuat lewat Google belum punya kata sandi. Pengguna
+  // dapat membuatnya kemudian di /settings. Login kata sandi menolak akun
+  // tanpa hash (lihat auth.ts), jadi NULL tidak pernah berarti "sandi kosong".
+  passwordHash  String?
   name          String?
   role          Role      @default(USER)
   emailVerified DateTime?

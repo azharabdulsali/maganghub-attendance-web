@@ -337,12 +337,11 @@ describe("changePasswordSchema, ubah kata sandi dalam sesi", () => {
     }
   });
 
-  it("menolak kata sandi saat ini yang kosong", () => {
+  it("menerima kata sandi saat ini kosong (akun Google membuat sandi pertama)", () => {
+    // Aturan "wajib sandi lama" sekarang milik ROUTE, bukan skema: hanya route
+    // yang tahu apakah akun ini sudah punya kata sandi di DB.
     const r = changePasswordSchema.safeParse({ ...valid, currentPassword: "" });
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      expect(r.error.issues[0]?.path).toEqual(["currentPassword"]);
-    }
+    expect(r.success).toBe(true);
   });
 
   it("menolak kata sandi yang terlalu panjang", () => {
