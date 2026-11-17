@@ -18,12 +18,13 @@ desain dan aturan teknis, lihat:
 | [`docs/CRON-BULK.md`](./docs/CRON-BULK.md) | Dispatcher massal (satu cron untuk semua) |
 | [`docs/MONEV-API.md`](./docs/MONEV-API.md) | Catatan integrasi API Monev |
 | [`docs/GIT-COMMITS-PLAN.md`](./docs/GIT-COMMITS-PLAN.md) | Rencana fitur auto laporan dari commit GitHub/GitLab |
+| [`docs/GOOGLE-LOGIN.md`](./docs/GOOGLE-LOGIN.md) | Mengaktifkan login dengan Google (opsional) |
 
 ## Tumpukan teknologi
 
 - **Next.js 16** (App Router) + **React 19**, TypeScript
 - **Prisma 7** + **PostgreSQL (Neon)** — via driver adapter `@prisma/adapter-neon`
-- **Auth.js (NextAuth v5)** — login kredensial, sesi di database
+- **Auth.js (NextAuth v5)** — login kredensial **atau Google (opsional)**, sesi di database
 - **Tailwind CSS 4** + **Base UI** + `shadcn`
 - **Vitest** untuk pengujian
 
@@ -69,6 +70,7 @@ Yang **opsional**:
 | `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Rate limit per-proses (kurang akurat lintas instance). **Gratis** — lihat [`docs/UPSTASH-SETUP.md`](docs/UPSTASH-SETUP.md) |
 | `CRON_SECRET` | Dispatcher massal `/api/cron/run-all` nonaktif (balas 503) |
 | `GIT_COMMITS_ENABLED` | Jaring darurat fitur bahan draf dari commit git. **Bila kosong = fitur AKTIF** (default), karena fitur ini sudah opt-in per pengguna lewat `/repos` + sakelar di `/automation`. Isi `0` untuk mematikan fitur bagi SEMUA pengguna. Lihat [`docs/GIT-COMMITS-PLAN.md`](docs/GIT-COMMITS-PLAN.md) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Login dengan Google. **Bila salah satu kosong, tombol Google tidak muncul** dan login kata sandi tetap jalan. Panduan: [`docs/GOOGLE-LOGIN.md`](docs/GOOGLE-LOGIN.md) |
 
 > **`ENCRYPTION_KEY` jangan pernah diganti** setelah ada kredensial tersimpan —
 > data lama akan tidak bisa didekripsi. Simpan baik-baik.

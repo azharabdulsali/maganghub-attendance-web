@@ -51,15 +51,18 @@ export default function PrivacyPage() {
         "bagaimana data itu dilindungi, dan hak Anda atasnya."
       }
     >
-      <LastUpdated date="6 Oktober 2026" />
+      <LastUpdated date="17 November 2026" />
 
       <Section nomor="1" judul="Data yang kami kumpulkan">
         <p>Kami hanya menyimpan data yang dibutuhkan agar aplikasi berfungsi:</p>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            <strong>Akun aplikasi:</strong> alamat email dan kata sandi. Kata
-            sandi disimpan sebagai hash satu arah, jadi tidak ada yang bisa
-            membacanya kembali, termasuk pengelola.
+            <strong>Akun aplikasi:</strong> alamat email dan, bila Anda memakai
+            kata sandi, kata sandi itu. Kata sandi disimpan sebagai hash satu
+            arah, jadi tidak ada yang bisa membacanya kembali, termasuk
+            pengelola. Bila Anda masuk lewat Google, kami hanya menyimpan
+            alamat email dari Google dan <strong>tidak</strong> menyimpan kata
+            sandi Google Anda.
           </li>
           <li>
             <strong>Kredensial Monev:</strong> email dan kata sandi akun portal

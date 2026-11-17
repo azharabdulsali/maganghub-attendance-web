@@ -21,7 +21,12 @@ import { hitungKekuatan } from "@/lib/password-strength";
 
 const MIN_PASSWORD = 8;
 
-export default function PasswordForm() {
+export default function PasswordForm({
+  hasPassword,
+}: {
+  /** false = akun Google yang belum punya kata sandi (membuat sandi pertama). */
+  hasPassword: boolean;
+}) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -33,10 +38,13 @@ export default function PasswordForm() {
 
   const terlaluPendek = next.length > 0 && next.length < MIN_PASSWORD;
   const tidakCocok = confirm.length > 0 && next !== confirm;
-  const samaDenganLama = next.length > 0 && next === current;
+  const samaDenganLama =
+    hasPassword && next.length > 0 && next === current;
   const kekuatan = hitungKekuatan(next);
   const lengkap =
-    current.length > 0 && next.length >= MIN_PASSWORD && next === confirm;
+    next.length >= MIN_PASSWORD &&
+    next === confirm &&
+    (hasPassword ? current.length > 0 : true);
   async function simpan() {
     setSaving(true);
     setError(null);
@@ -75,8 +83,10 @@ export default function PasswordForm() {
       setConfirm("");
       setSaved(true);
       toast.success(
-        "Kata sandi diubah",
-        "Perangkat lain telah dikeluarkan. Gunakan kata sandi baru saat login berikutnya.",
+        hasPassword ? "Kata sandi diubah" : "Kata sandi dibuat",
+        hasPassword
+          ? "Perangkat lain telah dikeluarkan. Gunakan kata sandi baru saat login berikutnya."
+          : "Sekarang akun ini bisa masuk dengan email dan kata sandi, selain lewat Google.",
       );
     } catch {
       const pesan = "Tidak bisa menghubungi server. Coba lagi.";
@@ -95,20 +105,22 @@ export default function PasswordForm() {
         if (lengkap && !samaDenganLama) void simpan();
       }}
     >
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="current-password">Kata sandi saat ini</Label>
-        <PasswordInput
-          id="current-password"
-          autoComplete="current-password"
-          value={current}
-          placeholder="••••••••"
-          aria-invalid={error !== null && current.length === 0}
-          onChange={(e) => {
-            setCurrent(e.target.value);
-            setSaved(false);
-          }}
-        />
-      </div>
+      {hasPassword && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="current-password">Kata sandi saat ini</Label>
+          <PasswordInput
+            id="current-password"
+            autoComplete="current-password"
+            value={current}
+            placeholder="••••••••"
+            aria-invalid={error !== null && current.length === 0}
+            onChange={(e) => {
+              setCurrent(e.target.value);
+              setSaved(false);
+            }}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="new-password">Kata sandi baru</Label>
@@ -171,7 +183,9 @@ export default function PasswordForm() {
       {error && <Message tone="bad">{error}</Message>}
       {saved && (
         <Message tone="good">
-          Kata sandi berhasil diubah. Semua perangkat lain telah dikeluarkan.
+          {hasPassword
+            ? "Kata sandi berhasil diubah. Semua perangkat lain telah dikeluarkan."
+            : "Kata sandi berhasil dibuat. Akun ini sekarang bisa masuk dengan email dan kata sandi."}
         </Message>
       )}
 
@@ -187,15 +201,31 @@ export default function PasswordForm() {
           type="submit"
           variant="success"
           disabled={saving || !lengkap || samaDenganLama}
-          title={saving ? "Menyimpan…" : "Ubah kata sandi"}
-          aria-label={saving ? "Menyimpan kata sandi" : "Ubah kata sandi"}
+          title={
+            saving
+              ? "Menyimpan…"
+              : hasPassword
+                ? "Ubah kata sandi"
+                : "Buat kata sandi"
+          }
+          aria-label={
+            saving
+              ? "Menyimpan kata sandi"
+              : hasPassword
+                ? "Ubah kata sandi"
+                : "Buat kata sandi"
+          }
         >
           {saving ? (
             <Loader2 className="animate-spin" aria-hidden />
           ) : (
             <KeyRound aria-hidden />
           )}
-          {saving ? "Menyimpan..." : "Ubah kata sandi"}
+          {saving
+            ? "Menyimpan..."
+            : hasPassword
+              ? "Ubah kata sandi"
+              : "Buat kata sandi"}
         </Button>
       </div>
     </form>

@@ -67,6 +67,28 @@ export default function PanduanPage() {
           .
         </p>
 
+        <section className="mb-8 rounded-base border-2 border-border bg-secondary-background p-4 sm:p-5">
+          <h2 className="font-heading text-base">Masuk dengan Google (opsional)</h2>
+          <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+            Selain email dan kata sandi, halaman masuk bisa menampilkan tombol{" "}
+            <strong>Masuk dengan Google</strong>. Tombol itu hanya muncul bila
+            pengelola sudah mengaktifkannya; kalau tidak ada, gunakan email dan
+            kata sandi seperti biasa.
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+            <strong>Sudah punya akun? Tidak perlu daftar ulang.</strong> Selama
+            alamat email Google Anda sama dengan email akun di sini, keduanya
+            otomatis menjadi satu akun. Kredensial Monev, template laporan, dan
+            riwayat pengiriman tetap utuh, dan kata sandi lama tetap bisa
+            dipakai.
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+            Akun yang dibuat lewat Google belum punya kata sandi. Untuk
+            membuatnya, buka menu Pengaturan setelah masuk: kata sandi lama
+            tidak diminta karena memang belum ada.
+          </p>
+        </section>
+
         <ul className="space-y-6">
           {GUIDES.map((g) => (
             <li key={g.slug} className="border-b-2 border-border pb-6 last:border-0">

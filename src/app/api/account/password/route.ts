@@ -19,6 +19,7 @@ import bcrypt from "bcryptjs";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasPassword } from "@/lib/auth-accounts";
 import { changePasswordSchema } from "@/lib/validate";
 import { rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
@@ -81,14 +82,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
   }
 
-  const cocok = await bcrypt.compare(currentPassword, user.passwordHash);
-  if (!cocok) {
-    // Pesan generik + status 400: tidak membocorkan apakah kata sandi lama
-    // "hampir benar". 400 (bukan 401) karena sesi tetap sah, hanya input salah.
-    return NextResponse.json(
-      { error: "Kata sandi saat ini salah", field: "currentPassword" },
-      { status: 400 },
-    );
+  // Akun Google belum punya kata sandi: ini pembuatan sandi PERTAMA, jadi tidak
+  // ada sandi lama yang bisa dibuktikan. Sesi yang sah sudah cukup (sama seperti
+  // saat pertama memasang kredensial Monev).
+  if (hasPassword(user)) {
+    if (!currentPassword) {
+      return NextResponse.json(
+        { error: "Kata sandi saat ini wajib diisi", field: "currentPassword" },
+        { status: 400 },
+      );
+    }
+    const cocok = await bcrypt.compare(currentPassword, user.passwordHash!);
+    if (!cocok) {
+      // Pesan generik + status 400: tidak membocorkan apakah kata sandi lama
+      // "hampir benar". 400 (bukan 401) karena sesi tetap sah, hanya input salah.
+      return NextResponse.json(
+        { error: "Kata sandi saat ini salah", field: "currentPassword" },
+        { status: 400 },
+      );
+    }
   }
 
   const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST);

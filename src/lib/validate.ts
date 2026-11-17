@@ -293,13 +293,16 @@ export type ProfileInput = z.infer<typeof profileSchema>;
  *     memulihkan).
  *   - Kata sandi baru TIDAK boleh sama dengan yang lama (tidak ada gunanya
  *     "mengganti" ke nilai yang sama).
+ *   - `currentPassword` boleh kosong HANYA untuk akun yang belum punya kata
+ *     sandi (dibuat lewat Google). Route yang memutuskan perlu/tidaknya;
+ *     skema tidak bisa tahu isi DB.
  */
 export const changePasswordSchema = z
   .object({
     currentPassword: z
       .string()
-      .min(1, "Kata sandi saat ini wajib diisi")
-      .max(200, "Kata sandi terlalu panjang"),
+      .max(200, "Kata sandi terlalu panjang")
+      .default(""),
     newPassword: z
       .string()
       .min(8, "Kata sandi baru minimal 8 karakter")

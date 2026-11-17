@@ -1,20 +1,23 @@
 // src/lib/auth.ts: konfigurasi NextAuth v5 (SPEC.md §9 poin 2, §13 baris 6).
 //
 // Keputusan yang tercermin di sini:
-//   - Login memakai email + password (tanpa OAuth).
-//   - Password di-hash bcryptjs, cost 12.
+//   - Login memakai email + password DAN (opsional) Google.
+//   - Password di-hash bcryptjs, cost 12. Akun Google boleh tanpa password.
 //   - Pendaftaran terbuka & langsung aktif (tanpa verifikasi email).
-//   - Email yang cocok dengan ADMIN_EMAIL otomatis jadi ADMIN (§13 baris 8).
+//   - Email yang cocok dengan ADMIN_EMAIL otomatis jadi ADMIN (§13 baris 8),
+//     termasuk saat pertama kali masuk lewat Google.
 
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { headers } from "next/headers";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import { env, isAdminEmail } from "@/lib/env";
+import { env, googleOAuthConfigured, isAdminEmail } from "@/lib/env";
+import { effectiveRoleForEmail } from "@/lib/auth-accounts";
 import { clientIpFromHeaders, rateLimitKey } from "@/lib/rate-limit";
 import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 import { sesiMasihSah, versiSesiDariKlien, wajibGantiDariKlien, peranSesiEfektif } from "@/lib/session-version";
@@ -24,6 +27,8 @@ const credentialsSchema = z.object({
   password: z.string().min(8, "Password minimal 8 karakter"),
 });
 
+const googleEnabled = googleOAuthConfigured();
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
@@ -31,6 +36,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   providers: [
+    // Google hanya dipasang bila kedua kredensialnya ada. Tanpa ini, tombol
+    // Google di halaman login tidak tampil dan /api/auth/providers tidak
+    // menyebutkannya, jadi pengguna tidak pernah menekan tombol mati.
+    ...(googleEnabled
+      ? [
+          Google({
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
+            // Email Google sudah diverifikasi Google. Bila emailnya sudah
+            // terdaftar lewat kata sandi, akun itu dihubungkan otomatis
+            // (keputusan pemilik), bukan ditolak "akun belum tertaut".
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -71,6 +91,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // walau kata sandinya benar. Diperlakukan sama seperti tidak ada akun.
         if (user.deletedAt) return null;
 
+        // Akun yang dibuat lewat Google belum punya kata sandi. Menolak di sini
+        // (bukan membandingkan bcrypt dengan NULL) supaya tidak melempar galat.
+        if (!user.passwordHash) return null;
+
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
 
@@ -88,11 +112,47 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    /**
+     * Penjaga jalur Google:
+     *   - akun yang di-soft-delete TIDAK boleh masuk lewat Google;
+     *   - email ADMIN_EMAIL dinaikkan menjadi ADMIN pada login pertama.
+     *
+     * Login kata sandi tidak disentuh di sini (authorize sudah memeriksanya).
+     */
+    async signIn({ user, account }) {
+      if (account?.provider !== "google") return true;
+
+      const email = user.email?.trim().toLowerCase();
+      if (!email) return false;
+
+      const existing = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true, role: true, deletedAt: true },
+      });
+      if (existing?.deletedAt) return false;
+
+      if (existing && isAdminEmail(email) && existing.role !== "ADMIN") {
+        // Ditulis ke DB sekarang juga, supaya permintaan berikutnya (yang
+        // membaca peran dari DB) tidak sempat melihat peran lama.
+        await prisma.user.update({
+          where: { id: existing.id },
+          data: { role: "ADMIN" },
+        });
+        (user as { role?: string }).role = "ADMIN";
+      }
+
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
       // Login pertama: salin identitas + generasi sesi dari DB.
       if (user) {
         token.id = user.id;
-        token.role = (user as { role?: string }).role ?? "USER";
+        // ADMIN_EMAIL menang atas peran tersimpan; peran lain dari DB tetap.
+        token.role = effectiveRoleForEmail(
+          user.email,
+          isAdminEmail,
+          (user as { role?: "USER" | "ADMIN" }).role,
+        );
         // `sessionVersion` diambil di `authorize` (bukan di sini) agar tidak
         // menambah satu query lagi di jalur login.
         const v = (user as { sessionVersion?: unknown }).sessionVersion;
