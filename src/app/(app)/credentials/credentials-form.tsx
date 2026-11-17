@@ -34,6 +34,11 @@ import {
   describeTokenShapeProblem,
 } from "@/lib/token-input";
 import {
+  credentialStatusTone,
+  describeCredentialStatus,
+} from "@/lib/admin";
+import type { CredentialStatus } from "@/generated/prisma/enums";
+import {
   daysUntilRefreshExpiry,
   refreshTokenExpiresAt,
 } from "@/lib/refresh-token-age";
@@ -360,8 +365,7 @@ export default function CredentialsForm({
           <CardHeader>
             <CardTitle>Hubungkan akun Monev</CardTitle>
             <CardDescription>
-              Password tidak bisa ditampilkan kembali, hanya bisa diganti. Tekan
-              uji login untuk memastikan kredensial bisa dipakai.
+              Password tidak bisa dilihat lagi, hanya bisa diganti.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -375,8 +379,15 @@ export default function CredentialsForm({
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
                 <dt className="font-heading sm:w-40">Status</dt>
                 <dd>
-                  <Badge className="px-3 py-1">
-                    {existingStatus ?? "-"}
+                  <Badge
+                    tone={credentialStatusTone(
+                      existingStatus as CredentialStatus | null,
+                    )}
+                    className="px-3 py-1"
+                  >
+                    {describeCredentialStatus(
+                      existingStatus as CredentialStatus | null,
+                    )}
                   </Badge>
                 </dd>
               </div>
@@ -433,15 +444,10 @@ export default function CredentialsForm({
                 terang, jangan menyuruh "coba lagi". */}
             {isUnsolvable && loginState === "error" ? (
               <Message tone="neutral">
-                <strong>Portal memasang Cloudflare Managed Challenge.</strong>{" "}
-                Tantangan ini menuntut browser asli menjalankan JavaScript, jadi
-                langkah <strong>login</strong> otomatis dari server{" "}
-                <strong>tidak bisa</strong> lewat. Ini bukan kesalahan Anda dan
-                tidak bisa &ldquo;dicoba lagi&rdquo;. Kabar baiknya: Anda cukup
-                login <strong>sekali</strong> di browser sendiri, lalu
-                menempelkan <strong>token</strong> di bagian cadangan bawah.
-                Setelah itu sesi bertahan sekitar 30 hari dan absensi otomatis
-                berjalan normal.
+                <strong>Portal memasang proteksi anti-bot.</strong> Login
+                otomatis dari server tidak bisa lewat, dan ini bukan kesalahan
+                Anda. Login sekali di browser sendiri, lalu tempel token di
+                bagian cadangan bawah. Sesi bertahan sekitar 30 hari.
               </Message>
             ) : (
               loginMsg && (
@@ -460,7 +466,7 @@ export default function CredentialsForm({
                 <summary className="cursor-pointer font-heading text-foreground/90">
                   Detail teknis penolakan (untuk laporan)
                 </summary>
-                <ul className="mt-2 space-y-0.5 font-mono">
+                <ul className="mt-2 space-y-0.5 break-all font-mono">
                   {loginPrime.httpCode !== undefined && (
                     <li>http={loginPrime.httpCode}</li>
                   )}
@@ -492,24 +498,19 @@ export default function CredentialsForm({
                 </p>
                 <p>
                   Portal menolak permintaan dari server kami (proteksi
-                  anti-bot), bukan menolak kredensial Anda. Email &amp; password
-                  Anda tetap benar. Pakai <strong>cara tempel token</strong> di
-                  bagian cadangan bawah sebagai gantinya:
+                  anti-bot). Kredensial Anda tetap benar. Pakai cara tempel
+                  token di bagian cadangan bawah:
                 </p>
                 <ol className="list-decimal space-y-1 pl-5">
                   <li>
-                    Buka{" "}
-                    <span className="font-medium">maganghub.kemnaker.go.id</span>{" "}
-                    di browser Anda (Chrome/Edge), lalu login seperti biasa.
+                    Buka portal Monev di browser, lalu login seperti biasa.
                   </li>
                   <li>
-                    Ambil cookie <code>monev_refresh_token</code> lewat DevTools
-                    — rinciannya di bawah.
+                    Ambil cookie <code>monev_refresh_token</code> lewat DevTools.
                   </li>
                   <li>
                     Tempel &amp; simpan di kartu{" "}
-                    <strong>Hubungkan sesi Monev</strong> di bagian cadangan
-                    bawah halaman ini.
+                    <strong>Hubungkan sesi Monev</strong> di bawah.
                   </li>
                 </ol>
                 <Button
@@ -539,10 +540,7 @@ export default function CredentialsForm({
               {hasExisting ? "Ganti kredensial" : "Hubungkan akun Monev"}
             </CardTitle>
             <CardDescription>
-              Isi email &amp; password portal MagangHub/Kemnaker Anda. Password
-              disimpan terenkripsi (AES-256-GCM) dan tidak bisa dibaca kembali.
-              Setelah tersimpan, tekan uji login untuk memastikan kredensial
-              bisa dipakai.
+              Password disimpan terenkripsi dan tidak bisa dibaca kembali.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -624,10 +622,9 @@ export default function CredentialsForm({
           <CardHeader>
             <CardTitle>Hubungkan sesi Monev (cadangan)</CardTitle>
             <CardDescription>
-              Login dulu di portal MagangHub lewat browser, lalu salin cookie{" "}
-              <code>monev_refresh_token</code> dari DevTools dan tempel di sini.
-              Kami uji ke portal dan simpan terenkripsi. Tidak ada laporan yang
-              dikirim. Sesi ini berlaku sekitar 30 hari.
+              Login di portal lewat browser, salin cookie{" "}
+              <code>monev_refresh_token</code> dari DevTools, lalu tempel di
+              sini. Berlaku sekitar 30 hari.
             </CardDescription>
             <Button
               variant="neutral"

@@ -90,10 +90,9 @@ export function ReminderPanel({
       <CardHeader>
         <CardTitle>Pengingat absen harian</CardTitle>
         <CardDescription>
-          Menampilkan popup peringatan di dalam aplikasi kepada pengguna yang{" "}
-          <strong>belum absen</strong> pada hari kerja, mulai jam yang ditentukan
-          di bawah (WIB). Popup hanya muncul selama halaman aplikasi terbuka —
-          tidak dikirim lewat email atau WhatsApp.
+          Popup peringatan di aplikasi untuk pengguna yang <strong>belum absen</strong>{" "}
+          pada hari kerja, mulai jam di bawah (WIB). Tidak dikirim lewat email
+          atau WhatsApp.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -109,7 +108,7 @@ export function ReminderPanel({
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1 sm:max-w-xs">
+          <div className="w-full space-y-1 sm:w-auto sm:max-w-xs">
             <Label htmlFor="reminder-time">Jam pengingat (WIB)</Label>
             <Input
               id="reminder-time"

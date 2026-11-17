@@ -12,11 +12,13 @@
 //   - Hanya menulis fakta yang ada di kode aplikasi ini. Angka yang disebut
 //     (100 karakter, 5000 karakter, 30 hari, 6 jam) bisa ditelusuri ke
 //     report-rules.ts, validate.ts, dan docs/MONEV-API.md.
-//   - Tidak menyebut fitur yang tidak ada (AI, integrasi GitHub, ekstensi
-//     browser).
+//   - Tidak menyebut fitur yang tidak ada (mis. ekstensi browser). Penyusun
+//     draf AI dan bahan draf dari commit git SUDAH ada, tetapi keduanya
+//     opsional; artikel di sini fokus pada alur inti, dan detail opsional itu
+//     dijelaskan di /docs agar tidak menyesatkan pembaca baru.
 //   - Bahasa lugas, tanpa pembuka basa-basi, tanpa em dash dekoratif.
-//   - Menyebut batasan secara jujur, termasuk bahwa laporan tetap ditulis
-//     oleh pengguna, bukan oleh aplikasi.
+//   - Menyebut batasan secara jujur, termasuk bahwa laporan tetap ditinjau
+//     oleh pengguna, bukan dikirim tanpa kendali.
 
 export type GuideBlock =
   | { jenis: "paragraf"; teks: string }

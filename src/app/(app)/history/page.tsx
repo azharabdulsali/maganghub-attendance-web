@@ -118,12 +118,11 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   const lastAt = summary.lastAt ? formatJakartaTimestamp(summary.lastAt) : null;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl">Riwayat Absensi</h1>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="font-heading text-2xl sm:text-3xl">Riwayat Absensi</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Catatan setiap percobaan kirim laporan. Sukses, duplikat, dan gagal
-          semuanya tercatat, ini bukti resmi bila ada sengketa kehadiran.
+          Catatan setiap percobaan kirim laporan
         </p>
       </div>
 
@@ -228,7 +227,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
                         {describeTrigger(log.trigger)}
                         {log.attempt > 1 && ` (ke-${log.attempt})`}
                       </td>
-                      <td className="p-3 text-xs text-foreground/80">
+                      <td className="break-words p-3 text-xs text-foreground/80">
                         {log.message ?? ","}
                       </td>
                     </tr>

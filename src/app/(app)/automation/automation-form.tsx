@@ -242,9 +242,7 @@ export default function AutomationForm({
         <CardHeader>
           <CardTitle>Jadwal harian</CardTitle>
           <CardDescription>
-            Absensi diproses pada jam yang Anda pilih setiap hari. Anda hanya
-            mengatur <strong>jam</strong>, bukan menit: pengiriman massal
-            mencocokkan jam, jadi menit tidak berpengaruh.
+            Absensi diproses setiap hari pada jam yang Anda pilih.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -262,8 +260,8 @@ export default function AutomationForm({
             </div>
             <p id="isEnabled-hint" className="text-xs text-foreground/60">
               {isEnabled
-                ? "Otomasi aktif: penjadwal akan mengirim absensi sesuai jadwal di bawah."
-                : "Otomasi nonaktif: tidak ada pengiriman otomatis, walau penjadwal tetap memanggil tautan."}
+                ? "Otomasi aktif sesuai jadwal di bawah."
+                : "Otomasi nonaktif: tidak ada pengiriman otomatis."}
             </p>
 
             <div className="space-y-2 sm:max-w-xs">
@@ -304,12 +302,8 @@ export default function AutomationForm({
             <div className="flex gap-2 rounded-base border-2 border-border bg-secondary-background p-3 text-xs text-foreground/70">
               <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
               <p>
-                <strong>Yang diatur hanya jam.</strong> Absensi diproses pada
-                jam itu, misalnya pilih <strong>08:00</strong> berarti bisa
-                terkirim antara <strong>08:00–08:59 WIB</strong>, bukan tepat
-                menit ke-00. Selama masih di jam itu, otomasi{" "}
-                <strong>berjalan normal</strong> (cek status di{" "}
-                <strong>dasbor</strong>).
+                Yang diatur hanya jam. Pilih 08:00 berarti terkirim antara
+                08:00–08:59 WIB, bukan tepat menit ke-00.
               </p>
             </div>
 
@@ -381,11 +375,8 @@ export default function AutomationForm({
             <div className="grid gap-1.5">
               <span className="font-heading leading-none">Tautan otomatis</span>
               <span className="text-sm font-base">
-                Sambungkan layanan penjadwal Anda (mis. cron-job.org) ke tautan
-                ini, jadwalkan sekali sehari. <strong>Cara dianjurkan:</strong>{" "}
-                kirim kunci lewat bagian pengaturan khusus, bukan ditempel di
-                tautan. Jangan bagikan kunci ini, siapa pun yang tahu bisa
-                memicu pengiriman.
+                Sambungkan layanan penjadwal (mis. cron-job.org) ke tautan ini,
+                sekali sehari. Jangan bagikan kunci ini.
               </span>
             </div>
             {/* Cara DIANJURKAN: kunci lewat header, URL bersih tanpa rahasia. */}
@@ -428,11 +419,10 @@ export default function AutomationForm({
 
             {/* Cara LAMA: dipertahankan sementara, ditandai deprecated. */}
             <div className="space-y-2 rounded-base border-2 border-dashed border-border p-3">
-              <p className="text-sm font-medium">Cara lama (akan dihapus)</p>
+              <p className="text-sm font-medium">Cara lama (tidak dianjurkan)</p>
               <p className="text-xs text-foreground/60">
-                Menempel kunci di tautan masih berfungsi sampai{" "}
-                <strong>1 Januari 2026</strong>, lalu dihapus. Hindari untuk
-                pemasangan baru.
+                Menempel kunci di tautan masih berfungsi, tetapi tidak dianjurkan
+                untuk pemasangan baru karena kunci ikut tercatat di URL.
               </p>
               <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
                 {webhookUrl}

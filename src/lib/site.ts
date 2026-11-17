@@ -61,8 +61,10 @@ export function absoluteUrl(path = "/"): string {
  * tanpa basa-basi "Tentu saja!"/"Tentu, kami senang membantu", tanpa em dash
  * dekoratif, dan menyebut batasan secara jujur. Semua jawaban hanya mengulang
  * fakta yang sudah ada di aplikasi: AES-256-GCM, tiga template, aturan >100
- * karakter, mode manual atau cron, dan REST API. TIDAK menyebut fitur yang
- * tidak ada (mis. AI, integrasi GitHub).
+ * karakter, mode manual atau cron, dan REST API. Fitur opsional (penyusun draf
+ * AI, bahan draf dari commit git) tidak dijadikan janji di FAQ ini; detailnya
+ * ada di /docs. Jangan menyebut fitur yang memang tidak ada (mis. ekstensi
+ * browser).
  */
 export const FAQ_ITEMS: readonly { q: string; a: string }[] = [
   {

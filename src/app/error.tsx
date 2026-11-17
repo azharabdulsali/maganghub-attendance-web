@@ -75,9 +75,9 @@ export default function Error({
               <RotateCcw aria-hidden="true" />
               Coba lagi
             </Button>
-            <Button variant="neutral" render={<Link href="/dashboard" />}>
+            <Button variant="neutral" render={<Link href="/" />}>
               <ArrowLeft aria-hidden="true" />
-              Ke Dasbor
+              Ke Beranda
             </Button>
           </div>
           {error.digest && (

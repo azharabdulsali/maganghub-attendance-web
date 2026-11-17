@@ -100,6 +100,14 @@ export default function PrivacyPage() {
             read-only yang terenkripsi AES-256-GCM. Fitur ini mati secara
             bawaan dan tidak menyentuh apa pun sebelum Anda mengisinya.
           </li>
+          <li>
+            <strong>Penyusun draf AI (opsional):</strong> bila admin
+            mengaktifkan penyusun AI, kata kunci aktivitas yang Anda tulis di
+            tombol &ldquo;Susun draf&rdquo; dikirim ke Google (Gemini) untuk
+            diolah menjadi draf laporan. Jangan cantumkan data rahasia di kata
+            kunci. Bila AI tidak aktif atau gagal, draf disusun di server kami
+            tanpa layanan luar.
+          </li>
         </ul>
       </Section>
 

@@ -31,8 +31,10 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, FAQ_ITEMS } from "@/lib/site";
 //
 // Struktur section mengikuti referensi UI (hero + statistik, strip teknologi,
 // grid fitur, tiga langkah, panduan, CTA, footer) tetapi SELURUH konten ditulis
-// ulang agar jujur: TIDAK ada AI, TIDAK ada integrasi GitHub, dan tidak ada
-// tautan ke halaman yang belum ada (mis. /docs). Lihat SPEC.md §3 & §13.
+// ulang agar jujur: fitur yang disebut hanya yang benar-benar ada, dan tidak ada
+// tautan ke halaman yang belum ada. Penyusun draf AI & bahan draf dari commit
+// git bersifat opsional, jadi tidak dijadikan janji utama di halaman ini; detail
+// lengkapnya ada di /docs dan /panduan. Lihat SPEC.md §3 & §13.
 
 // Statistik di hero, semua angka ini benar dan dapat ditelusuri ke SPEC.
 const STATISTIK = [
@@ -97,7 +99,7 @@ const LANGKAH = [
 const PANDUAN = [
   {
     icon: KeyRound,
-    judul: "Akun Monev",
+    judul: "Kredensial Monev",
     isi: "Simpan & tes login",
     href: "/credentials",
   },
@@ -109,7 +111,7 @@ const PANDUAN = [
   },
   {
     icon: Clock,
-    judul: "Jadwal Otomatis",
+    judul: "Otomasi",
     isi: "Atur kirim tiap sore",
     href: "/automation",
   },
@@ -122,13 +124,13 @@ const PANDUAN = [
 ];
 
 // Batasan yang diakui terbuka, kebalikan dari klaim berlebihan. Semua ini
-// sesuai SPEC: draf AI bisa gagal (selalu ada fallback lokal), tidak ada
-// integrasi GitHub sebagai fitur aplikasi, dan laporan tetap harus pernah
-// dibuat sendiri setidaknya sekali untuk mengisi template.
+// sesuai SPEC: draf AI bisa gagal (selalu ada fallback lokal), integrasi git
+// hanya membaca commit, dan laporan tetap harus pernah dibuat sendiri
+// setidaknya sekali untuk mengisi template.
 const BATASAN = [
   "Tidak menulis laporan atas nama Anda, isi template tetap dari Anda.",
   "Draf AI opsional; bila gagal, draf disusun lokal tanpa AI.",
-  "Tidak ada integrasi GitHub sebagai fitur aplikasi, sesuai cakupan proyek.",
+  "Integrasi GitHub/GitLab hanya membaca commit sebagai bahan draf; aplikasi tidak pernah menulis ke repo Anda.",
   "Bergantung pada portal Monev; bila portal berubah, pengiriman bisa gagal.",
 ];
 
@@ -189,7 +191,7 @@ export default function Home() {
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
             <CalendarCheck className="size-4" />
           </span>
-          <span className="flex flex-col">
+          <span className="hidden flex-col sm:flex">
             <span className="font-heading text-sm leading-tight">
               MagangHub Autoabsen
             </span>
@@ -256,13 +258,18 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
-            <Button size="lg" render={<Link href="/register" />}>
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              render={<Link href="/register" />}
+            >
               <span>Mulai gratis</span>
               <ArrowRight className="size-4" />
             </Button>
             <Button
               size="lg"
               variant="neutral"
+              className="w-full sm:w-auto"
               render={<Link href="/login" />}
               title="Saya sudah punya akun"
               aria-label="Saya sudah punya akun"
@@ -471,13 +478,18 @@ export default function Home() {
             urusan absensi dan logbook beres otomatis tepat waktu.
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
-            <Button size="lg" render={<Link href="/register" />}>
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              render={<Link href="/register" />}
+            >
               <CalendarCheck className="size-5" />
               Daftar gratis
             </Button>
             <Button
               size="lg"
               variant="neutral"
+              className="w-full sm:w-auto"
               render={<Link href="/login" />}
               title="Masuk ke dashboard"
               aria-label="Masuk ke dashboard"

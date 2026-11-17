@@ -187,18 +187,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   });
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-      <div className="mb-8">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 sm:mb-8">
         <span className="inline-flex items-center rounded-base border-2 border-border bg-main px-3 py-1 text-xs font-heading text-main-foreground">
           ADMIN
         </span>
-        <h1 className="mt-3 font-heading text-3xl">Panel Admin</h1>
+        <h1 className="mt-3 font-heading text-2xl sm:text-3xl">Panel Admin</h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Ringkasan seluruh pengguna, audit lintas pengguna, dan pengiriman
-          massal. Tabel & audit bersifat hanya-baca; satu-satunya aksi yang
-          mengubah data adalah tombol pengiriman massal di bawah (mengirim
-          laporan atas nama user yang jadwalnya jatuh pada jam ini). Daftar
-          hari libur dikelola terpisah di menu{" "}
+          Kelola pengguna, audit, dan pengiriman massal. Hari libur diatur di
+          menu{" "}
           <Link
             href="/admin/holidays"
             className="font-heading underline underline-offset-4"
@@ -214,7 +211,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <ReminderPanel initial={reminderSetting} />
 
       <section aria-label="Ringkasan" className="mb-10">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <Stat label="Total pengguna" value={summary.totalUsers} />
           <Stat label="Admin" value={summary.admins} />
           <Stat label="Kredensial aktif" value={summary.credentialActive} />
@@ -443,7 +440,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <th className="p-3 font-heading">Email</th>
                     <th className="p-3 font-heading">Status</th>
                     <th className="p-3 font-heading">Pemicu</th>
-                    <th className="p-3 font-heading">HTTP</th>
+                    <th className="p-3 font-heading">Kode portal</th>
                     <th className="p-3 font-heading">Keterangan</th>
                   </tr>
                 </thead>
@@ -476,7 +473,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         <td className="p-3 text-xs text-foreground/70">
                           {typeof log.httpCode === "number" ? log.httpCode : ","}
                         </td>
-                        <td className="p-3 text-xs text-foreground/80">
+                        <td className="break-words p-3 text-xs text-foreground/80">
                           {log.message ?? ","}
                         </td>
                       </tr>

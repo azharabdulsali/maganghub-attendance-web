@@ -61,7 +61,8 @@ type MenuItem = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-// Menu yang sama dilihat semua pengguna. Urutannya sengaja mengikuti alur
+// Menu yang sama dilihat semua pengguna, dikelompokkan agar 9 tautan tidak
+// tampil sebagai satu daftar rata yang sulit dipindai. Urutannya mengikuti alur
 // kerja harian: lihat ringkasan → periksa kalender → siapkan template → kirim →
 // periksa riwayat.
 //
@@ -69,32 +70,55 @@ type MenuItem = {
 // /dashboard. Halaman lain memakai rute root (/calendar, /credentials, …)
 // supaya URL lebih pendek & seragam. Jangan kembalikan ke /dashboard/… tanpa
 // memindahkan berkas halamannya juga.
-const MENU_UMUM: MenuItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/calendar", label: "Kalender", icon: CalendarDays },
-  { href: "/credentials", label: "Kredensial Monev", icon: KeyRound },
+type MenuGroup = {
+  label: string;
+  items: MenuItem[];
+};
+
+const MENU_UMUM_GROUPS: MenuGroup[] = [
   {
-    href: "/report-templates",
-    label: "Template Laporan",
-    icon: BookText,
+    label: "Harian",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/calendar", label: "Kalender", icon: CalendarDays },
+      { href: "/history", label: "Riwayat Absensi", icon: CalendarCheck },
+    ],
   },
-  { href: "/history", label: "Riwayat Absensi", icon: CalendarCheck },
-  { href: "/repos", label: "Repo Git", icon: GitBranch },
-  { href: "/automation", label: "Otomasi", icon: Clock },
-  { href: "/feedback", label: "Kritik & Saran", icon: MessageSquarePlus },
-  { href: "/settings", label: "Pengaturan", icon: Settings },
+  {
+    label: "Persiapan",
+    items: [
+      { href: "/credentials", label: "Kredensial Monev", icon: KeyRound },
+      {
+        href: "/report-templates",
+        label: "Template Laporan",
+        icon: BookText,
+      },
+      { href: "/repos", label: "Repo Git", icon: GitBranch },
+      { href: "/automation", label: "Otomasi", icon: Clock },
+    ],
+  },
+  {
+    label: "Lainnya",
+    items: [
+      { href: "/feedback", label: "Kritik & Saran", icon: MessageSquarePlus },
+      { href: "/settings", label: "Pengaturan", icon: Settings },
+    ],
+  },
 ];
 
 // Menu khusus ADMIN. Panel Admin (kelola pengguna + audit) dan Hari Libur
 // (kelola tanggal merah yang dilewati otomasi) adalah fitur nyata; Alat
 // Diagnostik pelengkap. Ruang untuk halaman admin lain terbuka di sini tanpa
 // mengubah komponen lain.
-const MENU_ADMIN: MenuItem[] = [
-  { href: "/admin", label: "Panel Admin", icon: Users },
-  { href: "/admin/holidays", label: "Hari Libur", icon: CalendarOff },
-  { href: "/admin/feedback", label: "Kritik & Saran", icon: MessageSquare },
-  { href: "/dev-tools", label: "Alat Diagnostik", icon: ShieldAlert },
-];
+const MENU_ADMIN_GROUP: MenuGroup = {
+  label: "Admin",
+  items: [
+    { href: "/admin", label: "Panel Admin", icon: Users },
+    { href: "/admin/holidays", label: "Hari Libur", icon: CalendarOff },
+    { href: "/admin/feedback", label: "Kritik & Saran", icon: MessageSquare },
+    { href: "/dev-tools", label: "Alat Diagnostik", icon: ShieldAlert },
+  ],
+};
 
 function SidebarContent({
   user,
@@ -104,11 +128,17 @@ function SidebarContent({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const items = user.isAdmin ? [...MENU_UMUM, ...MENU_ADMIN] : MENU_UMUM;
-  // Hanya SATU menu yang menyala, yaitu yang href-nya paling spesifik cocok
-  // dengan rute saat ini (lihat activeHref). Tanpa ini "Panel Admin" ikut
-  // menyala saat kita berada di "/admin/holidays".
-  const current = activeHref(pathname, items);
+  const groups = user.isAdmin
+    ? [...MENU_UMUM_GROUPS, MENU_ADMIN_GROUP]
+    : MENU_UMUM_GROUPS;
+  // Daftar rata hanya untuk menentukan menu aktif. Hanya SATU menu yang menyala,
+  // yaitu yang href-nya paling spesifik cocok dengan rute saat ini (lihat
+  // activeHref). Tanpa ini "Panel Admin" ikut menyala saat kita berada di
+  // "/admin/holidays".
+  const current = activeHref(
+    pathname,
+    groups.flatMap((group) => group.items),
+  );
 
   return (
     // `min-h-0 flex-1`: sidebar setinggi layar dan TIDAK boleh ikut memanjang
@@ -135,30 +165,37 @@ function SidebarContent({
           terlihat. `px-1 -mx-1` menyisakan ruang untuk bayangan item aktif
           agar tidak terpotong tepi area gulir. */}
       <nav
-        className="-mx-1 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain px-1"
+        className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1"
         aria-label="Navigasi utama"
       >
-        {items.map((item) => {
-          const active = item.href === current;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-2.5 rounded-base border-2 px-3 py-2 text-sm font-base transition-all",
-                active
-                  ? "border-border bg-main text-main-foreground shadow-shadow"
-                  : "border-transparent text-foreground/80 hover:border-border hover:bg-secondary-background",
-              )}
-            >
-              <Icon className="size-4 shrink-0" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+        {groups.map((group) => (
+          <div key={group.label} className="flex flex-col gap-1.5">
+            <p className="px-3 text-[11px] font-heading uppercase tracking-wide text-foreground/50">
+              {group.label}
+            </p>
+            {group.items.map((item) => {
+              const active = item.href === current;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-base border-2 px-3 py-2.5 text-sm font-base transition-all",
+                    active
+                      ? "border-border bg-main text-main-foreground shadow-shadow"
+                      : "border-transparent text-foreground/80 hover:border-border hover:bg-secondary-background",
+                  )}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       <div className="shrink-0 rounded-base border-2 border-border bg-secondary-background p-3">

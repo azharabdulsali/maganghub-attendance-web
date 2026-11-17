@@ -33,7 +33,7 @@ radius kecil (`--radius-base: 5px`), dan satu warna aksen biru terang.
 | Warna inti | netral (putih/hitam/abu) + biru `hsl(217,100%,66%)` (`--main`) | Identitas aplikasi sudah ditentukan token `--main`; netral menjaga tabel absensi tetap terbaca. |
 | Warna status | `--success` hijau `#059669` | Satu-satunya warna semantik; dipakai untuk status "terkirim", bukan dekorasi. |
 | Aksen | biru `--main` saja | Satu aksen yang dipakai hemat di tombol utama dan blok CTA. |
-| Tipografi | Inter (satu keluarga, via `--font-sans`) | Angka absensi harus jelas di ukuran kecil; satu keluarga mengurangi noise. |
+| Tipografi | Inter (satu keluarga, via `--font-sans`) | Angka absensi harus jelas d  i ukuran kecil; satu keluarga mengurangi noise. |
 | Radius | `--radius-base` 5px, konsisten | Radius kecil seragam menandai gaya border-tebal; bukan pill serba bulat. |
 | Elevasi | shadow keras hanya pada elemen yang bisa ditekan (tombol, kartu tautan) | Menandai "ini bisa diklik", bukan membuat semua elemen melayang. |
 | Latar | `--secondary-background` putih dengan latar halaman biru muda `hsl(214,95%,93%)` | Memisahkan kanvas dari kartu tanpa perlu gradien. |
@@ -228,6 +228,109 @@ Diterima sebagai pengecualian (bukan cacat): `icon-sm` 36px di atas; tidak ada
 `role="button"` pada elemen non-fokusabel (tidak ada `<div onClick>` — semua
 interaksi lewat `<button>`/`<a>` asli); tabel lebar sudah dibungkus
 `role="region"` + `tabIndex={0}`.
+
+## Kepadatan teks & hierarki (2026-11)
+
+Keluhan pemilik: halaman terasa penuh teks yang harus dibaca sebelum bisa
+bekerja. Perbaikan yang dipegang sekarang:
+
+- **Satu kalimat pengantar per halaman.** Subjudul halaman maksimal satu baris
+  pendek (mis. "Ringkasan absensi Anda"). Penjelasan cara kerja pindah ke
+  `InfoHint` (ikon info + tooltip) atau `Disclosure` (bagian yang bisa
+  dilipat), bukan paragraf di badan halaman.
+- **Aksi utama menonjol, bukan setengah kolom.** Kartu "Kirim Absen Hari Ini"
+  di dashboard memakai lebar penuh + `border-main`; kartu ringkasan lain
+  memakai border biasa. Hierarki ditentukan oleh ukuran & posisi, bukan hanya
+  warna.
+- **Tidak ada informasi ganda.** Kartu "Status Hari Ini" kini hanya menjawab
+  "hari ini sudah kirim belum"; rincian syarat (kredensial, token, template)
+  pindah ke kartu "Kesiapan akun" yang punya progres + tautan perbaikan per
+  poin. Satu fakta, satu tempat.
+- **Navigasi dikelompokkan.** Sidebar memakai label grup (`Harian`,
+  `Persiapan`, `Lainnya`, `Admin`) supaya 9–13 tautan bisa dipindai, bukan
+  daftar rata. `activeHref` tetap menerima daftar rata, jadi aturan menu aktif
+  tidak berubah.
+- **Halaman Pengaturan dibagi dua bagian** (`Akun`, `Keamanan`) dengan judul
+  kecil, agar empat kartu tidak tampak sederajat.
+
+Batas yang tetap berlaku: pesan yang tampil ke pengguna tetap Bahasa Indonesia
+sederhana tanpa jargon (AGENTS.md §3), dan penjelasan yang menyangkut keamanan
+atau privasi **tidak boleh hilang** — hanya dipindah ke `InfoHint`/`Disclosure`
+yang tetap bisa dibuka.
+
+## Konsistensi label & kejujuran (2026-11)
+
+Crosscheck menyeluruh menemukan beberapa ketidakcocokan yang sudah diperbaiki:
+
+- **Kode status tidak lagi tampil mentah.** Hasil kirim di dashboard memakai
+  label Indonesia (`Berhasil dikirim`, `Sudah pernah dikirim`, `Mode latihan`,
+  …) dengan nada hijau/merah/netral, bukan `SUCCESS`/`DRY_RUN`. Status
+  kredensial di halaman Kredensial memakai `describeCredentialStatus` yang sama
+  dengan panel admin, bukan enum `ACTIVE`/`INVALID`.
+- **Nama menu seragam.** Dokumentasi, landing, dan panduan memakai nama yang
+  sama dengan sidebar: `Kredensial Monev`, `Otomasi`, `Kirim Absen Hari Ini`.
+  Sebelumnya ada `Akun Monev`, `Jadwal Otomatis`, `Kirim Sekarang` yang membuat
+  pengguna mencari menu yang tidak ada.
+- **Tanggal libur tidak bisa memilih akhir pekan.** `<DatePicker unrestricted>`
+  di `/admin/holidays` tetap menonaktifkan Sabtu/Minggu karena server menolak
+  mendaftarkannya; sebelumnya pengguna bisa memilih lalu gagal saat menyimpan.
+- **Dokumentasi publik jujur.** Klaim lama "tidak ada AI / integrasi GitHub"
+  dihapus dari `/docs`, landing, dan FAQ; sekarang disebut apa adanya beserta
+  batasnya (AI opsional + fallback lokal, git hanya baca). Kebijakan privasi
+  menambahkan pengungkapan pengiriman kata kunci ke penyusun AI.
+- **Ukuran & jarak halaman seragam.** Semua halaman terlindungi memakai
+  `max-w-6xl px-4 py-8 sm:px-6 sm:py-10`, judul `text-2xl sm:text-3xl`, dan
+  header `mb-6 sm:mb-8`, sehingga perpindahan antarhalaman tidak terasa
+  "melompat".
+
+## Mobile (2026-11)
+
+Crosscheck khusus layar kecil menemukan dan memperbaiki:
+
+- **Header publik tidak lagi meluap.** Nama brand di header landing, `/docs`,
+  `/panduan`, panduan artikel, dan halaman legal disembunyikan di bawah `sm`
+  (logo tetap tampil). Sebelumnya brand + 2–3 tombol melebihi lebar 320–375px.
+- **Input tidak memicu auto-zoom iOS.** `Input`, `Textarea`, dan `NativeSelect`
+  memakai `text-base` (16px) di mobile dan `sm:text-sm` di desktop. Font < 16px
+  membuat Safari iOS memperbesar halaman saat kolom difokus.
+- **Grafik tren tidak meluap.** Titik harian dikelompokkan menjadi maksimal 45
+  batang (`bucketize` di `trend-chart.tsx`). Sebelumnya rentang 90 hari/1 tahun
+  menghasilkan ratusan batang dengan celah tetap yang melebihi lebar layar.
+- **Aksi utama selebar layar di mobile.** Tombol kirim absen, tombol banner
+  dashboard, dan CTA landing memakai `w-full sm:w-auto` agar mudah dijangkau
+  ibu jari.
+- **Target sentuh lebih besar.** Menu sidebar `py-2.5`, tautan paginasi
+  `min-h-10`, tombol Tutup/Kosongkan di date picker diberi padding, chip
+  dokumentasi `py-2.5`.
+- **Teks panjang tidak merusak tata letak.** Email, pesan audit, path/header
+  diagnostik, dan isi template memakai `break-all`/`break-words`; email di
+  profil & pengaturan juga.
+- **Safe area.** Toast memakai `pb-safe` agar tidak tertutup home indicator;
+  header, laci, jam, dan footer sudah memakainya.
+- **Kalender lebih lega.** Padding kartu kalender dikurangi di mobile
+  (`--card-spacing` 12px) supaya 7 kolom tanggal tidak terjepit.
+- **Pemilih tanggal khusus** memakai `w-full sm:w-60` agar tidak melebihi lebar
+  panel pada layar 320px.
+
+## Visualisasi status (2026-11)
+
+Bar chart diganti **status strip** (`status-strip.tsx`) karena datanya biner:
+
+- **Masalah bar chart:** tinggi batang mengodekan jumlah kiriman, padahal
+  jumlahnya hampir selalu 0 atau 1 per hari. Semua batang jadi sama tinggi,
+  hari kosong tampak seperti grafik rusak, dan akhir pekan tidak bisa dibedakan
+  dari hari yang terlewat.
+- **Status strip:** satu kotak per periode, diwarnai menurut keadaan —
+  hijau (berhasil), merah (gagal), kuning (sudah ada/duplikat), abu-abu
+  (belum ada). Kotak kosong di akhir pekan diberi garis putus-putus. Hari ini
+  diberi cincin aksen.
+- **Granularitas adaptif:** ≤31 hari = per hari, ≤120 hari = per minggu,
+  sisanya = per bulan. Jadi 1 tahun tetap ringkas (12 kotak), bukan 365 batang.
+- **Aksesibilitas:** kontainer `role="img"` dengan ringkasan
+  (`aria-label`), sel `aria-hidden` + `title` untuk tooltip. Rincian per hari
+  tetap ada di `/history`.
+- **Data:** `TrendPoint` kini juga membawa `duplicate`, sehingga status
+  "sudah ada" tidak lagi tercampur dengan "gagal".
 
 ## Status: perlu keputusan Anda
 

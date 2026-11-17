@@ -11,7 +11,12 @@ import type { Stat } from "./stats-cards";
 // sumber batas hari yang sama dengan /calendar, jadi angkanya tidak pernah
 // berbeda karena zona jam server.
 
-export type TrendPoint = { date: string; success: number; failed: number };
+export type TrendPoint = {
+  date: string;
+  success: number;
+  failed: number;
+  duplicate: number;
+};
 
 export type DashboardStats = {
   stats: Stat[];
@@ -89,7 +94,7 @@ export async function getDashboardStats(
   // yang sama dengan /calendar, jadi hari ini tidak pernah "hilang".
   const perDay = new Map<string, TrendPoint>();
   for (const day of lastJakartaDays(chartDays, now)) {
-    perDay.set(day, { date: day, success: 0, failed: 0 });
+    perDay.set(day, { date: day, success: 0, failed: 0, duplicate: 0 });
   }
   for (const log of recentLogs) {
     const key = jakartaISODate(log.createdAt);
@@ -98,6 +103,7 @@ export async function getDashboardStats(
     if (!point) continue;
     if (log.status === "SUCCESS") point.success += 1;
     else if (log.status === "FAILED") point.failed += 1;
+    else if (log.status === "DUPLICATE") point.duplicate += 1;
   }
 
   const trend = [...perDay.values()];

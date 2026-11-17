@@ -22,9 +22,10 @@
 // sah untuk hari ini (lihat report-policy.ts).
 //
 // PENGECUALIAN: halaman yang SEDANG mengelola daftar libur (/admin/holidays)
-// justru perlu memilih tanggal lampau/Sabtu/Minggu, jadi di sana dioper
-// `unrestricted` — semua pembatas dilepas. Halaman lain tetap memakai default
-// (terbatas) supaya perilakunya tidak berubah.
+// justru perlu memilih tanggal lampau, jadi di sana dioper `unrestricted` —
+// pembatas tanggal lampau/daftar libur/batas bulan dilepas. Sabtu/Minggu TETAP
+// nonaktif karena server menolak mendaftarkannya. Halaman lain tetap memakai
+// default (terbatas) supaya perilakunya tidak berubah.
 
 import { useMemo, useState } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -83,11 +84,11 @@ export interface DatePickerProps {
    */
   holidays?: string[];
   /**
-   * Bila `true`, semua pembatas tanggal dilepas: tanggal LAMPAU, Sabtu/Minggu,
-   * dan libur semuanya bisa dipilih, dan pengguna bisa berpindah ke bulan mana
-   * pun (termasuk ke belakang). Dipakai pada halaman yang justru DAFTAR
-   * tanggalnya sedang dikelola (mis. `/admin/holidays`), sehingga menonaktifkan
-   * hari libur di sana akan kontraproduktif. Default `false`.
+   * Bila `true`, pembatas tanggal LAMPAU, daftar libur, dan batas bulan
+   * dilepas — dipakai halaman yang SEDANG mengelola daftar libur. Sabtu/Minggu
+   * TETAP dinonaktifkan karena server menolak mendaftarkan akhir pekan
+   * (`validateHolidayInput`): membiarkannya bisa dipilih hanya menghasilkan
+   * kegagalan simpan yang membingungkan. Default `false`.
    */
   unrestricted?: boolean;
 }
@@ -109,18 +110,22 @@ export function DatePicker({
   // tanggal libur (Sabtu/Minggu + libur dari admin) tidak bisa diklik. Ini
   // pengganti langsung dari pengecekan `libur`/`lampau` versi lama.
   //
-  // Bila `unrestricted` (halaman kelola libur), tak satu pun dipasang: di sana
-  // justru Sabtu/Minggu & tanggal lampau yang mau didaftarkan sebagai libur.
+  // Bila `unrestricted` (halaman kelola libur), tanggal lampau & daftar libur
+  // dilepas — di sana justru tanggal itulah yang mau didaftarkan. Sabtu/Minggu
+  // TETAP nonaktif karena server menolaknya; membiarkannya dipilih hanya
+  // menghasilkan kegagalan simpan.
   //
   // `isHoliday` menuntut Set (ReadonlySet) untuk lookup O(1), jadi array
   // serializable dari server dibungkus sekali di sini.
   const disabledMatchers = useMemo<Matcher[]>(() => {
-    if (unrestricted) return [];
+    const akhirPekan = (date: Date) =>
+      date.getDay() === 0 || date.getDay() === 6;
+    if (unrestricted) return [akhirPekan];
     const batas = today();
     const libur = new Set(holidays ?? []);
     return [
       { before: batas },
-      (date) => date.getDay() === 0 || date.getDay() === 6,
+      akhirPekan,
       (date) => isHoliday(toIso(date), libur),
     ];
   }, [holidays, unrestricted]);
@@ -169,7 +174,7 @@ export function DatePicker({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="cursor-pointer text-xs text-foreground/60 underline underline-offset-4 hover:text-foreground"
+              className="cursor-pointer px-1 py-1.5 text-xs text-foreground/60 underline underline-offset-4 hover:text-foreground"
             >
               Tutup
             </button>
@@ -179,7 +184,7 @@ export function DatePicker({
                 onChange(null);
                 setOpen(false);
               }}
-              className="cursor-pointer text-xs text-foreground/60 underline underline-offset-4 hover:text-foreground"
+              className="cursor-pointer px-1 py-1.5 text-xs text-foreground/60 underline underline-offset-4 hover:text-foreground"
             >
               Kosongkan
             </button>

@@ -11,7 +11,6 @@ import {
   LogIn,
   Send,
   ShieldCheck,
-  Trash2,
   TriangleAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,9 +18,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 // Dokumentasi PUBLIK di "/docs", struktur meniru referensi UI (sidebar daftar
 // materi + panel konten + footer), tetapi seluruh isi disesuaikan dengan fitur
-// yang BENAR-BENAR ada di proyek ini (SPEC.md §1 & §3). Karena itu TIDAK ada
-// bagian "Model AI (BYOK)", "Repository GitHub", atau "Generate AI", fitur
-// tersebut tidak ada di aplikasi ini. Tautan mengarah ke route yang nyata.
+// yang BENAR-BENAR ada di proyek ini (SPEC.md §1 & §3). Penyusun draf AI
+// (Gemini + fallback lokal) dan bahan draf dari commit GitHub/GitLab SUDAH ada,
+// jadi keduanya disebut apa adanya — termasuk batasnya (AI opsional, git hanya
+// baca). Tautan mengarah ke route yang nyata.
 
 type TopikId =
   | "quickstart"
@@ -66,7 +66,7 @@ const TOPIK: Topik[] = [
   {
     id: "jadwal",
     nomor: "04",
-    judul: "Jadwal Otomatis",
+    judul: "Otomasi",
     ringkas: "Kirim manual 1-klik atau otomatis tiap sore.",
     icon: Clock,
   },
@@ -80,9 +80,9 @@ const TOPIK: Topik[] = [
   {
     id: "riwayat",
     nomor: "06",
-    judul: "Riwayat & Hapus Draft",
-    ringkas: "Pantau hasil kirim dan bersihkan draf lama.",
-    icon: Trash2,
+    judul: "Riwayat Pengiriman",
+    ringkas: "Pantau hasil kirim dan telusuri penyebab gagal.",
+    icon: CalendarCheck,
   },
   {
     id: "keamanan",
@@ -113,7 +113,7 @@ export default function DocsContent() {
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
             <CalendarCheck className="size-4" />
           </span>
-          <span className="flex flex-col">
+          <span className="hidden flex-col sm:flex">
             <span className="font-heading text-sm leading-tight">
               MagangHub Autoabsen
             </span>
@@ -204,7 +204,7 @@ export default function DocsContent() {
                     type="button"
                     onClick={() => setAktif(t.id)}
                     aria-current={dipilih ? "true" : undefined}
-                    className={`flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-2 px-3 py-2 text-xs transition-colors ${
+                    className={`flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-2 px-3 py-2.5 text-xs transition-colors ${
                       dipilih
                         ? "border-border bg-main font-heading text-main-foreground"
                         : "border-border text-foreground/70 hover:bg-background"
@@ -359,8 +359,10 @@ function TopikQuickstart() {
           Aplikasi ini mengotomatiskan penyerahan kehadiran dan laporan magang
           tiga bagian (Uraian Aktivitas, Pembelajaran, Kendala) ke portal Monev
           MagangHub Kemnaker (<code>monev.maganghub.kemnaker.go.id</code>) lewat
-          Direct REST API. Isi laporan Anda berasal dari template yang Anda
-          tulis sendiri, bukan dari AI dan bukan dari commit GitHub.
+          Direct REST API. Isi laporan berasal dari template yang Anda tulis
+          sendiri. Tombol <em>Susun draf</em> boleh memakai AI (opsional) atau
+          commit git sebagai bahan, tetapi hasilnya selalu bisa Anda sunting
+          sebelum disimpan.
         </p>
       </div>
 
@@ -374,9 +376,9 @@ function TopikQuickstart() {
           <Langkah nomor="2" judul="Simpan kredensial Monev">
             Buka{" "}
             <TautanPanduan href="/credentials">
-              Akun Monev
+              Kredensial Monev
             </TautanPanduan>{" "}, masukkan email &amp; password Kemnaker, lalu tekan{" "}
-            <em>Uji Login Monev</em>.
+            <em>Uji login</em>.
           </Langkah>
           <Langkah nomor="3" judul="Isi tiga template">
             Buka{" "}
@@ -389,10 +391,10 @@ function TopikQuickstart() {
             Di dashboard, periksa kembali isi laporan hari ini sebelum dikirim.
           </Langkah>
           <Langkah nomor="5" judul="Submit kehadiran">
-            Klik <em>Kirim Sekarang</em> untuk mode manual, atau aktifkan jadwal
-            otomatis di{" "}
+            Klik <em>Kirim Absen Hari Ini</em> untuk mode manual, atau aktifkan
+            jadwal otomatis di{" "}
             <TautanPanduan href="/automation">
-              Jadwal Otomatis
+              Otomasi
             </TautanPanduan>
             .
           </Langkah>
@@ -401,9 +403,9 @@ function TopikQuickstart() {
 
       <Catatan judul="Penting">
         <p>
-          Laporan tetap harus pernah Anda tulis sendiri, aplikasi ini tidak
-          mengarang isi laporan. Tiga template itu dipakai ulang setiap hari
-          agar Anda tidak perlu mengetik dari nol.
+          Draf boleh disusun otomatis, tetapi Anda tetap yang meninjau dan
+          menyimpan. Aplikasi tidak pernah mengirim laporan yang tidak memenuhi
+          syarat portal (minimal 100 karakter per kolom).
         </p>
       </Catatan>
     </>
@@ -416,7 +418,7 @@ function TopikKredensial() {
       <div className="space-y-2 text-xs text-foreground/80">
         <p>
           Buka halaman{" "}
-          <TautanPanduan href="/credentials">Akun Monev</TautanPanduan>{" "}
+          <TautanPanduan href="/credentials">Kredensial Monev</TautanPanduan>{" "}
           untuk menyimpan email dan password akun Kemnaker Anda.
         </p>
       </div>
@@ -427,7 +429,7 @@ function TopikKredensial() {
           <Langkah nomor="1" judul="Masukkan email & password">
             Gunakan kredensial yang sama seperti saat login ke portal Monev.
           </Langkah>
-          <Langkah nomor="2" judul="Uji Login Monev">
+          <Langkah nomor="2" judul="Uji login">
             Tombol ini mencoba masuk ke portal untuk memastikan kredensial benar
             sebelum dipakai mengirim laporan.
           </Langkah>
@@ -505,6 +507,15 @@ function TopikTemplate() {
           aplikasi sebelum dikirim.
         </p>
       </Catatan>
+
+      <Catatan judul="Susun draf otomatis (opsional)">
+        <p>
+          Tombol <em>Susun draf</em> mengisi ketiga kolom dari kata kunci
+          aktivitas. Bila admin mengaktifkan AI, kata kunci dikirim ke penyusun
+          luar; bila AI gagal, draf tetap disusun lokal. Hasilnya selalu draf
+          yang bisa Anda sunting sebelum disimpan.
+        </p>
+      </Catatan>
     </>
   );
 }
@@ -517,7 +528,7 @@ function TopikJadwal() {
           Ada dua cara mengirim laporan: manual 1-klik, atau otomatis lewat
           jadwal. Atur di{" "}
           <TautanPanduan href="/automation">
-            Jadwal Otomatis
+            Otomasi
           </TautanPanduan>
           .
         </p>
@@ -540,7 +551,7 @@ function TopikJadwal() {
       <Catatan judul="Kendali penuh">
         <p>
           Pengiriman otomatis bisa Anda matikan kapan saja. Bila tidak ingin
-          berjalan lagi, cukup nonaktifkan dari halaman Jadwal Otomatis.
+          berjalan lagi, cukup nonaktifkan dari halaman Otomasi.
         </p>
       </Catatan>
     </>
@@ -619,9 +630,9 @@ function TopikRiwayat() {
           <Langkah nomor="2" judul="Telusuri penyebab gagal">
             Pesan kesalahan dari portal ditampilkan agar mudah diperbaiki.
           </Langkah>
-          <Langkah nomor="3" judul="Bersihkan draf">
-            Buang draf atau catatan lama yang tidak lagi dipakai supaya riwayat
-            tetap rapi.
+          <Langkah nomor="3" judul="Saring riwayat">
+            Gunakan filter status dan rentang waktu untuk menemukan percobaan
+            tertentu. Catatan riwayat bersifat tetap dan tidak bisa dihapus.
           </Langkah>
         </ol>
       </div>
@@ -708,14 +719,16 @@ function TopikBatasan() {
           <li className="flex gap-2">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
             <span>
-              Draf AI opsional; bila gagal, draf disusun lokal tanpa AI.
+              Draf AI opsional; bila AI gagal, draf tetap disusun lokal tanpa
+              AI.
             </span>
           </li>
           <li className="flex gap-2">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
             <span>
-              Tidak ada integrasi GitHub sebagai fitur aplikasi, sesuai cakupan
-              proyek.
+              Integrasi GitHub/GitLab hanya untuk <strong>membaca</strong> commit
+              sebagai bahan draf (opsional, harus dinyalakan sendiri). Aplikasi
+              tidak pernah menulis, commit, atau push ke repo Anda.
             </span>
           </li>
           <li className="flex gap-2">
