@@ -1,7 +1,7 @@
 // src/lib/dispatch-log.test.ts: uji pencatatan ringkasan dispatch.
 //
 // Dua hal yang dijaga:
-//   1. Data yang dicatat HANYA angka — `userId` tidak boleh ikut ke log sistem.
+//   1. Data yang dicatat HANYA angka, `userId` tidak boleh ikut ke log sistem.
 //   2. Pencatatan TIDAK PERNAH menjatuhkan dispatch, apa pun yang terjadi.
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -112,7 +112,7 @@ describe("recordDispatchLog", () => {
     expect(createMock).not.toHaveBeenCalled();
   });
 
-  it("tidak melempar saat DB gagal — dispatch tetap selamat", async () => {
+  it("tidak melempar saat DB gagal, dispatch tetap selamat", async () => {
     createMock.mockRejectedValue(new Error("db down"));
 
     await expect(

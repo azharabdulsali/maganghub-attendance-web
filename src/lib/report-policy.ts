@@ -39,7 +39,7 @@ export type PlainDate = string;
  * `holidays-repo.ts`; pemanggil murni (test, komponen klien) boleh memakai
  * `LIBUR_NASIONAL` statis sebagai kemiripan.
  *
- * `undefined` (parameter tak diberikan) berarti "pakai daftar statis" — itu
+ * `undefined` (parameter tak diberikan) berarti "pakai daftar statis", itu
  * jalur kompatibilitas mundur supaya seluruh pemanggil lama tetap benar.
  */
 export type HolidaySet = ReadonlySet<string>;
@@ -79,7 +79,7 @@ export function isAfter(a: PlainDate, b: PlainDate): boolean {
  * `holidays` bila diberikan, kalau tidak dari daftar statis `LIBUR_NASIONAL`.
  *
  * `holidays` datang dari tabel `holidays` (dikelola admin). Bila ia kosong
- * (`new Set()`), akhir pekan tetap libur — mengosongkan tabel tidak pernah
+ * (`new Set()`), akhir pekan tetap libur, mengosongkan tabel tidak pernah
  * membuat Sabtu/Minggu jadi hari kerja.
  */
 export function isHoliday(date: PlainDate, holidays?: HolidaySet): boolean {

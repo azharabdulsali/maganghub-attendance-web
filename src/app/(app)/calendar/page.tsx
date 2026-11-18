@@ -19,8 +19,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toPlainDate } from "@/lib/submit-service";
 import { loadHolidaySet } from "@/lib/holidays-repo";
+import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   buildMonthGrid,
@@ -70,7 +70,7 @@ const STATUS_CELL_CLASS: Record<DayStatus, string> = {
   SUBMITTED: "bg-success text-success-foreground border-border",
   FAILED: "bg-destructive text-destructive-foreground border-border",
   DRAFT: "border-border bg-background",
-  NONE: "border-border/40 bg-background",
+  NONE: "border-muted-foreground bg-background",
 };
 
 /** Label ringkas penanda hari libur di sudut sel. */
@@ -160,20 +160,19 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">
-          Kalender Kehadiran &amp; Laporan
-        </h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Pantau status submit absensi dan laporan harian per bulan.
-        </p>
-      </div>
+      <PageHeader
+        title="Kalender Kehadiran & Laporan"
+        description="Pantau status submit absensi dan laporan harian per bulan."
+      />
 
-      <Card className="[--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
-          <CardTitle className="text-base">
+      {/* Satu lembar bergaris: kepala bulan, kisi tanggal, lalu keterangan di
+          bawah garis. Bukan kartu bersudut dengan judul kecil — bulan itu
+          sendiri yang menjadi judul, sama seperti kepala halaman buku absen. */}
+      <section className="border-2 border-border bg-card">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-border px-4 py-3 sm:px-6">
+          <h2 className="font-heading text-2xl leading-none">
             {MONTH_LABELS[month.month]} {month.year}
-          </CardTitle>
+          </h2>
           <div className="flex items-center gap-1.5">
             <Button
               variant="neutral"
@@ -194,8 +193,8 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
               <ChevronRight className="size-4" />
             </Button>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
+        </div>
+        <div className="space-y-3 p-4 sm:p-6">
           {!isCurrentMonth && (
             <div>
               <Link
@@ -207,12 +206,13 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             </div>
           )}
 
-          {/* Header hari. */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+          {/* Header hari: nama hari diperlakukan seperti kolom tabel cetak —
+              kecil, huruf kapital, huruf renggang. */}
+          <div className="grid grid-cols-7 gap-1 pb-1 sm:gap-2">
             {WEEKDAY_LABELS.map((label) => (
               <div
                 key={label}
-                className="text-center text-[10px] font-heading text-foreground/60 sm:text-[11px]"
+                className="text-center font-heading text-[0.6875rem] tracking-[0.12em] text-muted-foreground uppercase"
               >
                 {label}
               </div>
@@ -240,7 +240,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                       className={cn(
                         "flex h-14 flex-col justify-between rounded-base border-2 p-1 sm:h-16 sm:p-1.5",
                         STATUS_CELL_CLASS[status],
-                        status === "NONE" && "text-foreground/50",
+                        status === "NONE" && "text-muted-foreground",
                         holiday && "border-dashed",
                       )}
                       aria-label={`${cell.day}: ${STATUS_TEXT[status]}${
@@ -250,28 +250,28 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                       <div className="flex items-center justify-between">
                         <span
                           className={cn(
-                            "font-mono text-[10px] sm:text-[11px]",
+                            "font-mono text-[0.6875rem]",
                             status === "SUBMITTED" && "text-success-foreground",
                             status === "FAILED" && "text-destructive-foreground",
                             status !== "SUBMITTED" &&
                               status !== "FAILED" &&
-                              "text-foreground/70",
+                              "text-muted-foreground",
                           )}
                         >
                           {cell.day}
                         </span>
                         {isToday ? (
                           <span
-                            className="size-1.5 rounded-full bg-foreground"
+                            className="size-1.5 rounded-none bg-foreground"
                             aria-hidden
                           />
                         ) : holiday ? (
                           <span
                             className={cn(
-                              "size-1.5 rounded-full",
+                              "size-1.5 rounded-none",
                               holiday === "NATIONAL"
                                 ? "bg-foreground"
-                                : "bg-foreground/40",
+                                : "bg-muted-foreground",
                             )}
                             aria-hidden
                           />
@@ -279,18 +279,18 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                       </div>
                       <span
                         className={cn(
-                          "flex items-center gap-1 truncate text-[10px] sm:text-[11px]",
-                          status === "NONE" && "text-foreground/40",
+                          "flex items-center gap-1 truncate text-[0.6875rem]",
+                          status === "NONE" && "text-muted-foreground",
                         )}
                       >
                         {/* Penanda hijau: tanggal ini sudah punya laporan
                             sendiri (template khusus), isinya beda dari default.
                             `border-border` membuatnya tetap terlihat baik di
                             sel putih (DRAFT/NONE) maupun di sel hijau
-                            (SUBMITTED) — warna saja tidak cukup jadi penanda. */}
+                            (SUBMITTED), warna saja tidak cukup jadi penanda. */}
                         {hasDatedTemplate ? (
                           <span
-                            className="size-2 shrink-0 rounded-full border-2 border-border bg-success"
+                            className="size-2 shrink-0 rounded-none border-2 border-border bg-success"
                             aria-hidden
                           />
                         ) : null}
@@ -324,23 +324,23 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             <LegendItem status="NONE" count={counts.NONE} />
             <span className="inline-flex items-center gap-2">
               <span
-                className="size-3 shrink-0 rounded-sm border-2 border-dashed border-foreground/60"
+                className="size-3 shrink-0 rounded-sm border-2 border-dashed border-muted-foreground"
                 aria-hidden
               />
-              <span className="text-foreground/70">Hari libur</span>
+              <span className="text-muted-foreground">Hari libur</span>
             </span>
             <span className="inline-flex items-center gap-2">
               <span
-                className="size-2 shrink-0 rounded-full border-2 border-border bg-success"
+                className="size-2 shrink-0 rounded-none border-2 border-border bg-success"
                 aria-hidden
               />
-              <span className="text-foreground/70">Laporan Sudah Ada</span>
+              <span className="text-muted-foreground">Laporan Sudah Ada</span>
             </span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <p className="mt-4 text-xs text-foreground/50">
+      <p className="mt-4 text-xs text-muted-foreground">
         Zona waktu Asia/Jakarta. Hanya kiriman <strong>sukses</strong> yang
         ditandai terkirim. Sel bergaris putus-putus = akhir pekan atau libur.
       </p>
@@ -359,7 +359,7 @@ function LegendItem({ status, count }: { status: DayStatus; count: number }) {
         )}
         aria-hidden
       />
-      <span className="text-foreground/70">
+      <span className="text-muted-foreground">
         {STATUS_TEXT[status]}{" "}
         <span className="font-heading text-foreground">{count}</span>
       </span>

@@ -87,7 +87,7 @@ export async function POST(request: Request) {
   // WAJIB menampilkan pesan, bukan membuat draf kosong yang terlihat terisi.
   const bahan = draftInputFromCommits(hasil.keywords);
 
-  // Draf disusun lewat `getDrafter()` — jalur SAMA yang dipakai tombol "Susun
+  // Draf disusun lewat `getDrafter()`, jalur SAMA yang dipakai tombol "Susun
   // draf" di form. Jadi commit tidak menambah cara kedua menyusun laporan.
   // Kolom "Pembelajaran" diturunkan dari BUKTI commit (jenis perubahan &
   // topik), bukan dikarang; bila bukti tidak cukup, kolom itu tetap kosong dan

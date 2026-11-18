@@ -17,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { todayInJakarta, plainDateToUtcDate } from "@/lib/submit-service";
 import { paginate, parsePage } from "@/lib/audit-log";
 import { loadHolidayRows } from "@/lib/holidays-repo";
+import { PageHeader } from "@/components/page-header";
 import ReportTemplatesForm from "./report-templates-form";
 import DatedTemplatesTable from "./dated-templates-table";
 
@@ -46,7 +47,7 @@ export default async function ReportTemplatesPage({
   // CATATAN: form HANYA butuh tiga kolom dari template default, bukan daftar
   // seluruh template khusus tanggal. Sebelumnya halaman ini menarik SELURUH
   // tabel lalu memotongnya di memori, dan tabelnya menarik ulang data yang
-  // sama — dua salinan penuh di setiap kunjungan, tumbuh terus seiring
+  // sama, dua salinan penuh di setiap kunjungan, tumbuh terus seiring
   // bertambahnya tanggal.
   const [template, datedCount] = await Promise.all([
     prisma.reportTemplate.findUnique({
@@ -76,8 +77,8 @@ export default async function ReportTemplatesPage({
       : null;
 
   // Libur dari tabel admin. Dipakai DUA cara:
-  //  - `Set` untuk komponen SERVER (DatedTemplatesTable) — efisien untuk lookup.
-  //  - `string[]` untuk komponen KLIEN (form/DatePicker) — Set tidak bisa
+  //  - `Set` untuk komponen SERVER (DatedTemplatesTable), efisien untuk lookup.
+  //  - `string[]` untuk komponen KLIEN (form/DatePicker), Set tidak bisa
   //    melewati batas server→klien (harus serializable).
   const holidayRows = await loadHolidayRows();
   const holidaySet = new Set(holidayRows.map((h) => h.date));
@@ -133,18 +134,16 @@ export default async function ReportTemplatesPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">Template Laporan</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Template laporan harian (min. 100 karakter per kolom)
-        </p>
-      </div>
+      <PageHeader
+        title="Template Laporan"
+        description="Template laporan harian, minimal 100 karakter per kolom."
+      />
 
       {/* `key` berdasarkan tanggal yang diminta: tombol "Buka" di tabel
           menavigasi ke rute ini dengan `?date=`, dan tanpa `key` komponen klien
           ini TIDAK dipasang ulang, sehingga form tetap menampilkan tanggal lama
           (gejala "Buka tidak melakukan apa-apa"). Mengganti `key` memaksa React
-          memasang ulang form dengan `initialDate` yang baru — cara idiomatik
+          memasang ulang form dengan `initialDate` yang baru, cara idiomatik
           menyetel ulang state komponen tanpa efek `setState` di dalam efek.
 
           `initialDated` sengaja TIDAK diisi daftar semua tanggal: form hanya
@@ -175,7 +174,7 @@ export default async function ReportTemplatesPage({
           // `expand` sengaja DIBUANG saat berpindah halaman. Baris yang
           // di-expand ada di halaman lain, jadi mempertahankannya hanya
           // memunculkan banner "Menampilkan teks lengkap tanggal X" di halaman
-          // yang tidak memuat tanggal itu — petunjuk yang menyesatkan.
+          // yang tidak memuat tanggal itu, petunjuk yang menyesatkan.
           buildUrl({ tpage: page, expand: null })
         }
         buildExpandHref={(date) => buildUrl({ expand: date })}

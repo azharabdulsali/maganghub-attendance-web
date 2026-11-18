@@ -3,7 +3,7 @@
 //
 // ⚠️  KENAPA BERKAS INI TERPISAH (penting, jangan digabung kembali):
 //
-// Logika di sini adalah MURNI — hanya string/tipe, tidak menyentuh jaringan sama
+// Logika di sini adalah MURNI, hanya string/tipe, tidak menyentuh jaringan sama
 // sekali. Ia dipakai DUA dunia:
 //   1. sisi server (`monev-login.ts`, `kemnaker-sso.ts`) yang juga melakukan
 //      jaringan (dan karena itu meng-import `undici` lewat `proxy-fetch`), dan
@@ -92,7 +92,7 @@ export function extractCsrfTokenFromHtml(html: string): string | undefined {
 
 /**
  * Diagnostik NON-RAHASIA dari respons `GET /auth` (hanya untuk jalur gagal).
- * Tidak ada token/cookie/password di dalamnya — aman untuk ditampilkan & dicatat.
+ * Tidak ada token/cookie/password di dalamnya, aman untuk ditampilkan & dicatat.
  */
 export type PrimeResponseDiagnostics = {
   /** Header `content-type` (mis. `text/html`, `application/json`). */
@@ -101,9 +101,9 @@ export type PrimeResponseDiagnostics = {
   server?: string | null;
   /** Header `content-length` bila ada (petunjuk ukuran body). */
   contentLength?: string | null;
-  /** Header `cf-mitigated` — penanda TEGAS bahwa Cloudflare memblokir. */
+  /** Header `cf-mitigated`, penanda TEGAS bahwa Cloudflare memblokir. */
   cfMitigated?: string | null;
-  /** Header `cf-ray` — bukti permintaan melewati edge Cloudflare. */
+  /** Header `cf-ray`, bukti permintaan melewati edge Cloudflare. */
   cfRay?: string | null;
   /** Body HTML mentah (hanya dipindai jadi kategori, isinya tak dibocorkan). */
   html?: string;
@@ -114,7 +114,7 @@ export type PrimeResponseDiagnostics = {
 /**
  * Ringkasan NON-RAHASIA & JSON-friendly dari respons yang menolak priming.
  * Berbeda dari `PrimeResponseDiagnostics` (yang memuat `html` mentah), bentuk
- * ini sengaja hanya menyimpan **kategori** — aman dikirim ke klien agar
+ * ini sengaja hanya menyimpan **kategori**, aman dikirim ke klien agar
  * penyebab `403` bisa ditentukan dari DevTools/UI tanpa membuka log server.
  *
  * Tidak ada token, cookie, password, atau isi body di sini.
@@ -126,7 +126,7 @@ export type PrimeRejectionInfo = {
   kind: PrimeRejectionKind;
   /** Header `server` yang dilaporkan portal (mis. `cloudflare`), bila ada. */
   server?: string;
-  /** Header `cf-mitigated` (mis. `challenge`), bila ada — penanda WAF Cloudflare. */
+  /** Header `cf-mitigated` (mis. `challenge`), bila ada, penanda WAF Cloudflare. */
   cfMitigated?: string;
   /** Header `content-type`, bila ada. */
   contentType?: string;
@@ -170,7 +170,7 @@ export function buildPrimeRejectionInfo(
     httpCode,
     kind: classifyPrimeRejection(httpCode, d),
   };
-  // Hanya salin bila berisi — hindari field kosong yang bising di UI/log.
+  // Hanya salin bila berisi, hindari field kosong yang bising di UI/log.
   const server = d?.server ?? "";
   if (server) info.server = server;
   const cfMitigated = d?.cfMitigated ?? "";
@@ -204,7 +204,7 @@ export function diagnosePrimeRejection(
 
   // (a) Sinyal TEGAS Cloudflare: header `cf-mitigated` ada, atau `server`
   // menyebut cloudflare. Ini menjelaskan 403 sebagai challenge WAF, BUKAN
-  // kredensial salah. Sesuai SPEC §6/§10: jangan diakali, cukup dilaporkan —
+  // kredensial salah. Sesuai SPEC §6/§10: jangan diakali, cukup dilaporkan
   // penawar sahnya adalah IP residensial (proxy) atau jalur tempel token.
   const cloudflare =
     mitigated.length > 0 ||

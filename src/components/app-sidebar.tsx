@@ -144,33 +144,39 @@ function SidebarContent({
     // `min-h-0 flex-1`: sidebar setinggi layar dan TIDAK boleh ikut memanjang
     // mengikuti isi menu. Tanpa ini, admin dengan 11 menu mendorong blok
     // identitas + tombol Keluar ke bawah viewport, dan karena sidebar `sticky`
-    // bagian itu tak pernah bisa dijangkau — logout seolah hilang.
-    <div className="flex min-h-0 flex-1 flex-col gap-6 p-4">
+    // bagian itu tak pernah bisa dijangkau, logout seolah hilang.
+    <div className="flex min-h-0 flex-1 flex-col gap-5 p-4">
       <Link
         href="/dashboard"
         onClick={onNavigate}
-        className="flex shrink-0 items-center gap-2 rounded-base border-2 border-border bg-main px-3 py-2 text-main-foreground shadow-shadow"
+        className="flex shrink-0 items-center gap-2.5 rounded-base border-2 border-border bg-main px-3 py-2.5 text-main-foreground"
       >
-        <CalendarCheck className="size-5" />
-        <span className="font-heading text-base leading-tight">
-          MagangHub
-          <span className="block text-[11px] font-base opacity-90">
-            Absensi Otomatis
+        <CalendarCheck className="size-5 shrink-0" />
+        <span className="flex min-w-0 flex-col">
+          <span className="font-heading text-base leading-tight">
+            MagangHub
+          </span>
+          <span className="truncate text-[0.6875rem] leading-tight">
+            Absensi otomatis
           </span>
         </span>
       </Link>
 
       {/* `min-h-0 overflow-y-auto`: SATU-SATUNYA bagian yang menggulir. Footer
           (identitas, tema, Keluar) diberi `shrink-0` di bawah supaya selalu
-          terlihat. `px-1 -mx-1` menyisakan ruang untuk bayangan item aktif
-          agar tidak terpotong tepi area gulir. */}
+          terlihat.
+
+          Tiap kelompok menu dibuka oleh satu garis tipis + nama kelompok,
+          seperti judul bab pada indeks buku. Sebelumnya kelompok hanya berupa
+          teks redup berukuran 11px yang mudah terlewat, sehingga 11 tautan
+          admin tampak sebagai satu daftar rata. */}
       <nav
-        className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1"
+        className="-mx-1 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain px-1"
         aria-label="Navigasi utama"
       >
         {groups.map((group) => (
-          <div key={group.label} className="flex flex-col gap-1.5">
-            <p className="px-3 text-[11px] font-heading uppercase tracking-wide text-foreground/50">
+          <div key={group.label} className="flex flex-col gap-0.5">
+            <p className="mb-1.5 border-b-2 border-border pb-1.5 font-heading text-xs text-muted-foreground">
               {group.label}
             </p>
             {group.items.map((item) => {
@@ -183,10 +189,10 @@ function SidebarContent({
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-base border-2 px-3 py-2.5 text-sm font-base transition-all",
+                    "flex items-center gap-2.5 rounded-base px-3 py-2 font-heading text-sm transition-colors",
                     active
-                      ? "border-border bg-main text-main-foreground shadow-shadow"
-                      : "border-transparent text-foreground/80 hover:border-border hover:bg-secondary-background",
+                      ? "bg-main text-main-foreground"
+                      : "text-foreground hover:bg-background",
                   )}
                 >
                   <Icon className="size-4 shrink-0" />
@@ -198,7 +204,10 @@ function SidebarContent({
         ))}
       </nav>
 
-      <div className="shrink-0 rounded-base border-2 border-border bg-secondary-background p-3">
+      {/* Kaki sidebar tanpa kotak: satu garis atas memisahkan identitas dari
+          navigasi, sama seperti garis pada formulir. Kotak bergaris di dalam
+          panel bergaris hanya menambah bingkai tanpa menambah arti. */}
+      <div className="shrink-0 border-t-2 border-border pt-3">
         <Link
           href="/profile"
           onClick={onNavigate}
@@ -208,24 +217,24 @@ function SidebarContent({
             <UserRound className="size-4" />
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-sm font-heading">
+            <span className="block truncate font-heading text-sm">
               {user.name?.trim() || "Pengguna"}
             </span>
-            <span className="block truncate text-xs text-foreground/60">
+            <span className="block truncate text-xs text-muted-foreground">
               {user.email}
             </span>
           </span>
         </Link>
-        <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="mt-3 flex items-center justify-between gap-2">
           <span
             className={cn(
-              "inline-flex items-center rounded-base border-2 border-border px-2 py-0.5 text-[11px] font-heading",
+              "inline-flex items-center rounded-base border-2 border-border px-2 py-0.5 font-heading text-[0.6875rem]",
               user.isAdmin
                 ? "bg-main text-main-foreground"
                 : "bg-background text-foreground",
             )}
           >
-            {user.role}
+            {user.isAdmin ? "Admin" : "Peserta"}
           </span>
           <ThemeToggle />
         </div>
@@ -291,7 +300,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
       </header>
 
       {/* Sidebar tetap (desktop). */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r-2 border-border bg-background md:flex">
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r-2 border-border bg-secondary-background md:flex">
         <SidebarContent user={user} />
       </aside>
 
@@ -306,7 +315,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
             className="absolute inset-0 bg-overlay/60"
             onClick={() => setOpen(false)}
           />
-          <div className="pt-safe pb-safe pl-safe pr-safe absolute inset-y-0 right-0 flex w-72 max-w-[85%] animate-slide-in-right flex-col overflow-hidden border-l-2 border-border bg-background">
+          <div className="pt-safe pb-safe pl-safe pr-safe absolute inset-y-0 right-0 flex w-72 max-w-[85%] animate-slide-in-right flex-col overflow-hidden border-l-2 border-border bg-secondary-background">
             <div className="flex justify-end p-2">
               <Button
                 variant="neutral"

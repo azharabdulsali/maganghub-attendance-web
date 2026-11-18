@@ -1,4 +1,4 @@
-# MagangHub — Otomasi Absensi Monev
+# MagangHub: Otomasi Absensi Monev
 
 Web untuk mengotomatiskan pengisian laporan absensi (Monev) agar tidak perlu
 dilakukan manual tiap hari. Aplikasi masuk ke portal Monev dengan kredensial
@@ -24,8 +24,8 @@ desain dan aturan teknis, lihat:
 ## Tumpukan teknologi
 
 - **Next.js 16** (App Router) + **React 19**, TypeScript
-- **Prisma 7** + **PostgreSQL (Neon)** — via driver adapter `@prisma/adapter-neon`
-- **Auth.js (NextAuth v5)** — login kredensial **atau Google (opsional)**, sesi di database
+- **Prisma 7** + **PostgreSQL (Neon)**, via driver adapter `@prisma/adapter-neon`
+- **Auth.js (NextAuth v5)**, login kredensial **atau Google (opsional)**, sesi di database
 - **Tailwind CSS 4** + **Base UI** + `shadcn`
 - **Vitest** untuk pengujian
 
@@ -67,14 +67,14 @@ Yang **opsional**:
 | Variabel | Efek bila kosong |
 | --- | --- |
 | `ADMIN_EMAIL` | Tidak ada admin otomatis; user pertama jadi `USER` biasa |
-| `ALLOW_LIVE_SUBMIT` | Mode **latihan** — tidak ada laporan yang benar-benar dikirim (aman) |
-| `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Rate limit per-proses (kurang akurat lintas instance). **Gratis** — lihat [`docs/UPSTASH-SETUP.md`](docs/UPSTASH-SETUP.md) |
+| `ALLOW_LIVE_SUBMIT` | Mode **latihan**, tidak ada laporan yang benar-benar dikirim (aman) |
+| `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Rate limit per-proses (kurang akurat lintas instance). **Gratis**, lihat [`docs/UPSTASH-SETUP.md`](docs/UPSTASH-SETUP.md) |
 | `CRON_SECRET` | Dispatcher massal `/api/cron/run-all` nonaktif (balas 503) |
 | `GIT_COMMITS_ENABLED` | Jaring darurat fitur bahan draf dari commit git. **Bila kosong = fitur AKTIF** (default), karena fitur ini sudah opt-in per pengguna lewat `/repos` + sakelar di `/automation`. Isi `0` untuk mematikan fitur bagi SEMUA pengguna. Lihat [`docs/GIT-COMMITS-PLAN.md`](docs/GIT-COMMITS-PLAN.md) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Login dengan Google. **Bila salah satu kosong, tombol Google tidak muncul** dan login kata sandi tetap jalan. Panduan: [`docs/GOOGLE-LOGIN.md`](docs/GOOGLE-LOGIN.md) |
 | `TURNSTILE_SECRET_KEY` / `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | CAPTCHA Cloudflare Turnstile pada daftar & login. **Bila salah satu kosong, CAPTCHA tidak aktif sama sekali** (widget tidak tampil, server tidak memeriksa). Panduan: [`docs/TURNSTILE.md`](docs/TURNSTILE.md) |
 
-> **`ENCRYPTION_KEY` jangan pernah diganti** setelah ada kredensial tersimpan —
+> **`ENCRYPTION_KEY` jangan pernah diganti** setelah ada kredensial tersimpan
 > data lama akan tidak bisa didekripsi. Simpan baik-baik.
 
 ### 4. Siapkan database
@@ -122,13 +122,13 @@ npm run typecheck && npm run lint && npm test && npm run build
 
 ## Peta kode (graphify)
 
-Repo ini memakai [graphify](https://github.com/Graphify-Labs/graphify) — sebuah
-*skill* untuk agen AI (bukan dependensi aplikasi) — yang mengindeks seluruh
+Repo ini memakai [graphify](https://github.com/Graphify-Labs/graphify), sebuah
+*skill* untuk agen AI (bukan dependensi aplikasi), yang mengindeks seluruh
 codebase menjadi **knowledge graph lokal**. Tujuannya: saat bertanya soal kode,
 agen membaca peta ini dulu alih-alih menyisir seluruh berkas.
 
 Ekstraksi kode murni **AST (tree-sitter), deterministik, tanpa LLM, tanpa API
-key** — berjalan sepenuhnya offline.
+key**, berjalan sepenuhnya offline.
 
 ### Prasyarat
 
@@ -156,7 +156,7 @@ Output ada di `graphify-out/` (dilacak git kecuali `cache/`):
 
 | Berkas | Isi |
 | --- | --- |
-| `graph.json` | Graph persisten — untuk `query`/`path`/`explain` |
+| `graph.json` | Graph persisten, untuk `query`/`path`/`explain` |
 | `GRAPH_REPORT.md` | Ringkasan manusia: god nodes, koneksi mengejutkan |
 | `graph.html` | Viewer interaktif (klik, cari, filter per komunitas) |
 | `manifest.json` | Metadata graf |
@@ -167,16 +167,16 @@ Output ada di `graphify-out/` (dilacak git kecuali `cache/`):
 ## Deploy ke Vercel
 
 1. **Import repo** di [vercel.com/new](https://vercel.com/new). Vercel mengenali
-   Next.js secara otomatis — **tidak perlu** mengubah build command. `postinstall`
+   Next.js secara otomatis, **tidak perlu** mengubah build command. `postinstall`
    sudah menjalankan `prisma generate`.
 
 2. **Isi Environment Variables** (Settings → Environment Variables) untuk
-   Production — daftar wajib & opsional sama seperti tabel di atas, dengan
+   Production, daftar wajib & opsional sama seperti tabel di atas, dengan
    penyesuaian:
 
    - `NEXTAUTH_URL` = URL produksi, mis. `https://www.maganghub-autoabsen.my.id`
-     (harus `https://`, pakai host **final** yang tidak di-redirect — domain ini
-     me-redirect non-`www` → `www`, jadi `www` **wajib** — dan tanpa garis miring
+     (harus `https://`, pakai host **final** yang tidak di-redirect, domain ini
+     me-redirect non-`www` → `www`, jadi `www` **wajib**, dan tanpa garis miring
      di akhir).
    - `DATABASE_URL` = koneksi **pooled** Neon; `DIRECT_URL` = **direct**.
    - `NEXTAUTH_SECRET`, `ENCRYPTION_KEY` = nilai produksi yang **baru** (jangan
@@ -194,9 +194,9 @@ Output ada di `graphify-out/` (dilacak git kecuali `cache/`):
 
 4. **Deploy.** Bila build gagal dengan pesan
    `Konfigurasi environment bermasalah`, artinya ada variabel wajib yang belum
-   diisi — periksa pesannya, ia menyebut variabel mana yang kurang.
+   diisi, periksa pesannya, ia menyebut variabel mana yang kurang.
 
-5. **Opsional — otomasi massal.** Bila memakai dispatcher
+5. **Opsional, otomasi massal.** Bila memakai dispatcher
    (`/api/cron/run-all`), set `CRON_SECRET` di Vercel, lalu set **secrets repo**
    di GitHub (Settings → Secrets → Actions): `APP_URL` = host **final**
    (`https://www.maganghub-autoabsen.my.id`, pakai `www`, tanpa slash) dan
@@ -222,7 +222,7 @@ harus dipahami sebelum mengubah/menghapusnya:
 1. **Butuh CSP khusus.** CSP aplikasi (SPEC §9) memakai `connect-src 'self'`.
    Skrip Analytics mengirim data ke `vitals.vercel-insights.com`, jadi domain
    itu ditambahkan lewat konstanta `VERCEL_ANALYTICS_CONNECT_SRC` di
-   `src/lib/security-headers.ts`. **Jangan hapus** — tanpanya skrip tetap
+   `src/lib/security-headers.ts`. **Jangan hapus**, tanpanya skrip tetap
    termuat tapi semua data diblokir browser (dasbor kosong). Ada tes penjaga di
    `src/lib/security-headers.test.ts`.
 
@@ -233,7 +233,7 @@ harus dipahami sebelum mengubah/menghapusnya:
 
 3. **Hanya berfungsi di Vercel.** Di localhost dan di hosting non-Vercel, paket
    ini tidak mengirim apa pun (di dev ia hanya mencetak event ke konsol). Bila
-   suatu saat pindah dari Vercel, fitur ini jadi no-op — hapus `<Analytics />`,
+   suatu saat pindah dari Vercel, fitur ini jadi no-op, hapus `<Analytics />`,
    konstanta CSP, dan bagian "Statistik kunjungan" di
    `src/app/privacy/page.tsx`.
 
@@ -253,7 +253,7 @@ terpusat.
 
 **Gratis:** paket Free Upstash = 500.000 perintah/bulan (permanen, tanpa kartu
 kredit); pemakaian proyek ini ≈ 60.000/bulan (≈12% kuota). Cukup isi 2 env var
-— **tanpa mengubah kode** (kode sudah mendukung Upstash sejak awal di
+**tanpa mengubah kode** (kode sudah mendukung Upstash sejak awal di
 `src/lib/rate-limit-store.ts`). Bila Upstash mati, pembatas **fail-open**
 (request tetap diizinkan), jadi tidak bisa mematikan aplikasi.
 
@@ -265,7 +265,7 @@ kredit); pemakaian proyek ini ≈ 60.000/bulan (≈12% kuota). Cukup isi 2 env v
 
 `next.config.ts` masih memakai `permanent: false` (307) untuk rute lama. Setelah
 struktur rute final dan situs publik, ubah ke `permanent: true` (308) dengan
-sadar — redirect permanen di-cache keras oleh browser.
+sadar, redirect permanen di-cache keras oleh browser.
 
 ### Saran: migrasi Prisma
 

@@ -64,7 +64,7 @@ export interface JakartaClock {
 /**
  * Ambil jam, menit, dan tanggal (WIB) dari sebuah `Date`.
  *
- * MURNI terhadap argumennya — bisa diuji dengan waktu tetap. Memakai `Intl`
+ * MURNI terhadap argumennya, bisa diuji dengan waktu tetap. Memakai `Intl`
  * (bukan offset tetap +07:00) supaya benar bila aturan zona berubah. Ini SATU
  * sumber untuk pemecahan waktu Jakarta; `cron-dispatch.ts` punya `jakartaHour`
  * yang lebih sempit (hanya jam) karena itu cukup untuk kebutuhannya.
@@ -98,7 +98,7 @@ export function jakartaClock(at: Date): JakartaClock {
  *
  * Jendela menyala: dari jam:menit setelan SAMPAI tengah malam WIB (sesuai
  * kesepakatan). Jadi begitu jam mulai terlewati, pengingat tetap menyala
- * sepanjang sisa hari — bukan hanya selama satu menit.
+ * sepanjang sisa hari, bukan hanya selama satu menit.
  *
  * Bila jam:menit setelan tidak sah (mis. data rusak), kembalikan `false`:
  * lebih baik pengingat diam daripada muncul pada waktu acak.
@@ -127,7 +127,7 @@ export function isReminderWindowOpen(
  *
  * Urutan dipilih supaya alasan paling murah/menentukan diperiksa lebih dulu,
  * dan supaya hari libur selalu menang atas apa pun (pengingat tak pernah muncul
- * di libur, walau user belum absen — memang tak wajib absen).
+ * di libur, walau user belum absen, memang tak wajib absen).
  */
 export function shouldShowReminder(
   setting: ReminderSettingView,

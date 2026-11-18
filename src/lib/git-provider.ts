@@ -8,7 +8,7 @@
 // - Bentuk balasan GitHub dan GitLab berbeda jauh. Keduanya dinormalkan ke
 //   `GitCommit` di sini, supaya pemanggil tidak peduli provider.
 //
-// KEAMANAN (docs/GIT-COMMITS-PLAN.md §6) — jangan dilonggarkan
+// KEAMANAN (docs/GIT-COMMITS-PLAN.md §6), jangan dilonggarkan
 // -----------------------------------------------------------
 // 1. **URL TIDAK PERNAH dibangun dari input pengguna.** Base URL hanya berasal
 //    dari `PROVIDER_ENDPOINT` yang dipetakan dari enum `GitProvider`. Pengguna
@@ -155,7 +155,7 @@ export interface FetchCommitsOptions {
    * Branch yang dibaca. **Kosong = default branch repo** (bukan "main").
    *
    * KENAPA TIDAK `"main"` SAJA: banyak repo memakai `master`, `develop`, atau
-   * nama lain. Tanpa parameter ini, API git memakai default branch repo — itu
+   * nama lain. Tanpa parameter ini, API git memakai default branch repo, itu
    * perilaku yang benar. Menebak "main" justru menghasilkan 404 / daftar kosong
    * pada repo yang default-nya bukan main.
    */
@@ -178,7 +178,7 @@ const BRANCH_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
 /**
  * Validasi nama branch opsional.
  *
- * Mengembalikan `null` bila branch kosong/tidak diisi — pemanggil lalu
+ * Mengembalikan `null` bila branch kosong/tidak diisi, pemanggil lalu
  * membiarkan API memakai default branch repo. Melempar `GitApiError` bila
  * bentuknya tidak sah, supaya nilai aneh tidak pernah sampai ke query.
  */
@@ -349,7 +349,7 @@ export async function fetchCommits(
   url.searchParams.set("since", sinceIso);
   if (untilIso) url.searchParams.set("until", untilIso);
   // Nama parameter berbeda per provider:
-  // - GitHub: `sha` (branch, tag, atau SHA — semuanya sah)
+  // - GitHub: `sha` (branch, tag, atau SHA, semuanya sah)
   // - GitLab: `ref_name` (branch atau tag)
   // Tanpa ini, API memakai DEFAULT BRANCH repo. Itu sebabnya commit di branch
   // kerja tidak pernah terlihat walau branch sudah tersimpan di DB.

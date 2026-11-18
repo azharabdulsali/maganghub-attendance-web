@@ -12,6 +12,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Label status kredensial dalam bahasa manusia + warna sorot.
@@ -60,12 +61,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">Profil</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Informasi akun Anda
-        </p>
-      </header>
+      <PageHeader title="Profil" description="Informasi akun Anda." />
 
       <Card className="mb-6">
         <CardHeader>
@@ -73,14 +69,14 @@ export default async function ProfilePage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">
+            <span className="text-xs font-heading text-muted-foreground">
               Email
             </span>
             <span className="break-all text-sm">{user.email}</span>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">
+            <span className="text-xs font-heading text-muted-foreground">
               Peran
             </span>
             <span
@@ -95,7 +91,7 @@ export default async function ProfilePage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">
+            <span className="text-xs font-heading text-muted-foreground">
               Bergabung sejak
             </span>
             <span className="text-sm">{formatTanggal(user.createdAt)}</span>
@@ -108,7 +104,7 @@ export default async function ProfilePage() {
           <CardTitle>Ubah akun</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-foreground/70">
+          <p className="text-sm text-muted-foreground">
             Ubah email, nama tampilan, kata sandi, atau keluarkan perangkat lain
             di halaman{" "}
             <Link className="font-heading underline" href="/settings">
@@ -125,7 +121,7 @@ export default async function ProfilePage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm">
           {!user.credential ? (
-            <p className="text-foreground/70">
+            <p className="text-muted-foreground">
               Belum ada kredensial Monev tersimpan. Buka halaman{" "}
               <Link className="font-heading underline" href="/credentials">
                 Kredensial Monev
@@ -135,13 +131,13 @@ export default async function ProfilePage() {
           ) : (
             <>
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">
+                <span className="font-heading text-[0.6875rem] tracking-[0.18em] text-muted-foreground uppercase">
                   Email Monev
                 </span>
                 <span className="break-all">{user.credential.emailMonev}</span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">
+                <span className="font-heading text-[0.6875rem] tracking-[0.18em] text-muted-foreground uppercase">
                   Status
                 </span>
                 <span
@@ -155,7 +151,7 @@ export default async function ProfilePage() {
                 </span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-heading uppercase tracking-wide text-foreground/60">
+                <span className="font-heading text-[0.6875rem] tracking-[0.18em] text-muted-foreground uppercase">
                   Terakhir diperbarui
                 </span>
                 <span>{formatTanggal(user.credential.updatedAt)}</span>

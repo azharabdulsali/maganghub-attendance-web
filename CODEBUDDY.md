@@ -1,4 +1,4 @@
-# Panduan agen — MagangHub Attendance Web
+# Panduan agen: MagangHub Attendance Web
 
 > Berkas ini dibaca otomatis oleh agen AI. Bagian di bawah **ditulis oleh
 > graphify** (jangan diubah manual) dan berisi aturan pemakaian peta kode.

@@ -22,7 +22,7 @@ function Blok({ blok }: { blok: GuideBlock }) {
   switch (blok.jenis) {
     case "paragraf":
       return (
-        <p className="text-sm leading-relaxed text-foreground/80">
+        <p className="text-sm leading-relaxed text-muted-foreground">
           {blok.teks}
         </p>
       );
@@ -32,7 +32,7 @@ function Blok({ blok }: { blok: GuideBlock }) {
           {blok.judul ? (
             <p className="font-heading text-sm">{blok.judul}</p>
           ) : null}
-          <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-foreground/80">
+          <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">
             {blok.item.map((t) => (
               <li key={t}>{t}</li>
             ))}
@@ -43,7 +43,7 @@ function Blok({ blok }: { blok: GuideBlock }) {
       return (
         <div className="space-y-2">
           <p className="font-heading text-sm">{blok.judul}</p>
-          <ol className="list-decimal space-y-1 pl-5 text-sm leading-relaxed text-foreground/80">
+          <ol className="list-decimal space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">
             {blok.item.map((t) => (
               <li key={t}>{t}</li>
             ))}
@@ -54,7 +54,7 @@ function Blok({ blok }: { blok: GuideBlock }) {
       return (
         <div className="rounded-base border-2 border-border bg-secondary-background p-4">
           <p className="font-heading text-sm">{blok.judul}</p>
-          <p className="mt-1 text-sm leading-relaxed text-foreground/80">
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
             {blok.teks}
           </p>
         </div>
@@ -81,7 +81,7 @@ function Blok({ blok }: { blok: GuideBlock }) {
                   {r.map((sel, i) => (
                     <td
                       key={`${r.join("|")}-${i}`}
-                      className="border-2 border-border px-3 py-2 align-top text-foreground/80"
+                      className="border-2 border-border px-3 py-2 align-top text-muted-foreground"
                     >
                       {sel}
                     </td>
@@ -107,7 +107,7 @@ function Blok({ blok }: { blok: GuideBlock }) {
             className="w-full rounded-base border-2 border-border bg-secondary-background"
           />
           {blok.keterangan ? (
-            <figcaption className="text-xs leading-relaxed text-foreground/60">
+            <figcaption className="text-xs leading-relaxed text-muted-foreground">
               {blok.keterangan}
             </figcaption>
           ) : null}
@@ -119,14 +119,14 @@ function Blok({ blok }: { blok: GuideBlock }) {
 
 function Header() {
   return (
-    <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+    <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background px-4 sm:px-6 lg:px-8">
       <Link href="/" className="flex items-center gap-2.5">
         <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
           <CalendarCheck className="size-4" />
         </span>
         <span className="hidden flex-col sm:flex">
           <span className="font-heading text-sm leading-tight">{SITE_NAME}</span>
-          <span className="text-[10px] leading-none text-foreground/60">
+          <span className="text-[0.6875rem] leading-none text-muted-foreground">
             Panduan
           </span>
         </span>
@@ -157,13 +157,15 @@ export function GuidePage({ guide }: { guide: Guide }) {
       <Header />
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
-        <nav className="mb-4 text-xs text-foreground/60">
+        <nav className="mb-4 text-xs text-muted-foreground">
           <Link href="/panduan" className="hover:text-foreground">
             Panduan
           </Link>
         </nav>
-        <h1 className="mb-3 text-2xl font-heading sm:text-3xl">{guide.judul}</h1>
-        <p className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-foreground/60">
+        <h1 className="text-3xl leading-[1.05] font-heading sm:text-4xl">
+          {guide.judul}
+        </h1>
+        <p className="mt-3 mb-8 flex flex-wrap items-center gap-x-4 gap-y-1 border-b-2 border-border pb-5 text-xs text-muted-foreground">
           <span>Diperbarui {formatTanggalIndo(guide.terbit)}</span>
           <span className="flex items-center gap-1">
             <Clock className="size-3.5" />
@@ -194,7 +196,7 @@ export function GuidePage({ guide }: { guide: Guide }) {
                   >
                     {g.judul}
                   </Link>
-                  <p className="text-xs text-foreground/60">{g.ringkas}</p>
+                  <p className="text-xs text-muted-foreground">{g.ringkas}</p>
                 </li>
               ))}
             </ul>
@@ -203,8 +205,8 @@ export function GuidePage({ guide }: { guide: Guide }) {
       </main>
 
       <footer className="pb-safe border-t-2 border-border bg-secondary-background px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 text-xs text-foreground/60 sm:flex-row">
-          <span>{SITE_NAME} — untuk peserta magang Kemnaker</span>
+        <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
+          <span>{SITE_NAME}: untuk peserta magang Kemnaker</span>
           <div className="flex items-center gap-4">
             <Link href="/panduan" className="transition-colors hover:text-foreground">
               Panduan

@@ -1,7 +1,7 @@
 // src/app/not-found.tsx: halaman 404 global.
 //
 // Kenapa ada: sebelumnya TIDAK ADA `not-found.tsx` sama sekali, sehingga URL
-// salah ketik jatuh ke halaman 404 bawaan Next.js — hitam-putih, bahasa
+// salah ketik jatuh ke halaman 404 bawaan Next.js, hitam-putih, bahasa
 // Inggris, tanpa navigasi. Untuk aplikasi berbahasa Indonesia yang menyimpan
 // kredensial orang, halaman default itu meyakinkan pengguna bahwa situsnya
 // rusak. Berkas ini menampilkan 404 dengan gaya aplikasi + jalan keluar.
@@ -39,14 +39,14 @@ export default function NotFound() {
         <CardHeader>
           <div className="mb-2 flex items-center gap-2">
             <Compass aria-hidden="true" className="size-5 shrink-0" />
-            <span className="text-sm font-base text-foreground/70">
+            <span className="text-sm font-base text-muted-foreground">
               Galat 404
             </span>
           </div>
           <CardTitle>Halaman tidak ditemukan</CardTitle>
           <CardDescription>
             Alamat yang Anda buka tidak ada, atau sudah dipindahkan. Periksa
-            kembali tautannya — salah ketik satu huruf saja sudah cukup.
+            kembali tautannya, salah ketik satu huruf saja sudah cukup.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">

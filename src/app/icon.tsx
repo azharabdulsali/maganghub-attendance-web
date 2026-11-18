@@ -2,7 +2,7 @@
 //
 // Mengapa berkas ini ada: `favicon.ico` bawaan Vercel (aset biner dari template
 // awal) masih muncul di tab browser. Ikon itu diganti di sini memakai
-// ImageResponse — sama seperti apple-icon.tsx — supaya (a) tidak ada aset biner
+// ImageResponse, sama seperti apple-icon.tsx, supaya (a) tidak ada aset biner
 // di repo, dan (b) ikon ikut berubah otomatis bila warna merek diubah.
 //
 // Motif: KALENDER, karena aplikasi ini soal absensi/presensi harian. Digambar

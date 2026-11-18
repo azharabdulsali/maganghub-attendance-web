@@ -1,4 +1,4 @@
-// Tes runOne() + summarizeRunOne() — inti "jalankan otomasi 1 user" (admin).
+// Tes runOne() + summarizeRunOne(), inti "jalankan otomasi 1 user" (admin).
 //
 // Mengapa ada: fitur ini memberi admin tombol memaksa submit seorang pengguna.
 // Yang wajib dijaga: (a) pemetaan hasil ke ringkasan tidak membocorkan token,

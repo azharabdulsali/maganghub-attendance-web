@@ -1,11 +1,14 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { Tone } from "@/lib/admin";
 
-// Kartu statistik dashboard, komponen tampilan murni (tanpa state/fetch),
-// menerima angka yang sudah dihitung di server. Lihat SPEC.md §5.6.
+// Ringkasan angka dashboard.
 //
-// Semua ikon digambar dengan CSS/SVG inline alih-alih lucide-react supaya
-// berkas ini tidak perlu menambah impor apa pun.
+// Disajikan sebagai daftar "label — angka" di dalam satu bingkai, seperti baris
+// neraca pada buku besar, BUKAN sebagai deretan angka besar dengan label kecil
+// di bawahnya. Pola "angka raksasa + label" bisa dipakai halaman apa pun dan
+// membuat keempat angka saling bersaing; di sini label dibaca lebih dulu,
+// angkanya menjawab. Angka memakai `tabular-nums` supaya lebarnya tidak
+// bergeser saat nilainya berubah.
 
 export type Stat = {
   label: string;
@@ -23,22 +26,35 @@ const TONE_CLASS: Record<Tone, string> = {
 
 export default function StatsCards({ stats }: { stats: Stat[] }) {
   return (
-    <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-      {stats.map((stat) => (
-        <Card key={stat.label}>
-          <CardContent className="flex flex-col gap-1 p-4">
-            <span className="text-xs text-foreground/60">{stat.label}</span>
-            <span
-              className={`font-heading text-2xl ${TONE_CLASS[stat.tone ?? "neutral"]}`}
-            >
-              {stat.value}
-            </span>
+    <dl className="mb-6 grid border-2 border-border bg-card sm:grid-cols-2">
+      {stats.map((stat, index) => (
+        <div
+          key={stat.label}
+          className={cn(
+            "flex items-baseline justify-between gap-4 px-4 py-3",
+            index > 0 && "border-t-2 border-border",
+            index % 2 === 1 && "sm:border-l-2",
+            index < 2 && "sm:border-t-0",
+          )}
+        >
+          <dt className="min-w-0 text-xs text-muted-foreground">
+            {stat.label}
             {stat.hint && (
-              <span className="text-xs text-foreground/50">{stat.hint}</span>
+              <span className="mt-0.5 block text-[0.6875rem]">
+                {stat.hint}
+              </span>
             )}
-          </CardContent>
-        </Card>
+          </dt>
+          <dd
+            className={cn(
+              "shrink-0 font-heading text-xl leading-none tabular-nums",
+              TONE_CLASS[stat.tone ?? "neutral"],
+            )}
+          >
+            {stat.value}
+          </dd>
+        </div>
       ))}
-    </div>
+    </dl>
   );
 }

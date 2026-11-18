@@ -25,7 +25,7 @@ import type { SubmitStatus } from "@/generated/prisma/enums";
  * pengguna (termasuk yang belum pernah submit), dan memasukkannya ke dropdown
  * hanya menghasilkan pilihan yang tabelnya pasti kosong. Selain itu, pengguna
  * yang sudah di-soft-delete TIDAK ada di `getAdminUsers()` (difilter
- * `deletedAt: null`), padahal log auditnya masih ada dan tetap muncul di tabel —
+ * `deletedAt: null`), padahal log auditnya masih ada dan tetap muncul di tabel
  * tanpa ikut didaftarkan di sini, log mereka jadi tak bisa difilter sama sekali.
  *
  * `groupBy` memakai indeks @@index([userId, createdAt]) pada SubmitLog, jadi
@@ -72,7 +72,7 @@ export async function getAuditUserOptions(): Promise<AuditUserOption[]> {
  *
  * Bila suatu saat jumlah pengguna tumbuh besar, ganti ini dengan `count` +
  * agregat di database dan paginasi tabel via `skip`/`take`; tapi jangan
- * sekarang — itu menambah jalur query kedua yang harus dijaga tetap sinkron.
+ * sekarang, itu menambah jalur query kedua yang harus dijaga tetap sinkron.
  */
 export async function getAdminUsers(now: Date = new Date()): Promise<AdminUserRow[]> {
   // Batas hari WIB untuk menentukan "sudah jalan hari ini". Bila `now` tak sah

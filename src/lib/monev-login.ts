@@ -73,13 +73,13 @@ const LOGIN_USER_AGENT =
 /**
  * Header navigasi yang SELALU dikirim browser saat membuka dokumen, dan yang
  * WAJIB disertakan agar permintaan dari server tidak dibedakan dari kunjungan
- * browser biasa (penyebab `403` WAF di langkah (2) — lihat docs/MONEV-API.md).
+ * browser biasa (penyebab `403` WAF di langkah (2), lihat docs/MONEV-API.md).
  *
  * ⚠️  Ini BUKAN penyamaran: nilainya jujur (Chrome, Windows, id-ID) sama seperti
  * `User-Agent` yang memang sudah dipakai alur ini. Yang dihilangkan hanyalah
  * "kelainan" (klien Node yang tak mengirim `sec-fetch-*`/`Accept-Language`),
  * bukan identitas palsu. Sesuai SPEC.md §5/§6 & AGENTS.md §73: jangan mengakali
- * proteksi (spoof `cf_clearance`, proxy) — cukup kirim sinyal yang memang sah.
+ * proteksi (spoof `cf_clearance`, proxy), cukup kirim sinyal yang memang sah.
  */
 const BROWSER_NAV_HEADERS: Record<string, string> = {
   "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -244,7 +244,7 @@ export function interpretSsoPrimeResponse(
  *
  * ⚠️  Redirect diikuti **MANUAL** (`redirect: "manual"`), bukan `"follow"`.
  * Dengan `"follow"`, cookie `set-cookie` di balik respons `3xx` perantara
- * HILANG — padahal cookie sesi inilah yang wajib dibawa ke langkah (3); tanpa
+ * HILANG, padahal cookie sesi inilah yang wajib dibawa ke langkah (3); tanpa
  * itu SSO melihat kita anonim. Tiap hop juga membawa header navigasi browser
  * yang sah (`sec-fetch-*`, `Accept-Language`, `Referer`) agar WAF tidak
  * membedakan permintaan server dari kunjungan browser (penyebab `403`).
@@ -279,7 +279,7 @@ export async function primeSsoSession(opts: {
   try {
     // ⚠️  Ikuti redirect SECARA MANUAL (`redirect: "manual"`), bukan `"follow"`.
     // Alasannya: saat `"follow"`, cookie `set-cookie` yang dikirim di balik
-    // respons `3xx` perantara HILANG — padahal cookie sesi itulah yang wajib
+    // respons `3xx` perantara HILANG, padahal cookie sesi itulah yang wajib
     // dibawa ke langkah (3). Klien referensi pun mengikuti redirect manual dan
     // menyimpan cookie tiap hop. `Referer` juga di-update tiap hop (sah: browser
     // mengirim `Referer` halaman sebelumnya).

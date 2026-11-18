@@ -11,7 +11,7 @@ export type PesanLogin = { judul: string; detail: string };
  *
  * Kenapa perlu peta ini: Auth.js memakai beberapa kode berbeda untuk kegagalan
  * yang berbeda pula, dan sebelumnya SEMUANYA jatuh ke satu pesan "Email atau
- * password salah" — termasuk kasus yang bukan salah pengguna (CSRF kedaluwarsa,
+ * password salah", termasuk kasus yang bukan salah pengguna (CSRF kedaluwarsa,
  * server tidak siap), sehingga pengguna dibuat bingung. Kode yang tidak dikenal
  * tetap punya pesan cadangan yang jujur.
  */
@@ -71,7 +71,7 @@ export const PESAN_CADANGAN: PesanLogin = {
  *
  * Auth.js memakai satu kode umum untuk semua kegagalan jalur kata sandi, lalu
  * menambahkan kode rinci. Tanpa peta ini, kegagalan pemeriksaan keamanan akan
- * tampil sebagai "email atau password salah" — menyesatkan, karena keduanya
+ * tampil sebagai "email atau password salah", menyesatkan, karena keduanya
  * belum tentu salah.
  */
 export const PESAN_KODE_KREDENSIAL: Record<string, PesanLogin> = {

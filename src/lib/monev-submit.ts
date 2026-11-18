@@ -273,13 +273,13 @@ export async function submitReport(
 }
 
 // ---------------------------------------------------------------------------
-// Cek duplikasi (RB-03), `GET /api/v1/daily-logs` — SPEC.md §11B, MONEV-API §8.2
+// Cek duplikasi (RB-03), `GET /api/v1/daily-logs`, SPEC.md §11B, MONEV-API §8.2
 // ---------------------------------------------------------------------------
 //
 // KENAPA ini ada: portal Monev TIDAK menolak submit ulang untuk tanggal yang
 // sudah diisi lewat UI portal (jalur manual pengguna). Ia hanya membalas `409`
 // bila ENDPOINT API ini dipanggil dua kali. Akibatnya, kalau kita mengandalkan
-// `409` saja, cron bisa MENIMPA laporan yang sudah diisi manual — kejadian nyata
+// `409` saja, cron bisa MENIMPA laporan yang sudah diisi manual, kejadian nyata
 // terlihat di audit (laporan manual 18:00 tertimpa cron 18:52).
 //
 // Aturan tegas dari MONEV-API §12.6:
@@ -381,7 +381,7 @@ export function interpretDailyLogs(
  * Putuskan boleh-kirim berdasarkan hasil pra-cek. MURNI.
  *
  * Kebijakan default: HANYA `ABSENT` yang mengizinkan kirim. `EXISTS` jelas
- * membatalkan; `UNKNOWN` juga membatalkan — lebih baik melewatkan sehari
+ * membatalkan; `UNKNOWN` juga membatalkan, lebih baik melewatkan sehari
  * daripada menimpa laporan yang sudah ada (laporan besok tetap bisa dikirim).
  */
 export function duplicateGuardAllows(presence: DailyLogPresence): boolean {
@@ -393,7 +393,7 @@ export function duplicateGuardAllows(presence: DailyLogPresence): boolean {
  *
  * Bentuk amplop responsnya belum sepenuhnya terekam, jadi penafsiran diserahkan
  * ke `interpretDailyLogs` yang toleran. Kegagalan apa pun → `UNKNOWN`, BUKAN
- * `ABSENT`: jangan pernah melanjutkan kirim hanya karena cek-nya gagal — itu
+ * `ABSENT`: jangan pernah melanjutkan kirim hanya karena cek-nya gagal, itu
  * justru jalan menuju penimpaan.
  */
 export async function checkDailyLogExists(
@@ -516,7 +516,7 @@ export function interpretRefreshResponse(
     };
   }
 
-  // Refresh token BARU (rotasi) — diambil sekali, dipakai di setiap cabang OK.
+  // Refresh token BARU (rotasi), diambil sekali, dipakai di setiap cabang OK.
   // Cookie refresh yang nilai kosong (Max-Age=0) = penghapusan, bukan token
   // baru; helper mengabaikannya.
   const rotatedRefreshToken =

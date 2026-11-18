@@ -86,7 +86,7 @@ export function templateStatusTone(row: {
 
 /** Ringkas data pengguna untuk kolom tabel admin. */
 export interface AdminUserRow {
-  /** Id user — dipakai tombol aksi (reset/hapus) untuk menyebut sasaran. */
+  /** Id user, dipakai tombol aksi (reset/hapus) untuk menyebut sasaran. */
   id: string;
   email: string;
   name: string | null;

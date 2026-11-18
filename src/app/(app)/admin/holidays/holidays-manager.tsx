@@ -35,9 +35,20 @@ import { formatHolidayDate, weekdayLabelOf } from "./format";
 
 type Props = {
   initialRows: HolidayRow[];
-  /** Hari ini (WIB) sebagai `YYYY-MM-DD`, dari server — untuk menandai lewat. */
+  /** Hari ini (WIB) sebagai `YYYY-MM-DD`, dari server, untuk menandai lewat. */
   today: string;
 };
+
+/**
+ * Kelas kepala kolom tabel.
+ *
+ * Huruf kecil renggang seperti judul kolom pada buku besar: kepala kolom
+ * memberi tahu ISI kolom, bukan bersaing dengan angka di bawahnya. Karena
+ * dipakai belasan kali per berkas, disimpan sebagai konstanta supaya tidak
+ * ada satu pun kepala kolom yang tertinggal gaya lamanya.
+ */
+const TH_CLASS =
+  "p-3 font-heading text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase";
 
 export function HolidaysManager({ initialRows, today }: Props) {
   const router = useRouter();
@@ -46,7 +57,7 @@ export function HolidaysManager({ initialRows, today }: Props) {
   // Daftar ditampilkan LANGSUNG dari `initialRows` (data server). Setelah
   // tambah/ubah/hapus kami memanggil `router.refresh()`; karena halaman memberi
   // `key` pada komponen ini dari data server, komponen dipasang ulang dengan
-  // daftar terbaru. Jadi tidak ada state lokal yang perlu diselaraskan manual —
+  // daftar terbaru. Jadi tidak ada state lokal yang perlu diselaraskan manual
   // sumber tunggalnya tetap server.
   const rows = initialRows;
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -105,7 +116,7 @@ export function HolidaysManager({ initialRows, today }: Props) {
       }
       toast.success(
         editingId ? "Libur diperbarui" : "Libur ditambahkan",
-        `${payload.date} — ${payload.name}`,
+        `${payload.date}: ${payload.name}`,
       );
       reset();
       router.refresh();
@@ -131,7 +142,7 @@ export function HolidaysManager({ initialRows, today }: Props) {
         toast.error("Gagal menghapus", data?.error ?? "Terjadi kesalahan.");
         return;
       }
-      toast.success("Libur dihapus", `${hapus.date} — ${hapus.name}`);
+      toast.success("Libur dihapus", `${hapus.date}: ${hapus.name}`);
       // Bila yang dihapus sedang diedit, bersihkan form.
       if (editingId === hapus.id) reset();
       router.refresh();
@@ -164,7 +175,7 @@ export function HolidaysManager({ initialRows, today }: Props) {
                   // memilih Sabtu/Minggu atau tanggal mundur untuk didaftarkan.
                   unrestricted
                 />
-                <span className="text-xs text-foreground/60">
+                <span className="text-xs text-muted-foreground">
                   Pilih hari kerja (Sabtu/Minggu sudah otomatis libur).
                 </span>
               </div>
@@ -195,12 +206,11 @@ export function HolidaysManager({ initialRows, today }: Props) {
               </div>
 
               {/* Tombol aksi menyatu di baris field yang sama dan sejajar
-                  dengan garis input (self-end) — jadi "+" tampak sejajar
+                  dengan garis input (self-end), jadi "+" tampak sejajar
                   Tanggal/Nama libur/Jenis, bukan menggantung di bawahnya. */}
               <div className="flex flex-row flex-wrap items-center gap-2 self-end sm:col-start-1">
                 <Button
                   type="submit"
-                  variant="success"
                   size="icon-sm"
                   disabled={working}
                   title={editingId ? "Simpan perubahan" : "Tambah libur"}
@@ -243,14 +253,14 @@ export function HolidaysManager({ initialRows, today }: Props) {
         </CardHeader>
         <CardContent>
           {rows.some((r) => isSeedHolidayId(r.id)) ? (
-            <p className="mb-3 text-sm text-foreground/70">
+            <p className="mb-3 text-sm text-muted-foreground">
               Daftar masih memakai <strong>libur nasional bawaan</strong>. Tambah
-              satu tanggal di atas untuk mulai mengelola daftar sendiri — baris
+              satu tanggal di atas untuk mulai mengelola daftar sendiri, baris
               bawaan akan digantikan oleh data yang Anda kelola.
             </p>
           ) : null}
           {rows.length === 0 ? (
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-muted-foreground">
               Belum ada tanggal libur yang didaftarkan. Sabtu &amp; Minggu tetap
               otomatis libur tanpa perlu didaftarkan di sini.
             </p>
@@ -263,12 +273,12 @@ export function HolidaysManager({ initialRows, today }: Props) {
             >
               <table className="w-full min-w-[36rem] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-border/60">
-                    <th className="p-3 font-heading">Tanggal</th>
-                    <th className="p-3 font-heading">Hari</th>
-                    <th className="p-3 font-heading">Nama</th>
-                    <th className="p-3 font-heading">Jenis</th>
-                    <th className="p-3 font-heading">Aksi</th>
+                  <tr className="border-b-2 border-border">
+                    <th className={TH_CLASS}>Tanggal</th>
+                    <th className={TH_CLASS}>Hari</th>
+                    <th className={TH_CLASS}>Nama</th>
+                    <th className={TH_CLASS}>Jenis</th>
+                    <th className={TH_CLASS}>Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -277,28 +287,28 @@ export function HolidaysManager({ initialRows, today }: Props) {
                     return (
                       <tr
                         key={row.id}
-                        className="border-b border-border/40 align-middle last:border-b-0"
+                        className="border-b border-border align-middle last:border-b-0"
                       >
                         <td className="p-3">
                           <span className="font-heading text-sm">
                             {formatHolidayDate(row.date)}
                           </span>
                           {lewat ? (
-                            <span className="ml-2 text-xs text-foreground/50">
+                            <span className="ml-2 text-xs text-muted-foreground">
                               (sudah lewat)
                             </span>
                           ) : null}
                         </td>
-                        <td className="p-3 text-sm text-foreground/70">
+                        <td className="p-3 text-sm text-muted-foreground">
                           {weekdayLabelOf(row.date)}
                         </td>
                         <td className="p-3 text-sm">{row.name}</td>
-                        <td className="p-3 text-sm text-foreground/70">
+                        <td className="p-3 text-sm text-muted-foreground">
                           {row.kind}
                         </td>
                         <td className="p-3">
                           {isSeedHolidayId(row.id) ? (
-                            <span className="text-xs text-foreground/60">
+                            <span className="text-xs text-muted-foreground">
                               Bawaan sistem
                             </span>
                           ) : (

@@ -18,7 +18,7 @@ import {
 /** Baris tanggal "Terakhir diperbarui". */
 export function LastUpdated({ date }: { date: string }) {
   return (
-    <p className="text-xs text-foreground/60">Terakhir diperbarui: {date}</p>
+    <p className="text-xs text-muted-foreground">Terakhir diperbarui: {date}</p>
   );
 }
 
@@ -37,7 +37,7 @@ export function Section({
       <h2 className="font-heading text-lg">
         {nomor}. {judul}
       </h2>
-      <div className="space-y-2 text-sm leading-relaxed text-foreground/80">
+      <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
         {children}
       </div>
     </section>
@@ -52,14 +52,14 @@ export function Section({
 export function ContactBlock() {
   if (CONTACT_EMAIL_IS_PLACEHOLDER) {
     return (
-      <p className="text-sm leading-relaxed text-foreground/80">
+      <p className="text-sm leading-relaxed text-muted-foreground">
         Hubungi pengelola melalui halaman repositori proyek ini. Alamat email
         kontak akan ditambahkan sebelum situs dipublikasikan secara luas.
       </p>
     );
   }
   return (
-    <p className="text-sm leading-relaxed text-foreground/80">
+    <p className="text-sm leading-relaxed text-muted-foreground">
       Pertanyaan tentang privasi atau syarat ini bisa dikirim ke{" "}
       <a
         href={`mailto:${CONTACT_EMAIL}`}
@@ -83,7 +83,7 @@ export function LegalPage({
 }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+      <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
             <CalendarCheck className="size-4" />
@@ -92,7 +92,7 @@ export function LegalPage({
             <span className="font-heading text-sm leading-tight">
               {SITE_NAME}
             </span>
-            <span className="text-[10px] leading-none text-foreground/60">
+            <span className="text-[0.6875rem] leading-none text-muted-foreground">
               Attendance &amp; Reports
             </span>
           </span>
@@ -107,17 +107,19 @@ export function LegalPage({
       </header>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
-        <h1 className="mb-2 text-2xl font-heading sm:text-3xl">{judul}</h1>
-        <p className="mb-8 text-sm leading-relaxed text-foreground/70">
+        <h1 className="text-3xl leading-[1.05] font-heading sm:text-4xl">
+          {judul}
+        </h1>
+        <p className="mt-3 mb-8 border-b-2 border-border pb-5 text-sm leading-relaxed text-muted-foreground">
           {ringkas}
         </p>
         <div className="space-y-8">{children}</div>
       </main>
 
       <footer className="pb-safe border-t-2 border-border bg-secondary-background px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 text-xs text-foreground/60 sm:flex-row">
+        <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
           <span>
-            {SITE_NAME} — untuk peserta magang Kemnaker
+            {SITE_NAME}: untuk peserta magang Kemnaker
           </span>
           <div className="flex items-center gap-4">
             <Link href="/privacy" className="transition-colors hover:text-foreground">

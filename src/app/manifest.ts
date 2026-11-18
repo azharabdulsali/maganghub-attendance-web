@@ -1,7 +1,7 @@
 // src/app/manifest.ts: web app manifest (audit T-5).
 //
 // Efek praktisnya: saat pengguna "Tambahkan ke Layar Utama" di Android, situs
-// muncul sebagai aplikasi dengan nama, ikon, dan warna tema yang benar — bukan
+// muncul sebagai aplikasi dengan nama, ikon, dan warna tema yang benar, bukan
 // pintasan generik berjudul URL. Di sisi SEO, manifest juga membantu Google
 // menampilkan nama situs yang konsisten.
 //
@@ -15,7 +15,7 @@ import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${SITE_NAME} — Otomatisasi Presensi & Laporan Magang`,
+    name: `${SITE_NAME}: Otomatisasi Presensi & Laporan Magang`,
     short_name: SITE_NAME,
     description: SITE_DESCRIPTION,
     start_url: "/",

@@ -4,9 +4,10 @@ import {
   BookOpen,
   BookText,
   CalendarCheck,
+  ChevronRight,
   Clock,
   KeyRound,
-  Lock,
+  LayoutDashboard,
   LogIn,
   Plus,
   Send,
@@ -14,17 +15,28 @@ import {
   Timer,
   UserPlus,
 } from "lucide-react";
+import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { LandingReportSheet } from "@/components/landing-report-sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { JsonLd } from "@/components/json-ld";
 import FooterComponent01 from "@/components/shadcn-studio/blocks/footer-component-01/footer-component-01";
+import { recentWorkingDays } from "@/lib/landing-sheet-dates";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, FAQ_ITEMS } from "@/lib/site";
+import { todayInJakarta } from "@/lib/submit-service";
 
 // Landing PUBLIK di "/". Halaman ini SELALU tampil untuk siapa pun, termasuk
 // yang sudah login, supaya "/" tetap bisa dipakai sebagai halaman penjelasan
 // aplikasi. Karena itu TIDAK ada redirect ke /dashboard di sini; jangan
 // menambahkannya kembali (dulu sempat ada dan membuat "/" tak bisa dibuka
 // setelah logout). Lihat SPEC.md §5.8.
+//
+// Sesi hanya dibaca untuk MENGUBAH TOMBOL, bukan untuk mengalihkan halaman:
+// pengguna yang sudah masuk melihat "Dashboard" di kanan atas (bukan
+// Masuk/Daftar), sehingga ia tidak mengira sesinya hilang. Membaca sesi tidak
+// membuat halaman ini lebih mahal, root layout sudah dinamis karena cookie
+// `tema`, dan auth() di sini memakai jalur yang sama dengan semua halaman
+// terlindungi.
 //
 // Isi halaman ini hanya menyebut fitur yang BENAR-BENAR ada (SPEC.md §1):
 // kredensial terenkripsi, 3 template, mode manual/terjadwal, REST API.
@@ -36,12 +48,66 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, FAQ_ITEMS } from "@/lib/site";
 // git bersifat opsional, jadi tidak dijadikan janji utama di halaman ini; detail
 // lengkapnya ada di /docs dan /panduan. Lihat SPEC.md §3 & §13.
 
-// Statistik di hero, semua angka ini benar dan dapat ditelusuri ke SPEC.
+// Statistik di bawah hero. Semua angka ini benar dan dapat ditelusuri ke SPEC
+// (3 kolom laporan, 100 karakter minimum, token akses 6 jam, AES-256-GCM).
 const STATISTIK = [
-  { nilai: "3 Bagian", label: "Template laporan siap pakai" },
-  { nilai: ">100", label: "Karakter wajib per kolom" },
-  { nilai: "<2 dtk", label: "Kirim langsung dari server" },
-  { nilai: "AES-256", label: "Enkripsi kredensial Monev" },
+  { nilai: "3", label: "Kolom laporan" },
+  { nilai: "100+", label: "Karakter per kolom" },
+  { nilai: "6 jam", label: "Token akses" },
+  { nilai: "AES-256", label: "Enkripsi kredensial" },
+];
+
+// Isi contoh pada lembar laporan di hero. Ditulis sebagai laporan magang yang
+// wajar, bukan kalimat pemasaran: pembaca harus langsung mengenali tiga kolom
+// yang sama dengan yang ia isi di portal.
+//
+// TIGA set, bukan satu: lembar di hero bisa diketuk untuk berganti isi, dan
+// tiap set dipasangkan dengan tanggal hari kerja yang berbeda (lihat
+// `recentWorkingDays`). Satu hari tidak mungkin punya tiga laporan berbeda,
+// jadi tanggalnya memang harus ikut berganti.
+const CONTOH_LEMBAR = [
+  [
+    {
+      label: "Uraian aktivitas",
+      isi: "Merapikan modul presensi dan menambah validasi tanggal pada form.",
+    },
+    {
+      label: "Pembelajaran",
+      isi: "Memahami alur data dari form sampai tersimpan di database.",
+    },
+    {
+      label: "Kendala",
+      isi: "Server uji sempat mati saat pengujian, diganti ke lingkungan lokal.",
+    },
+  ],
+  [
+    {
+      label: "Uraian aktivitas",
+      isi: "Membuat halaman riwayat laporan dengan filter tanggal dan status kirim.",
+    },
+    {
+      label: "Pembelajaran",
+      isi: "Belajar memisahkan query database dari komponen tampilan.",
+    },
+    {
+      label: "Kendala",
+      isi: "Data contoh belum lengkap, jadi filter status belum bisa diuji penuh.",
+    },
+  ],
+  [
+    {
+      label: "Uraian aktivitas",
+      isi: "Menambahkan pengingat harian dan memperbaiki tata letak di layar kecil.",
+    },
+    {
+      label: "Pembelajaran",
+      isi: "Memahami cara kerja jadwal otomatis dan batas waktu zona WIB.",
+    },
+    {
+      label: "Kendala",
+      isi: "Notifikasi uji masuk terlambat karena jam server beda dari jam lokal.",
+    },
+  ],
 ];
 
 const FITUR = [
@@ -178,7 +244,37 @@ const SCHEMA_FAQ = {
   })),
 };
 
-export default function Home() {
+export default async function Home() {
+  // Gagal baca sesi (mis. database sedang tidak terjangkau) TIDAK boleh
+  // menjatuhkan halaman publik: landing tetap tampil sebagai pengunjung biasa,
+  // bukan halaman galat. Sama seperti tombol yang tidak tahu ada sesi.
+  let sudahMasuk = false;
+  try {
+    sudahMasuk = Boolean((await auth())?.user);
+  } catch {
+    sudahMasuk = false;
+  }
+
+  // Tanggal pada lembar contoh memakai WIB, sama dengan zona waktu yang dipakai
+  // seluruh aplikasi saat memutuskan "hari ini". `todayInJakarta` dipakai ulang
+  // (bukan `toISOString`) supaya di server UTC pun tanggalnya tidak meleset
+  // sehari antara pukul 00:00–07:00 WIB.
+  const fmtTanggal = new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  // Tiga lembar = tiga hari kerja terakhir, bukan tiga kali "hari ini".
+  const tanggalLembar = recentWorkingDays(todayInJakarta(), CONTOH_LEMBAR.length);
+  const lembar = CONTOH_LEMBAR.map((kolom, i) => ({
+    // `new Date("YYYY-MM-DD")` = tengah malam UTC, jadi saat diformat ke WIB
+    // tetap tanggal yang sama (07:00 WIB), tidak bergeser sehari.
+    tanggal: fmtTanggal.format(new Date(tanggalLembar[i])),
+    kolom,
+  }));
+
   return (
     <div className="flex min-h-dvh flex-col">
       <JsonLd id="schema-software-application" data={SCHEMA_APLIKASI} />
@@ -186,7 +282,7 @@ export default function Home() {
       <JsonLd id="schema-faq" data={SCHEMA_FAQ} />
       {/* Bilah atas sederhana: brand + tautan masuk/daftar.
           `pt-safe pl-safe pr-safe`: hindari poni di iPhone landscape. */}
-      <header className="pt-safe pl-safe pr-safe sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+      <header className="pt-safe pl-safe pr-safe sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
             <CalendarCheck className="size-4" />
@@ -195,8 +291,8 @@ export default function Home() {
             <span className="font-heading text-sm leading-tight">
               MagangHub Autoabsen
             </span>
-            <span className="text-[10px] leading-none text-foreground/60">
-              Attendance &amp; Reports
+            <span className="text-[0.6875rem] leading-none text-muted-foreground">
+              Absensi &amp; laporan
             </span>
           </span>
         </Link>
@@ -211,174 +307,207 @@ export default function Home() {
             <BookOpen />
             Dokumentasi
           </Button>
-          <Button
-            variant="neutral"
-            size="sm"
-            render={<Link href="/login" />}
-            title="Masuk"
-            aria-label="Masuk"
-          >
-            <LogIn aria-hidden />
-            Masuk
-          </Button>
-          <Button
-            size="sm"
-            variant="success"
-            render={<Link href="/register" />}
-            title="Daftar"
-            aria-label="Daftar"
-          >
-            <UserPlus aria-hidden />
-            Daftar
-          </Button>
+          {sudahMasuk ? (
+            <Button
+              size="sm"
+              render={<Link href="/dashboard" />}
+              title="Buka dashboard"
+              aria-label="Buka dashboard"
+            >
+              <LayoutDashboard aria-hidden />
+              Dashboard
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="neutral"
+                size="sm"
+                render={<Link href="/login" />}
+                title="Masuk"
+                aria-label="Masuk"
+              >
+                <LogIn aria-hidden />
+                Masuk
+              </Button>
+              <Button
+                size="sm"
+                render={<Link href="/register" />}
+                title="Daftar"
+                aria-label="Daftar"
+              >
+                <UserPlus aria-hidden />
+                Daftar
+              </Button>
+            </>
+          )}
         </nav>
       </header>
 
-      {/* Pahlawan (hero) + statistik. */}
-      <section className="relative overflow-hidden border-b-2 border-border px-4 pt-10 pb-12 sm:px-6 sm:pt-16 sm:pb-20 lg:px-8">
-        <div className="mx-auto max-w-4xl space-y-6 text-center">
-          <p className="inline-flex items-center gap-2 rounded-full border-2 border-border bg-main px-3 py-1 text-xs font-heading uppercase tracking-wider text-main-foreground">
-            <span className="size-1.5 rounded-full bg-main-foreground" />
-            Asisten logbook magang • tanpa browser
-          </p>
-          <h1 className="text-3xl leading-tight font-heading sm:text-4xl md:text-5xl">
-            Otomatisasi presensi &amp; laporan{" "}
-            {/* `text-foreground`, BUKAN `text-main-foreground`: yang terakhir
-                disetel untuk teks di atas aksen biru (`bg-main`), dan di mode
-                gelap nilainya nyaris hitam (#1c1c1c). Di sini latarnya kanvas
-                gelap, jadi teks itu praktis tak terlihat. `--foreground` sudah
-                benar di kedua tema (hitam di terang, off-white di gelap). */}
-            <span className="text-foreground">MagangHub Kemnaker</span>
-          </h1>
-          <p className="mx-auto max-w-2xl text-sm text-foreground/80 sm:text-base">
-            Simpan tiga template laporan sekali, lalu biarkan aplikasi mengirim
-            presensi dan laporan harian ke portal Monev dari server. Bisa Anda
-            kirim manual satu klik saat siap, bisa juga terjadwal otomatis tiap
-            sore, tanpa menyalakan komputer dan tanpa biaya bulanan.
-          </p>
+      {/* Pahlawan (hero). Teks di kiri, "benda" yang dijual aplikasi ini di
+          kanan: lembar laporan harian yang sudah berstempel. Lembar itu dipakai
+          sebagai panggung utama karena inilah artefak yang benar-benar dikirim
+          ke portal, bukan angka besar atau ilustrasi dekoratif.
 
-          <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto"
-              render={<Link href="/register" />}
-            >
-              <span>Mulai gratis</span>
-              <ArrowRight className="size-4" />
-            </Button>
-            <Button
-              size="lg"
-              variant="neutral"
-              className="w-full sm:w-auto"
-              render={<Link href="/login" />}
-              title="Saya sudah punya akun"
-              aria-label="Saya sudah punya akun"
-            >
-              <LogIn aria-hidden />
-              Saya sudah punya akun
-            </Button>
+          Latar tetap rata (tanpa gradien) dan lekukan tetap `rounded-base`.
+          Kedalaman dibangun dari tiga hal yang semuanya datar: dua lembar
+          kertas di belakang (tumpukan), sudut kanan-bawah terlipat, dan
+          kemiringan mengikuti kursor (`Tilt`). Rinciannya di DESIGN.md. */}
+      <section className="border-b-2 border-border px-4 pt-12 pb-14 sm:px-6 sm:pt-16 sm:pb-20 lg:px-8">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16">
+          <div>
+            <p className="font-heading text-xs tracking-[0.14em] text-muted-foreground uppercase">
+              Presensi &amp; logbook magang
+            </p>
+            <h1 className="mt-3 max-w-2xl font-heading text-4xl leading-[0.98] sm:text-5xl lg:text-6xl">
+              Tulis sekali. Terkirim tiap hari.
+            </h1>
+            <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground">
+              Tiga kolom laporan (Uraian Aktivitas, Pembelajaran, Kendala) cukup
+              diisi satu kali. Setelah itu laporan harian terkirim dengan satu
+              klik atau lewat jadwal otomatis, tanpa membuka portal Monev di
+              browser.
+            </p>
+            <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span>Gratis</span>
+              <span aria-hidden className="size-1 bg-border" />
+              <span>Tanpa ekstensi browser</span>
+              <span aria-hidden className="size-1 bg-border" />
+              <span>Kredensial terenkripsi</span>
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              {sudahMasuk ? (
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  render={<Link href="/dashboard" />}
+                  title="Buka dashboard"
+                  aria-label="Buka dashboard"
+                >
+                  <LayoutDashboard className="size-5" aria-hidden />
+                  <span>Buka dashboard</span>
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    render={<Link href="/register" />}
+                  >
+                    <span>Buat akun gratis</span>
+                    <ArrowRight className="size-4" aria-hidden />
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="neutral"
+                    className="w-full sm:w-auto"
+                    render={<Link href="/login" />}
+                    title="Masuk ke akun yang sudah ada"
+                    aria-label="Masuk ke akun yang sudah ada"
+                  >
+                    <LogIn aria-hidden />
+                    Saya sudah punya akun
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
-          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2.5 pt-6 text-left sm:grid-cols-4 sm:gap-3">
-            {STATISTIK.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-base border-2 border-border bg-secondary-background p-3"
-              >
-                <div className="font-mono text-base font-heading sm:text-lg">
-                  {item.nilai}
-                </div>
-                <div className="text-[10px] text-foreground/60 sm:text-[11px]">
-                  {item.label}
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Lembar laporan = satu-satunya "benda" di halaman ini, jadi ia yang
+              diberi kedalaman. Seluruh isinya (tumpukan, cap, sudut terlipat)
+              ada di `LandingReportSheet` karena lembar ini bisa DIKETUK untuk
+              berganti contoh — itu butuh status di peramban, sedangkan halaman
+              ini komponen server. Teksnya tetap dikirim dari sini sebagai data,
+              jadi tidak ada isi laporan yang ditulis ulang di komponen klien. */}
+          <LandingReportSheet lembar={lembar} fakta={STATISTIK} />
         </div>
       </section>
 
       <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        {/* Fitur-fitur utama. */}
-        <section id="fitur" className="mb-14 scroll-mt-20 sm:mb-20">
-          <div className="mx-auto mb-8 max-w-xl space-y-2 text-center">
-            <h2 className="text-2xl font-heading sm:text-3xl">
-              Solusi agar absen dan logbook tidak pernah terlewat
+        {/* Fitur. Daftar bergaris, bukan enam kartu sejajar: isinya enam hal
+            berbeda dengan bobot berbeda, dan kartu seragam membuat semuanya
+            tampak sederajat. Garis atas tiap baris memisahkan tanpa menambah
+            kotak baru. */}
+        <section id="fitur" className="mb-16 scroll-mt-20 sm:mb-24">
+          <div className="mb-8 grid gap-4 border-t-2 border-border pt-5 sm:grid-cols-2 sm:items-end sm:gap-12">
+            <h2 className="font-heading text-3xl leading-[1.05] sm:text-4xl">
+              Yang dikerjakan aplikasi ini
             </h2>
-            <p className="text-sm text-foreground/80">
-              Bukan sekadar bot. Ini asisten yang membantu menjaga absensi dan
-              penilaian magang Anda tetap aman.
+            <p className="max-w-md text-sm leading-relaxed text-muted-foreground sm:justify-self-end">
+              Semuanya berjalan dari server. Portal Monev tetap menerima
+              laporan seperti biasa, Anda tidak perlu membukanya.
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-x-12 sm:grid-cols-2">
             {FITUR.map((item) => (
               <article
                 key={item.judul}
-                className="rounded-base border-2 border-border bg-secondary-background p-5 shadow-shadow transition-transform hover:-translate-y-0.5"
+                className="flex gap-4 border-t-2 border-border py-5"
               >
-                <span className="mb-3 inline-flex size-9 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
-                  <item.icon className="size-4" />
-                </span>
-                <h3 className="mb-2 font-heading">{item.judul}</h3>
-                <p className="text-sm text-foreground/80">{item.isi}</p>
+                <item.icon
+                  className="mt-0.5 size-5 shrink-0 text-main"
+                  aria-hidden
+                />
+                <div>
+                  <h3 className="font-heading text-lg">{item.judul}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {item.isi}
+                  </p>
+                </div>
               </article>
             ))}
           </div>
         </section>
 
-        {/* Cara kerja, tiga langkah. */}
-        <section
-          id="alur"
-          className="mb-14 scroll-mt-20 rounded-base border-2 border-border bg-secondary-background/60 p-6 sm:mb-20 sm:p-10"
-        >
-          <div className="mx-auto mb-8 max-w-xl space-y-2 text-center">
-            <h2 className="text-2xl font-heading sm:text-3xl">
-              Alur singkat tiga langkah
+        {/* Cara kerja. Nomor di sini benar-benar urutan, jadi penanda bernomor
+            dibenarkan. Nomornya ditaruh di parit kiri sebagai angka besar
+            (bukan label "LANGKAH 01") supaya tidak ada dua kali pengulangan
+            informasi yang sama. */}
+        <section id="alur" className="mb-16 scroll-mt-20 sm:mb-24">
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-12">
+            <h2 className="font-heading text-3xl leading-[1.05] sm:text-4xl">
+              Tiga langkah sampai laporan masuk
             </h2>
-            <p className="text-sm text-foreground/80">
-              Dari mengisi template sampai laporan masuk ke portal Monev.
+            <p className="max-w-xs text-sm leading-relaxed text-muted-foreground sm:text-right">
+              Sekali saja di awal. Setelah itu pengiriman harian berjalan tanpa
+              mengetik ulang.
             </p>
           </div>
-          <ol className="grid gap-4 sm:grid-cols-3">
+          <ol className="grid gap-6 sm:grid-cols-3 sm:gap-8">
             {LANGKAH.map((item) => (
-              <li
-                key={item.nomor}
-                className="rounded-base border-2 border-border bg-background p-5 shadow-shadow"
-              >
-                <div className="mb-2 font-mono text-xs font-heading text-foreground/60">
-                  LANGKAH {item.nomor}
-                </div>
-                <h3 className="mb-2 font-heading">{item.judul}</h3>
-                <p className="text-sm text-foreground/80">{item.isi}</p>
+              <li key={item.nomor} className="border-t-2 border-border pt-4">
+                <p className="font-heading text-4xl leading-none tabular-nums text-main">
+                  {item.nomor}
+                </p>
+                <h3 className="mt-3 font-heading text-lg">{item.judul}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {item.isi}
+                </p>
               </li>
             ))}
           </ol>
         </section>
 
-        {/* Keamanan & batasan, dua kolom: janji di kiri, kejujuran di kanan. */}
-        <section className="mb-14 grid gap-4 rounded-base border-2 border-border bg-secondary-background p-6 shadow-shadow sm:mb-20 sm:grid-cols-2 sm:gap-6 sm:p-8">
+        {/* Keamanan & batasan, dua kolom dengan satu garis pemisah. Dua kartu
+            bersarang di dalam panel hanya menambah bingkai tanpa menambah
+            arti. */}
+        <section className="mb-16 grid gap-6 border-2 border-border bg-secondary-background p-6 sm:mb-24 sm:grid-cols-2 sm:gap-10 sm:p-8">
           <div>
-            <span className="mb-3 inline-flex size-10 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
-              <Lock className="size-5" />
-            </span>
-            <h2 className="mb-2 font-heading">Data Anda terjaga</h2>
-            <p className="text-sm text-foreground/80">
-              Password Monev Anda dienkripsi AES-256-GCM sebelum disimpan, dan
-              tidak ada satu pun catatan sistem maupun balasan server yang
-              memuat kata sandi. Pengiriman otomatis juga bisa Anda matikan
-              kapan saja.
+            <h2 className="font-heading text-2xl">Data Anda terjaga</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Password Monev dienkripsi AES-256-GCM sebelum disimpan. Tidak ada
+              catatan sistem maupun balasan server yang memuat kata sandi, dan
+              pengiriman otomatis bisa Anda matikan kapan saja.
             </p>
           </div>
-          <div className="rounded-base border-2 border-border bg-background p-5">
-            <span className="mb-3 inline-flex size-10 items-center justify-center rounded-base border-2 border-border bg-background">
-              <ShieldCheck className="size-5" />
-            </span>
-            <h2 className="mb-2 font-heading">Yang tidak kami klaim</h2>
-            <ul className="space-y-2 text-sm text-foreground/80">
+          <div className="border-t-2 border-border pt-6 sm:border-t-0 sm:border-l-2 sm:pt-0 sm:pl-10">
+            <h2 className="font-heading text-2xl">Yang tidak kami klaim</h2>
+            <ul className="mt-2 space-y-2 text-sm leading-relaxed text-muted-foreground">
               {BATASAN.map((item) => (
                 <li key={item} className="flex gap-2">
                   <span
                     aria-hidden="true"
-                    className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
+                    className="mt-1.5 size-1.5 shrink-0 bg-border"
                   />
                   <span>{item}</span>
                 </li>
@@ -387,29 +516,43 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Panduan, pintasan ke halaman dashboard yang memang ada. */}
-        <section id="panduan" className="mb-14 scroll-mt-20 sm:mb-20">
-          <div className="mx-auto mb-8 max-w-xl space-y-2 text-center">
-            <h2 className="text-2xl font-heading sm:text-3xl">
-              Panduan setup praktis
-            </h2>
-            <p className="text-sm text-foreground/80">
-              Setelah masuk, semuanya bisa Anda atur dari dashboard dalam
-              beberapa menit.
-            </p>
+        {/* Panduan: satu panel bergaris, bukan empat kartu tautan. Tautannya
+            tetap jelas karena seluruh baris bisa diklik dan diberi sorotan
+            latar saat ditunjuk. */}
+        <section id="panduan" className="mb-16 scroll-mt-20 sm:mb-24">
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-12">
+            <div>
+              <h2 className="font-heading text-3xl leading-[1.05] sm:text-4xl">
+                Setelah masuk, atur dari sini
+              </h2>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Empat halaman ini cukup untuk menyiapkan semuanya.
+              </p>
+            </div>
+            <Link
+              href="/panduan"
+              className="inline-flex shrink-0 items-center gap-1.5 font-heading text-sm underline decoration-2 underline-offset-4 hover:decoration-4"
+            >
+              Baca panduan lengkap
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="max-w-3xl border-2 border-border">
             {PANDUAN.map((item) => (
               <Link
                 key={item.judul}
                 href={item.href}
-                className="group rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow transition-colors hover:bg-main hover:text-main-foreground"
+                className="group flex items-center gap-4 border-t-2 border-border px-4 py-4 first:border-t-0 hover:bg-secondary-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
               >
-                <div className="mb-1.5 flex items-center gap-2 font-heading text-sm">
-                  <item.icon className="size-4" />
-                  {item.judul}
+                <item.icon className="size-5 shrink-0 text-main" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading text-base">{item.judul}</p>
+                  <p className="text-sm text-muted-foreground">{item.isi}</p>
                 </div>
-                <p className="text-sm text-foreground/80 group-hover:text-main-foreground/80">{item.isi}</p>
+                <ChevronRight
+                  className="size-4 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
               </Link>
             ))}
           </div>
@@ -422,81 +565,97 @@ export default function Home() {
             FAQPage di bawah sah menurut pedoman Google.
             Karena itu jawaban SELALU dirender (bukan {terbuka && ...}), hanya
             disembunyikan lewat CSS, supaya crawler tetap membacanya. */}
-        <section id="faq" className="mb-14 scroll-mt-20 sm:mb-20">
-          <div className="mb-8 flex flex-col items-center gap-3 text-center">
-            <span className="rounded-full border-2 border-border bg-secondary-background px-3 py-1 font-heading text-xs">
-              FAQ
-            </span>
-            <h2 className="max-w-lg text-2xl font-heading sm:text-3xl">
-              Pertanyaan yang sering diajukan
-            </h2>
-            <p className="max-w-xl text-sm text-foreground/80">
-              Jawaban lugas tentang keamanan, cara kerja, dan batasan aplikasi.
-            </p>
-          </div>
-          <div className="mx-auto flex max-w-3xl flex-col gap-4">
-            {FAQ_ITEMS.map((item, index) => (
-              <details
-                key={item.q}
-                className="group ring-offset-background animate-in fade-in slide-in-from-bottom-4 fill-mode-both rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow transition-colors duration-700 open:bg-main open:text-main-foreground"
-                // Jeda bertingkat: tiap kartu masuk sedikit setelah kartu di
-                // atasnya. Kelas delay-* ditulis eksplisit (bukan interpolasi)
-                // karena Tailwind hanya menyertakan kelas yang benar-benar
-                // tertulis di kode.
-                style={{ animationDelay: `${index * 80}ms` }}
-              >
-                {/* Cincin fokus wajib ada di sini: `globals.css` tidak mengatur
-                    `summary`, jadi tanpa ini pengguna keyboard kehilangan jejak
-                    saat berpindah antar pertanyaan (WCAG 2.4.7). Polanya sama
-                    dengan kontrol lain di aplikasi. */}
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-base font-heading text-base focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                  {item.q}
-                  <Plus
-                    aria-hidden="true"
-                    className="size-5 shrink-0 transition-transform duration-200 group-open:rotate-45"
-                  />
-                </summary>
-                {/* Grid 0fr→1fr: transisi tinggi tanpa mengukur piksel dan
-                    tanpa JS. Isi tetap ada di DOM saat tertutup. */}
-                <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 group-open:grid-rows-[1fr]">
-                  <div className="overflow-hidden">
-                    <p className="pt-2 text-sm text-foreground/80 group-open:text-main-foreground/80">{item.a}</p>
+        <section id="faq" className="mb-16 scroll-mt-20 sm:mb-24">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-16">
+            <div className="lg:sticky lg:top-20 lg:self-start">
+              <h2 className="font-heading text-3xl leading-[1.05] sm:text-4xl">
+                Pertanyaan yang sering diajukan
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                Jawaban lugas tentang keamanan, cara kerja, dan batasan
+                aplikasi.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              {FAQ_ITEMS.map((item) => (
+                <details
+                  key={item.q}
+                  className="group rounded-base border-2 border-border bg-secondary-background p-4 open:border-main"
+                >
+                  {/* Cincin fokus wajib ada di sini: `globals.css` tidak mengatur
+                      `summary`, jadi tanpa ini pengguna keyboard kehilangan jejak
+                      saat berpindah antar pertanyaan (WCAG 2.4.7). Polanya sama
+                      dengan kontrol lain di aplikasi. */}
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-base font-heading text-base focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    {item.q}
+                    <Plus
+                      aria-hidden="true"
+                      className="size-5 shrink-0 transition-transform duration-200 group-open:rotate-45"
+                    />
+                  </summary>
+                  {/* Grid 0fr→1fr: transisi tinggi tanpa mengukur piksel dan
+                      tanpa JS. Isi tetap ada di DOM saat tertutup. */}
+                  <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 group-open:grid-rows-[1fr]">
+                    <div className="overflow-hidden">
+                      <p className="pt-2 text-sm leading-relaxed text-muted-foreground">
+                        {item.a}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </details>
-            ))}
+                </details>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Ajakan akhir. */}
-        <section className="rounded-base border-2 border-border bg-secondary-background p-6 text-center shadow-shadow sm:p-10">
-          <h2 className="mb-2 text-2xl font-heading sm:text-3xl">
-            Jalani magang lebih tenang mulai hari ini
-          </h2>
-          <p className="mx-auto mb-6 max-w-xl text-sm text-foreground/80">
-            Daftar sekali, simpan kredensial dan template Anda, lalu biarkan
-            urusan absensi dan logbook beres otomatis tepat waktu.
-          </p>
-          <div className="flex flex-col justify-center gap-3 sm:flex-row">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto"
-              render={<Link href="/register" />}
-            >
-              <CalendarCheck className="size-5" />
-              Daftar gratis
-            </Button>
-            <Button
-              size="lg"
-              variant="neutral"
-              className="w-full sm:w-auto"
-              render={<Link href="/login" />}
-              title="Masuk ke dashboard"
-              aria-label="Masuk ke dashboard"
-            >
-              <LogIn aria-hidden />
-              Masuk ke dashboard
-            </Button>
+        {/* Ajakan akhir: satu-satunya bidang biru penuh di halaman ini. Tombol
+            di dalamnya memakai varian `neutral` (putih), bukan varian utama,
+            karena tombol utama juga biru dan akan melebur ke latarnya. */}
+        <section className="border-2 border-border bg-main p-6 text-main-foreground sm:p-10">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div className="max-w-xl">
+              <h2 className="font-heading text-3xl leading-[1.05] sm:text-4xl">
+                Jalani magang lebih tenang mulai hari ini
+              </h2>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-main-foreground">
+                Daftar sekali, simpan kredensial dan template Anda, lalu absensi
+                dan logbook berjalan tepat waktu.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+              {sudahMasuk ? (
+                <Button
+                  size="lg"
+                  variant="neutral"
+                  className="w-full sm:w-auto"
+                  render={<Link href="/dashboard" />}
+                  title="Buka dashboard"
+                  aria-label="Buka dashboard"
+                >
+                  <LayoutDashboard className="size-5" aria-hidden />
+                  Buka dashboard
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    size="lg"
+                    variant="neutral"
+                    className="w-full sm:w-auto"
+                    render={<Link href="/register" />}
+                  >
+                    <CalendarCheck className="size-5" aria-hidden />
+                    Buat akun gratis
+                  </Button>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center gap-2 px-1 text-sm font-heading text-main-foreground underline decoration-2 underline-offset-4 hover:decoration-4"
+                  >
+                    <LogIn className="size-4" aria-hidden />
+                    Sudah punya akun? Masuk
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </section>
       </main>

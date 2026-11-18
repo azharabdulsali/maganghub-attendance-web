@@ -3,7 +3,7 @@
 //
 // KENAPA TERPISAH DARI template-selection.ts
 // -----------------------------------------
-// `template-selection.ts` menjawab "template mana?" — ia hanya mengenal template
+// `template-selection.ts` menjawab "template mana?", ia hanya mengenal template
 // bertanggal dan template harian. Commit git adalah jenis bahan KETIGA yang
 // aturannya berbeda: ia bukan tulisan pengguna, ia bisa gagal diambil, dan ia
 // bisa kosong (pengguna tidak commit hari itu). Mencampurkan aturan itu ke
@@ -42,7 +42,7 @@ export type CommitDraft = ReportContent | null | undefined;
  * Pilih isi laporan untuk `date` (format `YYYY-MM-DD`).
  *
  * `commitDraft` adalah hasil penyusunan draf dari commit hari itu. Ia boleh
- * `null`/`undefined` — itu artinya tidak ada commit, commit tidak layak dipakai,
+ * `null`/`undefined`, itu artinya tidak ada commit, commit tidak layak dipakai,
  * atau pengambilan commit gagal. Ketiga keadaan itu diperlakukan SAMA: jatuh ke
  * template. Bedanya hanya perlu dilihat UI/log, bukan keputusan isi laporan.
  */

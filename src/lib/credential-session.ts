@@ -87,7 +87,7 @@ export async function saveLoginSession(
  * berikutnya memakai token mati → `401` palsu lalu pengguna dipaksa login ulang.
  *
  * HANYA menyentuh kolom token refresh; status & access token TIDAK diubah
- * (token baru ini tidak membuktikan sesi ACTIVE — itu tugas pemanggil).
+ * (token baru ini tidak membuktikan sesi ACTIVE, itu tugas pemanggil).
  * Mengembalikan `true` bila berhasil. Kegagalan DB ditelan (dilaporkan `false`),
  * bukan dilempar: kegagalan menyimpan rotasi tak boleh menggagalkan pengiriman
  * laporan yang mungkin sudah sukses.
@@ -119,7 +119,7 @@ export async function persistRotatedRefreshToken(
  * Konteks (rotasi, docs/MONEV-API.md §4.1): `POST /auth/refresh` yang sukses
  * mengganti `monev_refresh_token` DAN mencabut yang lama. Saat pengguna menempel
  * token lalu kita mengujinya, `pastedToken` (tempelan) sudah MATI begitu portal
- * merotasi. Karena itu token hasil rotasi (`rotatedToken`) harus menang — tanpa
+ * merotasi. Karena itu token hasil rotasi (`rotatedToken`) harus menang, tanpa
  * ini, kita menimpa token hidup dengan token mati (bug "rotasi terbalik").
  *
  * Murni & total: tidak menyentuh jaringan/DB, selalu mengembalikan string.
@@ -151,7 +151,7 @@ export type RefreshTokenHealth = {
  * Baca umur refresh token milik `userId` DARI ISI JWT-nya (klaim `exp`).
  *
  * Kenapa di sini, bukan di kolom DB: lihat catatan di `refresh-token-age.ts`.
- * Refresh token didekripsi sesaat, dibaca `exp`-nya, lalu dilepas — nilai
+ * Refresh token didekripsi sesaat, dibaca `exp`-nya, lalu dilepas, nilai
  * token TIDAK pernah kembali ke pemanggil. Kegagalan apa pun (tidak ada token,
  * kunci berubah, bukan JWT) menghasilkan `expiresAt: null` = "tidak diketahui",
  * bukan lempar, supaya dashboard tetap bisa dirender.

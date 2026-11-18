@@ -1,9 +1,9 @@
-# DESIGN.md — MagangHub Autoabsen
+# DESIGN.md: MagangHub Autoabsen
 
 Arah desain ini disusun dari UI yang **sudah ada** (`src/app/globals.css`,
 `src/app/page.tsx`, `src/components/ui/button.tsx`), bukan dikarang dari nol.
 Semua nilai di bawah bisa ditelusuri ke token nyata di repo. Status: **draf untuk
-disetujui** — selama belum disetujui, setiap UI yang saya bangun diberi label
+disetujui**, selama belum disetujui, setiap UI yang saya bangun diberi label
 *"draf tanpa arah"* (R-37).
 
 ## Dial
@@ -14,13 +14,15 @@ Dial: ENERGY 2 / RHYTHM 2 / MOTION 1
 
 Alasan satu baris per dial:
 
-- **ENERGY 2** — ini alat internal untuk peserta magang, bukan portofolio agensi:
+- **ENERGY 2**, ini alat internal untuk peserta magang, bukan portofolio agensi:
   harus terasa hidup lewat warna dan blok tebal, tapi tidak berteriak. Anchor
   rasa: antara GOV.UK dan Stripe.
-- **RHYTHM 2** — halaman butuh irama yang konsisten dengan beberapa jeda (blok
+- **RHYTHM 2**, halaman butuh irama yang konsisten dengan beberapa jeda (blok
   CTA penuh warna, strip langkah bernomor), bukan grid seragam total.
-- **MOTION 1** — pengguna membuka ini saat buru-buru mengisi logbook; animasi
-  hanya boleh jadi umpan balik (hover, focus), bukan tontonan.
+- **MOTION 1**, pengguna membuka ini saat buru-buru mengisi logbook; animasi
+  hanya boleh jadi umpan balik (hover, focus), bukan tontonan. Satu pengecualian
+  disetujui pemilik untuk lembar laporan di hero landing, batasnya di bagian
+  "Buku absen editorial" di bawah.
 
 ## Bahasa visual (dipilih dari aset yang sudah dipakai)
 
@@ -42,7 +44,9 @@ radius kecil (`--radius-base: 5px`), dan satu warna aksen biru terang.
 - Tanpa gradien dekoratif. Warna datar + border tebal sudah jadi identitas.
 - Shadow keras maksimal 1 level; tidak ada glow di kartu + tombol + badge sekaligus.
 - Radius tidak boleh serba pill: `rounded-base` untuk hampir semua, `rounded-full`
-  hanya untuk avatar dan indikator status titik.
+  hanya untuk avatar. Penanda status kecil (titik hari ini, penanda laporan,
+  butir daftar) memakai **kotak** `rounded-none`, lihat bagian "Buku absen
+  editorial" di bawah.
 - Maksimum 3 warna inti + 1 aksen di satu halaman.
 
 ## Warna & tombol
@@ -67,7 +71,7 @@ radius kecil (`--radius-base: 5px`), dan satu warna aksen biru terang.
   juga pasangannya (`hover:text-main-foreground`, dst.). Untuk anak yang
   diwarnai eksplisit, pakai varian grup (`group-hover:`/`group-open:`). Kasus
   paling mudah luput: bagian CTA berlatar `bg-main` yang berisi tombol varian
-  `default` (juga `bg-main`) — tombolnya jadi tak terlihat; solusinya jangan
+  `default` (juga `bg-main`), tombolnya jadi tak terlihat; solusinya jangan
   susun elemen `bg-main` di dalam `bg-main`.
 - **Tiga makna, tiga token:** `success` (berhasil), `destructive` (gagal/merusak),
   `warning` (perlu tindakan tapi tidak merusak). Jangan pakai kuning untuk hal
@@ -88,7 +92,13 @@ kata kerja konkret, angka yang bisa dicek.
   "Powerful", "Effortless", "Next Generation".
 - **Larang** (R-02): em dash `—` di seluruh teks yang tampil ke pengguna.
 - **CTA** harus menyebut aksi nyatanya (R-15): "Simpan template", "Kirim sekarang",
-  "Hubungkan akun Monev" — bukan "Get Started" / "Learn More".
+  "Hubungkan akun Monev", bukan "Get Started" / "Learn More".
+- **Judul hero = dua kalimat pendek, bukan deskripsi teknis** (2026-11). Bunyinya
+  sekarang "Tulis sekali. Terkirim tiap hari." Kategori produknya (presensi &
+  logbook magang) dinaikkan ke **kicker** di atas judul, sehingga judul boleh
+  sesingkat itu tanpa kehilangan kata kunci. Kalimat lama "terkirim dari server"
+  turun ke paragraf & daftar fitur karena itu **cara kerja**, bukan alasan orang
+  memakainya. Pola ini yang dipakai lagi kalau judul hero disunting nanti.
 - **Angka** hanya boleh muncul kalau bisa ditelusuri (R-17, R-36). Contoh yang
   lolos: "3 template", "100 karakter minimum" (benar, ada di SPEC).
 
@@ -132,9 +142,9 @@ Diputuskan dan dieksekusi (R-21, opsi b):
   hilang, sekaligus tidak sekeras putih 100%), dan warna scrollbar kini memakai
   token (`--secondary-background` / `--border`) alih-alih putih/hitam hard-code.
 - **Perbaikan (bug "mode gelap tetap putih semua"):** blok `.dark` dulu hanya
-  meng-override sebagian token `:root`. Token `--secondary-background` — dipakai
+  meng-override sebagian token `:root`. Token `--secondary-background`, dipakai
   oleh `bg-secondary-background` di kartu, panel hero, footer, `input`,
-  `textarea`, dan tombol varian `neutral` — **tidak punya pasangan gelap**, jadi
+  `textarea`, dan tombol varian `neutral`, **tidak punya pasangan gelap**, jadi
   tetap `oklch(100% 0 0)` (putih penuh) dan menutupi latar gelap di belakangnya.
   Sekarang `.dark` menetapkan `--secondary-background` (disejajarkan dengan
   `--card`) dan `--chart-active-dot` (titik penanda grafik hitam tidak terbaca di
@@ -142,8 +152,8 @@ Diputuskan dan dieksekusi (R-21, opsi b):
 
 ### Penyempurnaan mode gelap (skill `dark-mode-design`)
 
-Palet gelap disusun ulang mengikuti prinsip *surface elevation* — bukan sekadar
-pembalikan warna terang — lewat skill `dark-mode-design`
+Palet gelap disusun ulang mengikuti prinsip *surface elevation*, bukan sekadar
+pembalikan warna terang, lewat skill `dark-mode-design`
 (`owl-listener/designer-skills`). Empat aturan skill yang diterapkan:
 
 - **Hierarki permukaan lewat kecerahan, bukan bayangan.** Dulu hanya ada dua
@@ -157,7 +167,7 @@ pembalikan warna terang — lewat skill `dark-mode-design`
   ≈ `#e8e8e8`. Putih 100% di latar gelap memicu *halation* (teks tampak
   "bergetar") dan mempercepat kelelahan mata.
 - **Border terlihat.** `--border` `1 0 0 / 10%` hanya **1.4:1** terhadap
-  permukaan — nyaris tak terlihat. Dinaikkan ke `1 0 0 / 35%` ≈ **3.2:1**,
+  permukaan, nyaris tak terlihat. Dinaikkan ke `1 0 0 / 35%` ≈ **3.2:1**,
   memenuhi ambang 3:1 batas komponen WCAG 1.4.11 tanpa terasa seperti garis
   menyala. `--input` `1 0 0 / 40%`.
 - **Desaturasi aksen ±12%.** `--main` `hsl(217,100%,66%)` → `hsl(217,88%,67%)`
@@ -168,7 +178,7 @@ pembalikan warna terang — lewat skill `dark-mode-design`
   oleh `theme-toggle.tsx` selama 240ms) menganimasikan `background-color`,
   `border-color`, `color`, `fill`, `stroke`, dan `box-shadow` 220ms. Sengaja
   dipasang-lepas, **bukan** transisi global, karena tema sudah benar sejak paint
-  pertama — transisi global justru akan menganimasikan pemuatan awal dan
+  pertama, transisi global justru akan menganimasikan pemuatan awal dan
   memunculkan kedipan. Transisi dilewati bila pengguna meminta
   `prefers-reduced-motion`.
 - `--overlay` (tirai panel geser) dipekatkan ke `oklch(0% 0 0 / 0.7)` dan
@@ -179,7 +189,7 @@ Kontras terverifikasi: seluruh pasangan teks/latar pada tangga ini ≥ 5.7:1
 (ambang WCAG AA 4.5:1). Tidak ada aset gambar di aplikasi, jadi aturan "redupkan
 gambar di mode gelap" dari skill tidak berlaku. Tidak ada warna Tailwind
 hard-code (`bg-white`, `text-gray-*`, dst.) dan tidak ada varian `dark:` yang
-tersisa — seluruh warna mengalir lewat token semantik, jadi pergantian tema
+tersisa, seluruh warna mengalir lewat token semantik, jadi pergantian tema
 bebas tambalan.
 
 ## Aksesibilitas (audit UI/UX)
@@ -203,7 +213,7 @@ yang meminta gerakan dikurangi:
 
 Ditemukan tetapi **tidak** diubah: `icon-sm` = 36px, di bawah sasaran sentuh
 44px yang disarankan Apple HIG. Ini **tetap patuh** WCAG 2.2 AA, yang hanya
-menuntut 24×24 CSS px (kriteria 2.5.8) — 44pt adalah pedoman native iOS/Android,
+menuntut 24×24 CSS px (kriteria 2.5.8), 44pt adalah pedoman native iOS/Android,
 bukan ambang web. Karena kontrol ini hanya muncul di header/sidebar desktop
 (penunjuk presisi), 36px diterima dan dicatat sebagai pengecualian resmi.
 
@@ -219,13 +229,13 @@ Hasil: mayoritas sudah sesuai. Tiga perbaikan tambahan dieksekusi:
 - **`touch-action: manipulation` di `button.tsx`.** Menghapus delay tap 300ms
   di layar sentuh (aturan `tap-delay`).
 - **`export const viewport` eksplisit di `layout.tsx`.** Next.js sebenarnya sudah
-  menyuntikkan viewport yang benar, jadi ini bukan bug — tetapi ekspor eksplisit
+  menyuntikkan viewport yang benar, jadi ini bukan bug, tetapi ekspor eksplisit
   mengunci `width=device-width, initial-scale=1` dan mencegah siapa pun
   menambahkan `maximum-scale`/`user-scalable=no` (pelanggaran WCAG 1.4.4).
   Sekaligus memberi `themeColor` untuk kedua tema (aturan `viewport-meta`).
 
 Diterima sebagai pengecualian (bukan cacat): `icon-sm` 36px di atas; tidak ada
-`role="button"` pada elemen non-fokusabel (tidak ada `<div onClick>` — semua
+`role="button"` pada elemen non-fokusabel (tidak ada `<div onClick>`, semua
 interaksi lewat `<button>`/`<a>` asli); tabel lebar sudah dibungkus
 `role="region"` + `tabIndex={0}`.
 
@@ -255,7 +265,7 @@ bekerja. Perbaikan yang dipegang sekarang:
 
 Batas yang tetap berlaku: pesan yang tampil ke pengguna tetap Bahasa Indonesia
 sederhana tanpa jargon (AGENTS.md §3), dan penjelasan yang menyangkut keamanan
-atau privasi **tidak boleh hilang** — hanya dipindah ke `InfoHint`/`Disclosure`
+atau privasi **tidak boleh hilang**, hanya dipindah ke `InfoHint`/`Disclosure`
 yang tetap bisa dibuka.
 
 ## Konsistensi label & kejujuran (2026-11)
@@ -314,23 +324,219 @@ Crosscheck khusus layar kecil menemukan dan memperbaiki:
 
 ## Visualisasi status (2026-11)
 
-Bar chart diganti **status strip** (`status-strip.tsx`) karena datanya biner:
+Bar chart diganti **kalender status** (`status-calendar.tsx`) karena datanya
+biner:
 
 - **Masalah bar chart:** tinggi batang mengodekan jumlah kiriman, padahal
   jumlahnya hampir selalu 0 atau 1 per hari. Semua batang jadi sama tinggi,
   hari kosong tampak seperti grafik rusak, dan akhir pekan tidak bisa dibedakan
   dari hari yang terlewat.
-- **Status strip:** satu kotak per periode, diwarnai menurut keadaan —
-  hijau (berhasil), merah (gagal), kuning (sudah ada/duplikat), abu-abu
-  (belum ada). Kotak kosong di akhir pekan diberi garis putus-putus. Hari ini
+- **Kalender status:** satu kotak = satu hari, berisi **angka tanggal** dengan
+  baris nama hari (Min–Sab), disusun **per bulan** memakai `buildMonthGrid`.
+  Warna: hijau (berhasil), merah (gagal), kuning (sudah ada/duplikat), abu-abu
+  (belum ada). Kotak "belum ada" di akhir pekan bergaris putus-putus; hari ini
   diberi cincin aksen.
-- **Granularitas adaptif:** ≤31 hari = per hari, ≤120 hari = per minggu,
-  sisanya = per bulan. Jadi 1 tahun tetap ringkas (12 kotak), bukan 365 batang.
-- **Aksesibilitas:** kontainer `role="img"` dengan ringkasan
-  (`aria-label`), sel `aria-hidden` + `title` untuk tooltip. Rincian per hari
-  tetap ada di `/history`.
+- **Rentang filter:** 7 hari = 1 bulan, 30 hari = 1–2 bulan, 90 hari = 3–4
+  bulan, 1 tahun = 13 bulan paling banyak (pola sama dengan kontribusi GitHub:
+  banyak kalender kecil, bukan satu kisi raksasa). Tanggal di dalam bulan yang
+  berada di luar rentang filter **diredupkan** dan tidak diwarnai, supaya tidak
+  salah dibaca sebagai "belum pernah kirim".
+- **Aksesibilitas:** setiap kotak membawa `title` (tanggal, status, rincian
+  jumlah) dan teks `sr-only` berisi status, karena warna saja tidak terbaca
+  pembaca layar. Ringkasan total juga disediakan sebagai teks tersembunyi.
+  Rincian per hari tetap ada di `/history`.
 - **Data:** `TrendPoint` kini juga membawa `duplicate`, sehingga status
   "sudah ada" tidak lagi tercampur dengan "gagal".
+
+## Buku absen editorial (2026-11)
+
+Arah baru untuk **seluruh tampilan**: aplikasi ini dibaca sebagai satu **buku
+absen** yang dijilid rapi, bukan kumpulan widget. Sebelumnya hampir setiap blok
+adalah kartu berbayang di dalam kartu lain, dengan pil, blur, dan angka raksasa
+yang saling bersaing; hasilnya rapi per komponen tetapi tidak terbaca sebagai
+dokumen.
+
+Aturan yang mengikat sekarang:
+
+1. **Satu bingkai per bagian.** Bagian halaman memakai
+   `border-2 border-border bg-card` dengan **baris kepala** `border-b-2` berisi
+   judul (`font-heading text-2xl leading-none`), bukan kartu berjudul kecil di
+   dalam kartu lain. Contoh: kisi bulan di `/calendar` (nama bulan **adalah**
+   judul bagian, sejajar dengan judul halaman).
+2. **Label dibaca lebih dulu, angka menjawab.** Label memakai kicker
+   `font-heading text-[0.6875rem] tracking-[0.14em] uppercase
+   text-muted-foreground`; angka `font-heading text-2xl leading-none
+   tabular-nums`. Dua bentuk yang sah: **baris** label–angka dalam satu bingkai
+   (dashboard, `stats-cards.tsx`) dan **kolom** label di atas angka berpagar
+   `border-t-2` (ringkasan `/admin` & `/history`). Keduanya menolak pola "angka
+   raksasa + label kecil di bawahnya".
+3. **Kepala kolom tabel satu gaya.** Setiap berkas bertabel punya satu konstanta
+   `TH_CLASS` (`p-3 font-heading text-[0.6875rem] tracking-[0.14em]
+   text-muted-foreground uppercase`), jadi tidak ada kepala kolom yang
+   tertinggal gaya lama saat tabel disunting.
+4. **Garis pemisah = tinta penuh.** Baris tabel dipisah `border-b border-border`
+   (bukan `border-border/40`); bingkai bagian `border-2`. Buku besar tidak
+   memudarkan garisnya.
+5. **Penanda kecil berbentuk kotak.** Titik "hari ini", penanda "laporan sudah
+   ada", dan butir daftar memakai `rounded-none`; sel kalender kosong memakai
+   `border-muted-foreground` (token abu), bukan border yang diburamkan.
+6. **Tanpa bayangan pada wadah, tanpa blur, tanpa gradien, tanpa animasi
+   berulang.** `shadow-shadow` hanya milik elemen yang bisa ditekan (tombol,
+   tautan berbentuk tombol). Jam dinding tidak lagi berdenyut; `loading.tsx`
+   memakai `motion-safe:animate-pulse` sehingga `prefers-reduced-motion`
+   dihormati.
+7. **Afordansi memakai token warna, bukan transparansi.** `hover:opacity-80`
+   diganti `hover:text-main`; latar redup memakai `bg-border` /
+   `bg-muted-foreground`, bukan `bg-foreground/10`.
+
+### Pengecualian yang disetujui pemilik (2026-11): lembar laporan di hero
+
+Aturan 6 di atas tetap berlaku untuk **seluruh aplikasi**. Satu pengecualian
+disetujui pemilik untuk **lembar laporan di hero landing** (`src/app/page.tsx`),
+karena lembar itu bukan wadah berisi widget melainkan **benda** yang dijual
+aplikasi ini. Batasnya mengikat:
+
+1. **Kedalaman dari tumpukan, bukan bayangan.** Dua lembar `bg-card` bergeser
+   12px/6px dan miring di bawah 1 derajat di belakang lembar utama. Tidak ada
+   `shadow-shadow` di sini: bayangan keras tetap milik elemen yang bisa ditekan.
+2. **Sudut terlipat = satu SVG 28×28**, lima bentuk datar: potongan warna
+   kanvas (pojok yang terlipat), muka lipatan `fill-card`, dua garis pada sisi
+   potongan, dan satu garis lipatan. Bukan gambar, bukan gradien, bukan blur.
+3. **Gerak saat halaman dimuat hanya sekali**, tidak berulang: `animate-sheet`
+   (lembar "diletakkan") dan `animate-stamp` (cap menghantam). Keduanya dipakai
+   lewat prefiks `motion-safe:`, jadi pengguna yang memilih "kurangi gerakan"
+   langsung melihat keadaan akhir tanpa menunggu durasi. Gerak yang dipicu
+   sentuhan pengguna diatur terpisah di poin 6, bukan di sini.
+4. **Kemiringan 3D hanya untuk mouse.** `Tilt` (`src/components/ui/tilt.tsx`)
+   menolak `pointerType !== "mouse"`, menolak `(hover: none)`, dan menolak
+   `prefers-reduced-motion: reduce`; maksimal 6 derajat. Transform ditulis
+   langsung ke node (tanpa `setState`) supaya `pointermove` tidak merender ulang
+   isi kartu.
+5. **Jangan menyalin pola ini ke halaman lain.** Kalau lembar laporan muncul di
+   tempat lain (mis. pratinjau di `/report-templates`), ia tetap kartu biasa.
+   Pengecualian ini melekat pada hero, bukan pada komponennya.
+6. **Gerak yang dipicu sentuhan (disetujui pemilik 2026-11, diperbarui 2026-11).**
+   Hampir semua gerak di sini murni umpan balik dan hanya terjadi bila pengguna
+   menyentuh lembar itu sendiri. **Satu pengecualian disetujui pemilik: lembar
+   berganti sendiri tiap 6 detik** sampai pengguna menyentuhnya (lihat butir
+   "Putar otomatis" di bawah). Komponennya `LandingReportSheet`
+   (`src/components/landing-report-sheet.tsx`).
+   - **Ketukan ATAU geseran memutar isinya ke lembar berikutnya**, seperti
+     menaruh lembar depan ke belakang tumpukan. Tiga contoh, masing-masing
+     dengan tanggal hari kerja yang berbeda (`recentWorkingDays` di
+     `src/lib/landing-sheet-dates.ts`): satu hari tidak mungkin punya tiga
+     laporan berbeda, jadi tanggalnya memang harus ikut berganti. Tanggal
+     Sabtu/Minggu/libur nasional tidak pernah muncul, karena otomasi juga tidak
+     pernah mengirim di hari itu.
+   - **Putar otomatis tiap 6 detik — keputusan pemilik 2026-11.** Lembar
+     berganti sendiri sampai pengguna menyentuh atau memfokuskannya. Ini
+     **satu-satunya** gerak di aplikasi yang berjalan tanpa dipicu pengguna;
+     jangan menyalakan pola serupa di halaman lain.
+     - **Semua pagar ada di modul MURNI** `src/lib/landing-sheet-autoplay.ts`
+       (`bolehJalanOtomatis`, 11 tes). Auto-rotate hanya berjalan bila: lebih
+       dari satu lembar, `prefers-reduced-motion` tidak aktif, belum disentuh,
+       tidak sedang digeser, dan tab sedang terlihat. Jangan menulis ulang
+       syarat itu di komponen — satu pagar yang lupa diperiksa berarti teks
+       berganti di bawah jari pengguna.
+     - **TIDAK ada tombol kendali — keputusan pemilik 2026-11.** Versi pertama
+       fitur ini memasang tombol "Jeda"/"Lanjutkan"/"Putar otomatis" (tuntutan
+       WCAG 2.2.2 untuk konten bergerak > 5 detik). Pemilik memutuskan tombol
+       itu **dihapus**: ia mengganggu tampilan hero dan menambah satu kontrol
+       yang tidak dipakai siapa pun. Konsekuensinya diterima sadar: hero ini
+       **tidak** memenuhi WCAG 2.2.2, dan itu satu-satunya penyimpangan
+       aksesibilitas yang disetujui. Jangan menambahkan tombol itu kembali
+       tanpa keputusan pemilik yang baru.
+     - **Sentuhan atau fokus menghentikannya, dan ia tidak menyalakan sendiri
+       lagi.** Fokus ikut menghentikan karena `AnimatePresence` memasang ulang
+       lembar setiap indeks berganti: tanpa itu pengguna keyboard kehilangan
+       posisi fokusnya tiap 6 detik. Karena tidak ada tombol, berhenti berarti
+       berhenti permanen sampai halaman dimuat ulang — itulah harga yang
+       ditukar dengan hilangnya tombol kendali.
+     - **Timer tidak boleh memotong geseran.** Tick timer memeriksa
+       `sedangGeser` (ref) dan `document.visibilityState`; keduanya sengaja
+       TIDAK menjadi dependency efek, karena memasukkannya akan memasang ulang
+       timer di tengah geseran. `ganti` dibungkus `useCallback` justru supaya
+       timer tidak dipasang ulang tiap render — tanpa itu timer 6 detik tidak
+       pernah sempat menyala.
+   - **`motion` (framer-motion) DIPAKAI — keputusan pemilik 2026-11.** Ini satu-
+     satunya dependensi animasi di proyek, dan satu-satunya tempat pemakaiannya.
+     Alasannya geser-dengan-jari: pelacakan pointer, ambang lepas, dan pegas
+     pemulihan tidak sepadan ditulis tangan. Harganya **sudah diukur, bukan
+     diperkirakan**: JS rute `/` naik 219,3 → 267,2 KB gzip (**+47,9 KB, +22%**),
+     rute lain **0 KB** karena komponen ini hanya diimpor `src/app/page.tsx`.
+     Angka itu hasil build yang sama yang diukur dua kali (dengan dan tanpa
+     `motion`), bukan perkiraan dari ukuran paket di npm.
+     **Jangan menambah pemakaian `motion` di halaman lain** tanpa keputusan
+     pemilik yang baru; kalau butuh animasi kecil di tempat lain, pakai CSS
+     seperti biasa.
+   - **Ambang geser ada di modul MURNI** `src/lib/landing-sheet-gesture.ts`
+     (`arahGantiLembar`, 14 tes). Aturannya: kecepatan menang atas jarak
+     (kibasan 20px yang cepat tetap dihitung, seretan lambat 40px dikembalikan),
+     geser ke KIRI = lembar berikutnya, dan `NaN`/`Infinity` tidak mengubah apa
+     pun. Jangan menaruh angka ambang di dalam komponen: itu satu-satunya bagian
+     interaksi ini yang bisa salah tanpa terlihat di layar.
+   - **Geseran yang batal tidak boleh ikut mengganti lembar.** Ketukan dideteksi
+     dari `pointerup` + penanda `sedangGeser`, **bukan** `onClick` dan **bukan**
+     `onTap`. Dua pendekatan pertama sudah dicoba dan **dua-duanya gagal, terukur
+     di peramban**:
+     (a) `click` peramban terpicu SEBELUM `onDragEnd`, sehingga penanda "sudah
+     digeser" selalu terlambat dan satu geseran menghasilkan DUA pergantian
+     lembar (1 → 3, bukan 1 → 2);
+     (b) `onTap` milik `motion` **tidak** dibatalkan oleh drag (2 → 1 terukur),
+     jadi tetap ada satu pergantian tambahan setelah setiap geseran.
+     Pola yang dipakai sekarang tidak bergantung pada urutan peristiwa:
+     `sedangGeser` dikosongkan di `onPointerDownCapture` (paling awal), dipasang
+     di `onDragStart` (saat gerakan melewati ambang drag, jauh sebelum
+     `pointerup`), lalu `onPointerUp` hanya mengganti lembar bila penanda masih
+     kosong. Dua pagar tambahan: `pointerup` dengan tombol selain kiri diabaikan
+     (klik kanan tidak memutar lembar), dan `pointercancel` memasang penanda
+     (jari yang mulai menggulir halaman tidak dihitung sebagai ketukan).
+     Jangan menggantinya kembali ke `onClick`/`onTap` + penanda `habisGeser`;
+     ketiga pola itu sudah terbukti gagal.
+   - **Cap "Terkirim" bukan lagi tombol sendiri.** Cap berdetak ulang tiap
+     lembar berganti, karena laporan baru memang berarti cap baru. Dua sasaran
+     ketukan pada satu benda membingungkan: pengguna tidak bisa menebak apakah
+     ketukan akan mengganti lembar atau mengulang cap.
+   - **Angkat 4px + miring 0,5° saat ditekan sudah dibuang.** Pergantian isi
+     adalah umpan balik yang jauh lebih kuat. Sebagai gantinya kursor berubah
+     `grab` → `grabbing` saat digeser, yang memberi tahu bahwa benda itu bisa
+     dipindahkan.
+   - **Batas yang TETAP berlaku: tidak pernah ada dua lembar berteks sekaligus.**
+     Ini cacat yang sudah pernah diukur (lembar kedua yang masuk menutupi lembar
+     pertama membuat teks terpotong di tengah kata). Pagarnya sekarang
+     `AnimatePresence mode="wait"`: lembar baru baru dipasang setelah lembar lama
+     selesai pergi (160ms). **Jangan diganti `mode="popLayout"` atau `"sync"`** —
+     keduanya memudarkan dua teks bersamaan, persis cacat yang dilarang.
+   - **Dua cara lembar pergi.** Dari ketukan: menyelinap ke bawah-kanan ke tempat
+     tumpukan. Dari geseran: melanjutkan arah lemparan jari (`x` = 2,2× jarak
+     geser), jadi terasa dilempar, bukan ditarik kembali. Keduanya berdurasi
+     tetap, BUKAN pegas: `mode="wait"` menahan lembar baru selama itu berjalan,
+     jadi pegas 400ms akan terasa seperti jeda kosong. Lembar yang MASUK memakai
+     pegas (`stiffness` 420, `damping` 34) supaya terasa punya berat.
+   - **`animate-sheet` dipasang di pembungkus, bukan di lembarnya.** Animasi itu
+     mengunci `transform` dan `opacity` dengan `fill-mode: both`, jadi apa pun
+     yang ditulis `motion` ke elemen yang sama tidak akan pernah terlihat.
+     Karena itu `animate-sheet` tetap di `<div>` pembungkus, dan `motion`
+     menggerakkan `<figure>` di dalamnya.
+   - **Keyframe `sheet-back`/`sheet-forward` DIHAPUS** dari `globals.css` setelah
+     `motion` mengambil alih. Jangan dihidupkan lagi: dua mesin animasi untuk
+     satu gerak akan saling menimpa. `sheet`/`stamp` tetap ada karena keduanya
+     gerak sekali saat halaman dimuat dan tidak butuh JavaScript.
+   - **Petunjuk ketuk DIHAPUS (keputusan pemilik 2026-11).** Teks "Ketuk lembar
+     untuk contoh lain · 1/3" beserta penghitungnya tidak ditampilkan lagi.
+     Keterangan bahwa lembar bisa digeser/diketuk tetap tersedia untuk pembaca
+     layar lewat `aria-label` pada `<figure>`, dan kursor berubah menjadi `grab`
+     saat melintas di desktop. Jangan menambahkan kembali teks petunjuk di bawah
+     lembar tanpa keputusan baru.
+   - **`prefers-reduced-motion` tetap dipangkas**: `useReducedMotion()` membuat
+     semua durasi animasi nol DAN mematikan geser (`drag={false}`), jadi isi
+     lembar langsung berganti tanpa menunggu apa pun. Geser sengaja dimatikan,
+     bukan hanya dipercepat: menyeret benda yang tidak mengikuti jari terasa
+     rusak.
+
+`Card` tetap dipakai untuk blok yang memang berdiri sendiri (mis. panel di
+`/admin`), tetapi `CardTitle` kini `text-lg leading-tight` supaya hierarki
+judul–isi tidak hilang saat judul tidak lagi raksasa.
 
 ## Status: perlu keputusan Anda
 

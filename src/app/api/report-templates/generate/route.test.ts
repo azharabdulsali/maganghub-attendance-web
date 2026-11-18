@@ -4,7 +4,7 @@
 // Yang diuji adalah JAMINAN perilaku, bukan detail implementasi:
 //   1. Commit hari itu DIPAKAI saat kata kunci kosong (inti fitur).
 //   2. Kata kunci ketikan pengguna MENANG atas commit (tidak ditimpa diam-diam).
-//   3. Kegagalan git — termasuk MELEMPAR — tidak menggagalkan draf
+//   3. Kegagalan git, termasuk MELEMPAR, tidak menggagalkan draf
 //      (SPEC §5.4a: laporan tetap bisa disusun).
 //   4. Token tidak pernah ikut terkirim ke klien.
 

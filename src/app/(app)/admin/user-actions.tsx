@@ -5,7 +5,7 @@
 //   - konfirmasi dua langkah (ConfirmDialog) sebelum menembak server,
 //   - hasil reset menampilkan kata sandi sementara SEKALI di layar, dengan
 //     tombol salin dan gerbang "saya sudah menyalin" sebelum dialog bisa
-//     ditutup — supaya admin tidak menutup tanpa menyimpan kata sandinya.
+//     ditutup, supaya admin tidak menutup tanpa menyimpan kata sandinya.
 //
 // Server tetap sumber kebenaran: komponen ini hanya menyembunyikan aksi yang
 // jelas tak masuk akal (diri sendiri / admin lain) untuk mengurangi kesalahan,
@@ -104,7 +104,7 @@ export function UserRowActions({
   // Hanya PROMOSI (USER -> ADMIN) yang ditawarkan: tombolnya memang tidak
   // muncul untuk sasaran admin, dan `checkRoleChange` di server juga menolak
   // penurunan. Karena itu peran tujuan ditulis tetap, bukan dihitung dari
-  // `isAdmin` — dulu ada cabang "turunkan ke USER" yang tidak akan pernah
+  // `isAdmin`, dulu ada cabang "turunkan ke USER" yang tidak akan pernah
   // tercapai dan hanya menambah jalur yang tak teruji.
   async function jalankanPeran() {
     setWorking(true);
@@ -152,8 +152,8 @@ export function UserRowActions({
   return (
     <>
       <div className="flex flex-nowrap items-center gap-2">
-        {/* Netral: aksi tak merusak. Sengaja beda dari Hapus (merah) dan
-            Jalankan (hijau) di kolom Aksi yang sama. */}
+        {/* Netral: aksi tak merusak. Sengaja beda dari Ubah peran (kuning),
+            Hapus (merah), dan Jalankan (hijau) di kolom Aksi yang sama. */}
         <Button
           type="button"
           variant="neutral"
@@ -165,13 +165,17 @@ export function UserRowActions({
         >
           <KeyRound aria-hidden />
         </Button>
-        {/* Ubah peran: netral, hanya untuk pengguna yang bukan admin.
-            Menurunkan admin lain sengaja TIDAK ditawarkan (lihat
-            `checkRoleChange`) — server akan menolaknya, dan sistem bisa
+        {/* Ubah peran: kuning (`warning`). Warna ini berarti "perlu
+            kehati-hatian, bukan gagal", menaikkan hak akses memang tindakan
+            yang harus disadari, tapi tidak merusak seperti Hapus. Dulu tombol
+            ini `neutral`, sehingga tampil identik dengan "Atur ulang kata
+            sandi" di sebelahnya (dua tombol putih berdampingan = sulit
+            dibedakan sekilas). Menurunkan admin lain sengaja TIDAK ditawarkan
+            (lihat `checkRoleChange`), server akan menolaknya, dan sistem bisa
             terkunci bila itu admin terakhir. */}
         <Button
           type="button"
-          variant="neutral"
+          variant="warning"
           size="icon-sm"
           disabled={isSelf || isAdmin || working}
           title={
@@ -200,7 +204,7 @@ export function UserRowActions({
         </Button>
       </div>
 
-      {/* Konfirmasi reset — kata sandi belum dibuat sampai dikonfirmasi. */}
+      {/* Konfirmasi reset, kata sandi belum dibuat sampai dikonfirmasi. */}
       <ConfirmDialog
         open={konfirmasi === "reset"}
         onOpenChange={(buka) => !buka && setKonfirmasi(null)}

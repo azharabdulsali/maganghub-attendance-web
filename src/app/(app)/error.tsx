@@ -4,7 +4,7 @@
 //
 // Kenapa terpisah dari `src/app/error.tsx`: berkas ini dirender DI DALAM
 // `(app)/layout.tsx`, jadi sidebar tetap tampil saat galat terjadi. Itu
-// penting — pengguna tidak terjebak di halaman mati tanpa navigasi; ia bisa
+// penting, pengguna tidak terjebak di halaman mati tanpa navigasi; ia bisa
 // langsung pindah ke Dasbor atau Riwayat dan pekerjaan lain tetap bisa
 // dilanjutkan.
 //
@@ -48,13 +48,13 @@ export default function AppError({
         <CardHeader>
           <div className="mb-2 flex items-center gap-2">
             <TriangleAlert aria-hidden="true" className="size-5 shrink-0" />
-            <span className="text-sm font-base text-foreground/70">
+            <span className="text-sm font-base text-muted-foreground">
               Terjadi kesalahan
             </span>
           </div>
           <CardTitle>Halaman ini gagal dimuat</CardTitle>
           <CardDescription>
-            Menu di samping tetap bisa dipakai — Anda tidak terjebak di sini.
+            Menu di samping tetap bisa dipakai, Anda tidak terjebak di sini.
             Coba muat ulang halaman ini dulu; bila tetap gagal, hubungi admin
             dan sebutkan kode di bawah.
           </CardDescription>
@@ -71,7 +71,7 @@ export default function AppError({
             </Button>
           </div>
           {error.digest && (
-            <p className="font-mono text-xs break-all text-foreground/70">
+            <p className="font-mono text-xs break-all text-muted-foreground">
               Kode galat: {error.digest}
             </p>
           )}

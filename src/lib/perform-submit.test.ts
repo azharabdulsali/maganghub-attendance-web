@@ -162,7 +162,7 @@ describe("performSubmit, gerbang ALLOW_LIVE_SUBMIT", () => {
 
 describe("performSubmit, daftar libur gagal dimuat (gagal-lunak)", () => {
   // Pagar PENTING: daftar libur hanya PENYEMPURNAAN. Bila tabel `holidays`
-  // belum ada / DB error, pengiriman JANGAN ikut mati — pakai daftar statis.
+  // belum ada / DB error, pengiriman JANGAN ikut mati, pakai daftar statis.
   // Tanpa pagar ini, satu fitur pelengkap bisa mematikan seluruh otomasi.
   it("DB libur error → tetap kirim (tidak melempar ke pemanggil)", async () => {
     holidayFindManyMock.mockRejectedValueOnce(

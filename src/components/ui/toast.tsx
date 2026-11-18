@@ -236,7 +236,17 @@ function Toaster({
 // Alias kompatibilitas: `toast.success("Judul", "Keterangan")` dsb. Dipetakan
 // ke `toast.add` Base UI agar seluruh pemanggil lama tetap berjalan tanpa
 // diubah.
-type ToastAliasFn = (title: string, description?: string) => string
+//
+// Durasi: Base UI memakai 5 detik untuk semua jenis. Itu terlalu singkat untuk
+// pesan GAGAL, yang justru perlu dibaca sampai selesai (sering memuat langkah
+// perbaikan). Karena itu `error` dan `warning` diberi 8 detik, sedangkan
+// `success`/`info` tetap 5 detik — pesan sukses tidak perlu ditatap lama.
+// Pemanggil tetap bisa menimpa lewat argumen ketiga bila perlu.
+type ToastAliasFn = (
+  title: string,
+  description?: string,
+  timeout?: number,
+) => string
 
 type ToastManagerApi = {
   add: (options: {
@@ -249,8 +259,20 @@ type ToastManagerApi = {
 
 const toastCompat = toast as unknown as ToastManagerApi
 
+/** Durasi bawaan per jenis toast (ms). */
+const DURASI_BAWAAN: Record<string, number> = {
+  error: 8000,
+  warning: 8000,
+}
+
 function alias(type: string): ToastAliasFn {
-  return (title, description) => toastCompat.add({ title, description, type })
+  return (title, description, timeout) =>
+    toastCompat.add({
+      title,
+      description,
+      type,
+      timeout: timeout ?? DURASI_BAWAAN[type],
+    })
 }
 
 const toastApi = Object.assign(toast, {
@@ -263,7 +285,7 @@ const toastApi = Object.assign(toast, {
 })
 
 /**
- * `useToast()` — pengganti hook lama. Mengembalikan manager toast yang sama
+ * `useToast()`, pengganti hook lama. Mengembalikan manager toast yang sama
  * (satu instance global), sehingga `useToast().success("Judul", "Keterangan")`
  * dari berkas-berkas lama tetap bekerja apa adanya.
  */

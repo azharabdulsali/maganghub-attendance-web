@@ -82,7 +82,7 @@ export default function ProfileForm({ initialName }: { initialName: string }) {
             setSaved(false);
           }}
         />
-        <p id="profile-name-hint" className="text-xs text-foreground/60">
+        <p id="profile-name-hint" className="text-xs text-muted-foreground">
           Dipakai untuk menyapa Anda di aplikasi. Boleh dikosongkan.
         </p>
         {terlaluPanjang && (
@@ -100,7 +100,6 @@ export default function ProfileForm({ initialName }: { initialName: string }) {
       <div className="flex flex-row items-center justify-end gap-3">
         <Button
           type="submit"
-          variant="success"
           disabled={saving || terlaluPanjang || !berubah}
           title={saving ? "Menyimpan…" : "Simpan nama"}
           aria-label={saving ? "Menyimpan nama" : "Simpan nama"}

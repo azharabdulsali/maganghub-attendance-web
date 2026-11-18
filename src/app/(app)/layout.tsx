@@ -85,7 +85,7 @@ export default async function AppLayout({
         {mustChangePassword && <MustChangePasswordBanner />}
         {/*
           Pengingat "belum absen hari ini": hanya untuk pengguna biasa. Admin
-          tidak perlu diingatkan absen — tugasnya mengelola, bukan mengikuti
+          tidak perlu diingatkan absen, tugasnya mengelola, bukan mengikuti
           program magang. Komponen ini mengecek status ke server sendiri dan
           menampilkan popup bila perlu; ia tidak memblokir isi halaman.
         */}

@@ -34,7 +34,7 @@ Keputusan pemilik yang mengikat (lihat `SPEC.md` §5.1a):
    - **Authorized JavaScript origins** (boleh kosong, tapi aman diisi):
      - `http://localhost:3000`
      - `https://DOMAIN-PRODUKSI-ANDA`
-   - **Authorized redirect URIs** — WAJIB persis, tanpa garis miring di akhir:
+   - **Authorized redirect URIs**, WAJIB persis, tanpa garis miring di akhir:
      - `http://localhost:3000/api/auth/callback/google`
      - `https://DOMAIN-PRODUKSI-ANDA/api/auth/callback/google`
      - (tambahan bila memakai preview Vercel:
@@ -108,7 +108,7 @@ pembuatan akun lewat Google akan gagal.
 | --- | --- |
 | `redirect_uri_mismatch` | URI di Google Console tidak sama persis dengan `NEXTAUTH_URL` + `/api/auth/callback/google`. Perhatikan `www`, `https`, dan garis miring di akhir. |
 | `Access blocked: app not verified` | OAuth consent screen masih **Testing** dan email Anda belum masuk **Test user**. Tambahkan, atau **Publish app**. |
-| Tombol Google tidak muncul | Salah satu env kosong (harus dua-duanya), server belum dimuat ulang, atau build belum memuat env baru. Cek `GET /api/auth/providers` — harus ada `"google"`. |
+| Tombol Google tidak muncul | Salah satu env kosong (harus dua-duanya), server belum dimuat ulang, atau build belum memuat env baru. Cek `GET /api/auth/providers`, harus ada `"google"`. |
 | `Configuration` di halaman login | Client ID/Secret salah atau tertukar antar-project Google. |
 | Login berhasil di Google, lalu "Akses ditolak" | Email akun itu sedang di-soft-delete oleh admin (`deletedAt` terisi), atau `signIn` menolak karena email kosong. |
 | "Akun ini belum punya kata sandi" saat ubah email | Benar dan disengaja: buat kata sandi dulu di kartu Kata sandi. |

@@ -23,10 +23,10 @@
 // hanya menyembunyikan tautan, lihat catatan di components/app-sidebar.tsx.
 
 import { redirect } from "next/navigation";
-import Link from "next/link";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
 import { getAdminUsers, getAuditUserOptions } from "./admin-query";
@@ -73,6 +73,17 @@ import type { SubmitStatus } from "@/generated/prisma/enums";
 
 const AUDIT_PAGE_SIZE = 20;
 const USER_PAGE_SIZE = 20;
+
+/**
+ * Kelas kepala kolom tabel.
+ *
+ * Huruf kecil renggang seperti judul kolom pada buku besar: kepala kolom
+ * memberi tahu ISI kolom, bukan bersaing dengan angka di bawahnya. Karena
+ * dipakai belasan kali per berkas, disimpan sebagai konstanta supaya tidak
+ * ada satu pun kepala kolom yang tertinggal gaya lamanya.
+ */
+const TH_CLASS =
+  "p-3 font-heading text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase";
 
 /**
  * Bangun URL halaman admin. SEMUA parameter ikut dibawa eksplisit (status,
@@ -188,23 +199,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 sm:mb-8">
-        <span className="inline-flex items-center rounded-base border-2 border-border bg-main px-3 py-1 text-xs font-heading text-main-foreground">
-          ADMIN
-        </span>
-        <h1 className="mt-3 font-heading text-2xl sm:text-3xl">Panel Admin</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Kelola pengguna, audit, dan pengiriman massal. Hari libur diatur di
-          menu{" "}
-          <Link
-            href="/admin/holidays"
-            className="font-heading underline underline-offset-4"
-          >
-            Hari Libur
-          </Link>
-          .
-        </p>
-      </div>
+      <PageHeader
+        title="Panel Admin"
+        badge={<Badge className="bg-main text-main-foreground">Admin</Badge>}
+        description="Kelola pengguna, audit, dan pengiriman massal. Hari libur diatur di menu Hari Libur."
+      />
 
       <DispatchPanel />
 
@@ -226,7 +225,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </CardHeader>
         <CardContent>
           {userRows.length === 0 ? (
-            <p className="text-sm text-foreground/70">Belum ada pengguna.</p>
+            <p className="text-sm text-muted-foreground">Belum ada pengguna.</p>
           ) : (
             <div
               className="-mx-3 overflow-x-auto"
@@ -236,25 +235,25 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             >
               <table className="w-full min-w-[60rem] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-border/60">
-                    <th className="p-3 font-heading">Pengguna</th>
-                    <th className="p-3 font-heading">Peran</th>
-                    <th className="p-3 font-heading">Kredensial</th>
-                    <th className="p-3 font-heading">Template</th>
-                    <th className="p-3 font-heading">Otomasi</th>
-                    <th className="p-3 font-heading">Jadwal</th>
-                    <th className="p-3 font-heading">Hari ini</th>
-                    <th className="p-3 font-heading">Laporan</th>
-                    <th className="p-3 font-heading">Submit</th>
-                    <th className="p-3 font-heading">Terakhir kirim</th>
-                    <th className="p-3 font-heading">Aksi</th>
+                  <tr className="border-b-2 border-border">
+                    <th className={TH_CLASS}>Pengguna</th>
+                    <th className={TH_CLASS}>Peran</th>
+                    <th className={TH_CLASS}>Kredensial</th>
+                    <th className={TH_CLASS}>Template</th>
+                    <th className={TH_CLASS}>Otomasi</th>
+                    <th className={TH_CLASS}>Jadwal</th>
+                    <th className={TH_CLASS}>Hari ini</th>
+                    <th className={TH_CLASS}>Laporan</th>
+                    <th className={TH_CLASS}>Submit</th>
+                    <th className={TH_CLASS}>Terakhir kirim</th>
+                    <th className={TH_CLASS}>Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {userRows.map((u) => (
                     <tr
                       key={u.email}
-                      className="border-b border-border/40 align-middle last:border-b-0"
+                      className="border-b border-border align-middle last:border-b-0"
                     >
                       <td className="p-3">
                         <div className="flex items-center gap-2">
@@ -268,7 +267,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             <span className="block truncate font-heading text-sm">
                               {u.name ?? "Tanpa nama"}
                             </span>
-                            <span className="block truncate text-xs text-foreground/60">
+                            <span className="block truncate text-xs text-muted-foreground">
                               {u.email}
                             </span>
                           </span>
@@ -289,10 +288,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           {describeTemplateStatus(u)}
                         </Badge>
                       </td>
-                      <td className="p-3 text-xs text-foreground/70">
+                      <td className="p-3 text-xs text-muted-foreground">
                         {u.automationEnabled ? "Aktif" : "Mati"}
                       </td>
-                      <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
+                      <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
                         {/* Menit tidak ditampilkan: hanya jam yang menentukan
                             kapan dispatcher memproses (lihat scheduleLabel). */}
                         {u.automationHour !== null
@@ -304,18 +303,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           {describeTodayRun(u.todayRunStatus)}
                         </Badge>
                         {u.todayRunAt ? (
-                          <span className="mt-1 block whitespace-nowrap text-[11px] text-foreground/60">
+                          <span className="mt-1 block whitespace-nowrap text-[0.6875rem] text-muted-foreground">
                             {formatJakartaTimeOnly(u.todayRunAt) ?? ""}
                           </span>
                         ) : null}
                       </td>
-                      <td className="p-3 text-xs text-foreground/70">
+                      <td className="p-3 text-xs text-muted-foreground">
                         {u.reportCount}
                       </td>
-                      <td className="p-3 text-xs text-foreground/70">
+                      <td className="p-3 text-xs text-muted-foreground">
                         {u.submitCount}
                       </td>
-                      <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
+                      <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
                         {u.lastSubmitAt
                           ? (formatJakartaTimestamp(u.lastSubmitAt) ?? ",")
                           : "Belum pernah"}
@@ -420,7 +419,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
 
           {auditLogs.length === 0 ? (
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-muted-foreground">
               {userFilter === ALL_USERS
                 ? "Tidak ada catatan audit untuk filter ini."
                 : "Nama ini tidak punya catatan audit pada filter ini."}
@@ -434,14 +433,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             >
               <table className="w-full min-w-[54rem] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-border/60">
-                    <th className="p-3 font-heading">Waktu</th>
-                    <th className="p-3 font-heading">Nama</th>
-                    <th className="p-3 font-heading">Email</th>
-                    <th className="p-3 font-heading">Status</th>
-                    <th className="p-3 font-heading">Pemicu</th>
-                    <th className="p-3 font-heading">Kode portal</th>
-                    <th className="p-3 font-heading">Keterangan</th>
+                  <tr className="border-b-2 border-border">
+                    <th className={TH_CLASS}>Waktu</th>
+                    <th className={TH_CLASS}>Nama</th>
+                    <th className={TH_CLASS}>Email</th>
+                    <th className={TH_CLASS}>Status</th>
+                    <th className={TH_CLASS}>Pemicu</th>
+                    <th className={TH_CLASS}>Kode portal</th>
+                    <th className={TH_CLASS}>Keterangan</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -450,15 +449,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     return (
                       <tr
                         key={log.id}
-                        className="border-b border-border/40 align-top last:border-b-0"
+                        className="border-b border-border align-top last:border-b-0"
                       >
-                        <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
+                        <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
                           {when ?? "waktu tidak diketahui"}
                         </td>
-                        <td className="max-w-[14rem] truncate p-3 text-xs text-foreground/80">
+                        <td className="max-w-[14rem] truncate p-3 text-xs text-muted-foreground">
                           {log.user.name?.trim() || "Tanpa nama"}
                         </td>
-                        <td className="max-w-[14rem] truncate p-3 text-xs text-foreground/60">
+                        <td className="max-w-[14rem] truncate p-3 text-xs text-muted-foreground">
                           {log.user.email}
                         </td>
                         <td className="p-3">
@@ -466,14 +465,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             {describeSubmitStatus(log.status)}
                           </Badge>
                         </td>
-                        <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
+                        <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
                           {describeTrigger(log.trigger)}
                           {log.attempt > 1 && ` (ke-${log.attempt})`}
                         </td>
-                        <td className="p-3 text-xs text-foreground/70">
+                        <td className="p-3 text-xs text-muted-foreground">
                           {typeof log.httpCode === "number" ? log.httpCode : ","}
                         </td>
-                        <td className="break-words p-3 text-xs text-foreground/80">
+                        <td className="break-words p-3 text-xs text-muted-foreground">
                           {log.message ?? ","}
                         </td>
                       </tr>
@@ -511,12 +510,23 @@ function todayRunTone(status: TodayRunStatus): "good" | "bad" | "neutral" {
   return "neutral";
 }
 
-/** Kartu angka kecil untuk ringkasan admin. */
+/**
+ * Satu angka ringkasan.
+ *
+ * Urutan bacanya label dulu, angka kemudian (sama seperti `StatsCards` di
+ * dasbor): mata menemukan keterangannya sebelum angkanya, sehingga tidak perlu
+ * menebak "12" itu apa. Tidak ada kotak berbingkai di sini — pemisahnya cukup
+ * satu garis atas, seperti kolom pada buku absen cetak.
+ */
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-base border-2 border-border p-3">
-      <p className="font-heading text-2xl">{value}</p>
-      <p className="text-xs text-foreground/60">{label}</p>
+    <div className="border-t-2 border-border pt-2">
+      <p className="font-heading text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase">
+        {label}
+      </p>
+      <p className="mt-1 font-heading text-2xl leading-none tabular-nums">
+        {value}
+      </p>
     </div>
   );
 }

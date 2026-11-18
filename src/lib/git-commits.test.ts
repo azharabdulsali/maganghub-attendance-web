@@ -178,7 +178,7 @@ describe("commitsToKeywords", () => {
 
   // BUG YANG DIPERBAIKI: GitHub & GitLab mengembalikan commit TERBARU dulu,
   // sehingga bahan laporan tersusun dari akhir hari ke awal. Karena ada batas
-  // `MAX_COMMITS_IN_KEYWORDS`, commit paling awal justru terbuang — padahal itu
+  // `MAX_COMMITS_IN_KEYWORDS`, commit paling awal justru terbuang, padahal itu
   // pekerjaan pertama yang seharusnya membuka narasi.
   it("menyusun kata kunci dari commit TERAWAL dulu, apa pun urutan masuknya", () => {
     const hasil = commitsToKeywords([

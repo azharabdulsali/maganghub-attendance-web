@@ -17,7 +17,7 @@ src/app/
    ├─ layout.tsx                 # cek sesi + pasang sidebar SEKALI (SEMUA halaman)
    ├─ dashboard/                 # URL: /dashboard (beranda setelah login)
    │  ├─ page.tsx                # /dashboard
-   │  └─ … komponen statistik di sini (stats-*, trend-chart, submit-report-button)
+   │  └─ … komponen statistik di sini (stats-*, status-calendar, submit-report-button)
    ├─ calendar/                  # /calendar   (kalender kehadiran & laporan)
    ├─ profile/                   # /profile     (informasi akun, baca saja)
    ├─ settings/                  # /settings    (ubah email/nama/sandi/sesi)
@@ -106,7 +106,7 @@ Ikon diambil dari `lucide-react` (sudah terpasang).
 menggulir**: `<aside>`/laci = `flex flex-col`, `SidebarContent` =
 `min-h-0 flex-1`, `<nav>` = `min-h-0 flex-1 overflow-y-auto`, brand & footer
 `shrink-0`. Sebelum ini daftar menu mendorong tombol **Keluar** ke bawah
-viewport, dan karena sidebar `sticky`, bagian itu tidak pernah bisa dijangkau —
+viewport, dan karena sidebar `sticky`, bagian itu tidak pernah bisa dijangkau
 "logout hilang" bagi admin yang menunya banyak. Menambah menu (lihat contoh di
 atas) kini aman: yang bertambah panjang hanya area gulir.
 
@@ -127,7 +127,7 @@ pil melengkung penuh, melayang **sticky di tengah atas area konten**
 (`<main>`), terlihat oleh **semua peran** (user & admin). Dipasang sekali di
 `src/app/(app)/layout.tsx`, sebelum spanduk wajib-ganti-sandi.
 
-**HANYA jam yang sticky — bilah header mobile TIDAK.** Header kecil di
+**HANYA jam yang sticky, bilah header mobile TIDAK.** Header kecil di
 `app-sidebar.tsx` (brand + tombol hamburger) sengaja tidak lagi `sticky`: ia ikut
 tergulir hilang ke atas, lalu jam menggantikannya menempel di puncak. Kalau
 header dibiarkan sticky, layar sempit memakan **dua** baris menempel sekaligus
@@ -230,13 +230,13 @@ Dibagi dua supaya batas *melihat* vs *mengubah* jelas:
   admin).
 - **Audit**: aksi dicatat ke tabel `AdminActionLog` lewat
   `src/lib/admin-action-log.ts` (jenis aksi, id aktor & sasaran, alasan
-  penolakan). Penulisan dibungkus try/catch — bila tabel belum ada di suatu
+  penolakan). Penulisan dibungkus try/catch, bila tabel belum ada di suatu
   lingkungan, aksi tetap berjalan dan baris dicetak ke log server sebagai
   jaring pengaman. Kata sandi/token tidak pernah dicatat.
 - **Catatan migrasi**: kolom `User.deletedAt`, `User.mustChangePassword`, dan
   tabel `admin_action_logs` ditambahkan di `prisma/schema.prisma`. Selama
   `prisma db push` belum dijalankan di lingkungan itu, kolom baru belum ada di
-  DB — lihat README/CONTRIBUTING untuk langkah deploy.
+  DB, lihat README/CONTRIBUTING untuk langkah deploy.
 
 ---
 
@@ -339,7 +339,7 @@ mengalaminya, jadi keduanya di halaman admin sudah diperbaiki. Beri juga
 **Tabel WAJIB punya lebar minimum agar bisa digulir horizontal.** `<table
 class="w-full">` tanpa `min-w-*` di dalam `overflow-x-auto` **tidak** bisa
 digulir di layar sempit: tabel cukup "dipepetkan" mengikuti lebar wadah, kolom
-menyempit/membungkus, dan tak ada isi yang melampaui wadah — jadi tidak ada yang
+menyempit/membungkus, dan tak ada isi yang melampaui wadah, jadi tidak ada yang
 bisa digeser. Tabel lebar (≥ ±5 kolom) harus diberi `min-w-[40rem]`/`52rem`/dst.
 Contoh yang sudah diperbaiki: Riwayat Absensi (5 kolom → `min-w-[40rem]`),
 riwayat template laporan (6 kolom → `min-w-[52rem]`), admin (52rem/48rem).
@@ -359,7 +359,7 @@ halaman publik (`/`, `/login`, `/register`) tidak memakainya.
 
 ---
 
-## 5c. Konvensi form pengaturan (putaran UI/UX 2 — /repos)
+## 5c. Konvensi form pengaturan (putaran UI/UX 2: /repos)
 
 Halaman `/repos` dulu ditulis tangan: `<select>` buatan sendiri, kartu
 `rounded-base border-2` tanpa `shadow-shadow`, dan token memakai
@@ -404,15 +404,15 @@ dengan Playwright (atau manual) pada **1440px dan 390px**, dan pastikan
 `document.documentElement.scrollWidth === clientWidth` (tidak ada gulir
 horizontal). Untuk halaman yang butuh login, buat rute pratinjau SEMENTARA di
 luar grup `(app)` yang merender form dengan prop contoh, lalu **hapus** setelah
-selesai — jangan menambah pengguna uji ke database produksi.
+selesai, jangan menambah pengguna uji ke database produksi.
 
 ---
 
 ## 6. Yang belum dikerjakan (kandidat putaran berikutnya)
 
 Dua butir lama sudah **selesai** dan dikeluarkan dari daftar (jangan
-dikerjakan ulang): dashboard dengan kartu statistik + tabel + grafik
-(`stats-cards.tsx`, `trend-chart.tsx`, `stats-query.ts`), dan halaman admin
+dikerjakan ulang): dashboard dengan kartu statistik + kalender status
+(`stats-cards.tsx`, `status-calendar.tsx`, `stats-query.ts`), dan halaman admin
 (daftar pengguna, audit log lintas pengguna, kelola hari libur, kritik & saran).
 
 Yang benar-benar **masih kosong**:
@@ -427,7 +427,7 @@ Yang benar-benar **masih kosong**:
   "lupa sandi" yang mengirim email sebelum ada layanan email + kolom token.
 - Ekspor riwayat (CSV/Excel) di `/history` dan audit admin.
 
-### Batas galat — sudah ada, jangan dihapus
+### Batas galat: sudah ada, jangan dihapus
 
 Sampai putaran ini proyek **tidak punya** satu pun berkas batas galat, sehingga
 galat query Prisma menampilkan layar putih "Application error" berbahasa Inggris.
@@ -439,6 +439,6 @@ Sekarang ada enam berkas yang wajib dipertahankan bersamaan (aturannya di
 | `src/app/global-error.tsx` | Root layout sendiri gagal (menggantikan `<html>`/`<body>`) |
 | `src/app/error.tsx` | Galat di halaman publik sebelum login |
 | `src/app/not-found.tsx` | URL 404 tingkat root (`noindex`) |
-| `src/app/(app)/error.tsx` | Galat setelah login — **sidebar tetap tampil** |
+| `src/app/(app)/error.tsx` | Galat setelah login, **sidebar tetap tampil** |
 | `src/app/(app)/not-found.tsx` | `notFound()` dari halaman terlindungi |
 | `src/app/(app)/loading.tsx` | Kerangka muat saat pindah halaman (mewarisi ke semua halaman `(app)`) |

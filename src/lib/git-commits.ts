@@ -50,7 +50,7 @@ export const MAX_TITLE_LENGTH = 120;
  * `sinceIso` inklusif awal hari, `untilIso` inklusif akhir hari. Karena
  * `Asia/Jakarta` tidak memakai DST (selalu UTC+7), awal hari WIB selalu pukul
  * 00:00:00 WIB = 17:00:00 UTC hari sebelumnya. Pergeseran tetap itu dipakai
- * langsung — lebih jelas dibaca daripada perhitungan kalender rumit, dan sudah
+ * langsung, lebih jelas dibaca daripada perhitungan kalender rumit, dan sudah
  * dibuktikan oleh tes.
  */
 export function jakartaDayRange(plainDate: string): {
@@ -95,7 +95,7 @@ const PREFIX_CONVENTIONAL = /^[a-z]+(?:\([^)]*\))?!?:\s*(.+)$/i;
  * `[TAG]` dibatasi 1–16 huruf/angka tanpa spasi, supaya tanda kurung yang
  * memang bagian judul (mis. `[catatan panjang]`) tidak ikut terpotong.
  *
- * `[FIX]:` tanpa subjek menghasilkan `""` — BUKAN sisa `":"`. Itu penting:
+ * `[FIX]:` tanpa subjek menghasilkan `""`, BUKAN sisa `":"`. Itu penting:
  * sisa titik dua akan lolos `isGenericCommitTitle` dan masuk ke laporan.
  */
 function isiSetelahTagKurungSiku(text: string): string | null {

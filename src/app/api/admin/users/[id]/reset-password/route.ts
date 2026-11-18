@@ -15,7 +15,7 @@
 //   - Aksi dicatat ke audit (log sementara, lihat admin-action-log.ts).
 //
 // Catatan: memaksa pengguna mengganti kata sandi saat login berikutnya
-// dilakukan lewat `mustChangePassword: true` (lihat blok update di bawah) —
+// dilakukan lewat `mustChangePassword: true` (lihat blok update di bawah)
 // spanduk di (app)/layout.tsx dan halaman /settings yang menuntunnya. Sesi lama
 // tetap tercabut karena `sessionVersion` naik.
 

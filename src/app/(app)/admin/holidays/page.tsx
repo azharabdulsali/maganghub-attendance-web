@@ -3,7 +3,7 @@
 // Libur di sini menentukan KAPAN otomasi melewati sebuah tanggal: `decide()`
 // (report-policy.ts) memakai himpunan dari tabel `holidays` untuk memutuskan
 // SKIPPED vs ALLOW. Karena itu perubahan di halaman ini langsung memengaruhi
-// perilaku kirim — lihat SPEC.md §11B.
+// perilaku kirim, lihat SPEC.md §11B.
 //
 // ⚠️ Penjagaan sesungguhnya ada di SERVER (guard di bawah): sesi tanpa
 // `role === "ADMIN"` dialihkan ke /dashboard. Item sidebar hanya menyembunyikan
@@ -15,6 +15,8 @@ import { auth } from "@/lib/auth";
 import { isAdminRole } from "@/lib/admin";
 import { todayInJakarta } from "@/lib/submit-service";
 import { loadHolidayRows } from "@/lib/holidays-repo";
+import { PageHeader } from "@/components/page-header";
+import { Badge } from "@/components/ui/badge";
 import { HolidaysManager } from "./holidays-manager";
 
 export default async function AdminHolidaysPage() {
@@ -33,15 +35,11 @@ export default async function AdminHolidaysPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 sm:mb-8">
-        <span className="inline-flex items-center rounded-base border-2 border-border bg-main px-3 py-1 text-xs font-heading text-main-foreground">
-          ADMIN
-        </span>
-        <h1 className="mt-3 font-heading text-2xl sm:text-3xl">Hari Libur &amp; Tanggal Merah</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Tanggal ini dilewati otomasi, sama seperti Sabtu &amp; Minggu.
-        </p>
-      </div>
+      <PageHeader
+        title="Hari Libur & Tanggal Merah"
+        badge={<Badge className="bg-main text-main-foreground">Admin</Badge>}
+        description="Tanggal ini dilewati otomasi, sama seperti Sabtu & Minggu."
+      />
 
       {/* `key` dari data server: saat `router.refresh()` mengambil daftar baru,
           `key` berubah → komponen dipasang ulang dengan `initialRows` segar.

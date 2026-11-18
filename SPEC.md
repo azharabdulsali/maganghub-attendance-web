@@ -124,7 +124,7 @@ Sebelumnya §13 baris 6 menyebut "email + password (tanpa OAuth)"; kalimat itu
   NULL). Aturan murninya di `src/lib/auth-accounts.ts` (`hasPassword`,
   `effectiveRoleForEmail`), diuji tanpa DB.
 - **Membuat kata sandi pertama** (`POST /api/account/password`) tidak meminta
-  kata sandi lama — tidak ada yang bisa dibuktikan, dan sesi yang sah sudah
+  kata sandi lama, tidak ada yang bisa dibuktikan, dan sesi yang sah sudah
   cukup. Setelah itu akun bisa masuk dua cara.
 - **Ubah email tetap butuh kata sandi.** Akun Google yang belum punya sandi
   mendapat pesan "Buat kata sandi dulu" dan kartu email diganti keterangan di
@@ -176,7 +176,7 @@ Sebelumnya §13 baris 6 menyebut "email + password (tanpa OAuth)"; kalimat itu
 ### 5.3b Sumber Isi Laporan (commit → template)
 - Urutan yang berlaku di **semua** jalur kirim (cron per pengguna, dispatcher
   massal, dan pratinjau manual):
-  1. **Commit hari itu** — disusun otomatis menjadi 3 kolom.
+  1. **Commit hari itu**, disusun otomatis menjadi 3 kolom.
   2. **Template bertanggal** untuk tanggal tersebut.
   3. **Template harian**.
   4. Tidak ada satu pun → **batal**, alasan dicatat. Tidak pernah mengirim
@@ -194,12 +194,12 @@ Sebelumnya §13 baris 6 menyebut "email + password (tanpa OAuth)"; kalimat itu
   pengujian, dokumentasi, penataan ulang, konfigurasi) dibaca dari prefix commit
   atau kata di judul, lalu dirangkai bersama topiknya. Prefix yang dikenali ada
   dua gaya: **Conventional Commits** (`fix:`, `feat(api):`) dan **kurung siku**
-  (`[FIX]:`, `[ADD] ...`, `[FIX] - ...`) — gaya kedua lazim di repo nyata
+  (`[FIX]:`, `[ADD] ...`, `[FIX] - ...`), gaya kedua lazim di repo nyata
   pengguna. Kedua gaya dibuang dari judul sebelum dirangkai, sehingga
   `[FIX]: delete External ID and refactor documentation` terbaca sebagai
   perbaikan, bukan penataan ulang.
   Bila **tidak ada** jenis perubahan yang dapat dikenali, kolom dibiarkan kosong
-  — judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada yang
+judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada yang
   dipelajari. Pratinjau menandainya `learningNeedsReview: true` +
   `learningSource: "DERIVED" | "EMPTY"`; pengguna tetap wajib menyesuaikannya.
 
@@ -232,7 +232,7 @@ Sebelumnya §13 baris 6 menyebut "email + password (tanpa OAuth)"; kalimat itu
   UTC.
 - **Branch yang dibaca mengikuti isian pengguna.** Field `branch` di `/repos`
   dikirim ke API sebagai `ref_name` (GitLab) atau `sha` (GitHub). **Kosong berarti
-  default branch repo** menurut penyedia — aplikasi tidak menebak `main`, karena
+  default branch repo** menurut penyedia, aplikasi tidak menebak `main`, karena
   repo GitLab baru bisa memakai `master` atau nama lain. Tanpa ini API selalu
   memakai default branch, sehingga commit di branch kerja tidak pernah terlihat
   walau branch sudah tersimpan.
@@ -335,18 +335,43 @@ memantul ke login lagi. Setelah login, pengguna diarahkan ke `/dashboard` lewat
 halaman terlindungi (mis. `/calendar`), atau URL lama `/dashboard/*`? Layout
 mengalihkan ke `/login`.
 
+**Landing sadar sesi (bukan redirect).** `src/app/page.tsx` memanggil `auth()`
+hanya untuk **mengganti tombol**: pengguna yang sudah masuk melihat tombol
+**Dashboard** di kanan atas dan **Buka dashboard** di hero + CTA penutup,
+bukan Masuk/Daftar. Sebelumnya tombol itu selalu tampil sehingga pengguna
+mengira sesinya hilang padahal ia masih login. Halaman tetap tidak mengalihkan
+ke mana pun. Biayanya nihil: root layout sudah dinamis (cookie `tema`).
+
+**`/login` dan `/register` mengalihkan pengguna yang sudah masuk ke
+`/dashboard`.** Pemeriksaan di SERVER (`src/app/login/page.tsx`,
+`src/app/register/layout.tsx`, `register/page.tsx` adalah komponen klien,
+jadi penjaganya di layout). Tanpa itu, orang yang sudah login bisa memasukkan
+sandi ulang tanpa alasan atau mendaftar akun kedua.
+
+**Umur sesi: 30 hari, sliding.** Ditulis eksplisit di `src/lib/auth.ts`
+(`maxAge` 30 hari, `updateAge` 24 jam), jangan diandalkan pada default
+library. Sesi berupa cookie JWT `httpOnly` bernama `authjs.session-token`
+(`__Secure-authjs.session-token` di HTTPS), tidak terbaca JavaScript, dan
+diperpanjang otomatis selama pengguna aktif. Pencabutan tetap bisa dipaksa
+lewat `sessionVersion` (§5.8b), soft-delete akun, dan tombol Keluar.
+
 **Statistik dashboard (`/dashboard`):** halaman ini menampilkan empat kartu
-ringkas (**Total kirim, Berhasil, Gagal, Duplikat**) plus kartu **"Kirim sukses
-terakhir"** bila sudah ada, dan **grafik batang 30 hari**. Semua angka dihitung
-di server dari tabel `SubmitLog` (dan disaring `userId` pengguna yang sedang
-login; tidak ada agregasi lintas pengguna). Implementasinya terpisah agar
+ringkas (**Total kirim, Berhasil, Gagal, Duplikat**), kartu **Status Hari Ini**,
+**Kesiapan akun**, kartu kirim, dan **kalender status** per bulan. Semua angka
+dihitung di server dari tabel `SubmitLog` (dan disaring `userId` pengguna yang
+sedang login; tidak ada agregasi lintas pengguna). Implementasinya terpisah agar
 halaman tetap ringkas:
 
 - `stats-query.ts`, perhitungan; memakai `prisma.submitLog.groupBy` untuk total
-  per status dan `findMany` 30 hari untuk grafik.
+  per status dan `findMany` untuk deret harian (7 hari … 1 tahun sesuai filter).
 - `stats-cards.tsx`, kartu angka (komponen tampilan murni).
-- `trend-chart.tsx`, grafik batang **SVG murni**, tanpa library chart (menghindari
-  dependensi baru; lihat AGENTS.md §2).
+- `status-calendar.tsx`, **kalender status**: satu kotak = satu hari, angka
+  tanggal + nama hari, disusun per bulan memakai `buildMonthGrid`
+  (`src/lib/calendar.ts`), sumber kisi yang sama dengan halaman `/calendar`.
+  Aturan murni status & daftar bulannya ada di `src/lib/dashboard-calendar.ts`
+  (teruji). Bar chart lama dihapus karena datanya biner: tinggi batang tidak
+  mengodekan apa pun. Tanggal di luar rentang filter diredupkan, BUKAN dihitung
+  sebagai "Belum ada", data itu memang tidak di-query.
 
 Zona waktu: hari dihitung pada **Asia/Jakarta (UTC+7)**, bukan UTC, supaya
 "hari ini" cocok dengan hari kerja pengguna. Karena `Report.date` bertipe
@@ -509,7 +534,7 @@ sudah terkirim, mana yang masih kosong", melengkapi tabel linear di `/history`.
 > **Turunkan ADMIN → USER sengaja belum didukung.** Tanpa jaminan "masih ada
 > admin lain", menurunkan admin terakhir akan mengunci panel admin tanpa jalan
 > masuk. Server menolaknya terang-terangan (403) dan UI tidak menawarkan
-> tombolnya — lebih baik fitur tidak ada daripada ada tapi bisa mengunci sistem.
+> tombolnya, lebih baik fitur tidak ada daripada ada tapi bisa mengunci sistem.
 
 Halaman ini memuat tiga bagian:
 
@@ -539,13 +564,13 @@ menyunting jam, menit disimpan `00`) dan
 **status hari ini** ("Belum jalan" / "Sudah jalan" / "Gagal" + jam percobaan
 terakhir). Aturan murninya ada di `src/lib/admin-automation.ts` (teruji):
 `jakartaDayRange(now)` menentukan batas hari WIB, `scheduleLabel` memformat jam,
-dan `assessTodayRun(logs, now)` menilai status — "sudah jalan" = ada `SubmitLog`
+dan `assessTodayRun(logs, now)` menilai status, "sudah jalan" = ada `SubmitLog`
 apa pun hari ini; status log terakhir menang (FAILED → "Gagal"). Setiap baris
 punya tombol **Jalankan** yang memanggil `POST /api/admin/dispatch/user` untuk
 **memaksa** jalankan otomasi user itu, mengabaikan jam jadwalnya (untuk mengejar
 yang terlewat). Eksekusinya memakai `performSubmit` yang SAMA dengan dispatcher
 massal, jadi kebijakan laporan (libur/akhir pekan/akhir program, pra-cek duplikat,
-gerbang `ALLOW_LIVE_SUBMIT`) tetap berlaku — "paksa" = abaikan jam, bukan abaikan
+gerbang `ALLOW_LIVE_SUBMIT`) tetap berlaku, "paksa" = abaikan jam, bukan abaikan
 kebijakan. Pemicunya tercatat `CRON` di audit log.
 
 > **⚠️ Sama seperti riwayat:** jangan kirim `take: 0` ke Prisma, halaman audit
@@ -650,7 +675,7 @@ mengabarkan dua hal sekaligus untuk satu kejadian.
 ### 5.13 Kritik & Saran (`/feedback`, `/admin/feedback`)
 
 **Keputusan (2026-10): satu arah.** Pengguna mengirim masukan, admin membacanya
-dan menandai "sudah dibaca". **Tidak ada balasan admin** — pemilik memilih opsi
+dan menandai "sudah dibaca". **Tidak ada balasan admin**, pemilik memilih opsi
 ini agar tidak ada utang fitur notifikasi/percakapan.
 
 - Model `Feedback` (`feedbacks`): `userId`, `message`, `readAt` (NULL = belum
@@ -676,7 +701,7 @@ ini agar tidak ada utang fitur notifikasi/percakapan.
 berkas batas galat Next.js. Akibatnya bila query Prisma gagal (database tidak
 bisa dihubungi, kolom belum ada karena `db push` belum dijalankan,
 `ENCRYPTION_KEY` salah), pengguna melihat layar putih **"Application error"**
-berbahasa Inggris dari Next.js — tanpa navigasi dan tanpa petunjuk apa pun.
+berbahasa Inggris dari Next.js, tanpa navigasi dan tanpa petunjuk apa pun.
 Untuk aplikasi yang dipakai peserta magang, itu meyakinkan mereka bahwa
 seluruh situs rusak padahal hanya satu query yang gagal.
 
@@ -689,7 +714,7 @@ bersamaan:
 | `src/app/global-error.tsx` | Galat di `src/app/layout.tsx` (root layout) | **Menggantikan** root layout: wajib menulis `<html>` + `<body>` sendiri, gaya inline, tanpa impor komponen UI |
 | `src/app/error.tsx` | Galat di halaman publik sebelum login | Tampil tanpa sidebar |
 | `src/app/not-found.tsx` | URL 404 tingkat root | `noindex`, tawaran netral (Beranda, Masuk) |
-| `src/app/(app)/error.tsx` | Galat di halaman setelah login | **Sidebar tetap tampil** — pengguna tidak terjebak |
+| `src/app/(app)/error.tsx` | Galat di halaman setelah login | **Sidebar tetap tampil**, pengguna tidak terjebak |
 | `src/app/(app)/not-found.tsx` | `notFound()` dari halaman terlindungi | Tawaran relevan untuk pengguna login |
 | `src/app/(app)/loading.tsx` | Keadaan muat saat pindah halaman | Dipasang di level grup: satu perbaikan berlaku untuk SEMUA halaman `(app)` |
 
@@ -698,7 +723,7 @@ bersamaan:
 - **`error.message` mentah TIDAK PERNAH ditampilkan.** Pesan Prisma memuat nama
   tabel/kolom dan pesan env memuat nama variabel; keduanya tidak berguna bagi
   pengguna dan membocorkan struktur sistem. Yang ditampilkan hanya
-  `error.digest` — nilai yang sama muncul di log server Vercel sehingga admin
+  `error.digest`, nilai yang sama muncul di log server Vercel sehingga admin
   bisa mencocokkannya.
 - **Selalu ada satu tindakan yang benar-benar memulihkan.** `reset()` dari
   Next.js merender ulang segmen tanpa memuat ulang seluruh halaman; ditambah
@@ -714,14 +739,14 @@ bersamaan:
   eksplisit agar tidak dianggap pelanggaran aturan token DESIGN.md.
 - **Halaman galat `noindex`** (`robots: { index: false, follow: false }`).
 
-**Verifikasi.** `npm run build` saja **tidak cukup** — ia hanya membuktikan
+**Verifikasi.** `npm run build` saja **tidak cukup**, ia hanya membuktikan
 berkasnya terkompilasi. Cara membuktikan perilakunya: jalankan `npm run start`,
 minta URL yang tidak ada (harus `404` + teks Indonesia + tautan keluar), lalu
 sementara suntikkan `throw` di halaman **dinamis** (mis. `(app)/calendar`,
 setelah `auth()` supaya TypeScript tetap lolos) dan pastikan halaman galat
 tampil tanpa membocorkan pesan. Kembalikan suntikan itu dan periksa `git diff`
 bersih. **Halaman statis yang di-prerender** (mis. `/panduan`) tidak bisa
-dipakai untuk uji ini — galatnya muncul saat build, bukan saat request. Ini
+dipakai untuk uji ini, galatnya muncul saat build, bukan saat request. Ini
 sudah dilakukan dan hasilnya sesuai (404 kustom tampil 24 KB body; galat
 tersuntik tertangkap tanpa membocorkan `error.message`).
 
@@ -767,13 +792,13 @@ Bentuk sistem:
 - Jika `403` muncul, pesannya ditampilkan terus terang ke pengguna dan
   dicatat di audit log, bukan ditutupi dengan penyamaran.
 
-**✅ DIPUTUSKAN & DIUJI ULANG (2026-06, DIPERBARUI) — proxy residensial DIIZINKAN untuk login SSO.**
+**✅ DIPUTUSKAN & DIUJI ULANG (2026-06, DIPERBARUI), proxy residensial DIIZINKAN untuk login SSO.**
 
 Fakta yang sudah dikonfirmasi:
 - Yang dijaga Cloudflare Managed Challenge **hanya halaman login SSO**
   (`account.kemnaker.go.id`). Aplikasi ini, saat dijalankan dari IP datacenter
   (Vercel), selalu gagal di langkah `sso-prime` (GET `/auth`) dengan
-  `403` + `cf-mitigated: challenge` — **jauh sebelum password dicek**.
+  `403` + `cf-mitigated: challenge`, **jauh sebelum password dicek**.
 - **API Monev TIDAK diblokir**: `monev_refresh_token` yang dipanen dari browser
   pengguna dipakai memanggil `POST /auth/refresh` dari Vercel → `ACTIVE`.
 - **Repo referensi `maganghub-bot-attendance` berhasil login** (mencapai
@@ -783,7 +808,7 @@ Fakta yang sudah dikonfirmasi:
 
 **KEPUTUSAN:** larangan lama "*Tidak memakai proxy untuk menembus `403`*"
 **dicabut oleh pemilik** untuk jalur login SSO. Alasan: proxy membuat request
-datang dari **IP residensial** — tempat challenge Cloudflare lolos **secara
+datang dari **IP residensial**, tempat challenge Cloudflare lolos **secara
 wajar**, persis seperti browser pengguna sendiri. Ini **bukan** mengecoh
 CAPTCHA/OTP/MFA dan **bukan** menyamar sebagai identitas orang lain (UA tetap
 wajar, bukan memalsukan orang). Kebijakan lama di `AGENTS.md` §73 yang
@@ -805,7 +830,7 @@ mengatakan "jangan tambahkan proxy" sudah **diperbarui**.
    `src/lib/guides.ts`).
 3. Aplikasi menukar refresh token → access token; sesi ±30 hari.
 
-Dengan proxy aktif, langkah manual itu **tidak lagi wajib** — pengguna cukup
+Dengan proxy aktif, langkah manual itu **tidak lagi wajib**, pengguna cukup
 menekan "Uji Login" dan sesi tersimpan otomatis. Jalur manual tetap berguna
 bila proxy tidak tersedia/diblokir.
 
@@ -852,7 +877,7 @@ Batasan: `Report` unik per `(userId, date)`, mencegah draf ganda.
 
 Tabel ini **disusun langsung dari `src/app/**/route.ts`** (bukan rencana), jadi
 setiap baris bisa dicocokkan ke berkas nyata. Bila menambah endpoint, tambahkan
-barisnya di sini **dalam perubahan yang sama** — `AGENTS.md` §9 mewajibkan itu.
+barisnya di sini **dalam perubahan yang sama**, `AGENTS.md` §9 mewajibkan itu.
 
 | Method | Endpoint | Deskripsi | Auth | Rate limit |
 | :--- | :--- | :--- | :--- | :--- |
@@ -953,7 +978,7 @@ pendaftaran langsung aktif tanpa verifikasi email.
     membagikan data ke pihak ketiga.
 13. **CAPTCHA (opsional)**: Cloudflare Turnstile di `/api/register` dan
     `authorize` login kata sandi. Dua aturan yang mengikat:
-    (a) **dua env wajib terisi** — secret saja akan mengunci pengguna karena
+    (a) **dua env wajib terisi**, secret saja akan mengunci pengguna karena
     widget tidak pernah muncul;
     (b) **gangguan Cloudflare = tolak**, jangan pernah meloloskan permintaan
     saat verifikasi tidak bisa dilakukan; kalau tidak, CAPTCHA bisa dilewati
@@ -1184,8 +1209,8 @@ Setiap tahap harus bisa dilihat hasilnya sebelum lanjut. Bisa berhenti kapan saj
 > - **Header keamanan, SELESAI.** `src/lib/security-headers.ts` dipakai
 >   `next.config.ts`; diverifikasi nyata (curl + Playwright, 0 pelanggaran CSP).
 > - **Jalur re-auth yang jelas, SELESAI (SPEC §397).** Dua celah ditutup:
->   (1) `performSubmit` kini menandai kredensial `INVALID` saat `SESSION_DEAD`
->, sebelumnya hanya `POST /credentials/verify` yang melakukannya, jadi status
+>   (1) `performSubmit` kini menandai kredensial `INVALID` saat `SESSION_DEAD`;
+>   sebelumnya hanya `POST /credentials/verify` yang melakukannya, jadi status
 >   di DB tetap `ACTIVE` walau token sudah mati; error jaringan **tidak**
 >   menandai (token belum terbukti buruk). (2) Tombol submit menampilkan tombol
 >   "Buka halaman kredensial", dan kartu dashboard menampilkan status nyata.
@@ -1203,11 +1228,11 @@ Semua sudah diputuskan pemilik. Berikut ringkasannya.
 | # | Keputusan | Pilihan |
 | :--- | :--- | :--- |
 | 1 | Database | **Neon sejak awal** (bukan SQLite lokal), lihat §14 |
-| 2 | Provider AI | **DICABUT oleh pemilik.** Awalnya AI dihapus sepenuhnya (lihat baris 7); pemilik kemudian memutuskan memakai **LLM gratis** (Google Gemini) dengan **1 API key milik admin untuk semua pengguna**. Implementasi: `src/lib/report-draft-llm.ts` (server-only, key di header, bukan query string) dengan **fallback otomatis** ke penyusun lokal `src/lib/report-draft.ts`. Kontrak `ReportDrafter` + `getDrafter()`/`draftWithFallback()` menjaga agar penggantian provider tidak menyentuh UI/rute. Bila `GEMINI_API_KEY` kosong, fitur **tetap jalan** memakai lokal. **Pilihan model ditentukan hasil pengujian nyata ke API** (bukan asumsi): nama versi spesifik (`gemini-2.0-flash`, `gemini-2.5-flash`) semuanya 404 karena dihapus Google; `gemini-flash-latest` hanya berkuota **20 permintaan/hari**, terlalu kecil untuk key bersama; yang dipakai **`gemini-flash-lite-latest`** (alias stabil + kuota lebih lega). Endpoint **hanya `/v1beta`** — asumsi lama bahwa key `AQ.` butuh `/v1` salah dan menyebabkan 404 berkepanjangan. Kegagalan LLM **dicatat ke log server** (`console.warn`) supaya salah konfigurasi tidak tersembunyi di balik fallback. **Jawaban LLM divalidasi dua lapis:** `checkReportField` (panjang & placeholder) DAN `isIndonesianText` (bahasa). Lapis kedua wajib karena teks Inggris yang panjang **lolos** `checkReportField` — tanpa itu, laporan berbahasa Inggris bisa masuk ke form (dibuktikan dengan tes, bukan dugaan). Pemeriksa bahasa memakai **bukti positif** (kata fungsi Indonesia hadir) alih-alih daftar hitam kata asing, supaya istilah teknis yang wajar di laporan IT (`deploy`, `bug`, `React`) tidak membuat draf yang sah ikut ditolak. Diagnosis cepat: `npx tsx scripts/uji-gemini.ts`. |
+| 2 | Provider AI | **DICABUT oleh pemilik.** Awalnya AI dihapus sepenuhnya (lihat baris 7); pemilik kemudian memutuskan memakai **LLM gratis** (Google Gemini) dengan **1 API key milik admin untuk semua pengguna**. Implementasi: `src/lib/report-draft-llm.ts` (server-only, key di header, bukan query string) dengan **fallback otomatis** ke penyusun lokal `src/lib/report-draft.ts`. Kontrak `ReportDrafter` + `getDrafter()`/`draftWithFallback()` menjaga agar penggantian provider tidak menyentuh UI/rute. Bila `GEMINI_API_KEY` kosong, fitur **tetap jalan** memakai lokal. **Pilihan model ditentukan hasil pengujian nyata ke API** (bukan asumsi): nama versi spesifik (`gemini-2.0-flash`, `gemini-2.5-flash`) semuanya 404 karena dihapus Google; `gemini-flash-latest` hanya berkuota **20 permintaan/hari**, terlalu kecil untuk key bersama; yang dipakai **`gemini-flash-lite-latest`** (alias stabil + kuota lebih lega). Endpoint **hanya `/v1beta`**, asumsi lama bahwa key `AQ.` butuh `/v1` salah dan menyebabkan 404 berkepanjangan. Kegagalan LLM **dicatat ke log server** (`console.warn`) supaya salah konfigurasi tidak tersembunyi di balik fallback. **Jawaban LLM divalidasi dua lapis:** `checkReportField` (panjang & placeholder) DAN `isIndonesianText` (bahasa). Lapis kedua wajib karena teks Inggris yang panjang **lolos** `checkReportField`, tanpa itu, laporan berbahasa Inggris bisa masuk ke form (dibuktikan dengan tes, bukan dugaan). Pemeriksa bahasa memakai **bukti positif** (kata fungsi Indonesia hadir) alih-alih daftar hitam kata asing, supaya istilah teknis yang wajar di laporan IT (`deploy`, `bug`, `React`) tidak membuat draf yang sah ikut ditolak. Diagnosis cepat: `npx tsx scripts/uji-gemini.ts`. |
 | 3 | Pemicu jadwal | **cron-job.org** |
 | 4 | Domain | **`maganghub-autoabsen.my.id`** (aktif). Awalnya pakai domain Vercel (`*.vercel.app`); kini domain khusus, jadi URL produksi berbentuk `https://maganghub-autoabsen.my.id` |
 | 5 | Akses pendaftaran | **Terbuka bebas**, siapa pun boleh daftar, **langsung aktif, tanpa verifikasi email** |
-| 6 | Cara login | **Email + password**, ditambah **Google (opsional, 2026-11)** — §5.1a. Tombol Google hanya muncul bila `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` diisi. Provider lain (GitHub, dsb.) tetap tidak ada |
+| 6 | Cara login | **Email + password**, ditambah **Google (opsional, 2026-11)**, §5.1a. Tombol Google hanya muncul bila `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` diisi. Provider lain (GitHub, dsb.) tetap tidak ada |
 | 7 | Sumber commit GitHub | **DIIZINKAN sejak 2026-06 (mencabut keputusan lama "DIBATALKAN")**. Commit dari satu repo GitHub **atau** GitLab boleh dipakai sebagai bahan draf, opt-in, token read-only terenkripsi. Detail & batas: §5.4a + `docs/GIT-COMMITS-PLAN.md`. Template tetap jadi jalur default |
 | 8 | Admin pertama | **`ADMIN_EMAIL` di env** (opsi 1), lihat di bawah |
 | 9 | Isi laporan | **3 template sama setiap hari**, persis bot Python. Bisa diedit manual sebelum submit bila perlu |
@@ -1246,7 +1271,7 @@ Catatan keamanan:
   ```
 
   Skripnya ada di `scripts/make-admin.ts` (dijalankan `tsx`, hanya dari lokal,
-  memakai `.env.local`). Ia **tidak membuat akun** — pengguna harus mendaftar
+  memakai `.env.local`). Ia **tidak membuat akun**, pengguna harus mendaftar
   lebih dulu lewat `/register`. Keluar dengan kode 1 bila email tidak ditemukan,
   tidak wajar, atau akunnya sudah dihapus (soft delete), dengan pesan yang
   menyebutkan langkah berikutnya. Jalur alternatif: `npx prisma studio`.
@@ -1440,7 +1465,7 @@ npx prisma studio       # opsional
 
 > **Untuk proyek ini, Prisma yang terpasang adalah 7.x** (`package.json`:
 > `prisma: 7.10.0`), dan **Prisma 7 WAJIB memakai driver adapter**
-> (`@prisma/adapter-neon`) — `new PrismaClient()` polos akan gagal dengan
+> (`@prisma/adapter-neon`), `new PrismaClient()` polos akan gagal dengan
 > *"A driver adapter is required"*. Jangan mengikuti contoh Prisma 6 yang
 > tersebar di internet: di Prisma 7 `url` **tidak lagi** ditulis di blok
 > `datasource`, melainkan diberikan lewat `prisma.config.ts` (untuk CLI) dan

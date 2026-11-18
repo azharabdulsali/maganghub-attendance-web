@@ -38,7 +38,7 @@ export function GoogleSignInButton({ label }: { label: string }) {
     <div className="mt-4">
       <div className="mb-4 flex items-center gap-3" aria-hidden>
         <span className="h-0.5 flex-1 bg-border" />
-        <span className="text-xs text-foreground/60">atau</span>
+        <span className="text-xs text-muted-foreground">atau</span>
         <span className="h-0.5 flex-1 bg-border" />
       </div>
       <Button

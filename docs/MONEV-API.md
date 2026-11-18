@@ -294,7 +294,7 @@ Poin penting:
 **✅ Rotasi refresh token TERVERIFIKASI (rekaman DevTools, 2026-06).** Setiap
 `POST /auth/refresh` yang **sukses** membalas `Set-Cookie` baru untuk
 `monev_refresh_token` (nilai berbeda tiap panggilan), **dan token lama langsung
-tidak berlaku** — refresh berikutnya dengan token lama dibalas `401`.
+tidak berlaku**, refresh berikutnya dengan token lama dibalas `401`.
 
 ```
 200 OK
@@ -575,15 +575,15 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > diagnostik di atas penuh istilah teknis (`cf-mitigated`, jumlah byte, URL
 > OAuth) dan **membingungkan** bila tampil apa adanya di layar. Karena itu
 > `interpretSsoPrimeResponse` memisahkan dua hal:
-> - **`message`** — dari `describeLoginErrorForUser` (MURNI). Bahasa awam,
+> - **`message`**, dari `describeLoginErrorForUser` (MURNI). Bahasa awam,
 >   satu–dua kalimat, selalu menyebut langkah berikutnya (mis. "Portal menolak
 >   permintaan dari server kami karena proteksi anti-bot, **bukan** karena
 >   email & password Anda salah. Gunakan cara tempel token di bawah."). Ini
 >   yang dirender di UI.
-> - **`diagnostic`** — teks teknis penuh (`Priming SSO gagal (HTTP 403). …`).
+> - **`diagnostic`**, teks teknis penuh (`Priming SSO gagal (HTTP 403). …`).
 >   Hanya dicatat ke log server (`console.warn` di `POST
 >   /api/credentials/login`), **tidak pernah** dikirim ke klien.
-> - **`prime`** — ringkasan terstruktur **NON-RAHASIA** (`buildPrimeRejectionInfo`,
+> - **`prime`**, ringkasan terstruktur **NON-RAHASIA** (`buildPrimeRejectionInfo`,
 >   MURNI) dari respons yang menolak: `{ httpCode, kind, server?,
 >   cfMitigated?, contentType?, finalUrl? }`. Ini **beda** dari `diagnostic`:
 >   `prime` sengaja **boleh** mengalir server → klien (`POST
@@ -602,7 +602,7 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > (Opsi C1). Halaman `/credentials` kini punya **form "Tempel token manual"**
 > yang memanggil `POST /api/credentials/verify`, jadi instruksi fallback benar
 > bisa diikuti tanpa jalan buntu. Tautan panduan:
-> `/panduan/ambil-token-monev-devtools`. Tidak ada spoofing UA — proxy
+> `/panduan/ambil-token-monev-devtools`. Tidak ada spoofing UA, proxy
 > residensial (opsional) memakai `MAGANGHUB_PROXY_URL` (§9).
 >
 > **🧱 TEMUAN FINAL (bukti lapangan, `cf-mitigated: challenge`).** Pada uji
@@ -618,7 +618,7 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 > **Managed Challenge** ("Verify you are human"): halaman menuntut eksekusi
 > **JavaScript + proof-of-work**, lalu menaruh cookie `cf_clearance`. Server
 > Node (undici) **tidak menjalankan JS**, jadi **secara desain** ia tak akan
-> pernah lewat — tidak peduli header `Referer`/UA/`Origin` yang kita set.
+> pernah lewat, tidak peduli header `Referer`/UA/`Origin` yang kita set.
 > URL yang ditolak pun **sudah benar** (authorizeUrl lengkap dengan
 > `client_id`/`state`), jadi bukan soal langkah (1). Artinya:
 >
@@ -627,12 +627,12 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 >   "diperbaiki dengan header".
 > - Jalan keluar yang tersedia:
 >   - **Proxy residensial (DIIZINKAN, 2026-06).** `MAGANGHUB_PROXY_URL` membuat
->     request login SSO datang dari IP residensial tempat challenge lolos wajar
->     — sama seperti browser pengguna. Ini **bukan** mengakali proteksi
+>     request login SSO datang dari IP residensial tempat challenge lolos wajar,
+>     sama seperti browser pengguna. Ini **bukan** mengakali proteksi
 >     (`SPEC.md` §6 diperbarui; `AGENTS.md` §73 diperbarui). Terbukti dipakai
 >     repo referensi `maganghub-bot-attendance`.
 >   - **Headless browser** untuk "melarutkan" challenge (memecahkan JS/PoW)
->     tetap **terlarang** — itu mengakali anti-bot, bukan meniru klien wajar.
+>     tetap **terlarang**, itu mengakali anti-bot, bukan meniru klien wajar.
 >   - **Pinjam `cf_clearance`** orang lain tetap **terlarang** (terikat IP +
 >     sidik jari, dan itu menyamar sebagai sesi orang lain).
 >   - **Tempel token (Opsi C1)** tetap ada sebagai fallback bila proxy tidak
@@ -643,7 +643,7 @@ cookie: acw_tc=...; kemnaker_ri_session=...; cf_clearance=...
 >
 > Deteksi ini dipisah sebagai fungsi murni `isUnsolvableCloudflareChallenge`
 > (`src/lib/monev-login.ts`) yang hanya bernilai `true` untuk
-> `cf-mitigated=challenge` — `403` WAF biasa **tanpa** `challenge` sengaja
+> `cf-mitigated=challenge`, `403` WAF biasa **tanpa** `challenge` sengaja
 > **tidak** diklaim mustahil (masih mungkin ada perbaikan sah). Ini menjaga
 > kejujuran dua arah: tak menyuruh pengguna mencoba hal mustahil, tak pula
 > menyerah pada `403` yang sebenarnya bisa dilewati.
@@ -825,7 +825,7 @@ internal bila body kosong/HTML).
 
 Sesuai §12.6 dan SPEC §11B, sebelum setiap pengiriman nyata kita **membaca dulu**
 `GET /api/v1/daily-logs?date=<target>` dan **berhenti bila laporan tanggal itu
-sudah ada** — jangan bergantung pada `409` saja. Alasannya konkret: portal
+sudah ada**, jangan bergantung pada `409` saja. Alasannya konkret: portal
 **tidak** menolak submit ulang untuk tanggal yang sudah diisi lewat **UI portal
 (jalur manual pengguna)**; `409` hanya muncul bila endpoint API ini dipanggil dua
 kali. Tanpa pra-cek, cron bisa **menimpa** laporan manual (kejadian nyata:
@@ -837,7 +837,7 @@ Titik pemasangan: `src/lib/monev-submit.ts` menyediakan `checkDailyLogExists()`
 `submitReport`**. Kebijakan default-**aman**: hanya `ABSENT` yang mengizinkan
 kirim; `EXISTS` → `ALREADY_SUBMITTED` (dicatat `DUPLICATE`); `UNKNOWN` (jaringan
 gagal / 401 / bentuk respons tak dikenal) **juga membatalkan** (dicatat `FAILED`)
-— melewatkan sehari jauh lebih ringan daripada menghapus tulisan pengguna.
+melewatkan sehari jauh lebih ringan daripada menghapus tulisan pengguna.
 Pengecekan dilewati saat dry-run (tidak menyentuh jaringan). Pencocokan
 memakai **tanggal target**, bukan sekadar "ada log" (§12.7.3).
 
@@ -897,7 +897,7 @@ diamati saat uji pertama sebelum `ALLOW_LIVE_SUBMIT=1`.
   lewat proxy residensial (`HttpsProxyAgent` + `MAGANGHUB_PROXY_URL`). Yang
   dijaga Cloudflare Managed Challenge **hanya** halaman login SSO
   (`account.kemnaker.go.id`); proxy membuat request datang dari IP residensial
-  — tempat challenge lolos **secara wajar**, sama seperti browser pengguna.
+tempat challenge lolos **secara wajar**, sama seperti browser pengguna.
   Ini bukan "menerobos proteksi", melainkan tampil sebagai klien yang wajar.
   Lihat `SPEC.md` §6, `AGENTS.md` §73.
 - **Cara pakai:** set `MAGANGHUB_PROXY_URL` di `.env` (opsional). Implementasi
@@ -907,7 +907,7 @@ diamati saat uji pertama sebelum `ALLOW_LIVE_SUBMIT=1`.
 - **Tidak boleh mengirim apa pun** selama fase uji koneksi.
 
 Catatan penting: karena **API Monev tidak diblokir Cloudflare** (§7), jalur data
-(code-exchange, `refresh`, submit) **tidak** lewat proxy — hanya jalur yang
+(code-exchange, `refresh`, submit) **tidak** lewat proxy, hanya jalur yang
 menyentuh `account.kemnaker.go.id` (SSO) yang lewat proxy, dan itu diatur
 otomatis oleh `fetchPortal` (proxy hanya aktif di pemanggil yang memakainya).
 Jalur "tempel token" di `/credentials` tetap ada sebagai fallback bila proxy

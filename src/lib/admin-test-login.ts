@@ -4,7 +4,7 @@
 // HIDUP, tanpa harus menunggu otomasi berjalan dan TANPA mengirim laporan apa
 // pun. Fitur ini menjalankan alur login SSO yang SAMA dengan tombol
 // "Login otomatis" milik pengguna (src/lib/monev-login.ts) dan menyimpan sesi
-// hasilnya lewat jalur yang SAMA (saveLoginSession) — jadi status kredensial
+// hasilnya lewat jalur yang SAMA (saveLoginSession), jadi status kredensial
 // yang tampil di admin konsisten dengan yang dilihat pengguna.
 //
 // Prinsip keamanan (ditegakkan di kode):
@@ -44,7 +44,7 @@ export type TestLoginResult =
  *
  * Mengembalikan hasil terstruktur (tanpa rahasia) supaya route bisa memetakan
  * ke status HTTP yang tepat. `REJECTED`/`ERROR` juga menandai status kredensial
- * di DB (INVALID untuk REJECTED; ERROR tidak mengubah status — belum tentu
+ * di DB (INVALID untuk REJECTED; ERROR tidak mengubah status, belum tentu
  * kredensialnya salah, bisa jadi jaringan).
  *
  * @param userId  Sasaran. Dipanggil setelah route memverifikasi admin.
@@ -127,7 +127,7 @@ export async function testLogin(userId: string): Promise<TestLoginResult> {
   }
 
   if (result.status === "ERROR") {
-    // Kesalahan jaringan/WAF. JANGAN ubah status kredensial — belum tentu
+    // Kesalahan jaringan/WAF. JANGAN ubah status kredensial, belum tentu
     // kredensialnya salah. Detail teknis hanya dicatat ke log server.
     if (result.diagnostic) {
       console.warn(

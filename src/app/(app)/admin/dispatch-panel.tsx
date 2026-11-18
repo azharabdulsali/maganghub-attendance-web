@@ -22,7 +22,7 @@ import { useToast } from "@/components/ui/toast";
 //
 // Sebelumnya berkas ini mendeklarasikan ulang bentuk ringkasannya. Salinan
 // seperti itu tidak pernah gagal di-build saat lib menambah field (`topUpPending`
-// ditambahkan di lib dan panel diam-diam melewatkannya) — ia hanya jadi tidak
+// ditambahkan di lib dan panel diam-diam melewatkannya), ia hanya jadi tidak
 // lengkap tanpa peringatan. Impor tipe aslinya membuat perubahan lib LANGSUNG
 // terlihat di sini sebagai galat TypeScript.
 import type { DispatchSummary } from "@/lib/cron-dispatch-run";
@@ -138,7 +138,7 @@ export function DispatchPanel() {
                 ))}
               </ul>
             ) : (
-              <p className="text-foreground/70">
+              <p className="text-muted-foreground">
                 Tidak ada user yang jadwalnya jatuh pada jam ini.
               </p>
             )}

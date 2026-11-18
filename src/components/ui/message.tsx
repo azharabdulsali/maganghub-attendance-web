@@ -19,7 +19,7 @@ import type { Tone } from "@/lib/admin"
 const TONE_CLASS: Record<Tone, string> = {
   good: "bg-success text-success-foreground",
   bad: "border-destructive text-foreground",
-  neutral: "bg-background text-foreground",
+  neutral: "bg-secondary-background text-foreground",
 }
 
 function Message({

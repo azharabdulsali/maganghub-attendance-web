@@ -57,7 +57,7 @@ export interface DraftResult {
  * bentuk ini, tidak pada detail "bagaimana" draf dibuat.
  *
  * Implementasi saat ini: `localDrafter` (murni, di bawah).
- * Calon berikutnya    : `llmDrafter` (memanggil provider eksternal) — bila
+ * Calon berikutnya    : `llmDrafter` (memanggil provider eksternal), bila
  *   kelak diaktifkan, cukup daftarkan sebagai implementasi lain dan biarkan
  *   pemanggil memilih lewat `getDrafter()`. Tidak ada perubahan di form.
  */
@@ -203,7 +203,7 @@ function cukupkan(
  * Batas ATAS juga dijaga (`DRAFT_MAX_LENGTH`): keputusan pemilik adalah draf
  * otomatis 100-200 karakter per kolom. Pengguna tidak boleh diminta menghapus
  * kelebihan yang ia tidak minta. Pemotongan dilakukan di batas kata oleh
- * `trimToChars`, lalu divalidasi ulang — memotong bisa membuat kolom kembali
+ * `trimToChars`, lalu divalidasi ulang, memotong bisa membuat kolom kembali
  * di bawah MIN_REPORT_LENGTH, dan itu harus ketahuan di sini, bukan di server.
  */
 function bangunKolom(

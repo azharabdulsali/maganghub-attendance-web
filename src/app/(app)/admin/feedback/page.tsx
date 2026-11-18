@@ -8,7 +8,7 @@
 // tautan (docs/UI-LAYOUT.md §2).
 //
 // Urutan: BELUM dibaca dulu, lalu yang terbaru. Postgres menaruh NULL di
-// BELAKANG pada ASC, jadi `nulls: "first"` ditulis eksplisit — tanpa itu
+// BELAKANG pada ASC, jadi `nulls: "first"` ditulis eksplisit, tanpa itu
 // masukan baru tenggelam di bawah tumpukan yang sudah selesai.
 
 import { redirect } from "next/navigation";
@@ -16,6 +16,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/admin";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatJakartaTimestamp } from "@/lib/audit-log";
@@ -54,15 +55,11 @@ export default async function AdminFeedbackPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 sm:mb-8">
-        <span className="inline-flex items-center rounded-base border-2 border-border bg-main px-3 py-1 text-xs font-heading text-main-foreground">
-          ADMIN
-        </span>
-        <h1 className="mt-3 font-heading text-2xl sm:text-3xl">Kritik &amp; Saran</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Masukan dari pengguna aplikasi
-        </p>
-      </div>
+      <PageHeader
+        title="Kritik & Saran"
+        badge={<Badge className="bg-main text-main-foreground">Admin</Badge>}
+        description="Masukan dari pengguna aplikasi."
+      />
 
       <Card>
         <CardHeader>
@@ -79,7 +76,7 @@ export default async function AdminFeedbackPage() {
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-muted-foreground">
               Belum ada masukan dari pengguna.
             </p>
           ) : (
@@ -97,10 +94,10 @@ export default async function AdminFeedbackPage() {
                         <Badge tone={feedbackStateTone(row.readAt)}>
                           {describeFeedbackState(row.readAt)}
                         </Badge>
-                        <span className="min-w-0 truncate text-xs text-foreground/70">
+                        <span className="min-w-0 truncate text-xs text-muted-foreground">
                           {pengirim}
                         </span>
-                        <span className="text-xs text-foreground/60">
+                        <span className="text-xs text-muted-foreground">
                           {formatJakartaTimestamp(row.createdAt) ??
                             "waktu tidak diketahui"}
                         </span>
@@ -120,7 +117,7 @@ export default async function AdminFeedbackPage() {
           )}
 
           {rows.length === BATAS_TAMPIL ? (
-            <p className="mt-3 text-xs text-foreground/60">
+            <p className="mt-3 text-xs text-muted-foreground">
               Menampilkan {BATAS_TAMPIL} masukan pertama. Hapus yang sudah
               selesai untuk melihat sisanya.
             </p>

@@ -4,7 +4,7 @@
 //
 // Kenapa tes ini ada: sebagian besar pesan error API ditampilkan apa adanya di
 // UI lewat `setError(data.error)` atau `toast.error(judul, data.error)`. Jadi
-// string `{ error: "..." }` BUKAN pesan internal — ia tampil di layar. Tanpa
+// string `{ error: "..." }` BUKAN pesan internal, ia tampil di layar. Tanpa
 // penjaga ini, istilah seperti `userId`, `JSON`, `HTTP 403`, atau `CRON_SECRET`
 // mudah lolos ke depan pengguna tanpa ada yang sadar.
 //
@@ -44,7 +44,7 @@ function berkasSumber(): string[] {
 /**
  * Berkas yang audiensnya memang teknisi (penjadwal/curl/alat diagnostik admin:
  * analisis HAR & perintah curl). Pesan `HTTP`/`Authorization`/`JSON`/`HAR` di
- * sini WAJIB teknis agar bisa dipakai saat menyiapkan webhook — bukan
+ * sini WAJIB teknis agar bisa dipakai saat menyiapkan webhook, bukan
  * pelanggaran aturan "pesan awam".
  */
 const DIKECUALIKAN = [
@@ -78,7 +78,7 @@ const JARGON: Array<{ pola: RegExp; saran: string }> = [
  *
  * Hanya baris dengan penanda pesan (`error:`, `message:`, `toast.x(`,
  * `setError(`, `setSukses(`, `setLoginMsg(`, `setTokenMsg(`) yang diperiksa, dan
- * komentar dibuang — supaya istilah teknis di kode/nama variabel tidak ikut
+ * komentar dibuang, supaya istilah teknis di kode/nama variabel tidak ikut
  * dituduh.
  */
 /** Jargon tambahan: pola teknis yang lazim lolos ke pesan tanpa disadari. */
@@ -103,11 +103,11 @@ const SEMUA_JARGON = [...JARGON, ...JARGON_EKSTRA];
  *
  * Hanya baris dengan penanda pesan (`error:`, `message:`, `toast.x(`,
  * `setError(`, `setSukses(`, `setLoginMsg(`, `setTokenMsg(`) yang diperiksa, dan
- * komentar dibuang — supaya istilah teknis di kode/nama variabel tidak ikut
+ * komentar dibuang, supaya istilah teknis di kode/nama variabel tidak ikut
  * dituduh.
  *
  * Pesan yang ditulis multi-baris (`message:\n  "a" +\n  "b"`) digabung dulu
- * menjadi satu pesan logis, dan template literal (`` `...` ``) ikut dipindai —
+ * menjadi satu pesan logis, dan template literal (`` `...` ``) ikut dipindai
  * dua celah yang sempat meloloskan jargon `HTTP`/`hop` ke layar.
  */
 function pesanPengguna(isi: string): Array<{ baris: number; teks: string }> {

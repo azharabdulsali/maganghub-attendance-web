@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
-import { Inter } from "next/font/google";
+import { Bricolage_Grotesque, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,27 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+
+// Font JUDUL, sengaja berbeda dari font isi. Inter dipakai untuk semua teks
+// panjang (nyaman dibaca), sedangkan Bricolage Grotesque memberi "suara" pada
+// judul: bentuk hurufnya sedikit tidak simetris, seperti huruf pada buku absen
+// cetak, bukan font bawaan generator UI. Hanya dipakai lewat `font-heading`,
+// jadi tidak menyentuh keterbacaan paragraf.
+const display = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+// Mono HANYA untuk string mesin: URL webhook, kunci, token, potongan kode.
+// Sebelumnya `--font-mono` menunjuk `--font-geist-mono` yang tidak pernah
+// dimuat, jadi setiap kelas `font-mono` diam-diam jatuh ke Inter. Sekarang
+// keluarganya benar-benar ada, dan batas pemakaiannya ditulis di DESIGN.md.
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 // Tema (R-21). TIDAK ada <script> anti-flicker lagi; keputusan ini hasil
 // pengukuran, bukan selera:
@@ -77,7 +98,7 @@ export const metadata: Metadata = {
 //
 // `viewportFit: "cover"`: WAJIB agar `env(safe-area-inset-*)` melaporkan nilai
 // NON-NOL di perangkat berponi (iPhone notch, home indicator). Tanpa ini,
-// semua padding safe-area di globals.css bernilai 0 dan tidak berefek —
+// semua padding safe-area di globals.css bernilai 0 dan tidak berefek
 // konten tepi (header sticky, laci, toast, footer) bisa tertutup poni.
 export const viewport: Viewport = {
   width: "device-width",
@@ -102,6 +123,8 @@ export default async function RootLayout({
       className={cn(
         "font-sans",
         inter.variable,
+        display.variable,
+        mono.variable,
         tema === "dark" && "dark",
         tema === "light" && "light",
       )}

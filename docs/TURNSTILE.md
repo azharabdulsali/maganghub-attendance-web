@@ -3,7 +3,7 @@
 Panduan mengaktifkan pemeriksaan anti-bot pada **pendaftaran** dan **login kata
 sandi**. Fitur ini **opsional**: selama `TURNSTILE_SECRET_KEY` dan
 `NEXT_PUBLIC_TURNSTILE_SITE_KEY` kosong, widget tidak dirender dan server tidak
-memeriksa apa pun — aplikasi berjalan persis seperti sebelumnya.
+memeriksa apa pun, aplikasi berjalan persis seperti sebelumnya.
 
 CAPTCHA melengkapi rate limit, bukan menggantikan. Rate limit mencegah satu IP
 menembak berkali-kali; Turnstile menyaring permintaan yang datang dari bot
@@ -17,7 +17,7 @@ terdistribusi.
 2. Isi nama widget (mis. `maganghub-attendance`).
 3. **Hostname** yang didaftarkan harus memuat semua alamat yang dipakai:
    - `localhost` (untuk pengembangan)
-   - `www.maganghub-autoabsen.my.id` (produksi — pakai bentuk `www` karena
+   - `www.maganghub-autoabsen.my.id` (produksi, pakai bentuk `www` karena
      domain tanpa `www` di-redirect ke sana)
    - (opsional) branch domain preview Vercel, mis.
      `maganghub-attendance-web-git-nama.vercel.app`
@@ -102,7 +102,7 @@ Langkah uji:
   branch domain yang stabil.
 - **Verifikasi butuh jaringan keluar dari server** ke
   `challenges.cloudflare.com`. Bila server tidak bisa menjangkaunya, pengguna
-  melihat pesan "sedang tidak bisa dilakukan" — disengaja, karena meloloskan
+  melihat pesan "sedang tidak bisa dilakukan", disengaja, karena meloloskan
   permintaan saat pemeriksaan mati berarti CAPTCHA bisa dilewati.
 
 ## 8. Mematikan fitur

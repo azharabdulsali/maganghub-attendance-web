@@ -8,7 +8,7 @@
 //   1. Form di atas hanyalah client component yang membaca `?date=` SEKALI saat
 //      pertama dipasang. Menekan <Link> ke rute yang sama dengan query baru
 //      melakukan navigasi klien, TIDAK memuat ulang halaman, sehingga form
-//      tetap memakai `initialDate` lama — inilah sebab "Buka" tampak tidak
+//      tetap memakai `initialDate` lama, inilah sebab "Buka" tampak tidak
 //      melakukan apa-apa.
 //   2. Setelah pindah, pengguna juga perlu dibawa ke form yang posisinya di
 //      ATAS tabel. Tanpa menggulir, perubahan form di luar layar.

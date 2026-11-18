@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasPassword } from "@/lib/auth-accounts";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Message } from "@/components/ui/message";
 import ProfileForm from "./profile-form";
@@ -37,15 +38,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">Pengaturan</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Kelola akun dan keamanan
-        </p>
-      </header>
+      <PageHeader title="Pengaturan" description="Kelola akun dan keamanan." />
 
       <section className="mb-8">
-        <h2 className="mb-3 text-xs font-heading uppercase tracking-wide text-foreground/50">
+        <h2 className="mb-3 font-heading text-[0.6875rem] tracking-[0.18em] text-muted-foreground uppercase">
           Akun
         </h2>
 
@@ -54,7 +50,7 @@ export default async function SettingsPage() {
             <CardTitle>Email</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4 text-sm text-foreground/70">
+            <p className="mb-4 text-sm text-muted-foreground">
               Email saat ini:{" "}
               <span className="break-all font-heading">{user.email}</span>
             </p>
@@ -80,7 +76,7 @@ export default async function SettingsPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-xs font-heading uppercase tracking-wide text-foreground/50">
+        <h2 className="mb-3 font-heading text-[0.6875rem] tracking-[0.18em] text-muted-foreground uppercase">
           Keamanan
         </h2>
 
@@ -89,7 +85,7 @@ export default async function SettingsPage() {
             <CardTitle>Kata sandi</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4 text-sm text-foreground/70">
+            <p className="mb-4 text-sm text-muted-foreground">
               {punyaSandi
                 ? "Ubah kata sandi. Perangkat lain akan keluar otomatis."
                 : "Buat kata sandi agar akun bisa masuk tanpa Google."}
@@ -103,7 +99,7 @@ export default async function SettingsPage() {
             <CardTitle>Perangkat lain</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-muted-foreground">
               Keluarkan semua sesi di perangkat lain. Perangkat ini tetap aktif.
             </p>
             <RevokeSessionsButton />

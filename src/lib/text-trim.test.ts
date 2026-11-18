@@ -72,7 +72,7 @@ describe("trimToChars", () => {
   // ---------------------------------------------------------------------
   // Pemotongan "rapi" bisa mendarat SANGAT jauh di bawah `max`: kalau teks
   // dibuka kalimat pendek lalu satu kata sangat panjang, titik akhir kalimat
-  // ada di posisi 3 dan hasilnya cuma "Ok." — 3 karakter. Untuk draf laporan
+  // ada di posisi 3 dan hasilnya cuma "Ok.", 3 karakter. Untuk draf laporan
   // itu bencana: `checkReportField` menolak (< 100), kolom jadi kosong.
   describe("batas bawah `min`", () => {
     it("tanpa `min`, potongan rapi boleh sangat pendek (perilaku lama)", () => {

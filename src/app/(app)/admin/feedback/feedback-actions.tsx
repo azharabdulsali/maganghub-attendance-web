@@ -74,7 +74,6 @@ export function FeedbackActions({
         {!sudahDibaca ? (
           <Button
             type="button"
-            variant="success"
             size="icon-sm"
             disabled={busy !== null}
             title="Tandai sudah dibaca"

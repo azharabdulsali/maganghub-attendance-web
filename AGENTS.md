@@ -1,4 +1,4 @@
-# AGENTS.md: MagangHub Attendance Web
+﻿# AGENTS.md: MagangHub Attendance Web
 
 Panduan untuk AI agent (dan kontributor) yang bekerja di repo ini.
 
@@ -31,7 +31,7 @@ Tahap 6 dan **sudah aktif**: penyusun draf Gemini + fallback lokal, bahan draf
 dari commit git (GitHub/GitLab), panel admin lengkap (hapus/atur ulang sandi/
 ubah peran/uji login), hari libur, kritik & saran, pengingat "belum absen",
 kalender kehadiran, dan halaman legal/panduan. Baseline verifikasi saat ini:
-`npm run typecheck` ✅ · `npm run lint` ✅ · `npm test` (**1128 tes**) ✅ ·
+`npm run typecheck` ✅ · `npm run lint` ✅ · `npm test` (**1221 tes**) ✅ ·
 `npm run build` ✅. Lihat `SPEC.md` §12 untuk tahapan dan §13 untuk keputusan
 yang mengikat.
 
@@ -39,7 +39,7 @@ yang mengikat.
 > pemilik**. Kini ada penyusun draf opsional berbasis Gemini gratis
 > (`GEMINI_API_KEY`, key admin dipakai bersama semua pengguna). Lima aturan yang
 > tidak boleh dilanggar saat menyentuh bagian ini:
-> (a) **jangan pernah menghapus fallback lokal** — bila LLM gagal, pengguna
+> (a) **jangan pernah menghapus fallback lokal**, bila LLM gagal, pengguna
 > tetap harus mendapat draf, bukan pesan error;
 > (b) jawaban LLM **selalu** divalidasi dengan `checkReportField` sebelum
 > dipakai, karena LLM tidak boleh bisa merusak validasi form;
@@ -49,28 +49,28 @@ yang mengikat.
 > `checkReportField` karena fungsi itu hanya menghitung panjang. Tanpa langkah
 > ini, laporan berbahasa Inggris bisa benar-benar masuk ke form (sudah
 > dibuktikan, bukan dugaan);
-> (d) **jangan memakai nama model versi spesifik** (`gemini-2.0-flash` dsb.) —
+> (d) **jangan memakai nama model versi spesifik** (`gemini-2.0-flash` dsb.)
 > semuanya 404 karena dihapus Google. Pakai alias `-latest`;
 > (e) endpoint **hanya `/v1beta`**. `/v1` selalu 404 di sini, percobaan
 > sebelumnya mengasumsikan sebaliknya dan membuat fitur mati selama-lamanya.
 
-> **KEPUTUSAN BARU (2026-06) — integrasi GitHub/GitLab DIIZINKAN untuk mengambil
+> **KEPUTUSAN BARU (2026-06), integrasi GitHub/GitLab DIIZINKAN untuk mengambil
 > commit.** Kalimat lama "Integrasi GitHub tetap dibatalkan" **dicabut pemilik**.
 > Rencana lengkap: `docs/GIT-COMMITS-PLAN.md`. Batas yang TETAP berlaku:
 > (a) **token hanya boleh punya scope BACA** (fine-grained PAT `Contents: Read`
-> di GitHub; `read_api` di GitLab) — aplikasi ini tidak pernah menulis ke repo
+> di GitHub; `read_api` di GitLab), aplikasi ini tidak pernah menulis ke repo
 > siapa pun;
 > (b) **token tidak pernah dikembalikan ke klien**, tidak pernah masuk log atau
-> pesan error — perlakuan sama persis dengan password Monev (lihat §5);
+> pesan error, perlakuan sama persis dengan password Monev (lihat §5);
 > (c) **URL API dibangun dari enum `GitProvider`**, bukan dari input pengguna,
 > untuk menutup celah SSRF;
-> (d) **fallback lokal wajib tetap ada** — API git gagal atau tidak ada commit
+> (d) **fallback lokal wajib tetap ada**, API git gagal atau tidak ada commit
 > tidak boleh membuat form laporan error. Fitur ini hanya *menambah bahan draf*,
 > tidak pernah menghalangi submit normal.
 
 > **Cara men-debug "kok masih pakai lokal?":** jalankan
 > `npx tsx scripts/uji-gemini.ts`. Skrip itu memanggil API sungguhan dan
-> mencetak status HTTP persis. Jangan menebak dari UI — UI sengaja menyembunyikan
+> mencetak status HTTP persis. Jangan menebak dari UI, UI sengaja menyembunyikan
 > error dari pengguna, sehingga kesalahan konfigurasi tidak terlihat di sana.
 
 ---
@@ -94,13 +94,13 @@ yang mengikat.
   console, tidak di audit log, tidak di pesan error.
 - **Jangan memalsukan User-Agent** untuk menembus `403` portal. Batas etika ini
   ada di `SPEC.md` §6 dan §10.
-  - **✅ KEPUTUSAN BARU (2026-06, DIPERBARUI) — proxy residensial DIIZINKAN
+  - **✅ KEPUTUSAN BARU (2026-06, DIPERBARUI), proxy residensial DIIZINKAN
     untuk jalur login SSO.** Aturan lama ("jangan tambahkan proxy")
     **dicabut pemilik** setelah terbukti: repo referensi
     `maganghub-bot-attendance` berhasil login lewat proxy residensial
     (`HttpsProxyAgent` + `MAGANGHUB_PROXY_URL`). Yang dijaga Cloudflare Managed
     Challenge hanya **halaman login SSO** (`account.kemnaker.go.id`), dan proxy
-    membuat request datang dari IP residensial — tempat challenge lolos
+    membuat request datang dari IP residensial, tempat challenge lolos
     **secara wajar** (sama seperti browser pengguna). Ini **bukan** mengecoh
     CAPTCHA/OTP/MFA dan **bukan** menyamar sebagai identitas orang lain.
   - **Cara pakai (opsional, tetap terjaga):** set `MAGANGHUB_PROXY_URL` (mis.
@@ -118,7 +118,7 @@ yang mengikat.
   memperbesar permukaan serangan untuk aplikasi yang menyimpan password orang
   lain.
 - **Jangan mengganti bahasa balasan.** Seluruh balasan ke pemilik proyek
-  **HARUS dalam Bahasa Indonesia** — termasuk saat menjalankan perintah
+  **HARUS dalam Bahasa Indonesia**, termasuk saat menjalankan perintah
   terminal, membaca kode, atau berpikir. Jangan beralih ke Inggris, Mandarin,
   atau bahasa lain di tengah percakapan. Ini berlaku untuk pesan, ringkasan,
   komentar penjelasan, dan usulan.
@@ -133,10 +133,10 @@ yang mengikat.
   ingin menyimpang, tulis alasannya di `SPEC.md`, jangan diam-diam.
 - **Jalankan `npm run lint`, `npm run typecheck`, `npm run build`, dan
   `npm test`** sebelum menyatakan selesai. Empat-empatnya wajib hijau; tes
-  (`vitest`, 1128 tes) adalah jaring pengaman utama proyek ini — lihat §7 untuk
+  (`vitest`, 1221 tes) adalah jaring pengaman utama proyek ini, lihat §7 untuk
   aturan menulis tes yang benar-benar bisa gagal.
 - **Balas dalam Bahasa Indonesia.** Seluruh komunikasi ke pemilik proyek
-  memakai Bahasa Indonesia, konsisten sampai akhir — jangan berganti bahasa di
+  memakai Bahasa Indonesia, konsisten sampai akhir, jangan berganti bahasa di
   tengah jalan. Lihat juga larangan di bagian "Jangan pernah" di atas.
 
 ---
@@ -148,6 +148,7 @@ yang mengikat.
 | Framework | Next.js (App Router), TypeScript                                  |
 | Styling   | Tailwind CSS v4 + **neobrutalism.dev** (via shadcn CLI)           |
 | UI base   | **Base UI** (`@base-ui/react`), komponen neobrutalism memakai ini |
+| Animasi   | **`motion`** — HANYA hero landing (`/`), lihat DESIGN.md poin 6    |
 | Database  | PostgreSQL (Neon)                                                 |
 | ORM       | Prisma 7 (driver adapter `@prisma/adapter-neon`)                  |
 | Auth      | NextAuth.js v5 (**email/password + Google opsional**)              |
@@ -157,6 +158,26 @@ yang mengikat.
 | Deploy    | Vercel (serverless, paket gratis)                                 |
 
 Detail dan alasan tiap pilihan ada di `SPEC.md` §3.
+
+### Aturan animasi hero landing (jangan dilanggar)
+
+- **`motion` hanya boleh dipakai di hero landing** (`src/components/landing-report-sheet.tsx`).
+  Halaman lain memakai CSS biasa. Menambah pemakaian `motion` di tempat lain
+  butuh keputusan pemilik yang baru.
+- **Lembar contoh berganti sendiri tiap 6 detik** (keputusan pemilik 2026-11),
+  tetapi **berhenti permanen** begitu pengguna menyentuh atau memfokuskannya.
+  Semua pagar ada di modul MURNI `src/lib/landing-sheet-autoplay.ts`
+  (`bolehJalanOtomatis`): lebih dari satu lembar, `prefers-reduced-motion`
+  tidak aktif, belum disentuh, tidak sedang digeser, tab terlihat.
+  **Jangan menulis ulang syarat itu di komponen.**
+- **TIDAK ada tombol kendali** (keputusan pemilik 2026-11, mencabut aturan
+  WCAG 2.2.2 yang sempat diwajibkan di sini). Jangan menambahkan tombol
+  "Jeda"/"Lanjutkan"/"Putar otomatis" kembali tanpa keputusan pemilik yang
+  baru; berhenti karena sentuhan/fokus berarti berhenti sampai halaman dimuat
+  ulang.
+- **Timer tidak boleh memotong geseran** dan tidak boleh menyala saat tab
+  tersembunyi. `ganti` dibungkus `useCallback` supaya timer tidak dipasang ulang
+  tiap render — tanpa itu timer 6 detik tidak pernah sempat menyala.
 
 ### Aturan login dengan Google (opsional)
 
@@ -169,7 +190,7 @@ Yang tidak boleh dilanggar:
   contoh. Salah satu kosong = tombol Google tidak muncul (bukan tombol mati).
   Tidak ada dependensi baru; provider Google sudah ada di `next-auth`.
 - **`User.passwordHash` boleh NULL** (akun Google). Login kata sandi **wajib**
-  menolak hash NULL — `bcrypt.compare` dengan null melempar galat. Aturan murni
+  menolak hash NULL, `bcrypt.compare` dengan null melempar galat. Aturan murni
   di `src/lib/auth-accounts.ts` (`hasPassword`), dipakai juga oleh
   `/api/account/password` dan `/api/account/email`.
 - **Jangan menghapus pemeriksaan `deletedAt` di callback `signIn`.** Tanpa itu
@@ -235,7 +256,7 @@ Keputusan pemilik 2026-11: CAPTCHA **boleh** dipasang pada **pendaftaran** dan
   `VerificationToken`, `Session`, `MaganghubCredential`, `ReportTemplate`,
   `DatedReportTemplate`, `Report`, `SubmitLog`, `AutomationConfig`,
   `ReminderSetting`, `Holiday`, `Feedback`, `AdminActionLog`, `GitRepoConfig`.
-  Menambah model/kolom berarti menjalankan `db push` lagi **sebelum** deploy —
+  Menambah model/kolom berarti menjalankan `db push` lagi **sebelum** deploy
   lihat peringatan di bawah.
   - **Tambahan kolom (bukan tabel):** `User.sessionVersion` (fitur invalidasi
     sesi, SPEC.md §5.8b). Menambah kolom tetap butuh `npm run db:push` supaya
@@ -259,7 +280,7 @@ Keputusan pemilik 2026-11: CAPTCHA **boleh** dipasang pada **pendaftaran** dan
   padanan registry: `badge.tsx` (peta `Tone`), `message.tsx`,
   `field-error.tsx`, `password-input.tsx`, `password-strength.tsx`.
   **Jangan menjalankan ulang CLI `add` untuk komponen yang sudah ada tanpa
-  meninjau diff-nya** — `button.tsx` pernah tertimpa dan kehilangan kustomisasi
+  meninjau diff-nya**, `button.tsx` pernah tertimpa dan kehilangan kustomisasi
   proyek. Jangan menulis ulang primitif dari nol; susun dari registry.
 - Komponen neobrutalism dibangun di atas **Base UI**, **bukan Radix**. Karena itu
   prop `asChild` **tidak ada**. Untuk merender `Button` sebagai link, pakai
@@ -271,19 +292,20 @@ Keputusan pemilik 2026-11: CAPTCHA **boleh** dipasang pada **pendaftaran** dan
   `text-main-foreground`, `bg-secondary-background`, `text-foreground`,
   `border-border`, `rounded-base`, `shadow-shadow`, `font-heading`, `font-base`.
   Hindari `slate-*`/`gray-*`/`rounded-md`, tidak mengenal tema neobrutalism.
-  Untuk warna semantik ada variant tombol **`danger`** (aksi merusak: hapus) dan
-  **`success`** (aksi "menjalankan/aktifkan"). Keduanya memakai token
-  `--destructive`/`--success` + `--destructive-foreground`/`--success-foreground`
-  (didefinisikan di `globals.css` untuk mode terang & gelap), **bukan**
-  `bg-red-500`. Jalankan `npx shadcn` untuk menambah komponen, bukan menambah
-  kelas warna mentah.
+  Untuk warna semantik ada variant tombol **`danger`** (aksi merusak: hapus),
+  **`success`** (aksi "menjalankan/aktifkan"), dan **`warning`** (perlu
+  kehati-hatian tapi tidak merusak, mis. menaikkan hak akses jadi admin).
+  Ketiganya memakai token `--destructive`/`--success`/`--warning` +
+  `-foreground`-nya (didefinisikan di `globals.css` untuk mode terang & gelap),
+  **bukan** `bg-red-500`. Jalankan `npx shadcn` untuk menambah komponen, bukan
+  menambah kelas warna mentah.
 - **Warna latar WAJIB berpasangan dengan foreground-nya.** Latar `bg-success`,
   `bg-destructive`, atau `bg-warning` selalu ditulis dengan
   `text-success-foreground` / `text-destructive-foreground` /
   `text-warning-foreground`; latar `bg-main` (aksen biru) selalu dengan
   `text-main-foreground`. **Jangan** `text-main-foreground` di atas hijau/merah/
   kuning, dan **jangan** `text-foreground`/`text-white`/`text-black` di atas
-  `bg-main` — nilainya berbeda (di mode gelap `--main-foreground` gelap)
+  `bg-main`, nilainya berbeda (di mode gelap `--main-foreground` gelap)
   sehingga teks jadi tidak terbaca. Bila latar berubah karena interaksi
   (`hover:`/`open:`/`data-[state=...]:`), perubahan foreground-nya WAJIB
   ditulis juga (`hover:text-main-foreground`, dst.), termasuk untuk anak
@@ -304,8 +326,8 @@ Keputusan pemilik 2026-11: CAPTCHA **boleh** dipasang pada **pendaftaran** dan
   untuk pesan error API (`{ error: "..." }`), `message` hasil aksi, judul &
   isi toast, label tombol/badge, dan helper text. Pesan boleh bocor ke layar
   lewat `setError(data.error)` / `toast.error(judul, data.error)`, jadi **tulis
-  seolah setiap pesan akan tampil di layar** — bahkan yang terasa "internal".
-  Larangan keras: **jangan** tampilkan jargon ke pengguna — `HTTP 403`,
+  seolah setiap pesan akan tampil di layar**, bahkan yang terasa "internal".
+  Larangan keras: **jangan** tampilkan jargon ke pengguna, `HTTP 403`,
   `cf-mitigated`, `content-type`, `OAuth`, `csrf`, `access_token`, `state`,
   `JSON`, `body`, `payload`, nama field (`userId`), nama env (`CRON_SECRET`),
   atau potongan path (`/auth/login`). Sebut hal itu hanya di **log server**
@@ -323,7 +345,7 @@ Keputusan pemilik 2026-11: CAPTCHA **boleh** dipasang pada **pendaftaran** dan
   **Pisahkan pesan ramah dari detail teknis**: objek hasil internal membawa
   `message` (tampil ke pengguna) **dan** `diagnostic` (jejak hop/HTTP/kategori
   halaman, HANYA untuk log server). Jangan pernah menaruh jejak diagnostik di
-  `message` — nilai itu bocor ke UI lewat `setError`/`toast`. Penjaga otomatis:
+  `message`, nilai itu bocor ke UI lewat `setError`/`toast`. Penjaga otomatis:
   `src/lib/user-facing-messages.test.ts` memindai literal setelah `message:`/
   `error:`/`toast.*(`/`setError(` dan menggagalkan build bila menemukan jargon
   (termasuk `HTTP`, `hop`, `gerbang '...'`, `redirect_uri`, `refresh_token`,
@@ -332,13 +354,57 @@ Keputusan pemilik 2026-11: CAPTCHA **boleh** dipasang pada **pendaftaran** dan
   layar kecil). Uji di `sm:`, `md:`, `lg:`. Jangan buat layout yang hanya rapi
   di desktop.
 
+### Aturan kontras warna (DIUKUR, bukan dikira-kira)
+
+- **`src/lib/color-contrast.ts`** (MURNI, teruji) membaca token dari
+  `src/app/globals.css` sungguhan, mengubah `hsl()`/`oklch()`/hex ke sRGB, lalu
+  menghitung rasio kontras WCAG. Tesnya (`color-contrast.test.ts`) memeriksa
+  delapan pasangan latar–teks yang benar-benar dipakai, di **kedua** mode.
+- **Ambang 4.5:1** untuk semua pasangan teks (semua teks di aplikasi ini
+  berukuran normal/kecil, jadi ambang 3:1 teks besar tidak dipakai).
+- **Jangan menyalin nilai token ke dalam tes.** Tes harus membaca CSS, kalau
+  tidak ia tetap hijau walau tokennya berubah dan tidak menjaga apa pun.
+- Token ber-alpha (`--border`, `--input`) **tidak** diuji: hasil akhirnya
+  bergantung pada latar di belakangnya, dan border bukan teks.
+- Dua token sudah dikoreksi karena tes ini: `--muted-foreground` mode terang
+  `0.556 → 0.50` (3.92:1 → 4.97:1 di atas latar biru muda) dan `--success`
+  mode terang `#059669 → #047857` (putih di atasnya 3.77:1 → 5.48:1). Jangan
+  dikembalikan tanpa mengukur ulang.
+
+### Aturan keadaan kosong & form panjang
+
+- **`src/components/empty-state.tsx`** (`EmptyState`) dipakai untuk semua
+  "belum ada data": ikon + judul + satu kalimat penjelas + satu tindakan
+  berikutnya. Ikon memakai `text-muted-foreground`, **bukan** warna aksen:
+  keadaan kosong bukan peringatan dan bukan kesalahan. Jangan kembali menulis
+  satu baris teks abu-abu di dalam kotak garis putus-putus, itu terbaca seperti
+  halaman yang gagal memuat.
+- **`src/lib/form-guard.ts`** (`apakahKotor` MURNI + `useUnsavedGuard`) memasang
+  peringatan `beforeunload` selama form berisi perubahan yang belum disimpan.
+  Dipakai form template laporan (tiga kolom teks panjang). Cakupannya SENGAJA
+  hanya keluar aplikasi (tutup tab/refresh); navigasi di dalam aplikasi tidak
+  dicegat karena akan memaksa pengguna mengonfirmasi dua kali.
+- **Baseline pembanding harus isi yang benar-benar TERSIMPAN**, bukan state
+  staging. Di form template, `pindah()` menulis ketikan yang belum disimpan ke
+  `defaultValues`/`dated`; membandingkan dengan keduanya mematikan guard justru
+  saat ada perubahan yang belum disimpan. Karena itu ada state `baseline`
+  terpisah yang hanya diperbarui setelah simpan/hapus/pindah konteks.
+- **Pintasan `Ctrl+Enter`/`Cmd+Enter` = Simpan** di form template laporan.
+  Hanya aktif bila isinya sudah memenuhi syarat, jadi pintasan tidak bisa
+  menembus validasi. Petunjuknya ditampilkan di dekat tombol Simpan supaya bisa
+  ditemukan.
+- **Durasi toast**: `error` dan `warning` 8 detik, `success`/`info` 5 detik
+  (bawaan Base UI). Pesan gagal sering memuat langkah perbaikan dan tidak boleh
+  hilang sebelum selesai dibaca. Pemanggil bisa menimpa lewat argumen ketiga
+  `toast.error(judul, keterangan, timeout)`.
+
 ---
 
 ## 4. Struktur yang Dituju
 
 Mengikuti pola di `SPEC.md`. Saat menambah file, hormati pembagian ini.
 **Struktur di bawah adalah yang BENAR-BENAR ADA** (diperiksa ke repo), bukan
-rencana. Jangan membuat folder `services/`, `actions/`, atau `schemas/` — proyek
+rencana. Jangan membuat folder `services/`, `actions/`, atau `schemas/`, proyek
 ini menaruh logika bisnis di `src/lib/` dan query DB di berkas `*-query.ts` di
 samping halamannya.
 
@@ -360,7 +426,7 @@ maganghub-attendance-web/
 │   ├── components/           # app-sidebar, filter-bar, pagination, theme-toggle, …
 │   │   └── ui/               # primitif dari registry (button, card, dialog, …)
 │   ├── lib/                  # SEMUA logika bisnis & murni + tesnya berdampingan
-│   └── generated/prisma/     # hasil `prisma generate` — JANGAN diedit
+│   └── generated/prisma/     # hasil `prisma generate`, JANGAN diedit
 ├── prisma/schema.prisma      # sumber kebenaran skema (15 model)
 ├── scripts/                  # uji-gemini.ts, uji-proxy.ts (dijalankan manual)
 ├── docs/                     # panduan operasional (lihat tabel di README)
@@ -375,7 +441,7 @@ maganghub-attendance-web/
 - Komponen UI tidak boleh mengimpor Prisma langsung.
 - **Tes diletakkan BERDAMPINGAN dengan sumbernya** (`src/lib/foo.ts` ↔
   `src/lib/foo.test.ts`), bukan di folder `tests/` terpisah.
-- **Batas galat wajib ada di tiga tingkat** — jangan hapus salah satunya:
+- **Batas galat wajib ada di tiga tingkat**, jangan hapus salah satunya:
   `src/app/global-error.tsx` (root layout gagal), `src/app/error.tsx` (galat
   sebelum login), `src/app/(app)/error.tsx` (galat setelah login, sidebar tetap
   tampil). Lihat §9 untuk aturan isinya.
@@ -383,7 +449,7 @@ maganghub-attendance-web/
 **Yang sudah ada (diperiksa ke repo):**
 
 - `src/lib/`, `env.ts`, `auth.ts`, `prisma.ts`, `crypto.ts` (+test),
-  `validate.ts` (+test), `utils.ts`, `site.ts`, dan modul fitur lain — semuanya
+  `validate.ts` (+test), `utils.ts`, `site.ts`, dan modul fitur lain, semuanya
   ber-`*.test.ts`.
 - `src/app/api/`, `auth/[...nextauth]`, `register`, `credentials`,
   `credentials/login`, `credentials/verify`, `profile`, `account/password`,
@@ -443,7 +509,7 @@ maganghub-attendance-web/
   memberi `ERROR`/menyimpan apa adanya bila bentuknya berbeda.
 - **Pengingat dini sesi hampir habis** (mitigasi celah "mati setelah 30 hari").
   Umur refresh token dibaca **dari klaim `exp` di dalam JWT-nya**, bukan dari
-  kolom DB baru — proyek ini memakai `prisma db push`, jadi menambah kolom =
+  kolom DB baru, proyek ini memakai `prisma db push`, jadi menambah kolom =
   operasi eksternal ke Neon yang tidak sepadan untuk sekadar pengingat.
   Helper MURNI & teruji: `src/lib/refresh-token-age.ts`
   (`refreshTokenExpiresAt`, `isRefreshTokenNearingExpiry`,
@@ -453,12 +519,12 @@ maganghub-attendance-web/
   tidak pernah keluar). Dashboard menampilkan banner `neutral` "Sesi Monev
   segera berakhir" bila sisa <= 7 hari **dan** sesi tidak sedang bermasalah.
   Prinsip: bila `exp` tak dapat dipastikan (bukan JWT / kunci berubah),
-  hasilnya `null` dan **tidak ada** banner — jangan menebak, jangan ada
+  hasilnya `null` dan **tidak ada** banner, jangan menebak, jangan ada
   peringatan palsu.
 - ⚠️ **Batas yang diketahui**: pengingat ini hanya **tampil di dashboard**,
   tidak mengirim email/notifikasi. Bila pengguna tidak membuka dashboard > 7
   hari sebelum token mati, ia akan tetap melewatkannya. Tidak ada login-ulang
-  otomatis di cron — itu sengaja (menghindari password dipakai aktif tanpa
+  otomatis di cron, itu sengaja (menghindari password dipakai aktif tanpa
   pengawasan). Kalau nanti dibutuhkan penutup penuh, opsi yang lebih aman
   adalah notifikasi keluar, bukan menyimpan password untuk auto-login berkala.
 
@@ -592,11 +658,11 @@ Prioritas test:
   template + aksi **Buka** & **Hapus**.
   - **"Buka" bukan lagi `<Link>` biasa** melainkan pulau klien `OpenDatedButton`:
     `<Link>` ke rute yang sama dengan `?date=` baru melakukan navigasi klien
-    tanpa memasang ulang form, sehingga form tetap menampilkan tanggal lama —
+    tanpa memasang ulang form, sehingga form tetap menampilkan tanggal lama
     gejalanya "Buka tidak melakukan apa-apa". Tombol ini `router.push` ke
     `?date=YYYY-MM-DD`, lalu menggulir form (`id=report-templates-form`) ke
     pandangan. Di `page.tsx` form diberi `key={params.date ?? "default"}` supaya
-    tanggal baru benar-benar **memasang ulang** form dengan state segar — cara
+    tanggal baru benar-benar **memasang ulang** form dengan state segar, cara
     idiomatik menyetel ulang state komponen (menghindari `setState` di dalam
     efek, yang dilarang lint `react-hooks/set-state-in-effect`). Tanggal tanpa
     penimpa terisi isi default (Simpan membuat penimpa baru).
@@ -619,7 +685,7 @@ Prioritas test:
   libur tetap memakai `isHoliday` yang SAMA dengan jalur kirim, jadi tanggal yang
   dinonaktifkan tidak mungkin berbeda dari yang benar-benar dilewati otomasi.
   **Pengecualian:** halaman `/admin/holidays` (yang justru MENGELOLA daftar
-  libur) memakai `<DatePicker unrestricted>` — pembatas tanggal lampau, daftar
+  libur) memakai `<DatePicker unrestricted>`, pembatas tanggal lampau, daftar
   libur, dan batas bulan dilepas, karena di sana justru tanggal itulah yang mau
   didaftarkan. **Sabtu/Minggu tetap nonaktif** karena server menolak
   mendaftarkan akhir pekan (`validateHolidayInput`); membiarkannya dipilih hanya
@@ -662,7 +728,7 @@ Prioritas test:
   menghilangkan libur nasional yang sudah dikenal (mis. 25 Des 2026) sehingga
   cron mengirim pada hari Natal. Begitu ada baris pertama, DB jadi kebenaran
   penuh (menghapus semua baris setelahnya = nol libur, bukan balik ke statis).
-  Sama: `performSubmit()` membungkus pemuatan libur dengan `try/catch` —
+  Sama: `performSubmit()` membungkus pemuatan libur dengan `try/catch`
   kegagalan baca DB libur TIDAK boleh mematikan seluruh otomasi; ia jatuh ke
   daftar statis. Kedua pagar ini diuji (butuh pembuktian test bisa merah).
 - `report-policy.ts` tetap **MURNI**: `isHoliday(date, holidays?)`,
@@ -670,7 +736,7 @@ Prioritas test:
   sebagai argumen opsional. `undefined` = pakai daftar statis (kompatibilitas
   & test). `holidayKindOf(iso, holidays?)` di `calendar.ts` juga menerima
   himpunan ini. **Himpunan kosong tidak pernah membuat Sabtu/Minggu jadi hari
-  kerja** — pagar ini diuji.
+  kerja**, pagar ini diuji.
 - Jalur kirim: `performSubmit()` (dipakai manual, webhook cron, dispatch massal)
   memuat libur via `loadHolidaySet()` bila pemanggil tidak memberikannya, lalu
   meneruskannya ke `assessReadiness()` → `decide()`. Jadi **ketiga** jalur kirim
@@ -695,7 +761,7 @@ Prioritas test:
   seorang pengguna tanpa menunggu jam jadwalnya.
 - **Aturan murni & teruji di `src/lib/admin-automation.ts`**:
   `jakartaDayRange(now)` (batas hari WIB sebagai `Date` UTC, offset dihitung
-  dari `now` lewat `Intl` — bukan asumsi `+07:00` tetap),
+  dari `now` lewat `Intl`, bukan asumsi `+07:00` tetap),
   `scheduleLabel(hour)`, dan `assessTodayRun(logs, now)`. "Sudah jalan
   hari ini" = ada `SubmitLog` APA PUN hari ini (SUCCESS/DUPLICATE/FAILED);
   bila ada, status log TERAKHIR yang menang (FAILED → `GAGAL`, selain itu
@@ -718,7 +784,7 @@ Prioritas test:
   `todayRunStatus`, `todayRunAt`.
 - **Eksekusi 1 user = `src/lib/admin-run-one.ts` (`runOne`)**, memakai
   `performSubmit` yang SAMA dengan dispatcher massal & webhook. Jadi **"paksa"
-  berarti abaikan JAM jadwal, BUKAN abaikan kebijakan laporan** — libur/akhir
+  berarti abaikan JAM jadwal, BUKAN abaikan kebijakan laporan**, libur/akhir
   pekan/akhir program, pra-cek duplikat (RB-03), dan gerbang `ALLOW_LIVE_SUBMIT`
   tetap berlaku. Pemicu dicatat sebagai `CRON` (tindakan sistem atas nama user,
   keputusan pemilik), `logOnNotReady: true` (konsisten dengan cron). Sasaran
@@ -726,10 +792,10 @@ Prioritas test:
 - **Endpoint `POST /api/admin/dispatch/user`** (`src/app/api/admin/dispatch/user/route.ts`):
   guard sesi + role ADMIN di SERVER, rate limit scope `adminUserAction`
   (20/10 menit per admin, sama kelas dengan aksi admin lain), body `{ userId }`
-  divalidasi. Balasan TIDAK memuat rahasia — hanya `kind`, `label`,
+  divalidasi. Balasan TIDAK memuat rahasia, hanya `kind`, `label`,
   `succeeded`, `message` (lewat `summarizeRunOne`).
 - **UI klien `src/app/(app)/admin/run-user-button.tsx`**: `useRouter` statis
-  (BUKAN hook di dalam `useEffect`/`import()` dinamis — itu melanggar
+  (BUKAN hook di dalam `useEffect`/`import()` dinamis, itu melanggar
   `react-hooks`), kirim `{ userId }`, tampilkan toast, lalu `router.refresh()`
   agar kolom "Hari ini" langsung memperbarui.
 - **Kolom "Aksi" = tombol IKON, bukan teks.** Ketiga aksi baris memakai
@@ -744,7 +810,7 @@ Prioritas test:
 
 #### Panel Admin: status template & uji login per-user
 
-- **Kolom baru di tabel pengguna `/admin`: `Template`** — badge yang
+- **Kolom baru di tabel pengguna `/admin`: `Template`**, badge yang
   meringkas kesiapan template absensi seorang pengguna: (a) ada/tidak template
   harian `ReportTemplate`, dan (b) berapa banyak `DatedReportTemplate` (template
   bertanggal) yang dimiliki. Keputusan MURNI & teruji di `src/lib/admin.ts`:
@@ -763,7 +829,7 @@ Prioritas test:
   ditolak (`REJECTED`), status kredensial diset `INVALID`; saat `ERROR`
   (mis. jaringan) status DIBIARKAN apa adanya (bukan salah kredensial).
 - **Kredensial hanya bisa DILIHAT statusnya, tidak pernah dilihat/diubah
-  kata sandinya** oleh admin — konsisten di seluruh UI & API.
+  kata sandinya** oleh admin, konsisten di seluruh UI & API.
 - **UI klien `src/app/(app)/admin/test-login-button.tsx`**: `useRouter` statis,
   kirim `{ }` (id di path), tampilkan toast, lalu `router.refresh()`.
 
@@ -852,7 +918,7 @@ Tanpa instruksi eksplisit itu, **default-nya adalah tidak commit.**
 - Bahasa kode (nama variabel/fungsi): Inggris, konsisten.
 - **Bahasa pesan pengguna: Indonesia, sederhana, tanpa jargon teknis.** Setiap
   teks yang bisa muncul di layar (error API, `message`, toast, label) harus
-  dimengerti orang awam dan memberi satu tindakan berikutnya — lihat §3
+  dimengerti orang awam dan memberi satu tindakan berikutnya, lihat §3
   "Semua teks yang dilihat pengguna wajib dimengerti orang awam".
 - TypeScript **strict**, hindari `any`. Kalau terpaksa, beri komentar alasannya.
 - Satu perubahan = satu tujuan.
@@ -867,7 +933,7 @@ Ini hasil perbaikan celah nyata: sebelumnya proyek **tidak punya satu pun**
 berkas batas galat, sehingga galat query Prisma menampilkan layar putih
 "Application error" berbahasa Inggris ke pengguna. Aturan yang mengikat:
 
-1. **Tiga `error.tsx` wajib ada bersamaan** — `src/app/global-error.tsx`,
+1. **Tiga `error.tsx` wajib ada bersamaan**, `src/app/global-error.tsx`,
    `src/app/error.tsx`, `src/app/(app)/error.tsx`. Batas galat TIDAK menangkap
    galat di segmen tempat ia berada, jadi ketiganya menutup tingkat berbeda.
    Menghapus salah satu membuka kembali layar putih.
@@ -892,7 +958,7 @@ berkas batas galat, sehingga galat query Prisma menampilkan layar putih
    pastikan halaman galat tampil TANPA membocorkan pesan. **Kembalikan suntikan
    itu** dan jalankan `git diff` untuk memastikan tidak ada sisa.
    Halaman statis yang di-prerender (mis. `/panduan`) TIDAK bisa dipakai untuk
-   uji ini — galatnya muncul saat build, bukan saat request.
+   uji ini, galatnya muncul saat build, bukan saat request.
 
 ---
 

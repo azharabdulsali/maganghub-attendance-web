@@ -4,7 +4,7 @@
 // deadlineHit, topUpPending) ke pemanggil HTTP, lalu ringkasan itu HILANG.
 // Pemanggilnya adalah GitHub Actions yang hanya menyimpan log mentah beberapa
 // hari, jadi pertanyaan "apakah cron kemarin kena tenggat?" tidak bisa dijawab
-// dari aplikasi — padahal itulah tanda paling awal bahwa jam jadwal terlalu
+// dari aplikasi, padahal itulah tanda paling awal bahwa jam jadwal terlalu
 // padat atau portal sedang lambat.
 //
 // Yang dicatat SENGAJA hanya angka: tidak ada id user, tidak ada isi laporan,
@@ -106,7 +106,7 @@ export async function recordDispatchLog(input: {
  * id nyata. Yang dipilih adalah **admin aktif pertama** (urut `createdAt`):
  * deterministik, bukan acak, dan tidak bergantung pada waktu pemanggilan.
  * Konsekuensinya tercatat di `AdminActionLog` seolah admin itu pelakunya; itu
- * memang kompromi yang disengaja — jenis aksinya `SYSTEM_DISPATCH` sehingga
+ * memang kompromi yang disengaja, jenis aksinya `SYSTEM_DISPATCH` sehingga
  * pembaca log tahu ini tindakan sistem, bukan tindakan admin tersebut.
  *
  * Mengembalikan null bila belum ada admin sama sekali (aplikasi baru). Dalam

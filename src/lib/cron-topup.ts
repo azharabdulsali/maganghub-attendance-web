@@ -2,24 +2,24 @@
 //
 // Latar (celah yang ditutup): `planDispatch` hanya memilih user yang JAM
 // jadwalnya sama dengan jam sekarang. Bila seorang user tertunda pada jam
-// jadwalnya — karena batch penuh, tenggat internal 50 dtk tercapai, atau
-// gelombangnya belum sempat jalan — ia TIDAK PERNAH dicoba lagi. Jam 08:00
+// jadwalnya, karena batch penuh, tenggat internal 50 dtk tercapai, atau
+// gelombangnya belum sempat jalan, ia TIDAK PERNAH dicoba lagi. Jam 08:00
 // berikutnya `isDueNow` menjawab "tidak", user itu hilang dari pandangan dan
 // laporannya tidak terkirim hari itu tanpa suara.
 //
 // Solusinya dua lapis dan keduanya perlu, karena kegagalan bisa terjadi di
 // tingkat berbeda:
-//   1. `planTopUp` (di sini) — memilih user yang jam jadwalnya SUDAH LEWAT dan
+//   1. `planTopUp` (di sini), memilih user yang jam jadwalnya SUDAH LEWAT dan
 //      belum punya jejak TUNTAS hari ini. Menangkap yang tertunda karena batch
 //      penuh / tenggat, yang tidak pernah mengembalikan hasil apa pun.
-//   2. `performSubmit` (jalur CRON) — sudah punya penjaga "sudah tuntas?" dari
+//   2. `performSubmit` (jalur CRON), sudah punya penjaga "sudah tuntas?" dari
 //      SubmitLog. Itu menangkap yang tertunda setelah `performSubmit` SEMPAT
 //      menulis baris (mis. gagal jaringan), karena log FAILED tidak menutup
 //      kesempatan coba lagi.
 //
 // Keduanya bertumpuk dengan sengaja: lapis 1 murah (satu query log per
 // pemanggilan) dan lapis 2 sudah ada. Duplikat percobaan mustahil terjadi
-// karena lapis 2 yang menentukan — bukan daftar di sini.
+// karena lapis 2 yang menentukan, bukan daftar di sini.
 //
 // Modul ini MURNI: tanpa DB, tanpa jaringan, tanpa `Date.now`. Keputusan ada
 // di sini, pengambilan data di cron-dispatch-run.ts.
@@ -43,7 +43,7 @@ export type TopUpCandidate = DueCandidate;
  *     pemanggilan.
  *   - Tengah malam: jadwal 23:00 yang tertunda baru bisa dikejar pukul 00:00
  *     besoknya. Karena itu "lewat" dihitung dari `hour < currentHour` dan
- *     BUKAN dari selisih hari — jadwal 23:00 pada pukul 00:30 memang tidak
+ *     BUKAN dari selisih hari, jadwal 23:00 pada pukul 00:30 memang tidak
  *     lolos. Ini kompromi yang disengaja: laporan tanggal kemarin yang
  *     terkirim hari ini lebih buruk daripada absen yang terlihat di riwayat.
  *     Yang tetap tertolong adalah jadwal pagi/siang yang tertunda, yaitu
@@ -62,7 +62,7 @@ export type SettledLookup = ReadonlySet<string>;
  *
  * `settledUserIds` berasal dari satu query `SubmitLog` (status SUCCESS atau
  * DUPLICATE, tanggal WIB hari ini). User yang TIDAK ada di himpunan itu berarti
- * belum tuntas — termasuk yang belum pernah dicoba sama sekali (mis. server
+ * belum tuntas, termasuk yang belum pernah dicoba sama sekali (mis. server
  * mati pada jam jadwalnya) dan yang percobaannya FAILED (boleh diulang).
  *
  * @param candidates     Semua user otomasi aktif (sudah disaring `isEnabled`).

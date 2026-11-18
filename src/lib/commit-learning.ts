@@ -1,5 +1,5 @@
 // src/lib/commit-learning.ts: menurunkan kolom "Pembelajaran yang Diperoleh"
-// dari BUKTI yang benar-benar ada di commit — bukan mengarang.
+// dari BUKTI yang benar-benar ada di commit, bukan mengarang.
 //
 // KENAPA MODUL INI ADA (docs/GIT-COMMITS-PLAN.md §8 Fase 3):
 // Kolom pembelajaran sebelumnya sengaja dibiarkan kosong dengan alasan yang
@@ -104,7 +104,7 @@ const POLA_JENIS: ReadonlyArray<{ kind: Exclude<ChangeKind, "OTHER">; pola: RegE
  *
  * Prefix diperiksa lebih dulu karena itu penanda paling eksplisit. Yang
  * dikenali bukan hanya Conventional Commits (`fix:` / `feat(api):`), tetapi
- * juga gaya kurung siku (`[FIX]:` / `[ADD] ...`) — gaya terakhir itulah yang
+ * juga gaya kurung siku (`[FIX]:` / `[ADD] ...`), gaya terakhir itulah yang
  * dipakai repo nyata, dan tanpa dukungan ini judul `[FIX]: ... refactor ...`
  * salah terbaca REFACTOR karena kata "refactor" lebih dulu cocok saat
  * pencocokan jatuh ke judul.
@@ -291,14 +291,14 @@ function kapitalkan(teks: string): string {
  *
  * Potongan di batas kata bisa mendarat di TENGAH anak kalimat: "… memecah
  * pekerjaan menjadi bagian kecil yang bisa diuji sendiri-sendiri sehingga
- * kesalahan" ditutup menjadi "… sehingga kesalahan." — kata "kesalahan" adalah
+ * kesalahan" ditutup menjadi "… sehingga kesalahan.", kata "kesalahan" adalah
  * subjek yang predikatnya ikut terpotong, jadi kalimatnya tidak selesai walau
  * tanda titiknya ada.
  *
  * Perbaikannya: cari kata sambung TERAKHIR, lalu buang kata sambung itu beserta
  * semua kata sesudahnya. Hasilnya berhenti di klausa yang utuh ("… menjadi
  * bagian kecil yang bisa diuji sendiri-sendiri"). Bila hasilnya jadi terlalu
- * pendek (< `min`), teks dibiarkan apa adanya — lebih baik agak menggantung
+ * pendek (< `min`), teks dibiarkan apa adanya, lebih baik agak menggantung
  * daripada kolom ditolak server karena kurang panjang.
  */
 function pangkasKlausaBuntu(badan: string, kalimatPertama: string, min: number): string {
@@ -410,7 +410,7 @@ const PENUTUP_BERBUKTI =
  * Susun kolom "Pembelajaran yang Diperoleh" dari bukti commit.
  *
  * @returns Teks yang lulus `checkReportField`, atau `null` bila bukti tidak
- *          cukup. `null` berarti "biarkan kosong" — TIDAK boleh diganti karangan.
+ *          cukup. `null` berarti "biarkan kosong", TIDAK boleh diganti karangan.
  */
 export function learningFromCommits(commits: readonly GitCommit[]): string | null {
   if (!commits || commits.length === 0) return null;
@@ -427,7 +427,7 @@ export function learningFromCommits(commits: readonly GitCommit[]): string | nul
   // Guard: WAJIB ada minimal satu JENIS perubahan yang dikenali.
   //
   // Kenapa topik saja tidak cukup: judul panjang seperti "mengerjakan
-  // administrasi berkas..." adalah judul biasa — ia membuktikan APA yang
+  // administrasi berkas..." adalah judul biasa, ia membuktikan APA yang
   // dikerjakan, bukan bahwa ada yang dipelajari. Tanpa jenis perubahan, satu-
   // satunya isi kolom adalah kalimat "saya mempelajari penerapannya", yang
   // justru dugaan tentang isi kepala pengguna. Itu persis "mengarang" yang
@@ -461,7 +461,7 @@ export function learningFromCommits(commits: readonly GitCommit[]): string | nul
 
   // Penutup netral ini memastikan kolom memenuhi panjang minimum. PENTING: ia
   // TIDAK berisi klaim pembelajaran apa pun, jadi menambahkannya tidak sama
-  // dengan mengarang — tetapi juga tidak boleh dipakai sebagai satu-satunya isi.
+  // dengan mengarang, tetapi juga tidak boleh dipakai sebagai satu-satunya isi.
   // `bagian` selalu punya minimal satu entri di titik ini, karena guard di atas
   // sudah menolak kasus tanpa bukti.
   if (countReportLength(teks) < MIN_REPORT_LENGTH) {

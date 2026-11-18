@@ -24,13 +24,13 @@ import {
  * Himpunan tanggal libur (`YYYY-MM-DD`) dari DB, siap dipakai `decide()` /
  * `isHoliday` / `holidayKindOf`.
  *
- * AUTO-SEED (penting): bila tabel KOSONG, kembalikan `undefined` — bukan
+ * AUTO-SEED (penting): bila tabel KOSONG, kembalikan `undefined`, bukan
  * himpunan kosong. `undefined` membuat `isHoliday` jatuh ke daftar statis
  * `LIBUR_NASIONAL` (libur nasional yang dulu di-hardcode, mis. 25 Des 2026).
  * Tanpa ini, go-live dengan tabel kosong akan MENGHILANGKAN libur nasional
  * yang sudah dikenal dan cron bisa mengirim laporan pada hari Natal.
  *
- * Begitu admin menambah baris PERTAMA, DB menjadi sumber kebenaran penuh —
+ * Begitu admin menambah baris PERTAMA, DB menjadi sumber kebenaran penuh
  * termasuk bila admin lalu menghapus semua baris (himpunan kosong dikembalikan
  * apa adanya, artinya "nol libur custom", bukan balik lagi ke statis). Jadi
  * fallback statis hanya berlaku selama tabel benar-benar belum pernah diisi.
@@ -47,7 +47,7 @@ export async function loadHolidaySet(): Promise<ReadonlySet<string> | undefined>
  * AUTO-SEED (sama seperti `loadHolidaySet`): bila tabel KOSONG, kembalikan
  * baris SEED dari `LIBUR_NASIONAL` (id berawalan `seed:`) supaya halaman yang
  * menampilkan libur (kalender, template, admin) SEIRAMA dengan kebijakan yang
- * benar-benar dijalankan. Baris seed bukan baris DB — UI menonaktifkan
+ * benar-benar dijalankan. Baris seed bukan baris DB, UI menonaktifkan
  * ubah/hapus untuknya. Begitu ada baris DB pertama, seed tak dipakai lagi.
  */
 export async function loadHolidayRows(): Promise<HolidayRow[]> {

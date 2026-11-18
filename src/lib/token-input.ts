@@ -33,7 +33,7 @@ export type TokenCleanup = {
  * Buang awalan yang sering ikut tersalin dari DevTools, tanpa menyentuh nilai
  * token itu sendiri:
  *
- * - `Cookie: ` / `Set-Cookie: ` (header) — case-insensitive.
+ * - `Cookie: ` / `Set-Cookie: ` (header), case-insensitive.
  * - `monev_refresh_token=` (nama= nilai).
  * - `monev_refresh_token: ` (bentuk tabel). Hanya dipisah `:` bila TIDAK ada
  *   `=` di depannya, supaya nama cookie yang memang memuat `=` tetap utuh.
@@ -95,7 +95,7 @@ export function describeTokenShapeProblem(value: string): string | null {
   const parts = token.split(".");
   if (parts.length === 1) {
     return "Teks ini hanya satu bagian. Token Monev terdiri dari tiga bagian " +
-      "dipisah titik — salin hanya nilai di kolom Value, bukan nama barisnya.";
+      "dipisah titik, salin hanya nilai di kolom Value, bukan nama barisnya.";
   }
   if (parts.length !== 3) {
     return `Token ini terbagi menjadi ${parts.length} bagian, seharusnya 3 ` +

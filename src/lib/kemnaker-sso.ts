@@ -150,7 +150,7 @@ export type SsoLoginResult =
       /** Pesan ramah untuk layar pengguna (bebas jargon). */
       message: string;
       /**
-       * Detail teknis untuk log server saja — TIDAK pernah dirender ke UI.
+       * Detail teknis untuk log server saja, TIDAK pernah dirender ke UI.
        * Memuat jejak hop, kode HTTP, kategori halaman, dsb. agar bisa direkam
        * saat melaporkan masalah (docs/MONEV-API.md §4.0/§7).
        */
@@ -515,7 +515,7 @@ export type CatchCodeResult =
       status: "ERROR";
       /** Pesan ramah untuk layar pengguna (bebas jargon). */
       message: string;
-      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      /** Detail teknis untuk log server saja, tidak dirender ke UI. */
       diagnostic?: string;
     };
 
@@ -552,7 +552,7 @@ export async function fetchAuthorizationRedirect(
       status: "ERROR";
       /** Pesan ramah untuk layar pengguna (bebas jargon). */
       message: string;
-      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      /** Detail teknis untuk log server saja, tidak dirender ke UI. */
       diagnostic?: string;
     }
 > {

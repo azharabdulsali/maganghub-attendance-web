@@ -54,7 +54,7 @@ export type SessionCheckResult =
       status: "ERROR";
       /** Pesan ramah untuk layar pengguna (bebas jargon). */
       message: string;
-      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      /** Detail teknis untuk log server saja, tidak dirender ke UI. */
       diagnostic?: string;
     };
 
@@ -276,7 +276,7 @@ export type CodeExchangeResult =
       status: "ERROR";
       /** Pesan ramah untuk layar pengguna (bebas jargon). */
       message: string;
-      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      /** Detail teknis untuk log server saja, tidak dirender ke UI. */
       diagnostic?: string;
     };
 
@@ -364,7 +364,7 @@ export type OAuthStartResult =
       status: "ERROR";
       /** Pesan ramah untuk layar pengguna (bebas jargon). */
       message: string;
-      /** Detail teknis untuk log server saja — tidak dirender ke UI. */
+      /** Detail teknis untuk log server saja, tidak dirender ke UI. */
       diagnostic?: string;
     };
 

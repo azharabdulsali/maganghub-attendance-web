@@ -4,7 +4,7 @@
 // otomasi miliknya di WIB dan (b) apakah otomasi sudah berjalan HARI INI atau
 // belum. Keputusan yang bisa diuji (bentuk label jadwal, batas hari WIB, dan
 // penilaian "sudah jalan hari ini") dikumpulkan di sini supaya tidak perlu DB
-// untuk mengujinya — pola sama seperti admin.ts & audit-log.ts.
+// untuk mengujinya, pola sama seperti admin.ts & audit-log.ts.
 //
 // Modul ini SENGAJA murni (tanpa DB/jaringan/Date.now langsung): `now`
 // disuntikkan sebagai argumen supaya pengujian memakai tanggal tetap.

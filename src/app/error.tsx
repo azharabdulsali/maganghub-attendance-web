@@ -12,13 +12,13 @@
 // Aturan yang dipegang berkas ini:
 //   1. JANGAN pernah menampilkan `error.message` mentah ke pengguna. Pesan
 //      Prisma bisa memuat nama tabel/kolom, dan pesan env bisa memuat nama
-//      variabel — detail internal tidak ada gunanya bagi pengguna dan
+//      variabel, detail internal tidak ada gunanya bagi pengguna dan
 //      membocorkan struktur sistem (AGENTS.md §2: jangan menyembunyikan
 //      kegagalan, tapi juga jangan membocorkan detail).
 //   2. Sediakan SATU tombol yang benar-benar memulihkan: `reset()` dari
 //      Next.js mencoba merender ulang segmen ini tanpa memuat ulang seluruh
 //      halaman.
-//   3. `digest` ditampilkan kecil — itu satu-satunya hal yang bisa dicocokkan
+//   3. `digest` ditampilkan kecil, itu satu-satunya hal yang bisa dicocokkan
 //      admin dengan log server Vercel untuk menemukan galat yang sama.
 //
 // Catatan: `error.tsx` WAJIB Client Component dan menangkap galat di segmen
@@ -58,7 +58,7 @@ export default function Error({
         <CardHeader>
           <div className="mb-2 flex items-center gap-2">
             <TriangleAlert aria-hidden="true" className="size-5 shrink-0" />
-            <span className="text-sm font-base text-foreground/70">
+            <span className="text-sm font-base text-muted-foreground">
               Terjadi kesalahan
             </span>
           </div>
@@ -81,7 +81,7 @@ export default function Error({
             </Button>
           </div>
           {error.digest && (
-            <p className="font-mono text-xs break-all text-foreground/70">
+            <p className="font-mono text-xs break-all text-muted-foreground">
               Kode galat: {error.digest}
             </p>
           )}

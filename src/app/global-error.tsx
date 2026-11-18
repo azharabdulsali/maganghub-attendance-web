@@ -15,7 +15,7 @@
 //   2. `globals.css` TIDAK otomatis ikut termuat lewat layout yang gagal,
 //      jadi kelas Tailwind bisa tidak berefek. Karena itu gaya di sini
 //      sengaja MEMAKAI ATRIBUT INLINE (`style`), bukan kelas, agar tetap
-//      terbaca dalam keadaan paling buruk — inilah satu-satunya berkas di
+//      terbaca dalam keadaan paling buruk, inilah satu-satunya berkas di
 //      proyek ini yang boleh melakukannya (pengecualian DESIGN.md: "jangan
 //      warna hard-code" hanya berlaku untuk UI normal yang punya tema).
 //   3. `metadata` TIDAK boleh diekspor dari Client Component; abaikan.

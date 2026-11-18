@@ -1,4 +1,4 @@
-// src/app/(app)/history/page.tsx: riwayat audit log submit (Tahap 5).
+﻿// src/app/(app)/history/page.tsx: riwayat audit log submit (Tahap 5).
 //
 // Server component: memeriksa sesi, mengambil SubmitLog milik pengguna (paling
 // baru 100), lalu menampilkan ringkasan + tabel. Semua pemformatan diserahkan
@@ -9,9 +9,14 @@
 // disengketakan, jadi TIDAK ada tombol edit/hapus di sini.
 
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { History, RotateCcw } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, toneForBadgeVariant } from "@/components/ui/badge";
 import FilterBar from "@/components/filter-bar";
@@ -38,6 +43,17 @@ import type { SubmitStatus } from "@/generated/prisma/enums";
 
 /** Jumlah baris per halaman. */
 const PAGE_SIZE = 20;
+
+/**
+ * Kelas kepala kolom tabel.
+ *
+ * Huruf kecil renggang seperti judul kolom pada buku besar: kepala kolom
+ * memberi tahu ISI kolom, bukan bersaing dengan angka di bawahnya. Karena
+ * dipakai belasan kali per berkas, disimpan sebagai konstanta supaya tidak
+ * ada satu pun kepala kolom yang tertinggal gaya lamanya.
+ */
+const TH_CLASS =
+  "p-3 font-heading text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase";
 
 /** Bangun URL halaman ini dengan filter status, rentang waktu & halaman. */
 function historyUrl(
@@ -119,12 +135,10 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">Riwayat Absensi</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Catatan setiap percobaan kirim laporan
-        </p>
-      </div>
+      <PageHeader
+        title="Riwayat Absensi"
+        description="Catatan setiap percobaan kirim laporan."
+      />
 
       <Card className="mb-6">
         <CardHeader>
@@ -135,7 +149,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
           <Stat label="Terkirim" value={summary.success} />
           <Stat label="Sudah ada" value={summary.duplicate} />
           <Stat label="Gagal" value={summary.failed} />
-          <p className="col-span-2 text-xs text-foreground/60 sm:col-span-4">
+          <p className="col-span-2 text-xs text-muted-foreground sm:col-span-4">
             {lastAt
               ? `Percobaan terakhir: ${lastAt}`
               : "Belum ada percobaan kirim."}
@@ -171,21 +185,40 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
           ]}
         />
         {totalFiltered > 0 && (
-          <p className="mt-2 text-xs text-foreground/60">
+          <p className="mt-2 text-xs text-muted-foreground">
             {totalFiltered} catatan
           </p>
         )}
       </div>
 
-
       {logs.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="text-sm text-foreground/70">
-            {statusFilter === "ALL"
-              ? `Belum ada riwayat dalam rentang “${RANGE_FILTER_LABELS[rangeFilter]}”. Setelah Anda menekan “Kirim Absen”, catatan akan muncul di sini.`
-              : `Tidak ada catatan berstatus “${STATUS_FILTER_LABELS[statusFilter]}” dalam rentang “${RANGE_FILTER_LABELS[rangeFilter]}”.`}
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<History aria-hidden />}
+          title={
+            statusFilter === "ALL"
+              ? "Belum ada riwayat kiriman"
+              : "Tidak ada catatan dengan status itu"
+          }
+          description={
+            statusFilter === "ALL"
+              ? `Belum ada percobaan kirim dalam rentang “${RANGE_FILTER_LABELS[rangeFilter]}”. Setelah Anda menekan “Kirim Absen”, catatannya muncul di sini.`
+              : `Tidak ada catatan berstatus “${STATUS_FILTER_LABELS[statusFilter]}” dalam rentang “${RANGE_FILTER_LABELS[rangeFilter]}”. Coba pilih status atau rentang lain.`
+          }
+          action={
+            statusFilter === "ALL" ? null : (
+              <Button
+                variant="neutral"
+                size="sm"
+                render={<Link href="/history" />}
+                title="Tampilkan semua status"
+                aria-label="Tampilkan semua status"
+              >
+                <RotateCcw aria-hidden />
+                Tampilkan semua status
+              </Button>
+            )
+          }
+        />
       ) : (
         <Card className="overflow-hidden">
           <div
@@ -200,11 +233,11 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
                 wajar dan wadah `overflow-x-auto` benar-benar bisa digeser. */}
             <table className="w-full min-w-[40rem] border-collapse text-sm">
               <thead>
-                <tr className="border-b-2 border-border text-left text-xs text-foreground/60">
-                  <th className="p-3 font-heading">Waktu</th>
-                  <th className="p-3 font-heading">Status</th>
-                  <th className="p-3 font-heading">Pemicu</th>
-                  <th className="p-3 font-heading">Keterangan</th>
+                <tr className="border-b-2 border-border text-left">
+                  <th className={TH_CLASS}>Waktu</th>
+                  <th className={TH_CLASS}>Status</th>
+                  <th className={TH_CLASS}>Pemicu</th>
+                  <th className={TH_CLASS}>Keterangan</th>
                 </tr>
               </thead>
               <tbody>
@@ -213,9 +246,9 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
                   return (
                     <tr
                       key={log.id}
-                      className="border-b border-border/40 align-top last:border-b-0"
+                      className="border-b border-border align-top last:border-b-0"
                     >
-                      <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
+                      <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
                         {when ?? "waktu tidak diketahui"}
                       </td>
                       <td className="p-3">
@@ -223,11 +256,11 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
                           {describeSubmitStatus(log.status)}
                         </Badge>
                       </td>
-                      <td className="whitespace-nowrap p-3 text-xs text-foreground/70">
+                      <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
                         {describeTrigger(log.trigger)}
                         {log.attempt > 1 && ` (ke-${log.attempt})`}
                       </td>
-                      <td className="break-words p-3 text-xs text-foreground/80">
+                      <td className="break-words p-3 text-xs text-muted-foreground">
                         {log.message ?? ","}
                       </td>
                     </tr>
@@ -249,12 +282,21 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   );
 }
 
-/** Kartu angka kecil untuk ringkasan. */
+/**
+ * Satu angka ringkasan.
+ *
+ * Label dulu, angka kemudian (sama seperti `StatsCards` di dasbor), dipisahkan
+ * satu garis atas — bukan kotak berbingkai di dalam kotak berbingkai.
+ */
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-base border-2 border-border p-3">
-      <p className="font-heading text-2xl">{value}</p>
-      <p className="text-xs text-foreground/60">{label}</p>
+    <div className="border-t-2 border-border pt-2">
+      <p className="font-heading text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase">
+        {label}
+      </p>
+      <p className="mt-1 font-heading text-2xl leading-none tabular-nums">
+        {value}
+      </p>
     </div>
   );
 }

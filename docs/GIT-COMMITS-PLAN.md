@@ -309,12 +309,12 @@ rute API tanpa UI tidak bisa dipakai pemilik untuk menguji:
 - Menu sidebar "Repo Git" sudah ditambahkan.
 
 **Belum dikerjakan:** tidak ada. Butir 3 (sakelar) selesai di `/repos`, bukan
-`/automation` — lihat catatan penyimpangan di bawah.
+`/automation`, lihat catatan penyimpangan di bawah.
 
 > **Celah yang ditemukan & ditutup setelah Fase 4 "selesai".** Sampai saat itu
 > commit hanya bisa dilihat lewat tombol "Uji ambil commit" di `/repos`.
 > Tombol **"Generate draf"** di `/report-templates` sama sekali tidak memakai
-> commit — jadi fitur ini belum menghemat waktu pengguna di tempat ia dipakai
+> commit, jadi fitur ini belum menghemat waktu pengguna di tempat ia dipakai
 > sehari-hari. Sekarang `POST /api/report-templates/generate` mengambil commit
 > hari itu dan memakainya sebagai `keywords`:
 >
@@ -331,7 +331,7 @@ rute API tanpa UI tidak bisa dipakai pemilik untuk menguji:
 
 ---
 
-## 12. Menyambungkan commit ke alur kirim otomatis (Fase 5) — SUDAH DIPUTUSKAN
+## 12. Menyambungkan commit ke alur kirim otomatis (Fase 5): SUDAH DIPUTUSKAN
 
 Sebelumnya commit hanya dipakai tombol **Generate draf** (manual). Cron tetap
 mengirim template. Bagian ini menutup jarak itu.
@@ -340,7 +340,7 @@ mengirim template. Bagian ini menutup jarak itu.
 
 | # | Pertanyaan | Keputusan |
 |---|---|---|
-| 1 | Alur | **B** — draf dari commit disimpan sebagai template bertanggal, lalu dikirim |
+| 1 | Alur | **B**, draf dari commit disimpan sebagai template bertanggal, lalu dikirim |
 | 2 | Tanpa commit | Pakai **template harian** (tetap kirim, tidak menahan laporan) |
 | 3 | Kolom Pembelajaran | **Selalu terisi.** Ketiga kolom disusun dari sumber yang sama. Penyusun lokal menjamin panjang >= `MIN_REPORT_LENGTH`, jadi tidak ada kolom kosong yang ditolak portal |
 | 4 | Jendela meninjau | **Tidak perlu meninjau.** Draf disusun sesaat sebelum kirim |
@@ -355,11 +355,11 @@ commit hari itu  ->  template bertanggal  ->  template harian  ->  batal
 Aturan ini ada di satu tempat, `chooseReportContent()`
 (`src/lib/report-source.ts`), dan dipakai oleh **kedua** jalur cron:
 
-- `src/lib/cron-dispatch-run.ts` — dispatcher massal (`/api/cron/run-all`)
-- `src/app/api/cron/submit/route.ts` — cron per pengguna (`?key=<webhookKey>`)
+- `src/lib/cron-dispatch-run.ts`, dispatcher massal (`/api/cron/run-all`)
+- `src/app/api/cron/submit/route.ts`, cron per pengguna (`?key=<webhookKey>`)
 
 Memasangnya di satu jalur saja akan membuat pengguna jalur lain terus mengirim
-template selamanya — fitur tampak ada tetapi tidak pernah aktif.
+template selamanya, fitur tampak ada tetapi tidak pernah aktif.
 
 ### Cara kerja
 
@@ -407,7 +407,7 @@ malam, dan fungsi itu tidak bisa diuji. Kini `todayInJakarta(now)`.
 >
 > **Temuan saat pengerjaan:** kolom `enabled` sebelumnya sudah ada di skema dan
 > **sudah dihormati** `resolveCommits` (baris `if (!row.enabled)`), tetapi
-> **tidak ada satu pun UI atau endpoint yang bisa mengubahnya** — form selalu
+> **tidak ada satu pun UI atau endpoint yang bisa mengubahnya**, form selalu
 > menulis `enabled: true`. Artinya pengguna tidak punya cara mematikan fitur
 > selain menghapus repo beserta tokennya. Sekarang ditutup:
 > `PUT /api/repos` dengan `{ action: "toggle", enabled }` (skema
@@ -446,7 +446,7 @@ Sengaja dibatasi, sesuai `AGENTS.md` §2 dan SPEC §10:
 ## 11. Daftar periksa sebelum menyatakan selesai
 
 - [x] `SPEC.md` dan `AGENTS.md` sudah diperbarui (pencabutan resmi tertulis)
-- [ ] `npm run db:push` dijalankan pemilik — **belum dicatat di repo**; jalankan
+- [ ] `npm run db:push` dijalankan pemilik, **belum dicatat di repo**; jalankan
       bila `GitRepoConfig` belum ada di DB Anda
 - [x] `npm run lint` bersih
 - [x] `npm run typecheck` bersih
@@ -460,14 +460,14 @@ Sengaja dibatasi, sesuai `AGENTS.md` §2 dan SPEC §10:
       `resolveCommits`; endpoint sakelar tidak menerima token sama sekali)
 - [x] `/privacy` menyebut pengiriman commit ke Gemini
 - [ ] Pemilik meninjau `git diff` lalu commit sendiri (agent tidak commit)
-- [x] **Uji nyata dengan token asli** — **selesai**. Sebelumnya hanya sampai
+- [x] **Uji nyata dengan token asli**, **selesai**. Sebelumnya hanya sampai
       pesan "Tidak ada commit pada hari itu"; penyebabnya ternyata branch tidak
       pernah dikirim ke API (§16.1). Setelah diperbaiki, commit nyata pada
       branch `dev-zar` tertarik dan 3 kolom tersusun (§16).
 
 **Butir terbuka yang butuh keputusan pemilik:**
 
-1. Kolom **"Pembelajaran yang Diperoleh"** — sudah diisi dari bukti commit sejak
+1. Kolom **"Pembelajaran yang Diperoleh"**, sudah diisi dari bukti commit sejak
    §14.1, dan kini mengenali prefix `[TAG]:` (§16.2). Teksnya tetap ditandai
    `learningNeedsReview: true`; pengguna wajib menyesuaikan.
 2. **Tanggal laporan mengikuti tanggal COMMIT**, bukan tanggal author. Commit
@@ -485,7 +485,7 @@ bersih · lint bersih · **974 tes lulus** · build sukses.
 **1. Query template bertanggal memuat seluruh riwayat (ditemukan & dibatasi).**
 
 Kedua jalur kirim membaca `datedTemplates` **tanpa `where`**, sehingga tiap
-pemanggilan cron menarik *semua* baris bertanggal milik pengguna — bukan hanya
+pemanggilan cron menarik *semua* baris bertanggal milik pengguna, bukan hanya
 tanggal hari ini. Karena draf commit disimpan sebagai baris bertanggal setiap
 hari, jumlahnya tumbuh terus (±90 baris/pengguna setelah 3 bulan), dan isinya
 teks panjang. Di dispatcher massal dampaknya berlipat: satu query untuk semua
@@ -506,7 +506,7 @@ sumber kebenaran urutan tersebut.
 ### Diperiksa dan dinilai aman (tidak diubah)
 
 - **29 route API**: semuanya punya auth kecuali yang memang publik (`register`,
-  `cron/*`, `auth`). Route template/profile tanpa rate limit dinilai wajar —
+  `cron/*`, `auth`). Route template/profile tanpa rate limit dinilai wajar
   operasi DB lokal milik sendiri, bukan aksi berisiko atau ke portal luar.
 - **DB produksi (Neon)**: `dated_report_templates` dan `git_repo_configs`
   **sudah ada** dengan kolom benar dan indeks `(userId, date)`; tak perlu
@@ -516,25 +516,25 @@ sumber kebenaran urutan tersebut.
   mock. Ini bukan bug, tetapi berarti jalur simpan draf commit belum terbukti
   di lingkungan nyata.
 
-## 14. Dua keputusan yang tadinya ditunda — kini dikerjakan
+## 14. Dua keputusan yang tadinya ditunda: kini dikerjakan
 
 Kedua butir yang di §13 dicatat "menunggu keputusan pemilik" sudah diputuskan
 dan diimplementasikan.
 
 ### 14.1 Kolom "Pembelajaran yang Diperoleh" diisi dari BUKTI commit
 
-Keputusan lama (§8 Fase 3) — *jangan isi otomatis karena commit menunjukkan
-apa yang dikerjakan, bukan apa yang dipelajari* — **tetap dihormati**. Yang
+Keputusan lama (§8 Fase 3), *jangan isi otomatis karena commit menunjukkan
+apa yang dikerjakan, bukan apa yang dipelajari*, **tetap dihormati**. Yang
 ditambahkan bukan pengisian bebas, melainkan penurunan dari bukti:
 
 - Modul murni baru `src/lib/commit-learning.ts`: `detectChangeKind()` membaca
-  jenis perubahan dari prefix commit — Conventional Commits (`fix:`) **maupun
-  kurung siku (`[FIX]:`, lihat §16.2)** — atau kata di judul; lalu
+  jenis perubahan dari prefix commit, Conventional Commits (`fix:`) **maupun
+  kurung siku (`[FIX]:`, lihat §16.2)**, atau kata di judul; lalu
   `learningFromCommits()` merakit kalimat yang **hanya** merujuk pada jenis
   perubahan yang benar-benar ada + topik dari judul commit.
 - **Guard yang menentukan**: bila tidak ada satu pun JENIS perubahan yang
   dikenali, fungsi mengembalikan `null` dan kolom dibiarkan kosong. Topik saja
-  tidak cukup — judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada
+  tidak cukup, judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada
   yang dipelajari.
 - `DraftInput` menerima `learning?`. Penyusun memakainya bila lolos
   `checkReportField`, selain itu tetap menyusun sendiri. Drafter tidak tahu
@@ -548,7 +548,7 @@ secara kebetulan**: dengan guard dihapus tes tetap hijau karena teks kosong
 memang sudah ditolak `MIN_REPORT_LENGTH` (100). Tes seperti itu tidak menjaga
 apa pun. Setelah diperbaiki dengan bahan yang cukup panjang, tes langsung merah
 dan **menyingkap cacat desain nyata**: judul panjang tanpa sinyal jenis masih
-menghasilkan kalimat "saya mempelajari penerapannya" — persis karangan yang
+menghasilkan kalimat "saya mempelajari penerapannya", persis karangan yang
 ingin dihindari. Guard diperketat dari `jenis === 0 && topik === 0` menjadi
 `jenis === 0`.
 
@@ -585,25 +585,25 @@ build ✅ · `prisma db push` ✅ (enum tersinkron).
 ## 15. Perbaikan setelah meninjau ulang hasil sendiri
 
 Butir-butir di bawah ditemukan dengan membaca ulang diff, **bukan** dari tes
-yang merah — semuanya lolos seluruh 997 tes pada saat itu. Dua di antaranya
+yang merah, semuanya lolos seluruh 997 tes pada saat itu. Dua di antaranya
 adalah bug keamanan dan janji yang salah kepada pengguna.
 
-### 15.1 KRITIS — peran sesi adalah potret saat login
+### 15.1 KRITIS: peran sesi adalah potret saat login
 
 Callback `jwt` pada permintaan biasa menyegarkan `sessionVersion`, `deletedAt`,
 dan `mustChangePassword` dari DB, tetapi **tidak** `role`. Padahal semua
 penjagaan admin (`/admin`, `/api/admin/*`, termasuk `PATCH` ubah peran) membaca
-`session.user.role` yang berasal dari `token.role` — nilai saat login. Jadi
+`session.user.role` yang berasal dari `token.role`, nilai saat login. Jadi
 peran yang sudah dicabut tetap berlaku sampai token kedaluwarsa.
 
 `sessionVersion++` di route ubah-peran memang mencabut sesi, sehingga celah ini
 tidak bisa dieksploitasi lewat jalur tersebut. Tetapi klaim "JWT lama tidak
 membawa peran lama" hanya benar karena efek samping itu, bukan karena sesi
 menanyakan peran ke sumbernya. Pengguna yang **dinaikkan** juga ikut ter-logout
-tanpa penjelasan — sesi tidak perlu dicabut saat promosi.
+tanpa penjelasan, sesi tidak perlu dicabut saat promosi.
 
 Perbaikan: `role` ikut `select` di callback `jwt`, keputusan diambil fungsi murni
-baru `peranSesiEfektif()` (`session-version.ts`) — DB sebagai penentu, peran tak
+baru `peranSesiEfektif()` (`session-version.ts`), DB sebagai penentu, peran tak
 dikenal tidak pernah menaikkan siapa pun menjadi ADMIN, dan tanpa peran yang
 bisa dipakai hasilnya `USER` (menutup, bukan membuka).
 
@@ -616,7 +616,7 @@ bisa gagal dengan merusak `peranSesiEfektif` → 1 merah → dikembalikan.
 Guard `jenis.length === 0` sudah benar, tetapi kalimat topiknya berbunyi
 *"…, saya mempelajari penerapannya secara langsung, bukan hanya dari teori."*
 Kalimat itu muncul untuk **setiap** commit yang punya topik dan tidak diturunkan
-dari bukti apa pun — persis karangan yang jadi alasan modul ini ada. Ia lolos
+dari bukti apa pun, persis karangan yang jadi alasan modul ini ada. Ia lolos
 karena semua tes memeriksa ada/tidaknya keluaran, bukan isinya.
 
 Sekarang kalimat topik hanya melaporkan pekerjaan ("Pekerjaan hari ini mencakup
@@ -636,7 +636,7 @@ dengan pesan jelas.
 
 `jalankanPeran()` menghitung `peranBaru = isAdmin ? "USER" : "ADMIN"` padahal
 tombolnya tidak pernah aktif untuk sasaran admin (dan server menolak penurunan
-peran). Cabang "turunkan ke USER" — termasuk pesan toast-nya — tidak akan pernah
+peran). Cabang "turunkan ke USER", termasuk pesan toast-nya, tidak akan pernah
 tercapai. Diganti peran tujuan tetap `"ADMIN"` dengan komentar alasannya.
 
 Baseline akhir: typecheck ✅ · lint ✅ · **1005 tes lulus** (+31) · build ✅.
@@ -649,7 +649,7 @@ Ditemukan saat menguji dengan repo sungguhan (`it-sigap/after-sales/laporan-bula
 branch `dev-zar`). Keduanya lolos dari tes karena tes memakai data palsu yang
 selalu "rapi".
 
-### 16.1 KRITIS — branch tersimpan tetapi tidak pernah dipakai
+### 16.1 KRITIS: branch tersimpan tetapi tidak pernah dipakai
 
 `resolveCommits` membaca `row.branch` dari DB, tetapi `fetchCommits` tidak
 menerimanya sama sekali. Akibatnya API selalu memakai **default branch repo**,
@@ -694,7 +694,7 @@ Perbaikan:
     `":"`. Versi pertama regex menyisakan `":"`, sisa yang lolos
     `isGenericCommitTitle` dan bisa masuk laporan. Tes menangkapnya.
 
-### 16.3 Dugaan yang TERBUKTI SALAH — filter tanggal
+### 16.3 Dugaan yang TERBUKTI SALAH: filter tanggal
 
 Catatan awal menduga GitLab memfilter `since`/`until` berdasarkan `authored_date`
 sehingga commit hasil rebase terlewat, sementara GitHub memakai `committer_date`.
@@ -715,11 +715,11 @@ author-nya 30 Okt.
 
 Karena `committedAt` yang ditampilkan juga diambil dari `committed_date`
 (GitLab) / `committer.date` (GitHub), **tanggal yang ditarik dan yang ditampilkan
-selalu sama** — tidak ada ketidakcocokan yang perlu ditutup.
+selalu sama**, tidak ada ketidakcocokan yang perlu ditutup.
 
 **Konsekuensi yang perlu diketahui pengguna** (bukan bug): commit yang di-rebase
 akan muncul pada tanggal commit, bukan tanggal pengerjaan. Contoh `d14ef0c9`
 dikerjakan 28 Okt tetapi tercatat 2 Nov. Mengikuti tanggal pengerjaan adalah
-keputusan produk berbeda — belum diminta, jadi belum diubah.
+keputusan produk berbeda, belum diminta, jadi belum diubah.
 
 Baseline akhir: typecheck OK · lint OK · **1064 tes lulus**.

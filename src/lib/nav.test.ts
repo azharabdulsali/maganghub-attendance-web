@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
 
 import { activeHref, matchesPath } from "./nav";
 
-// Menu admin seperti di app-sidebar.tsx — kasus yang dulu bermasalah.
+// Menu admin seperti di app-sidebar.tsx, kasus yang dulu bermasalah.
 const MENU_ADMIN = [
   { href: "/admin" },
   { href: "/admin/holidays" },

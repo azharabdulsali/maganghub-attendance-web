@@ -130,12 +130,12 @@ function shiftMonth({ year, month }: YearMonth, delta: number): YearMonth {
 
 /**
  * Susun kisi bulan seperti `buildMonthGrid`, TETAPI sel padding tidak lagi
- * kosong — diisi tanggal nyata dari bulan sebelum/sesudahnya (`outside: true`).
+ * kosong, diisi tanggal nyata dari bulan sebelum/sesudahnya (`outside: true`).
  *
  * Kenapa dibuat: pemilih tanggal pada /report-templates menampilkan kisi yang
  * utuh (tanpa sel kosong) supaya hari di bulan sebelah tetap terlihat dan layout
  * tidak berlubang. Catatan: meski selnya berisi tanggal nyata, komponen
- * pemilih yang menentukan tanggal mana yang BOLEH dipilih — saat ini hanya hari
+ * pemilih yang menentukan tanggal mana yang BOLEH dipilih, saat ini hanya hari
  * ini dan tanggal mendatang (`date-picker.tsx`). Jadi tanggal lampau tetap
  * tampil redup di sini, tetapi tidak bisa diklik. Halaman /calendar tetap
  * memakai `buildMonthGrid` yang kosong, perilakunya tidak berubah.

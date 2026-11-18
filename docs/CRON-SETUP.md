@@ -39,7 +39,7 @@ Authorization: Bearer <webhookKey>          ← cara dianjurkan
 ```
 
 Cara lama tetap didukung **sementara** (kompatibilitas mundur, **dihapus 1 Jan
-2026** — lihat banner di atas):
+2026**, lihat banner di atas):
 
 ```
 GET https://<domain-anda>/api/cron/submit?key=<webhookKey>
@@ -52,8 +52,8 @@ GET https://<domain-anda>/api/cron/submit?key=<webhookKey>
 > mati mendadak.
 
 > Inilah **endpoint per-user**. Dispatcher massal memakai endpoint **lain**
-> (`GET /api/cron/run-all`, dijaga header `Authorization: Bearer <CRON_SECRET>`
->, lihat `docs/CRON-BULK.md`). Keduanya memakai logika keputusan yang sama
+> (`GET /api/cron/run-all`, dijaga header `Authorization: Bearer <CRON_SECRET>`;
+> lihat `docs/CRON-BULK.md`). Keduanya memakai logika keputusan yang sama
 > persis (`performSubmit`), jadi perilaku libur/kelengkapan identik.
 
 Alur saat dipanggil:

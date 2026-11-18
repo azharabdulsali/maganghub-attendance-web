@@ -31,53 +31,53 @@ const FooterComponent01 = () => {
   return (
     <footer className="pb-safe border-t-2 border-border bg-secondary-background">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-6 max-md:flex-col sm:px-6 sm:py-8 md:gap-6">
-        <Link href="/" aria-label={`${SITE_NAME} Absensi — beranda`}>
+        <Link href="/" aria-label={`${SITE_NAME} Absensi, beranda`}>
           <Logo />
         </Link>
 
         <nav
           aria-label="Tautan footer"
-          className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-foreground/80"
+          className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground"
         >
           <a
             href="#fitur"
-            className="opacity-80 transition-opacity duration-300 hover:opacity-100"
+            className="transition-colors hover:text-foreground"
           >
             Fitur
           </a>
           <a
             href="#alur"
-            className="opacity-80 transition-opacity duration-300 hover:opacity-100"
+            className="transition-colors hover:text-foreground"
           >
             Cara Kerja
           </a>
           <a
             href="#faq"
-            className="opacity-80 transition-opacity duration-300 hover:opacity-100"
+            className="transition-colors hover:text-foreground"
           >
             FAQ
           </a>
           <Link
             href="/docs"
-            className="opacity-80 transition-opacity duration-300 hover:opacity-100"
+            className="transition-colors hover:text-foreground"
           >
             Dokumentasi
           </Link>
           <Link
             href="/panduan"
-            className="opacity-80 transition-opacity duration-300 hover:opacity-100"
+            className="transition-colors hover:text-foreground"
           >
             Panduan
           </Link>
           <Link
             href="/privacy"
-            className="opacity-80 transition-opacity duration-300 hover:opacity-100"
+            className="transition-colors hover:text-foreground"
           >
             Privasi
           </Link>
           <Link
             href="/terms"
-            className="opacity-80 transition-opacity duration-300 hover:opacity-100"
+            className="transition-colors hover:text-foreground"
           >
             Syarat
           </Link>
@@ -86,7 +86,7 @@ const FooterComponent01 = () => {
 
       <div className="border-t-2 border-border">
         <div className="mx-auto flex max-w-7xl justify-center px-4 py-6 sm:px-6">
-          <p className="text-center text-xs text-balance text-foreground/70">
+          <p className="text-center text-xs text-balance text-muted-foreground">
             {`©${year}`}{" "}
             <Link href="/" className="hover:underline">
               {SITE_NAME} Absensi

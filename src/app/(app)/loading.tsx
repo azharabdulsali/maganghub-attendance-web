@@ -3,7 +3,7 @@
 // Kenapa ada: halaman di grup ini adalah Server Component yang menunggu
 // beberapa query Prisma berurutan (statistik, log, kredensial). Sebelum ada
 // `loading.tsx`, Next.js menahan halaman LAMA di layar tanpa tanda apa pun
-// sampai data siap — pengguna menekan menu, tidak terjadi apa-apa, lalu
+// sampai data siap, pengguna menekan menu, tidak terjadi apa-apa, lalu
 // menekan lagi. Itu terasa seperti aplikasi macet.
 //
 // Berkas ini dipasang di LEVEL GRUP, jadi satu perbaikan berlaku untuk semua
@@ -30,8 +30,8 @@ export default function AppLoading() {
       <span className="sr-only">Memuat halaman…</span>
 
       {/* Judul halaman */}
-      <div className="mb-2 h-8 w-56 rounded-base bg-foreground/10 motion-safe:animate-pulse" />
-      <div className="mb-8 h-4 w-80 max-w-full rounded-base bg-foreground/10 motion-safe:animate-pulse" />
+      <div className="mb-2 h-8 w-56 rounded-base bg-border motion-safe:animate-pulse" />
+      <div className="mb-8 h-4 w-80 max-w-full rounded-base bg-border motion-safe:animate-pulse" />
 
       {/* Kartu statistik: 1 kolom di ponsel, 3 di layar lebar */}
       <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -49,7 +49,7 @@ export default function AppLoading() {
       {/* Teks cadangan untuk peramban tanpa dukungan animasi sama sekali:
           kerangka tetap terlihat sebagai kotak abu-abu, dan teks ini yang
           memberi tahu apa yang sedang terjadi. */}
-      <p className="mt-4 text-sm text-foreground/70" aria-hidden="true">
+      <p className="mt-4 text-sm text-muted-foreground" aria-hidden="true">
         Memuat data…
       </p>
     </div>
