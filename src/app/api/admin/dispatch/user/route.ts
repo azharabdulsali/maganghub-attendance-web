@@ -1,7 +1,7 @@
 // src/app/api/admin/dispatch/user/route.ts: jalankan otomasi untuk SATU user.
 //
 // Beda dengan /api/admin/dispatch (massal, seleksi per jam): route ini
-// MEMAKSA jalankan seorang pengguna yang dipilih admin, apa pun jam jadwalnya —
+// MEMAKSA jalankan seorang pengguna yang dipilih admin, apa pun jam jadwalnya
 // untuk "mengejar" orang yang terlewat tanpa menunggu jam berikutnya.
 //
 // Keamanan (sejajar dengan route admin lain):

@@ -3,7 +3,7 @@
 //
 // Kenapa modul terpisah: keputusan ini menentukan ISI laporan yang terkirim ke
 // portal. Kalau salah, pengguna bisa mengirim template harian padahal sudah
-// menyiapkan template khusus untuk tanggal itu — kesalahan yang tidak terlihat
+// menyiapkan template khusus untuk tanggal itu, kesalahan yang tidak terlihat
 // sampai laporan sudah terkirim (portal tidak bisa ditarik kembali).
 //
 // Aturan (diputuskan pemilik, jangan diubah sendiri):

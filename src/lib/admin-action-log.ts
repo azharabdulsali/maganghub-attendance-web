@@ -1,7 +1,7 @@
 // src/lib/admin-action-log.ts: pencatatan aksi admin.
 //
 // Aksi admin yang menyentuh akun orang lain (hapus / atur ulang kata sandi)
-// dicatat ke tabel `AdminActionLog` supaya bisa diaudit — terpisah dari
+// dicatat ke tabel `AdminActionLog` supaya bisa diaudit, terpisah dari
 // `SubmitLog` yang artinya percobaan kirim laporan.
 //
 // Pencatatan TIDAK boleh menggagalkan aksi yang sudah sah, dan tidak boleh

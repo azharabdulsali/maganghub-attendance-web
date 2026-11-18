@@ -119,7 +119,7 @@ export type GitRepoInput = z.infer<typeof gitRepoSchema>;
  *
  * Sengaja terpisah dari `gitRepoSchema` supaya mematikan fitur TIDAK menuntut
  * token ditempel ulang. Tanpa ini, satu-satunya cara mematikan adalah menghapus
- * repo beserta tokennya — terlalu berat untuk sekadar jeda.
+ * repo beserta tokennya, terlalu berat untuk sekadar jeda.
  */
 export const gitRepoToggleSchema = z.object({
   enabled: z.boolean({ message: "Nilai sakelar harus benar/salah" }),

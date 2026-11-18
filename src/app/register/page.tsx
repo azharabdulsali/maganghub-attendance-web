@@ -17,10 +17,7 @@ import { TurnstileWidget } from "@/components/turnstile-widget";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 export default function RegisterPage() {
@@ -32,7 +29,7 @@ export default function RegisterPage() {
   // `konfirmasiTersentuh` mencegah error "tidak cocok" muncul sejak halaman
   // dibuka (kolom konfirmasi masih kosong, padahal pengguna belum mengisi apa
   // pun). Baru setelah pengguna mengetik di kolom itu, ketidakcocokan
-  // ditampilkan — dan tetap ditampilkan sambil ia mengetik sampai cocok.
+  // ditampilkan, dan tetap ditampilkan sambil ia mengetik sampai cocok.
   const [konfirmasiTersentuh, setKonfirmasiTersentuh] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -82,14 +79,21 @@ export default function RegisterPage() {
 
   return (
     <main className="pt-safe pb-safe pl-safe pr-safe mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 py-16">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Daftar akun</CardTitle>
-          <CardDescription>
-            MagangHub Autoabsen, absensi otomatis dari template laporan Anda.
-          </CardDescription>
-        </CardHeader>
+      {/* Kepala halaman di luar kartu, sama seperti halaman masuk: identitas
+          halaman tidak dibingkai, hanya isian yang dibingkai. */}
+      <header className="mb-6 border-b-2 border-border pb-5">
+        <p className="font-heading text-[0.6875rem] tracking-[0.18em] uppercase text-muted-foreground">
+          MagangHub Autoabsen
+        </p>
+        <h1 className="mt-2 font-heading text-3xl leading-[1.05]">
+          Daftar akun
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Absensi otomatis dari template laporan Anda.
+        </p>
+      </header>
 
+      <Card>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -156,7 +160,7 @@ export default function RegisterPage() {
                 // password (ditegakkan server), sedangkan kolom ini hanya
                 // memeriksa kecocokan. Kalau `minLength` ada di sini, browser
                 // akan memblokir submit dengan pesan "minimal 8 karakter" saat
-                // masalah sebenarnya adalah ketidakcocokan — menyesatkan.
+                // masalah sebenarnya adalah ketidakcocokan, menyesatkan.
                 //
                 // `new-password` (bukan `off`): pengelola kata sandi akan
                 // menawarkan membuat kata sandi BARU dan mengisi KEDUA kolom
@@ -201,7 +205,6 @@ export default function RegisterPage() {
               type="submit"
               disabled={loading}
               className="w-full"
-              variant="success"
               title={loading ? "Memproses…" : "Daftar"}
               aria-label={loading ? "Memproses pendaftaran" : "Daftar"}
             >

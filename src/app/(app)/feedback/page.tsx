@@ -12,9 +12,12 @@
 // query di bawah SELALU difilter `userId` sesi.
 
 import { redirect } from "next/navigation";
+import { MessageSquare } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatJakartaTimestamp } from "@/lib/audit-log";
@@ -40,12 +43,10 @@ export default async function FeedbackPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">Kritik &amp; Saran</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Sampaikan masukan untuk perbaikan aplikasi
-        </p>
-      </div>
+      <PageHeader
+        title="Kritik & Saran"
+        description="Sampaikan masukan untuk perbaikan aplikasi."
+      />
 
       <Card className="mb-8">
         <CardHeader>
@@ -62,9 +63,11 @@ export default async function FeedbackPage() {
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <p className="text-sm text-foreground/70">
-              Belum ada masukan yang Anda kirim.
-            </p>
+            <EmptyState
+              icon={<MessageSquare aria-hidden />}
+              title="Belum ada masukan yang Anda kirim"
+              description="Kritik dan saran yang Anda tulis lewat formulir di atas akan tampil di sini, supaya Anda bisa memeriksa apa yang sudah dikirim."
+            />
           ) : (
             <ul className="flex flex-col gap-3">
               {rows.map((row) => (
@@ -76,7 +79,7 @@ export default async function FeedbackPage() {
                     <Badge tone={feedbackStateTone(row.readAt)}>
                       {describeFeedbackState(row.readAt)}
                     </Badge>
-                    <span className="text-xs text-foreground/60">
+                    <span className="text-xs text-muted-foreground">
                       {formatJakartaTimestamp(row.createdAt) ??
                         "waktu tidak diketahui"}
                     </span>
@@ -90,7 +93,7 @@ export default async function FeedbackPage() {
           )}
 
           {rows.length === RIWAYAT_BATAS ? (
-            <p className="mt-3 text-xs text-foreground/60">
+            <p className="mt-3 text-xs text-muted-foreground">
               Menampilkan {RIWAYAT_BATAS} masukan terbaru.
             </p>
           ) : null}

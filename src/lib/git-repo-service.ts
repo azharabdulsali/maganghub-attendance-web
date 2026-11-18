@@ -188,7 +188,7 @@ export async function resolveCommits(
       sinceIso: rentang.sinceIso,
       untilIso: rentang.untilIso,
       // Branch WAJIB diteruskan. Tanpa ini commit di branch kerja tidak pernah
-      // terlihat: API memakai default branch repo. Branch kosong sah — artinya
+      // terlihat: API memakai default branch repo. Branch kosong sah, artinya
       // "pakai default branch repo", bukan "main".
       branch: row.branch,
     });
@@ -244,7 +244,7 @@ export function toCommitView(commits: readonly GitCommit[]): Array<{
  * Mengembalikan `null` bila tidak ada bahan yang layak (semua commit generik
  * atau tidak ada commit sama sekali). Pemanggil WAJIB memakai `null` sebagai
  * sinyal "jangan buat draf dari commit", bukan mengirim string kosong ke
- * penyusun — itu menghasilkan laporan palsu yang terlihat terisi.
+ * penyusun, itu menghasilkan laporan palsu yang terlihat terisi.
  */
 export function draftInputFromCommits(
   keywords: string,

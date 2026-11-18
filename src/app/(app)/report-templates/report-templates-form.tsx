@@ -43,6 +43,7 @@ import {
   isAfter,
   LAST_ACTIVE_DATE,
 } from "@/lib/report-policy";
+import { apakahKotor, useUnsavedGuard } from "@/lib/form-guard";
 
 const FIELDS = [
   {
@@ -170,6 +171,32 @@ export default function ReportTemplatesForm({
   const toast = useToast();
   const router = useRouter();
 
+  // Guard "perubahan belum disimpan": hanya memperingatkan saat penutupan
+  // tab/refresh (lihat form-guard.ts untuk keputusan cakupannya).
+  //
+  // `baseline` = isi konteks yang TERAKHIR TERSIMPAN di server. Ia sengaja
+  // disimpan terpisah dari `defaultValues`/`dated`: `pindah()` menulis ketikan
+  // yang BELUM disimpan ke kedua map itu (supaya tidak hilang saat berpindah
+  // konteks), jadi membandingkan dengan mereka akan mematikan guard justru saat
+  // ada perubahan yang belum disimpan.
+  const [baseline, setBaseline] = useState<Record<FieldName, string>>(() =>
+    tanggal && dated[tanggal]
+      ? dated[tanggal]
+      : {
+          activity: initialActivity,
+          learning: initialLearning,
+          obstacles: initialObstacles,
+        },
+  );
+  const kotor =
+    !saving &&
+    !deleting &&
+    apakahKotor(
+      baseline as unknown as Record<string, string>,
+      values as unknown as Record<string, string>,
+    );
+  useUnsavedGuard(kotor);
+
 
   // Bahan untuk penyusun draf. Dipisah dari `values` karena ini BUKAN isi
   // template final, hanya kata kunci sementara yang tidak ikut tersimpan.
@@ -220,7 +247,11 @@ export default function ReportTemplatesForm({
       setDated((prev) => ({ ...prev, [tanggal]: values }));
     }
     // Muat isi konteks tujuan.
-    setValues(t === null ? defaultValues : dated[t] ?? KOSONG);
+    const isiTujuan = t === null ? defaultValues : dated[t] ?? KOSONG;
+    setValues(isiTujuan);
+    // Baseline ikut pindah: konteks tujuan dibandingkan dengan isi TERSIMPAN-nya
+    // sendiri, bukan dengan ketikan konteks sebelumnya.
+    setBaseline(isiTujuan);
     setTanggal(t);
     setServerError(null);
   }
@@ -289,7 +320,7 @@ export default function ReportTemplatesForm({
       setServerError(null);
 
       // Pesan hasil dibedakan supaya pengguna tahu persis bahan apa yang
-      // dipakai — termasuk saat commit TIDAK terpakai. Tanpa ini, draf dari
+      // dipakai, termasuk saat commit TIDAK terpakai. Tanpa ini, draf dari
       // kata kunci lama bisa disangka berasal dari commit hari ini.
       if (data.git?.status === "used") {
         toast.success(
@@ -348,6 +379,7 @@ export default function ReportTemplatesForm({
 
       if (keTanggal) {
         setDated((prev) => ({ ...prev, [tanggal]: values }));
+        setBaseline(values);
         toast.success(
           "Template tanggal tersimpan",
           "Dipakai hanya untuk tanggal ini, template default tidak berubah.",
@@ -360,6 +392,7 @@ export default function ReportTemplatesForm({
       } else {
         setDefaultValues(values);
         setExists(true);
+        setBaseline(values);
         setSavedAt(data.updatedAt ?? new Date().toISOString());
         toast.success(
           "Template tersimpan",
@@ -405,6 +438,7 @@ export default function ReportTemplatesForm({
         });
         setValues(defaultValues);
         setTanggal(null);
+        setBaseline(defaultValues);
         toast.success(
           "Template tanggal dihapus",
           "Tanggal itu kembali memakai template default.",
@@ -412,6 +446,7 @@ export default function ReportTemplatesForm({
       } else {
         setValues(KOSONG);
         setDefaultValues(KOSONG);
+        setBaseline(KOSONG);
         setExists(false);
         setSavedAt(null);
         toast.success("Template dihapus", "Isi template sudah dikosongkan.");
@@ -429,6 +464,17 @@ export default function ReportTemplatesForm({
     <div
       id={FORM_ANCHOR_ID}
       className="flex scroll-mt-24 flex-col gap-6"
+      // Pintasan Ctrl+Enter (Cmd+Enter di Mac) = Simpan. Form ini berisi tiga
+      // kolom teks panjang; pengguna yang sudah terbiasa mengetik cepat tidak
+      // perlu melepas tangan dari papan ketik untuk menyimpan. Hanya aktif bila
+      // isinya sudah memenuhi syarat, jadi pintasan tidak bisa dipakai
+      // menembus validasi. `preventDefault` mencegah Enter menyisipkan baris
+      // baru di textarea sekaligus.
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey)) return;
+        e.preventDefault();
+        if (semuaValid && !saving && !deleting) void simpan();
+      }}
     >
       {/* Pemilih tanggal: satu form, konteks berganti. Kosong = template default
           yang berlaku untuk semua tanggal; ada tanggal = penimpa untuk tanggal
@@ -446,7 +492,7 @@ export default function ReportTemplatesForm({
             <div className="flex items-center gap-1.5">
               <Label htmlFor="tanggal-target" className="text-xs">
                 Tanggal khusus{" "}
-                <span className="text-foreground/50">(opsional)</span>
+                <span className="text-muted-foreground">(opsional)</span>
               </Label>
               <InfoHint>
                 Tanggal libur (Sabtu, Minggu, dan hari libur nasional) tidak bisa
@@ -480,7 +526,7 @@ export default function ReportTemplatesForm({
           ) : null}
         </div>
 
-        <p className="mt-2 text-xs text-foreground/70">
+        <p className="mt-2 text-xs text-muted-foreground">
           {tanggal === null ? (
             <>
               Mengedit <b>template default</b> (berlaku untuk semua tanggal).
@@ -543,7 +589,7 @@ export default function ReportTemplatesForm({
       <div className="rounded-base border-2 border-border bg-secondary-background p-4">
         <div className="flex items-center gap-2">
           <WandSparkles className="size-4 shrink-0" aria-hidden />
-          <h2 className="font-heading text-base">
+          <h2 className="font-heading text-lg">
             Isi otomatis 3 kolom laporan
           </h2>
           <InfoHint>
@@ -551,7 +597,7 @@ export default function ReportTemplatesForm({
             Jangan cantumkan data rahasia.
           </InfoHint>
         </div>
-        <p className="mt-1 text-xs text-foreground/70">
+        <p className="mt-1 text-xs text-muted-foreground">
           Tulis kata kunci aktivitas, sistem mengisi ketiga kolom sebagai draf.
         </p>
 
@@ -577,7 +623,7 @@ export default function ReportTemplatesForm({
           </div>
           <div className="flex flex-1 flex-col gap-1.5">
             <Label htmlFor="draft-unit" className="text-xs">
-              Unit / divisi <span className="text-foreground/50">(opsional)</span>
+              Unit / divisi <span className="text-muted-foreground">(opsional)</span>
             </Label>
             <Input
               id="draft-unit"
@@ -617,7 +663,7 @@ export default function ReportTemplatesForm({
 
         {draftSource ? (
           <div className="mt-2 space-y-1">
-            <p className="text-xs text-foreground/60">
+            <p className="text-xs text-muted-foreground">
               Draf terakhir disusun oleh:{" "}
               <span className="font-heading">{draftSource}</span>
             </p>
@@ -625,7 +671,7 @@ export default function ReportTemplatesForm({
                 benar-benar berada di luar (label LLM memuat "Gemini"). Penyusun
                 lokal "Lokal 0-Token" tidak pernah memicu ini. */}
             {/gemini/i.test(draftSource) ? (
-              <p className="text-xs text-foreground/60">
+              <p className="text-xs text-muted-foreground">
                 Kata kunci dikirim ke Google untuk diolah. Jangan cantumkan data
                 rahasia.
               </p>
@@ -648,7 +694,7 @@ export default function ReportTemplatesForm({
         // dibedakan lewat ikon, bukan warna, supaya aman untuk buta warna.
         const warna =
           s.panjang === 0
-            ? "text-foreground/60"
+            ? "text-muted-foreground"
             : s.error
               ? "text-destructive"
               : "text-foreground";
@@ -658,7 +704,7 @@ export default function ReportTemplatesForm({
             <Label htmlFor={f.name} className="font-heading">
               {f.label}
             </Label>
-            <p className="text-xs text-foreground/60">{f.hint}</p>
+            <p className="text-xs text-muted-foreground">{f.hint}</p>
 
             <Textarea
               id={f.name}
@@ -686,7 +732,7 @@ export default function ReportTemplatesForm({
                   </>
                 )}
               </span>
-              <span className="tabular-nums text-foreground/60">
+              <span className="tabular-nums text-muted-foreground">
                 {s.panjang}/{MIN_REPORT_LENGTH}
                 {kurang > 0 ? ` (kurang ${kurang})` : ""}
               </span>
@@ -708,7 +754,6 @@ export default function ReportTemplatesForm({
           onClick={simpan}
           disabled={!semuaValid || saving || deleting}
           size="sm"
-          variant="success"
           title={
             saving
               ? "Menyimpan…"
@@ -756,10 +801,18 @@ export default function ReportTemplatesForm({
       </div>
 
       {!semuaValid ? (
-        <p className="text-xs text-foreground/60">
+        <p className="text-xs text-muted-foreground">
           Simpan aktif setelah ketiga kolom ≥ {MIN_REPORT_LENGTH} karakter.
         </p>
-      ) : null}
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Tip: tekan{" "}
+          <kbd className="rounded-base border-2 border-border bg-secondary-background px-1 font-mono text-xs">
+            Ctrl+Enter
+          </kbd>{" "}
+          untuk menyimpan tanpa memindahkan tangan dari papan ketik.
+        </p>
+      )}
 
       <ConfirmDialog
         open={confirmHapusOpen}

@@ -27,7 +27,7 @@ export function InfoHint({ children, className, side = "top" }: InfoHintProps) {
       <TooltipPrimitive.Trigger
         aria-label="Penjelasan"
         className={cn(
-          "inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded-full text-foreground/50 transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+          "inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
           className,
         )}
       >

@@ -13,10 +13,12 @@
 //   - Zona dikunci ke WIB, bukan zona perangkat, supaya semua orang melihat
 //     acuan waktu yang sama.
 //   - Aksesibilitas: bagian visual berdetak tiap detik dan ditandai
-//     `aria-hidden` — kalau tidak, pembaca layar akan mengumumkan detik tanpa
+//     `aria-hidden`, kalau tidak, pembaca layar akan mengumumkan detik tanpa
 //     henti. Sebagai gantinya ada <span> tersembunyi berisi tanggal + jam:menit
 //     yang hanya berubah tiap menit.
-//   - `prefers-reduced-motion` dihormati: titik "hidup" berhenti berdenyut.
+//   - Tidak ada animasi berulang di sini (dulu ada titik berdenyut). Cap waktu
+//     yang berkedip terus-menerus di tepi layar menarik mata dari isi halaman,
+//     dan `prefers-reduced-motion` jadi tidak perlu diurus sama sekali.
 
 import { useEffect, useState } from "react";
 
@@ -52,21 +54,21 @@ function JamIsland() {
       className="pt-safe sticky top-0 z-20 flex justify-center pointer-events-none"
     >
       <div
-        // Bentuk pil ala dynamic island: penuh melengkung, tepi tegas, sedikit
-        // bayangan + blur latar supaya tetap terbaca saat konten lewat di balik.
+        // Bentuknya sengaja datar: kotak bersudut `rounded-base`, latar penuh,
+        // tanpa bayangan dan tanpa blur. Pil melengkung + kaca buram adalah pola
+        // yang bisa dipakai aplikasi apa pun; di sini jam dibaca sebagai cap
+        // waktu yang menempel di atas halaman, sejalan dengan sisa tampilan.
         className={cn(
           "pointer-events-auto mt-2 inline-flex items-center gap-2",
-          "rounded-full border-2 border-border bg-background/85 px-4 py-1.5",
-          "font-heading text-xs tabular-nums shadow-sm backdrop-blur-md sm:text-sm",
+          "rounded-base border-2 border-border bg-secondary-background px-3 py-1",
+          "font-heading text-xs tabular-nums sm:text-sm",
         )}
       >
         {/* Bagian visual: berdetak tiap detik → disembunyikan dari pembaca layar. */}
         <span className="contents" aria-hidden="true">
-          <span className="relative flex size-2 shrink-0">
-            {/* Titik "hidup" ala indikator kamera Dynamic Island. */}
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-main opacity-60 motion-reduce:hidden" />
-            <span className="relative inline-flex size-2 rounded-full bg-main" />
-          </span>
+          {/* Penanda tetap, bukan titik berdenyut: cap waktu tidak perlu
+              berkedip untuk membuktikan dirinya hidup. */}
+          <span className="size-2 shrink-0 rounded-none bg-main" />
           <span className="whitespace-nowrap">
             {bagian ? (
               <>

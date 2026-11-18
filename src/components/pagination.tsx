@@ -2,7 +2,7 @@ import Link from "next/link";
 
 // Navigasi halaman (Sebelumnya / Berikutnya + "Halaman X dari Y").
 //
-// Diekstrak karena pola HTML-nya identik di 3 tabel (admin ×2, riwayat) —
+// Diekstrak karena pola HTML-nya identik di 3 tabel (admin ×2, riwayat)
 // menyalinnya lagi hanya menambah tempat yang bisa menyimpang satu sama lain.
 // Komponen ini HANYA menyusun tautan; perhitungan halaman (jumlah halaman,
 // penjepitan page di luar rentang) tetap dilakukan `paginate()` di
@@ -42,7 +42,7 @@ export default function Pagination({
       ) : (
         <span />
       )}
-      <span className="text-xs text-foreground/60">
+      <span className="text-xs text-muted-foreground">
         Halaman {page} dari {pageCount}
       </span>
       {page < pageCount ? (

@@ -12,7 +12,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card rounded-base flex flex-col shadow-shadow border-2 gap-(--card-spacing) py-(--card-spacing) border-border bg-background text-foreground font-base [--card-spacing:--spacing(6)] data-[size=sm]:[--card-spacing:--spacing(4)]",
+        "group/card rounded-base flex flex-col border-2 gap-(--card-spacing) py-(--card-spacing) border-border bg-card text-foreground font-base [--card-spacing:--spacing(6)] data-[size=sm]:[--card-spacing:--spacing(4)]",
         className,
       )}
       {...props}
@@ -37,7 +37,10 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn("font-heading leading-none", className)}
+      // `text-lg` bawaan: sebelumnya judul kartu mewarisi ukuran teks isi
+      // (16px), sehingga judul dan paragraf tampak setara dan hierarki halaman
+      // hilang. Pemanggil tetap bisa menimpanya (`text-base`, `text-xl`, dst).
+      className={cn("font-heading text-lg leading-tight", className)}
       {...props}
     />
   )

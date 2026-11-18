@@ -19,7 +19,7 @@ const LEVEL_STYLE: Record<
   { isi: string; teks: string; label: string }
 > = {
   lemah: { isi: "bg-destructive", teks: "text-destructive", label: "Lemah" },
-  sedang: { isi: "bg-main", teks: "text-foreground/70", label: "Sedang" },
+  sedang: { isi: "bg-main", teks: "text-muted-foreground", label: "Sedang" },
   kuat: { isi: "bg-success", teks: "text-success", label: "Kuat" },
 };
 
@@ -50,7 +50,7 @@ export function PasswordStrength({
               key={i}
               className={cn(
                 "h-1 flex-1 rounded-full transition-colors",
-                i < skor ? gaya.isi : "bg-foreground/15",
+                i < skor ? gaya.isi : "bg-border",
               )}
             />
           ))}
@@ -58,7 +58,7 @@ export function PasswordStrength({
         <span className={cn("text-xs font-medium", gaya.teks)}>{gaya.label}</span>
       </div>
       {/* Diucapkan pembaca layar saat berubah; teks saran juga terlihat mata. */}
-      <p className="text-xs text-foreground/60" aria-live="polite">
+      <p className="text-xs text-muted-foreground" aria-live="polite">
         {saran}
       </p>
     </div>

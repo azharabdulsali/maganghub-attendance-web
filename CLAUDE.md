@@ -1,6 +1,6 @@
 @AGENTS.md
 
-> Bagian `graphify` di bawah **ditulis otomatis oleh graphify** — jangan diubah
+> Bagian `graphify` di bawah **ditulis otomatis oleh graphify**, jangan diubah
 > manual, ia akan ditimpa saat `graphify claude install` dijalankan ulang.
 
 ## graphify

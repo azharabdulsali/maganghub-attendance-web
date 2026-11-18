@@ -31,7 +31,7 @@ import { logAdminAction } from "@/lib/admin-action-log";
  * laju, dan pencarian sasaran berbagi logika yang sama.
  *
  * Sesi pengguna yang perannya berubah DICABUT (naikkan `sessionVersion`) supaya
- * JWT lama tidak terus membawa peran lama — kalau tidak, admin yang baru
+ * JWT lama tidak terus membawa peran lama, kalau tidak, admin yang baru
  * diturunkan masih bisa membuka panel admin sampai tokennya kedaluwarsa.
  */
 export async function PATCH(

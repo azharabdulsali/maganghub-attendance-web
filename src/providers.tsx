@@ -9,8 +9,8 @@ import { Toaster } from "@/components/ui/toast";
  *
  * Aplikasi ini menangani data sensitif (kredensial Monev terenkripsi, presensi,
  * panel admin). Vercel Analytics menyimpan URL halaman apa pun yang dikunjungi;
- * kita tidak ingin path seperti `/credentials` atau `/admin/...` — apalagi
- * kalau nanti ada id di dalamnya — terbaca dari dasbor. `beforeSend` dipanggil
+ * kita tidak ingin path seperti `/credentials` atau `/admin/...`, apalagi
+ * kalau nanti ada id di dalamnya, terbaca dari dasbor. `beforeSend` dipanggil
  * sebelum tiap event dikirim: `null` = event dibatalkan sepenuhnya.
  *
  * Pencocokan memakai prefix path; `/admin` juga menangkap `/admin/holidays`,

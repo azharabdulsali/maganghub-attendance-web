@@ -14,7 +14,7 @@ on:
     # telat 10-30 menit saat runner sedang ramai, dan pada jam sibuk run bisa
     # di-skip sepenuhnya. Dengan pemicu sekali per jam, user yang jam
     # jadwalnya 07:xx hanya punya SATU kesempatan; bila pemicu itu telat ke
-    # 07:45 atau hilang, absensinya baru terkirim pukul 08:xx — di luar jam
+    # 07:45 atau hilang, absensinya baru terkirim pukul 08:xx, di luar jam
     # jadwalnya, sehingga server tidak memprosesnya sama sekali pada hari itu.
     # Dengan 4x per jam, jendela itu jadi <=15 menit.
     #
@@ -45,7 +45,7 @@ jobs:
         run: |
           # Tujuan: membedakan "secret kosong" vs "secret ada spasi/baris baru
           # tak sengaja" vs "secret beda nilai". AMAN: hanya panjang (jumlah
-          # karakter) dan sifat karakter ujung yang dicetak — NILAI rahasia
+          # karakter) dan sifat karakter ujung yang dicetak, NILAI rahasia
           # tidak pernah ditampilkan.
           # (sengaja TIDAK memakai `set -u`: secret yang belum diset di GitHub
           #  disubstitusi menjadi kosong/hilang, dan `set -u` akan menjatuhkan

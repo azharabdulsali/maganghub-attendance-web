@@ -86,7 +86,7 @@ export function policyMessage(decision: PolicyDecision): string {
  * MURNI: memutuskan dari jumlah `SubmitLog` tuntas (bukan DB).
  *
  * Latar: cron dipanggil berkali-kali dalam satu jam (mis. tiap 10 menit), dan
- * `isDueNow` hanya mencocokkan JAM — jadi user jadwal 12:00 "jatuh tempo" pada
+ * `isDueNow` hanya mencocokkan JAM, jadi user jadwal 12:00 "jatuh tempo" pada
  * 12:00, 12:10, …, 12:50 (6 kali). Tanpa penjaga ini, percobaan ke-2..6 tetap
  * menembak portal lalu dicegat jadi DUPLICATE, dan TIAP percobaan menulis
  * baris `SubmitLog` baru → riwayat penuh duplikat & portal dibebani sia-sia.

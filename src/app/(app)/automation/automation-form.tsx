@@ -47,7 +47,7 @@ export default function AutomationForm({
   const toast = useToast();
   // Ref ke <form> asli: tombol Simpan tidak lagi `type="submit"` (ia membuka
   // dialog dulu). Setelah dikonfirmasi kita panggil `requestSubmit()` supaya
-  // jalur submit tetap jalur bawaan form — sama seperti sign-out-button.tsx.
+  // jalur submit tetap jalur bawaan form, sama seperti sign-out-button.tsx.
   const formRef = useRef<HTMLFormElement>(null);
 
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
@@ -65,7 +65,7 @@ export default function AutomationForm({
   const [tersalin, setTersalin] = useState(false);
   // Dua dialog konfirmasi: satu untuk menyimpan pengaturan, satu untuk
   // mengganti "kunci tautan otomatis" (aksi destruktif). Dipisah agar pesannya
-  // bisa spesifik — konfirmasi yang generik membuat orang menekan "Ya" tanpa baca.
+  // bisa spesifik, konfirmasi yang generik membuat orang menekan "Ya" tanpa baca.
   const [konfirmasiSimpan, setKonfirmasiSimpan] = useState(false);
   const [konfirmasiRotasi, setKonfirmasiRotasi] = useState(false);
 
@@ -258,7 +258,7 @@ export default function AutomationForm({
                 Aktifkan otomasi
               </Label>
             </div>
-            <p id="isEnabled-hint" className="text-xs text-foreground/60">
+            <p id="isEnabled-hint" className="text-xs text-muted-foreground">
               {isEnabled
                 ? "Otomasi aktif sesuai jadwal di bawah."
                 : "Otomasi nonaktif: tidak ada pengiriman otomatis."}
@@ -287,7 +287,7 @@ export default function AutomationForm({
               </Select>
               <p
                 id="jadwal-berikutnya"
-                className="text-sm text-foreground/70"
+                className="text-sm text-muted-foreground"
               >
                 {nextRun ? `Berikutnya: ${nextRun}` : "Jam tidak sah."}
               </p>
@@ -295,11 +295,11 @@ export default function AutomationForm({
 
             {/* PENTING: yang dipilih hanya JAM. Dispatch (GitHub Actions /
                 cron-job.org) mencocokkan jam saja, jadi kiriman bisa terjadi
-                kapan saja antara menit ke-00 dan ke-59 — bukan tepat di menit
+                kapan saja antara menit ke-00 dan ke-59, bukan tepat di menit
                 ke-00 seperti yang mungkin dibayangkan pengguna. Disebut di UI
                 (bukan disembunyikan) supaya pengguna tidak mengira otomasi
                 gagal hanya karena jamnya "telat". */}
-            <div className="flex gap-2 rounded-base border-2 border-border bg-secondary-background p-3 text-xs text-foreground/70">
+            <div className="flex gap-2 rounded-base border-2 border-border bg-secondary-background p-3 text-xs text-muted-foreground">
               <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
               <p>
                 Yang diatur hanya jam. Pilih 08:00 berarti terkirim antara
@@ -313,7 +313,6 @@ export default function AutomationForm({
             <div className="flex flex-row items-center justify-end gap-3">
               <Button
                 type="button"
-                variant="success"
                 onClick={() => setKonfirmasiSimpan(true)}
                 disabled={loading}
                 title={
@@ -354,7 +353,7 @@ export default function AutomationForm({
            merasa wajib mengurus sesuatu yang sebenarnya opsional.
            Pola <details>/<summary> native dipakai supaya bisa dibuka-tutup
            tanpa JS dan tetap bisa diakses keyboard (sama seperti FAQ di "/"). */
-        <details className="group rounded-base border-2 border-border bg-background font-base text-foreground shadow-shadow">
+        <details className="group rounded-base border-2 border-border bg-card font-base text-foreground">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-base p-6 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
             <div className="grid gap-1.5">
               <span className="font-heading leading-none">
@@ -384,11 +383,11 @@ export default function AutomationForm({
               <p className="text-sm font-medium">
                 Cara dianjurkan (kunci lewat pengaturan khusus)
               </p>
-              <p className="text-xs text-foreground/60">Alamat tautan:</p>
+              <p className="text-xs text-muted-foreground">Alamat tautan:</p>
               <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
                 {webhookBaseUrl}
               </code>
-              <p className="text-xs text-foreground/60">
+              <p className="text-xs text-muted-foreground">
                 Isi pengaturan kunci:
               </p>
               <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
@@ -396,7 +395,7 @@ export default function AutomationForm({
               </code>
               {curlSnippet && (
                 <>
-                  <p className="text-xs text-foreground/60">
+                  <p className="text-xs text-muted-foreground">
                     Contoh untuk penjadwal di server sendiri:
                   </p>
                   <code className="block break-all rounded-base border-2 border-border px-3 py-2 text-xs">
@@ -420,7 +419,7 @@ export default function AutomationForm({
             {/* Cara LAMA: dipertahankan sementara, ditandai deprecated. */}
             <div className="space-y-2 rounded-base border-2 border-dashed border-border p-3">
               <p className="text-sm font-medium">Cara lama (tidak dianjurkan)</p>
-              <p className="text-xs text-foreground/60">
+              <p className="text-xs text-muted-foreground">
                 Menempel kunci di tautan masih berfungsi, tetapi tidak dianjurkan
                 untuk pemasangan baru karena kunci ikut tercatat di URL.
               </p>
@@ -466,7 +465,7 @@ export default function AutomationForm({
               </div>
             </div>
 
-            <p className="text-xs text-foreground/60">
+            <p className="text-xs text-muted-foreground">
               Jadwal: {formatSchedule(hour, 0)}{" "}
               WIB setiap hari. Mengganti kunci akan mematikan tautan/perintah
               lama, pasang ulang di penjadwal Anda setelah itu.
@@ -480,7 +479,7 @@ export default function AutomationForm({
           tidak bisa dibatalkan, sedangkan simpan di sini idempoten. Ini
           permintaan pemilik proyek secara sadar. Karena itu teksnya dibuat
           menjelaskan DAMPAK yang sedang disimpan (aktif/tidak, jam berapa),
-          bukan sekadar "Anda yakin?" — supaya dialog ini menambah informasi,
+          bukan sekadar "Anda yakin?", supaya dialog ini menambah informasi,
           bukan cuma satu klik ekstra. */}
       <ConfirmDialog
         open={konfirmasiSimpan}

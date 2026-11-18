@@ -143,7 +143,7 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
     }
     const slice = work.slice(i, i + DISPATCH_CONCURRENCY);
     // Nama `gelombang` (bukan `settled`): `settled` sudah dipakai untuk himpunan
-    // user yang tuntas hari ini di atas. Dulu variabel ini menimpa nama itu —
+    // user yang tuntas hari ini di atas. Dulu variabel ini menimpa nama itu
     // shadowing yang lolos typecheck tetapi menyulitkan pembacaan.
     const gelombang = await Promise.all(
       slice.map(async (cand) => {
@@ -166,7 +166,7 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
           // `prepareCommitDraft` MENYIMPAN hasilnya sebagai template bertanggal
           // hari itu, sehingga pengguna bisa membuka & menyuntingnya di
           // /report-templates. Kalau baris bertanggal sudah ada (tulisan atau
-          // suntingan pengguna), ia TIDAK menimpa — suntingan manusia menang.
+          // suntingan pengguna), ia TIDAK menimpa, suntingan manusia menang.
           //
           // Kegagalan git tidak pernah menghalangi kirim: hasilnya NO_COMMITS
           // dan alur jatuh ke template di bawah.
@@ -180,7 +180,7 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
           }));
 
           // Bila draf baru saja disimpan, ia sudah ada di `datedTemplates` yang
-          // dibaca SEBELUM penyimpanan — jadi salinan DB itu belum memuatnya.
+          // dibaca SEBELUM penyimpanan, jadi salinan DB itu belum memuatnya.
           // Kita suntikkan isi segar agar tidak perlu query ulang per user.
           const dipilih = chooseReportContent(
             date,
@@ -217,7 +217,7 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
 
   // `DEFERRED` adalah user yang sudah masuk gelombang tetapi per-user tenggat
   // terlewati. Ia TIDAK dihitung sebagai `processed` (memang tidak diproses),
-  // tetapi juga bukan "menunggu dikejar" — ia sudah dicoba, hanya kehabisan
+  // tetapi juga bukan "menunggu dikejar", ia sudah dicoba, hanya kehabisan
   // waktu, jadi ia masuk `deferred`.
   const processed = results.filter((r) => r.kind !== "DEFERRED").length;
   const deferredByDeadline = results.length - processed;
@@ -234,7 +234,7 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
 
   // Yang masih harus dikejar pemanggilan berikutnya: belum tuntas, tetapi tidak
   // sempat didatangi. Dihitung dari himpunan kandidat yang benar-benar tidak
-  // tersentuh — bukan dari "sisa kuota" — supaya user yang tak terjangkau kuota
+  // tersentuh, bukan dari "sisa kuota", supaya user yang tak terjangkau kuota
   // tidak terhitung dua kali.
   const sudahDidatangi = new Set(results.map((r) => r.userId));
   const topUpPending = candidates.filter(
@@ -258,7 +258,7 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
  * User yang SUDAH tuntas hari ini (log SUCCESS atau DUPLICATE), dari SATU query.
  *
  * Dipakai untuk memilih siapa yang perlu dikejar ulang (cron-topup.ts). Sengaja
- * hanya membaca `userId` — tidak ada isi laporan atau rahasia yang ikut.
+ * hanya membaca `userId`, tidak ada isi laporan atau rahasia yang ikut.
  *
  * Kegagalan query TIDAK boleh menggagalkan dispatch: bila lookup ini gagal,
  * lebih aman menganggap "belum ada yang tuntas" dan membiarkan `performSubmit`

@@ -87,7 +87,7 @@ export default function AnalyzeCaptureForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ol className="space-y-2 text-sm text-foreground/80">
+          <ol className="space-y-2 text-sm text-muted-foreground">
             <li>
               1. Buka portal Monev yang sudah login, masuk ke halaman isi
               laporan.
@@ -162,7 +162,7 @@ export default function AnalyzeCaptureForm() {
                 <p className="break-all font-heading">
                   {c.method} {c.path}
                 </p>
-                <dl className="mt-2 space-y-1 break-all text-foreground/80">
+                <dl className="mt-2 space-y-1 break-all text-muted-foreground">
                   <div>
                     <dt className="inline font-heading">Status respons: </dt>
                     <dd className="inline">{c.responseStatus ?? ","}</dd>
@@ -199,7 +199,7 @@ export default function AnalyzeCaptureForm() {
                 )}
               </div>
             ))}
-            <p className="text-xs text-foreground/60">
+            <p className="text-xs text-muted-foreground">
               Salin hasil di atas ke dokumen proyek untuk melengkapi catatan
               integrasi.
             </p>

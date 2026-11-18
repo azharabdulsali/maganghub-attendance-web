@@ -7,7 +7,7 @@
 //
 // Tabel ini SINGLETON: satu baris dengan `id = "default"`. Tidak ada seed SQL;
 // baris dibuat malas (lazy) saat admin menyimpan pertama kali, dan pembacaan
-// memakai nilai default bila baris belum ada — sehingga aplikasi tetap benar
+// memakai nilai default bila baris belum ada, sehingga aplikasi tetap benar
 // (pengingat nonaktif) sebelum admin menyentuh apa pun.
 //
 // Tidak ada rahasia di sini: hanya jam, menit, saklar on/off, dan zona waktu.
@@ -26,7 +26,7 @@ export const REMINDER_SETTING_ID = "default";
 /**
  * Setelan default bila baris belum pernah dibuat. `isEnabled = false` supaya
  * fitur baru TIDAK tiba-tiba memunculkan popup ke semua user tanpa admin
- * memintanya — admin harus menyalakannya sendiri.
+ * memintanya, admin harus menyalakannya sendiri.
  */
 export function defaultReminderSetting(): ReminderSettingView {
   return {
@@ -39,7 +39,7 @@ export function defaultReminderSetting(): ReminderSettingView {
 
 /**
  * Baca setelan yang berlaku. Bila baris belum ada (belum pernah diatur admin),
- * kembalikan default (nonaktif) — bukan melempar, bukan membuat baris diam-diam
+ * kembalikan default (nonaktif), bukan melempar, bukan membuat baris diam-diam
  * saat GET (GET tidak boleh punya efek samping tulis).
  */
 export async function loadReminderSetting(): Promise<ReminderSettingView> {
@@ -58,7 +58,7 @@ export async function loadReminderSetting(): Promise<ReminderSettingView> {
 
 /**
  * Simpan setelan (upsert baris tunggal). Dipanggil HANYA dari endpoint admin
- * setelah validasi — fungsi ini mengasumsikan nilai sudah sah.
+ * setelah validasi, fungsi ini mengasumsikan nilai sudah sah.
  */
 export async function saveReminderSetting(
   setting: ReminderSettingView,

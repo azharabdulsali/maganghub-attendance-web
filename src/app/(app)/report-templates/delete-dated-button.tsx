@@ -6,7 +6,7 @@
 //
 // Kenapa komponen klien terpisah, padahal tabelnya server component: hapus
 // adalah aksi interaktif (fetch + konfirmasi + muat ulang data). Menjadikan
-// seluruh tabel `"use client"` akan menyeret query Prisma ke bundel klien —
+// seluruh tabel `"use client"` akan menyeret query Prisma ke bundel klien
 // tidak perlu. Jadi hanya tombol mungil ini yang menjadi pulau klien.
 //
 // Alur: klik → <ConfirmDialog> memuat konsekuensinya (tanggal itu kembali ke

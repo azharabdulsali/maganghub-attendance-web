@@ -6,7 +6,7 @@
 //
 // Aturan yang ditegakkan di sini:
 //   1. Tanggal harus `YYYY-MM-DD` yang benar-benar ada di kalender
-//      (menolak `2026-02-30`) — memakai `isPlainDate` agar SATU sumber.
+//      (menolak `2026-02-30`), memakai `isPlainDate` agar SATU sumber.
 //   2. Akhir pekan (Sabtu/Minggu) TIDAK boleh didaftarkan: itu sudah otomatis
 //      libur lewat `isHoliday`, menambah baris hanya membingungkan.
 //   3. Tanggal harus berada dalam masa program (`<= LAST_ACTIVE_DATE`); setelah

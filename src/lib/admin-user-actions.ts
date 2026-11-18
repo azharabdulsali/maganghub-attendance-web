@@ -68,7 +68,7 @@ export type AssignableRole = "USER" | "ADMIN";
 
 /** Alasan sebuah perubahan PERAN ditolak. */
 export type RoleChangeDenial =
-  | ActionDenial // SELF / IS_ADMIN / NOT_FOUND — aturan sama dengan aksi destruktif
+  | ActionDenial // SELF / IS_ADMIN / NOT_FOUND, aturan sama dengan aksi destruktif
   | "INVALID_ROLE" // peran yang diminta tidak dikenal
   | "NO_CHANGE"; // peran sama dengan yang sekarang
 
@@ -157,7 +157,7 @@ const PANJANG = 16;
 /**
  * Buat kata sandi sementara acak yang kuat (16 karakter, ada huruf besar,
  * kecil, angka, dan simbol). Memakai `crypto.getRandomValues` (Web Crypto)
- * supaya acak secara kriptografis — bukan `Math.random`.
+ * supaya acak secara kriptografis, bukan `Math.random`.
  *
  * `rand` bisa disuntik untuk pengujian (harus mengembalikan 0 ≤ x < 1).
  */

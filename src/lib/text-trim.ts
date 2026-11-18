@@ -30,7 +30,7 @@
 //    selesai, bukan kalimat yang menggantung.
 // 4. **Tanpa elipsis menggantung.** Elipsis hanya dipakai sebagai upaya
 //    TERAKHIR; jalur normal menutup kalimat dengan `.`.
-// 5. **Murni.** Tanpa I/O, tanpa `Date`, tanpa env — bisa dites tanpa stub.
+// 5. **Murni.** Tanpa I/O, tanpa `Date`, tanpa env, bisa dites tanpa stub.
 
 /** Tanda baca penutup agar draf tidak menggantung. */
 const PENUTUP = ".";

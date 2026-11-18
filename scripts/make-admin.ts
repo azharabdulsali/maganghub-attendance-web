@@ -4,7 +4,7 @@
  * Gunanya: jalur pemulihan bila `ADMIN_EMAIL` kosong saat pendaftaran sehingga
  * tidak ada admin otomatis, atau bila admin terakhir tidak bisa masuk. SPEC §13
  * ("Cara Membuat Admin Pertama") menjanjikan perintah ini, jadi skripnya harus
- * benar-benar ada — dokumen tidak boleh menjanjikan skrip yang tidak ada.
+ * benar-benar ada, dokumen tidak boleh menjanjikan skrip yang tidak ada.
  *
  * JALANKAN HANYA DARI LOKAL, dengan `.env.local` yang menunjuk database yang
  * benar. Skrip ini TIDAK dijaga apa pun selain akses ke database: siapa pun yang
@@ -15,7 +15,7 @@
  *   npm run make-admin -- email@anda.com
  *
  * Keluar dengan kode 1 bila email tidak ditemukan, tidak wajar, akunnya sudah
- * dihapus, atau database tidak bisa dihubungi — supaya salah ketik tidak lewat
+ * dihapus, atau database tidak bisa dihubungi, supaya salah ketik tidak lewat
  * tanpa terlihat.
  *
  * Catatan teknis (mengikuti AGENTS.md §3 "Menjalankan skrip di luar Next.js"):
@@ -68,7 +68,7 @@ function jelaskanGalat(galat: unknown): string {
     const tumpukan = rekaman.error?.stack ?? rekaman.stack;
     if (typeof tumpukan === "string") {
       // `ErrorEvent` dari driver Neon hanya berisi "TypeError" tanpa pesan dan
-      // tanpa frame `at …` — detailnya (ECONNREFUSED, timeout, dsb.) tidak
+      // tanpa frame `at …`, detailnya (ECONNREFUSED, timeout, dsb.) tidak
       // pernah sampai ke kita. Mencetak "TypeError" saja justru menyesatkan,
       // jadi baris tanpa frame sengaja TIDAK dikembalikan.
       const barisPesan = tumpukan
@@ -124,7 +124,7 @@ async function main() {
     console.error(
       `Tidak bisa menghubungi database saat mencari "${argumen}".\n` +
         "Periksa bahwa `.env.local` ada dan DATABASE_URL/DIRECT_URL-nya benar " +
-        "(Neon paket gratis \"tidur\" saat lama tidak dipakai — coba lagi beberapa detik kemudian).\n" +
+        "(Neon paket gratis \"tidur\" saat lama tidak dipakai, coba lagi beberapa detik kemudian).\n" +
         `Pesan teknis: ${jelaskanGalat(galat)}`,
     );
     process.exitCode = 1;
@@ -153,7 +153,7 @@ async function main() {
   }
 
   if (pengguna.role === "ADMIN") {
-    console.log(`"${argumen}" SUDAH ADMIN — tidak ada yang diubah.`);
+    console.log(`"${argumen}" SUDAH ADMIN, tidak ada yang diubah.`);
     return;
   }
 
@@ -180,7 +180,7 @@ main()
   .finally(async () => {
     // Sengaja diam-diam gagal: bila proses sudah sampai di sini dengan
     // `exitCode = 1` (mis. impor `@/lib/prisma` sendiri gagal), melempar galat
-    // baru dari `finally` akan MENGGANTI pesan aslinya — pengguna akhirnya
+    // baru dari `finally` akan MENGGANTI pesan aslinya, pengguna akhirnya
     // melihat galat disconnect, bukan masalah sebenarnya.
     try {
       const { prisma } = await import("../src/lib/prisma");

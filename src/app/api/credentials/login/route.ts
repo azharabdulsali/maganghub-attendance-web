@@ -114,7 +114,7 @@ export async function POST() {
   if (result.status === "ERROR") {
     // Kesalahan jaringan/bentuk respons yang belum terekam. JANGAN ubah
     // status kredensial, belum tentu kredensialnya salah. `kind` (bila ada)
-    // memberitahu UI apakah ini blokir WAF — supaya bisa mengarahkan ke jalur
+    // memberitahu UI apakah ini blokir WAF, supaya bisa mengarahkan ke jalur
     // tempel token manual, bukan menyalahkan password.
     //
     // Detail teknis (`result.diagnostic`) HANYA dicatat ke log server: berisi

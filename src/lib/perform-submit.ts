@@ -246,7 +246,7 @@ export async function performSubmit(opts: {
   //
   // GAGAL-LUNAK (penting): daftar libur adalah PENYEMPURNAAN kebijakan, bukan
   // syarat pengiriman. Bila tabel `holidays` belum ada (mis. `db push` belum
-  // dijalankan) atau DB error sesaat, kita JANGAN menggagalkan pengiriman —
+  // dijalankan) atau DB error sesaat, kita JANGAN menggagalkan pengiriman
   // itu akan mematikan seluruh otomasi (manual & cron) karena satu fitur
   // pelengkap. Kembali ke daftar statis (`undefined` → `LIBUR_NASIONAL`) sama
   // seperti perilaku sebelum fitur ini ada. Jalur DB di `/admin/holidays`
@@ -401,8 +401,8 @@ export async function performSubmit(opts: {
     const exchange = await exchangeRefreshForAccess(refreshToken);
 
     // Rotasi refresh token: portal mengganti monev_refresh_token di tiap refresh
-    // sukses dan mencabut yang lama. Simpan token BARU lebih dulu — apa pun
-    // status akhirnya — supaya refresh berikutnya tidak memakai token mati.
+    // sukses dan mencabut yang lama. Simpan token BARU lebih dulu, apa pun
+    // status akhirnya, supaya refresh berikutnya tidak memakai token mati.
     // Kegagalan menyimpan di sini tidak menggagalkan alur; hanya dicatat.
     if ("rotatedRefreshToken" in exchange && exchange.rotatedRefreshToken) {
       const saved = await persistRotatedRefreshToken(
@@ -442,7 +442,7 @@ export async function performSubmit(opts: {
 
   // --- Pra-cek duplikat (RB-03) ----------------------------------------------
   // WAJIB sebelum menembak submit (MONEV-API §12.6). Portal TIDAK menolak submit
-  // ulang untuk tanggal yang sudah diisi lewat UI portal — hanya `409` bila
+  // ulang untuk tanggal yang sudah diisi lewat UI portal, hanya `409` bila
   // endpoint API dipanggil dua kali. Tanpa pra-cek ini, cron bisa menimpa
   // laporan manual pengguna (kejadian nyata: manual 18:00, cron 18:52 → 201).
   //

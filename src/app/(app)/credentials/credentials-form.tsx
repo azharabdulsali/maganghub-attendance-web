@@ -372,7 +372,7 @@ export default function CredentialsForm({
             <dl className="space-y-3 text-sm">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
                 <dt className="font-heading sm:w-40">Email Monev</dt>
-                <dd className="break-all text-foreground/80">
+                <dd className="break-all text-muted-foreground">
                   {existingEmail ?? "-"}
                 </dd>
               </div>
@@ -393,7 +393,7 @@ export default function CredentialsForm({
               </div>
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
                 <dt className="font-heading sm:w-40">Terakhir diubah</dt>
-                <dd className="text-foreground/80">{formatTanggal(updatedAt)}</dd>
+                <dd className="text-muted-foreground">{formatTanggal(updatedAt)}</dd>
               </div>
             </dl>
 
@@ -402,7 +402,6 @@ export default function CredentialsForm({
                 className="w-full sm:w-auto"
                 onClick={loginOtomatis}
                 disabled={loginLoading || loading}
-                variant="success"
                 title={loginLoading ? "Menguji…" : "Uji login"}
                 aria-label={loginLoading ? "Menguji login" : "Uji login"}
               >
@@ -440,7 +439,7 @@ export default function CredentialsForm({
             {/* Ekspektasi jujur: bila server diblokir WAF (bukan kredensial
                 salah), jangan menyalahkan password pengguna. Saat buktinya
                 Cloudflare Managed Challenge (`cf-mitigated=challenge`), login
-                otomatis dari server TIDAK mungkin berhasil — katakan terus
+                otomatis dari server TIDAK mungkin berhasil, katakan terus
                 terang, jangan menyuruh "coba lagi". */}
             {isUnsolvable && loginState === "error" ? (
               <Message tone="neutral">
@@ -462,8 +461,8 @@ export default function CredentialsForm({
                 saat perlu melaporkan masalah. Tidak memuat token/cookie/
                 password. */}
             {loginState === "error" && loginPrime && (
-              <details className="rounded-base border-2 border-border bg-background p-3 text-xs text-foreground/80">
-                <summary className="cursor-pointer font-heading text-foreground/90">
+              <details className="rounded-base border-2 border-border bg-background p-3 text-xs text-muted-foreground">
+                <summary className="cursor-pointer font-heading text-muted-foreground">
                   Detail teknis penolakan (untuk laporan)
                 </summary>
                 <ul className="mt-2 space-y-0.5 break-all font-mono">
@@ -480,8 +479,8 @@ export default function CredentialsForm({
                   )}
                   {loginPrime.finalUrl && <li>url={loginPrime.finalUrl}</li>}
                 </ul>
-                <p className="mt-2 text-foreground/60">
-                  Ini tidak berisi token, cookie, atau password — aman
+                <p className="mt-2 text-muted-foreground">
+                  Ini tidak berisi token, cookie, atau password, aman
                   dibagikan.
                 </p>
               </details>
@@ -492,7 +491,7 @@ export default function CredentialsForm({
                 cadangan (tempel token) di bagian bawah halaman
                 (§ C1, docs/MONEV-API.md §7). */}
             {loginState === "error" && loginKind === "waf" && (
-              <div className="space-y-2 rounded-base border-2 border-border bg-background p-3 text-sm text-foreground/90">
+              <div className="space-y-2 rounded-base border-2 border-border bg-background p-3 text-sm text-muted-foreground">
                 <p className="font-heading text-foreground">
                   Ini bukan soal email &amp; password Anda
                 </p>
@@ -573,7 +572,6 @@ export default function CredentialsForm({
               <div className="flex flex-row flex-wrap items-center justify-end gap-3">
                 <Button
                   type="submit"
-                  variant="success"
                   disabled={loading}
                   title={loading ? "Menyimpan…" : "Simpan"}
                   aria-label="Simpan"
@@ -694,11 +692,11 @@ export default function CredentialsForm({
                   Tempel
                 </Button>
               </div>
-              <p className="text-xs text-foreground/70">
+              <p className="text-xs text-muted-foreground">
                 Belum punya token?{" "}
                 <Link
                   href="/panduan/ambil-token-monev-devtools"
-                  className="underline underline-offset-4 hover:opacity-80"
+                  className="underline underline-offset-4 hover:text-main"
                 >
                   Lihat cara mengambilnya di DevTools
                 </Link>{" "}
@@ -707,7 +705,7 @@ export default function CredentialsForm({
                   href="https://monev.maganghub.kemnaker.go.id"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline underline-offset-4 hover:opacity-80"
+                  className="underline underline-offset-4 hover:text-main"
                 >
                   buka portal MagangHub
                 </a>{" "}
@@ -718,7 +716,6 @@ export default function CredentialsForm({
             <div className="flex flex-row flex-wrap items-center justify-end gap-3">
               <Button
                 type="submit"
-                variant="success"
                 disabled={tokenLoading || token.trim() === ""}
                 title="Simpan & uji koneksi"
                 aria-label="Simpan dan uji koneksi"
@@ -759,7 +756,7 @@ export default function CredentialsForm({
           {/* Masa berlaku hanya bila bisa dibaca dari token (bukan tebakan).
               Memberi tahu kapan perlu login ulang, tanpa alarm palsu. */}
           {tokenState === "ok" && tokenHari !== null && (
-            <p className="text-xs text-foreground/70">
+            <p className="text-xs text-muted-foreground">
               {tokenHari > 0
                 ? `Perkiraan sesi ini berlaku sekitar ${tokenHari} hari lagi.`
                 : "Token ini tampaknya sudah mendekati kedaluwarsa."}
@@ -807,7 +804,7 @@ export default function CredentialsForm({
               </li>
               <li>
                 Cari baris bernama <code>monev_refresh_token</code>, lalu{" "}
-                <strong>salin hanya isi kolom Value-nya</strong> — jangan ikut
+                <strong>salin hanya isi kolom Value-nya</strong>, jangan ikut
                 nama cookie atau baris lain.
               </li>
               <li>
@@ -815,7 +812,7 @@ export default function CredentialsForm({
                 <strong>Hubungkan sesi Monev</strong>, lalu simpan.
               </li>
             </ol>
-            <p className="mt-2 text-xs text-foreground/70">
+            <p className="mt-2 text-xs text-muted-foreground">
               Token ini setara sesi login Anda (berlaku sekitar 30 hari). Jangan
               bagikan ke siapa pun.
             </p>
@@ -823,7 +820,7 @@ export default function CredentialsForm({
 
           <Link
             href="/panduan/ambil-token-monev-devtools"
-            className="inline-block font-medium text-foreground underline underline-offset-4 hover:opacity-80"
+            className="inline-block font-medium text-foreground underline underline-offset-4 hover:text-main"
           >
             Panduan bergambar: ambil token dengan DevTools
           </Link>

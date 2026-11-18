@@ -20,7 +20,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 // materi + panel konten + footer), tetapi seluruh isi disesuaikan dengan fitur
 // yang BENAR-BENAR ada di proyek ini (SPEC.md §1 & §3). Penyusun draf AI
 // (Gemini + fallback lokal) dan bahan draf dari commit GitHub/GitLab SUDAH ada,
-// jadi keduanya disebut apa adanya — termasuk batasnya (AI opsional, git hanya
+// jadi keduanya disebut apa adanya, termasuk batasnya (AI opsional, git hanya
 // baca). Tautan mengarah ke route yang nyata.
 
 type TopikId =
@@ -108,7 +108,7 @@ export default function DocsContent() {
     <div className="flex min-h-dvh flex-col">
       {/* Bilah atas, konsisten dengan landing page. Safe-area agar tidak
           tertutup poni di iPhone landscape. */}
-      <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+      <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
             <CalendarCheck className="size-4" />
@@ -117,7 +117,7 @@ export default function DocsContent() {
             <span className="font-heading text-sm leading-tight">
               MagangHub Autoabsen
             </span>
-            <span className="text-[10px] leading-none text-foreground/60">
+            <span className="text-[0.6875rem] leading-none text-muted-foreground">
               Attendance &amp; Reports
             </span>
           </span>
@@ -130,7 +130,6 @@ export default function DocsContent() {
           </Button>
           <Button
             size="sm"
-            variant="success"
             render={<Link href="/login" />}
             title="Masuk"
             aria-label="Masuk"
@@ -142,27 +141,32 @@ export default function DocsContent() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        {/* Judul halaman. */}
-        <div className="mb-6 space-y-1 sm:mb-8">
-          <div className="flex items-center gap-2">
-            <BookOpen className="size-5 shrink-0" />
-            <h1 className="text-lg font-heading sm:text-xl">
-              Dokumentasi &amp; Panduan Pengguna
-            </h1>
+        {/* Judul halaman: label kecil di atas, judul besar, lalu garis tebal.
+            Sama seperti `PageHeader` di dalam aplikasi, supaya halaman publik
+            dan halaman setelah masuk terasa satu keluarga. */}
+        <header className="mb-8 border-b-2 border-border pb-5">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <BookOpen className="size-4 shrink-0" aria-hidden />
+            <span className="font-heading text-[0.6875rem] tracking-[0.18em] uppercase">
+              Dokumentasi
+            </span>
           </div>
-          <p className="text-xs text-foreground/70">
+          <h1 className="mt-2 text-3xl leading-[1.05] font-heading sm:text-4xl">
+            Panduan Pengguna
+          </h1>
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
             Pelajari alur kerja, panduan konfigurasi, dan otomatisasi bot
             absensi MagangHub Kemnaker.
           </p>
-        </div>
+        </header>
 
         <div className="flex flex-col items-start gap-6 md:flex-row md:gap-8">
           {/* Sidebar daftar materi, 8 topik. */}
           <aside className="w-full shrink-0 space-y-2 md:sticky md:top-20 md:w-64 lg:w-72">
-            <div className="flex items-center justify-between px-2 py-1 text-[11px] font-heading uppercase tracking-wider text-foreground/50 sm:px-3">
-              <span>Daftar Materi</span>
-              <span className="font-bold text-foreground/70">
-                {TOPIK.length} Topik
+            <div className="flex items-center justify-between px-2 py-1 font-heading text-[0.6875rem] tracking-[0.18em] text-muted-foreground uppercase sm:px-3">
+              <span>Daftar materi</span>
+              <span className="font-mono tracking-normal">
+                {TOPIK.length} topik
               </span>
             </div>
 
@@ -179,14 +183,14 @@ export default function DocsContent() {
                     className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-base border-2 px-3 py-2.5 text-left text-xs transition-colors ${
                       dipilih
                         ? "border-border bg-main font-heading text-main-foreground"
-                        : "border-transparent text-foreground/70 hover:bg-background hover:text-foreground"
+                        : "border-transparent text-muted-foreground hover:bg-background hover:text-foreground"
                     }`}
                   >
                     <span className="flex min-w-0 items-center gap-2.5">
                       <t.icon className="size-4 shrink-0" />
                       <span className="truncate">{t.judul}</span>
                     </span>
-                    <span className="ml-2 shrink-0 font-mono text-[10px] text-foreground/50">
+                    <span className="ml-2 shrink-0 font-mono text-[0.6875rem] text-muted-foreground">
                       {t.nomor}
                     </span>
                   </button>
@@ -204,10 +208,10 @@ export default function DocsContent() {
                     type="button"
                     onClick={() => setAktif(t.id)}
                     aria-current={dipilih ? "true" : undefined}
-                    className={`flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-2 px-3 py-2.5 text-xs transition-colors ${
+                    className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-base border-2 whitespace-nowrap px-3 py-2 text-xs transition-colors ${
                       dipilih
                         ? "border-border bg-main font-heading text-main-foreground"
-                        : "border-border text-foreground/70 hover:bg-background"
+                        : "border-border text-muted-foreground hover:bg-background"
                     }`}
                   >
                     <t.icon className="size-3.5" />
@@ -221,15 +225,15 @@ export default function DocsContent() {
 
           {/* Panel konten. */}
           <div className="w-full min-w-0 flex-1">
-            <article className="space-y-6 rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow sm:p-8">
+            <article className="space-y-6 border-2 border-border bg-secondary-background p-4 sm:p-8">
               <header className="border-b-2 border-border pb-4">
-                <p className="mb-1 font-mono text-[10px] uppercase tracking-wider text-foreground/50">
+                <p className="mb-1 font-mono text-[0.6875rem] tracking-[0.18em] text-muted-foreground uppercase">
                   Topik {topikAktif.nomor}
                 </p>
-                <h2 className="text-base font-heading sm:text-lg">
+                <h2 className="text-xl leading-tight font-heading">
                   {topikAktif.judul}
                 </h2>
-                <p className="mt-1 text-xs text-foreground/70">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {topikAktif.ringkas}
                 </p>
               </header>
@@ -248,7 +252,7 @@ export default function DocsContent() {
       </main>
 
       <footer className="pb-safe border-t-2 border-border bg-secondary-background px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-xs text-foreground/60 sm:flex-row">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-xs text-muted-foreground sm:flex-row">
           <div className="flex items-center gap-2">
             <CalendarCheck className="size-4 text-foreground" />
             <span>MagangHub Attendance © 2026</span>
@@ -287,7 +291,7 @@ function Catatan({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5 rounded-base border-2 border-border bg-background p-4 text-xs text-foreground/80">
+    <div className="space-y-1.5 rounded-base border-2 border-border bg-background p-4 text-xs text-muted-foreground">
       <div className="flex items-center gap-1.5 font-heading text-foreground">
         <ShieldCheck className="size-4" />
         <span>{judul}</span>
@@ -308,13 +312,13 @@ function Langkah({
 }) {
   return (
     <li className="flex gap-3">
-      <span className="mt-0.5 shrink-0 font-mono text-xs text-foreground/50">
+      <span className="mt-0.5 shrink-0 font-mono text-xs text-muted-foreground">
         {nomor}
       </span>
       <span>
         <strong className="font-heading text-foreground">{judul}</strong>
         {", "}
-        <span className="text-foreground/80">{children}</span>
+        <span className="text-muted-foreground">{children}</span>
       </span>
     </li>
   );
@@ -322,7 +326,7 @@ function Langkah({
 
 function SubJudul({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="font-heading text-xs uppercase tracking-wider text-foreground/60">
+    <h3 className="font-heading text-[0.6875rem] tracking-[0.18em] text-muted-foreground uppercase">
       {children}
     </h3>
   );
@@ -351,7 +355,7 @@ function TautanPanduan({
 function TopikQuickstart() {
   return (
     <>
-      <div className="space-y-1.5 rounded-base border-2 border-border bg-background p-4 text-xs text-foreground/80">
+      <div className="space-y-1.5 rounded-base border-2 border-border bg-background p-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5 font-heading text-foreground">
           <span>Tujuan Utama Sistem</span>
         </div>
@@ -368,7 +372,7 @@ function TopikQuickstart() {
 
       <div className="space-y-3">
         <SubJudul>5 Langkah Mudah Memulai</SubJudul>
-        <ol className="space-y-3 text-xs text-foreground/80">
+        <ol className="space-y-3 text-xs text-muted-foreground">
           <Langkah nomor="1" judul="Daftar akun">
             Buat akun lewat{" "}
             <TautanPanduan href="/register">halaman pendaftaran</TautanPanduan>, lalu masuk ke dashboard.
@@ -415,7 +419,7 @@ function TopikQuickstart() {
 function TopikKredensial() {
   return (
     <>
-      <div className="space-y-2 text-xs text-foreground/80">
+      <div className="space-y-2 text-xs text-muted-foreground">
         <p>
           Buka halaman{" "}
           <TautanPanduan href="/credentials">Kredensial Monev</TautanPanduan>{" "}
@@ -425,7 +429,7 @@ function TopikKredensial() {
 
       <div className="space-y-3">
         <SubJudul>Cara mengisi</SubJudul>
-        <ol className="space-y-3 text-xs text-foreground/80">
+        <ol className="space-y-3 text-xs text-muted-foreground">
           <Langkah nomor="1" judul="Masukkan email & password">
             Gunakan kredensial yang sama seperti saat login ke portal Monev.
           </Langkah>
@@ -455,7 +459,7 @@ function TopikKredensial() {
 function TopikTemplate() {
   return (
     <>
-      <div className="space-y-2 text-xs text-foreground/80">
+      <div className="space-y-2 text-xs text-muted-foreground">
         <p>
           Laporan magang Monev terdiri dari tiga kolom wajib. Isi ketiganya di{" "}
           <TautanPanduan href="/report-templates">
@@ -466,11 +470,11 @@ function TopikTemplate() {
 
       <div className="space-y-3">
         <SubJudul>Tiga kolom wajib</SubJudul>
-        <ul className="space-y-2 text-xs text-foreground/80">
+        <ul className="space-y-2 text-xs text-muted-foreground">
           <li className="flex gap-2">
             <span
               aria-hidden="true"
-              className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
+              className="mt-1.5 size-1.5 shrink-0 rounded-none bg-muted-foreground"
             />
             <span>
               <strong className="font-heading">Uraian Aktivitas</strong>,
@@ -480,7 +484,7 @@ function TopikTemplate() {
           <li className="flex gap-2">
             <span
               aria-hidden="true"
-              className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
+              className="mt-1.5 size-1.5 shrink-0 rounded-none bg-muted-foreground"
             />
             <span>
               <strong className="font-heading">Pembelajaran</strong>, hal baru
@@ -490,7 +494,7 @@ function TopikTemplate() {
           <li className="flex gap-2">
             <span
               aria-hidden="true"
-              className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
+              className="mt-1.5 size-1.5 shrink-0 rounded-none bg-muted-foreground"
             />
             <span>
               <strong className="font-heading">Kendala</strong>, hambatan atau
@@ -523,7 +527,7 @@ function TopikTemplate() {
 function TopikJadwal() {
   return (
     <>
-      <div className="space-y-2 text-xs text-foreground/80">
+      <div className="space-y-2 text-xs text-muted-foreground">
         <p>
           Ada dua cara mengirim laporan: manual 1-klik, atau otomatis lewat
           jadwal. Atur di{" "}
@@ -536,7 +540,7 @@ function TopikJadwal() {
 
       <div className="space-y-3">
         <SubJudul>Pilihan mode</SubJudul>
-        <ol className="space-y-3 text-xs text-foreground/80">
+        <ol className="space-y-3 text-xs text-muted-foreground">
           <Langkah nomor="1" judul="Manual">
             Kirim kapan pun Anda siap langsung dari dashboard. Cocok bila isi
             laporan berubah tiap hari.
@@ -562,7 +566,7 @@ function TopikJadwal() {
 function TopikSubmit() {
   return (
     <>
-      <div className="space-y-2 text-xs text-foreground/80">
+      <div className="space-y-2 text-xs text-muted-foreground">
         <p>
           Pengiriman dilakukan lewat Direct REST API ke portal Monev, tanpa
           membuka browser dan tanpa server tambahan, sehingga laporan terkirim
@@ -572,25 +576,25 @@ function TopikSubmit() {
 
       <div className="space-y-3">
         <SubJudul>Yang divalidasi sebelum kirim</SubJudul>
-        <ul className="space-y-2 text-xs text-foreground/80">
+        <ul className="space-y-2 text-xs text-muted-foreground">
           <li className="flex gap-2">
             <span
               aria-hidden="true"
-              className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
+              className="mt-1.5 size-1.5 shrink-0 rounded-none bg-muted-foreground"
             />
             <span>Ketiga kolom terisi dan masing-masing &gt; 100 karakter.</span>
           </li>
           <li className="flex gap-2">
             <span
               aria-hidden="true"
-              className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
+              className="mt-1.5 size-1.5 shrink-0 rounded-none bg-muted-foreground"
             />
             <span>Kredensial Monev sudah tersimpan dan berhasil diuji.</span>
           </li>
           <li className="flex gap-2">
             <span
               aria-hidden="true"
-              className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground/60"
+              className="mt-1.5 size-1.5 shrink-0 rounded-none bg-muted-foreground"
             />
             <span>Belum ada kiriman untuk tanggal yang sama.</span>
           </li>
@@ -611,7 +615,7 @@ function TopikSubmit() {
 function TopikRiwayat() {
   return (
     <>
-      <div className="space-y-2 text-xs text-foreground/80">
+      <div className="space-y-2 text-xs text-muted-foreground">
         <p>
           Halaman{" "}
           <TautanPanduan href="/history">Riwayat Absensi</TautanPanduan>{" "}
@@ -622,7 +626,7 @@ function TopikRiwayat() {
 
       <div className="space-y-3">
         <SubJudul>Yang bisa Anda lakukan</SubJudul>
-        <ol className="space-y-3 text-xs text-foreground/80">
+        <ol className="space-y-3 text-xs text-muted-foreground">
           <Langkah nomor="1" judul="Pantau status">
             Lihat mana yang berhasil dan mana yang gagal, lengkap dengan waktu
             kirimnya.
@@ -651,7 +655,7 @@ function TopikRiwayat() {
 function TopikKeamanan() {
   return (
     <>
-      <div className="space-y-2 text-xs text-foreground/80">
+      <div className="space-y-2 text-xs text-muted-foreground">
         <p>
           Keamanan kredensial adalah hal paling penting di aplikasi ini. Berikut
           cara Anda dilindungi.
@@ -660,7 +664,7 @@ function TopikKeamanan() {
 
       <div className="space-y-3">
         <SubJudul>Perlindungan yang diterapkan</SubJudul>
-        <ul className="space-y-2 text-xs text-foreground/80">
+        <ul className="space-y-2 text-xs text-muted-foreground">
           <li className="flex gap-2">
             <ShieldCheck className="mt-0.5 size-4 shrink-0" />
             <span>
@@ -699,7 +703,7 @@ function TopikKeamanan() {
 function TopikBatasan() {
   return (
     <>
-      <div className="space-y-2 text-xs text-foreground/80">
+      <div className="space-y-2 text-xs text-muted-foreground">
         <p>
           Kami menyebutkan batasan secara terbuka supaya ekspektasi Anda sesuai
           dengan kemampuan aplikasi yang sebenarnya.
@@ -708,7 +712,7 @@ function TopikBatasan() {
 
       <div className="space-y-3">
         <SubJudul>Yang belum / tidak dilakukan</SubJudul>
-        <ul className="space-y-2 text-xs text-foreground/80">
+        <ul className="space-y-2 text-xs text-muted-foreground">
           <li className="flex gap-2">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
             <span>

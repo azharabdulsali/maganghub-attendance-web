@@ -15,7 +15,7 @@
 //
 // Ini juga sebabnya bagian "Statistik kunjungan (Vercel Analytics)" ada: app ini
 // memakai @vercel/analytics (dipasang di src/providers.tsx). Sebelumnya halaman
-// ini mengklaim "tidak memakai layanan analitik" — klaim itu kini DIPERBARUI
+// ini mengklaim "tidak memakai layanan analitik", klaim itu kini DIPERBARUI
 // agar tetap benar, bukan dibiarkan basi. Jangan hapus bagian itu selama
 // <Analytics /> masih terpasang.
 
@@ -158,7 +158,7 @@ export default function PrivacyPage() {
           Aplikasi memakai <strong>Vercel Web Analytics</strong> untuk mengetahui
           halaman mana yang sering dibuka, sehingga kami bisa memperbaiki bagian
           yang paling sering dipakai. Layanan ini memang{' '}
-          <em>layanan analitik pihak ketiga</em> — kami menyebutnya terbuka di
+          <em>layanan analitik pihak ketiga</em>, kami menyebutnya terbuka di
           sini, bukan menyembunyikannya.
         </p>
         <p>Yang perlu Anda ketahui tentang layanan ini:</p>
@@ -173,9 +173,9 @@ export default function PrivacyPage() {
             isi laporan, kredensial Monev, atau identitas akun yang dikirim.
           </li>
           <li>
-            Halaman yang bersifat pribadi/sensitif —{' '}
+            Halaman yang bersifat pribadi/sensitif, seperti{' '}
             <code>/credentials</code>, <code>/admin</code>, <code>/profile</code>,
-            dan <code>/dev-tools</code> — <strong>sengaja dikecualikan</strong>{' '}
+            dan <code>/dev-tools</code>, <strong>sengaja dikecualikan</strong>{' '}
             dari pelaporan (lihat <code>beforeSend</code> di{' '}
             <code>src/providers.tsx</code>), jadi kunjungan ke sana tidak
             tercatat.

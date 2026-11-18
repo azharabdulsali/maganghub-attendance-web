@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 export default function PanduanPage() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+      <header className="pt-safe pl-safe pr-safe sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b-2 border-border bg-secondary-background px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-base border-2 border-border bg-main text-main-foreground">
             <CalendarCheck className="size-4" />
@@ -40,7 +40,7 @@ export default function PanduanPage() {
             <span className="font-heading text-sm leading-tight">
               {SITE_NAME}
             </span>
-            <span className="text-[10px] leading-none text-foreground/60">
+            <span className="text-[0.6875rem] leading-none text-muted-foreground">
               Panduan
             </span>
           </span>
@@ -55,10 +55,10 @@ export default function PanduanPage() {
       </header>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
-        <h1 className="mb-2 text-2xl font-heading sm:text-3xl">
+        <h1 className="text-3xl leading-[1.05] font-heading sm:text-4xl">
           Panduan MagangHub
         </h1>
-        <p className="mb-8 text-sm leading-relaxed text-foreground/70">
+        <p className="mt-3 mb-8 border-b-2 border-border pb-5 text-sm leading-relaxed text-muted-foreground">
           Artikel praktis untuk memakai aplikasi ini dari awal sampai laporan
           terkirim ke portal Monev. Untuk referensi tiap menu, lihat{" "}
           <Link href="/docs" className="text-foreground underline underline-offset-4">
@@ -68,21 +68,21 @@ export default function PanduanPage() {
         </p>
 
         <section className="mb-8 rounded-base border-2 border-border bg-secondary-background p-4 sm:p-5">
-          <h2 className="font-heading text-base">Masuk dengan Google (opsional)</h2>
-          <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+          <h2 className="font-heading text-lg">Masuk dengan Google (opsional)</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Selain email dan kata sandi, halaman masuk bisa menampilkan tombol{" "}
             <strong>Masuk dengan Google</strong>. Tombol itu hanya muncul bila
             pengelola sudah mengaktifkannya; kalau tidak ada, gunakan email dan
             kata sandi seperti biasa.
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             <strong>Sudah punya akun? Tidak perlu daftar ulang.</strong> Selama
             alamat email Google Anda sama dengan email akun di sini, keduanya
             otomatis menjadi satu akun. Kredensial Monev, template laporan, dan
             riwayat pengiriman tetap utuh, dan kata sandi lama tetap bisa
             dipakai.
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Akun yang dibuat lewat Google belum punya kata sandi. Untuk
             membuatnya, buka menu Pengaturan setelah masuk: kata sandi lama
             tidak diminta karena memang belum ada.
@@ -100,10 +100,10 @@ export default function PanduanPage() {
                   {g.judul}
                 </Link>
               </h2>
-              <p className="mt-1 text-sm leading-relaxed text-foreground/80">
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 {g.ringkas}
               </p>
-              <p className="mt-2 text-xs text-foreground/60">
+              <p className="mt-2 text-xs text-muted-foreground">
                 {formatTanggalIndo(g.terbit)} · {g.menitBaca} menit baca
               </p>
             </li>
@@ -112,8 +112,8 @@ export default function PanduanPage() {
       </main>
 
       <footer className="pb-safe border-t-2 border-border bg-secondary-background px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 text-xs text-foreground/60 sm:flex-row">
-          <span>{SITE_NAME} — untuk peserta magang Kemnaker</span>
+        <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
+          <span>{SITE_NAME}: untuk peserta magang Kemnaker</span>
           <div className="flex items-center gap-4">
             <Link href="/docs" className="transition-colors hover:text-foreground">
               Dokumentasi

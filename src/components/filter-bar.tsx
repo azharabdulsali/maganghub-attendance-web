@@ -48,7 +48,7 @@ export default function FilterBar({ fields }: { fields: FilterFieldDef[] }) {
           <div key={field.name} className="flex flex-col gap-1">
             <Label
               htmlFor={id}
-              className="text-xs font-heading text-foreground/50"
+              className="text-xs font-heading text-muted-foreground"
             >
               {field.label}
             </Label>

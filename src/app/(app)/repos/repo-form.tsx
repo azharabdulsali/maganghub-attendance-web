@@ -91,7 +91,7 @@ const PROVIDER_LABEL: Record<Provider, string> = {
  * Diambil dari dokumentasi resmi GitHub/GitLab (diperiksa 2026-06). Tautan
  * `createUrl` sengaja membuka halaman pembuatan token LANGSUNG, bukan halaman
  * dokumentasi, karena pengguna yang sedang mengisi form butuh satu klik ke
- * tempat yang benar — bukan membaca tutorial dulu.
+ * tempat yang benar, bukan membaca tutorial dulu.
  *
  * Keduanya menyebut izin BACA saja: aplikasi ini tidak pernah menulis ke repo
  * siapa pun (AGENTS.md §2 batas (a)), jadi token yang lebih luas hanya menambah
@@ -129,7 +129,7 @@ const TOKEN_HELP: Record<
 
 /** Format waktu ke tanggal-jam WIB yang mudah dibaca. */
 function formatWib(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString("id-ID", {
     timeZone: "Asia/Jakarta",
     dateStyle: "medium",
@@ -381,7 +381,7 @@ export default function RepoForm({
         />
 
         {/* Kartu 2: sakelar. Penyimpanannya SENDIRI (PUT `action: "toggle"`),
-            tanpa token — karena itu dipisah dari form di atas. */}
+            tanpa token, karena itu dipisah dari form di atas. */}
         {hasExisting && (
           <Card size="sm">
             <CardContent>
@@ -395,7 +395,7 @@ export default function RepoForm({
                   <span id="repo-enabled-label" className="text-sm font-heading">
                     Pakai commit sebagai bahan draf
                   </span>
-                  <p id="repo-enabled-desc" className="text-xs text-foreground/70">
+                  <p id="repo-enabled-desc" className="text-xs text-muted-foreground">
                     {enabled
                       ? "Aktif. Saat menyusun draf, commit hari itu (zona WIB) ikut dipakai sebagai bahan."
                       : "Nonaktif. Repo tetap tersimpan, tapi tidak ada commit yang diambil sampai dinyalakan."}
@@ -410,14 +410,14 @@ export default function RepoForm({
                 />
               </div>
               {/* Galat sakelar DULU memakai `error` bersama yang hanya dirender
-                  di kartu repo — jadi kegagalan sakelar tampil di kartu yang
+                  di kartu repo, jadi kegagalan sakelar tampil di kartu yang
                   salah. Sekarang pesannya muncul di kartu sakelar sendiri. */}
               {toggleError && (
                 <div className="mt-3">
                   <Message tone="bad">{toggleError}</Message>
                 </div>
               )}
-              <p className="mt-3 text-xs text-foreground/60">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Berlaku langsung, tanpa perlu simpan ulang.
               </p>
             </CardContent>
@@ -435,19 +435,19 @@ export default function RepoForm({
           <CardContent>
             <dl className="space-y-2 text-xs">
               <div className="space-y-1 border-t-2 border-border pt-2">
-                <dt className="text-foreground/60">Terhubung</dt>
+                <dt className="text-muted-foreground">Terhubung</dt>
                 {/* `break-words` (bukan `break-all`): jalur repo GitLab bisa
                     sangat panjang dan dulu membungkus jadi kolom sempit di
                     samping label. Ditaruh di barisnya sendiri supaya muat,
                     dan `break-words` memotong di batas kata yang wajar. */}
                 <dd className="break-words">
                   {hasExisting
-                    ? `${PROVIDER_LABEL[existingProvider ?? provider]} · ${existingRepoPath ?? "—"}`
+                    ? `${PROVIDER_LABEL[existingProvider ?? provider]} · ${existingRepoPath ?? "-"}`
                     : "Belum"}
                 </dd>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-foreground/60">Token</dt>
+                <dt className="text-muted-foreground">Token</dt>
                 <dd>
                   <Badge tone={hasToken ? "good" : "neutral"}>
                     {hasToken ? "Tersimpan" : "Belum ada"}
@@ -455,7 +455,7 @@ export default function RepoForm({
                 </dd>
               </div>
               <div className="space-y-1 border-t-2 border-border pt-2">
-                <dt className="text-foreground/60">Terakhir diambil</dt>
+                <dt className="text-muted-foreground">Terakhir diambil</dt>
                 <dd>{formatWib(lastFetchedAt)}</dd>
               </div>
             </dl>
@@ -476,7 +476,7 @@ export default function RepoForm({
               <CardTitle className="text-base">Lepas repo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-xs text-foreground/70">
+              <p className="text-xs text-muted-foreground">
                 Menghapus repo dan token tersimpan. Draf dari commit berhenti
                 sampai Anda menghubungkan repo lagi.
               </p>
@@ -492,7 +492,7 @@ export default function RepoForm({
           </Card>
         )}
 
-        <p className="text-xs text-foreground/60">
+        <p className="text-xs text-muted-foreground">
           Fitur ini hanya membaca commit. Aplikasi tidak pernah membuat commit
           atau push ke repo Anda.
         </p>
@@ -518,10 +518,10 @@ function KartuHasilUji({ preview }: { preview: PreviewState }) {
       <CardHeader>
         <CardTitle className="text-base">
           Hasil uji ambil commit
-          {preview.date ? ` — ${preview.date}` : ""}
+          {preview.date ? `, ${preview.date}` : ""}
         </CardTitle>
         {preview.message && (
-          <CardDescription className="text-foreground/70">
+          <CardDescription className="text-muted-foreground">
             {preview.message}
           </CardDescription>
         )}
@@ -531,7 +531,7 @@ function KartuHasilUji({ preview }: { preview: PreviewState }) {
           <ul className="divide-y-2 divide-border rounded-base border-2 border-border">
             {preview.commits.map((c) => (
               <li key={c.shortId} className="break-words p-2 text-xs">
-                <code className="text-foreground/60">{c.shortId}</code>{" "}
+                <code className="text-muted-foreground">{c.shortId}</code>{" "}
                 {c.url ? (
                   <a
                     href={c.url}
@@ -550,7 +550,7 @@ function KartuHasilUji({ preview }: { preview: PreviewState }) {
         )}
 
         {preview.learningNeedsReview && (
-          <p className="text-xs text-foreground/60">
+          <p className="text-xs text-muted-foreground">
             Kolom <strong>Pembelajaran yang Diperoleh</strong>
             {preview.learningSource === "DERIVED" ? (
               <>
@@ -616,7 +616,7 @@ function KartuRepo({
     <Card>
       <CardHeader>
         <CardTitle>Repo yang dipantau</CardTitle>
-        <CardDescription className="text-foreground/70">
+        <CardDescription className="text-muted-foreground">
           {hasExisting
             ? "Mengubah pengaturan di sini mengganti pengaturan yang tersimpan."
             : "Hubungkan satu repo. Setelah tersimpan, uji dulu pengambilannya sebelum mengandalkannya untuk laporan."}
@@ -637,7 +637,7 @@ function KartuRepo({
               <NativeSelectOption value="GITHUB">GitHub</NativeSelectOption>
               <NativeSelectOption value="GITLAB">GitLab</NativeSelectOption>
             </NativeSelect>
-            <p className="text-xs text-foreground/60">
+            <p className="text-xs text-muted-foreground">
               {TOKEN_HELP[provider].scopeNote}
             </p>
           </div>
@@ -652,7 +652,7 @@ function KartuRepo({
               onChange={(e) => setRepoPath(e.target.value)}
               onBlur={() => {
                 // Rapikan otomatis HANYA saat fokus berpindah, bukan setiap
-                // ketikan — kalau dirapikan sambil mengetik, pengguna yang
+                // ketikan, kalau dirapikan sambil mengetik, pengguna yang
                 // mengetik manual akan melihat teksnya berubah di tengah jalan.
                 const rapi = repoPathFromCloneUrl(repoPath);
                 if (rapi) setRepoPath(rapi);
@@ -662,9 +662,9 @@ function KartuRepo({
               aria-describedby="repoPath-hint"
               required
             />
-            <p id="repoPath-hint" className="text-xs text-foreground/60">
+            <p id="repoPath-hint" className="text-xs text-muted-foreground">
               Format <code>owner/nama-repo</code>. Untuk GitLab boleh bertingkat,
-              mis. <code>grup/sub/proyek</code>. Tempel URL clone juga boleh —
+              mis. <code>grup/sub/proyek</code>. Tempel URL clone juga boleh
               akan dirapikan otomatis.
             </p>
           </div>
@@ -679,7 +679,7 @@ function KartuRepo({
               autoComplete="off"
               aria-describedby="branch-hint"
             />
-            <p id="branch-hint" className="text-xs text-foreground/60">
+            <p id="branch-hint" className="text-xs text-muted-foreground">
               Kosongkan untuk memakai default branch repo. Isi bila commit Anda
               ada di branch lain, mis. <code>feature/admin</code>.
             </p>
@@ -701,13 +701,13 @@ function KartuRepo({
               aria-describedby="token-hint"
               required
             />
-            <p id="token-hint" className="text-xs text-foreground/60">
+            <p id="token-hint" className="text-xs text-muted-foreground">
               Disimpan terenkripsi dan tidak pernah ditampilkan lagi. Hanya
               dipakai untuk membaca commit.
               {hasExisting && (
                 <>
                   {" "}
-                  <strong>Menyimpan wajib menempel ulang token</strong> — sama
+                  <strong>Menyimpan wajib menempel ulang token</strong>, sama
                   atau baru.
                 </>
               )}
@@ -742,7 +742,7 @@ function KartuRepo({
             {/* Dulu tombol simpan mati tanpa penjelasan. Sekarang alasannya
                 tertulis tepat di sebelah tombol. */}
             {!bisaSimpan && (
-              <p className="text-xs text-foreground/60" aria-live="polite">
+              <p className="text-xs text-muted-foreground" aria-live="polite">
                 Isi {repoPath.trim() ? "token akses" : "repo dan token akses"}{" "}
                 untuk menyimpan.
               </p>
@@ -768,7 +768,7 @@ function TokenHelp({ provider }: { provider: Provider }) {
       <summary className="cursor-pointer text-sm font-base">
         Belum punya token {PROVIDER_LABEL[provider]}?
       </summary>
-      <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs text-foreground/70">
+      <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs text-muted-foreground">
         {help.steps.map((langkah) => (
           <li key={langkah}>{langkah}</li>
         ))}
@@ -781,12 +781,12 @@ function TokenHelp({ provider }: { provider: Provider }) {
       >
         {help.createLabel} (buka tab baru)
       </a>
-      <p className="mt-2 text-xs text-foreground/60">
+      <p className="mt-2 text-xs text-muted-foreground">
         Memberi izin lebih luas tidak membuat fitur ini bekerja lebih baik, dan
         hanya menambah risiko bila token bocor. Jangan pakai token kerja yang
         punya akses ke banyak repo.
       </p>
-      <p className="mt-1 text-xs text-foreground/60">
+      <p className="mt-1 text-xs text-muted-foreground">
         Di GitLab, token hanya bisa membaca repo tempat Anda sendiri punya akses.
         Kalau muncul pesan repo tidak ditemukan, pastikan Anda sudah menjadi
         anggota repo tersebut (minimal peran Reporter), bukan hanya mengubah izin

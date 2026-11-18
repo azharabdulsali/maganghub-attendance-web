@@ -96,7 +96,7 @@ export async function GET(request: Request) {
           },
           datedTemplates: {
             // HANYA baris untuk tanggal hari ini. Tanpa `where` ini, setiap
-            // pemanggilan cron memuat SELURUH riwayat template bertanggal —
+            // pemanggilan cron memuat SELURUH riwayat template bertanggal
             // dan jumlahnya bertambah tiap hari (draf commit disimpan sebagai
             // baris bertanggal). Setelah beberapa bulan itu ratusan baris teks
             // panjang per pengguna, dikirim dari DB berkali-kali sehari, padahal
@@ -144,7 +144,7 @@ export async function GET(request: Request) {
   //
   // Disusun DI SINI (bukan hanya di dispatcher) karena pengguna yang memasang
   // cron-job.org sendiri memakai jalur ini. Bila aturannya hanya dipasang di
-  // dispatcher, pengguna jalur ini akan terus mengirim template selamanya —
+  // dispatcher, pengguna jalur ini akan terus mengirim template selamanya
   // fitur tampak ada tetapi tidak pernah aktif untuk mereka.
   const commitOutcome = await prepareCommitDraft(config.userId, date);
   const dated = config.user.datedTemplates.map((t) => ({
@@ -169,7 +169,7 @@ export async function GET(request: Request) {
     trigger: "CRON",
     // logOnNotReady=true: cron mencatat alasan tidak-siap (token dsb.) supaya
     // terlihat. Hari libur/akhir pekan TETAP tidak dicatat (performSubmit
-    // menjaga: POLICY_SKIPPED tidak pernah menulis log) — Riwayat bersih.
+    // menjaga: POLICY_SKIPPED tidak pernah menulis log), Riwayat bersih.
     logOnNotReady: true,
   });
 

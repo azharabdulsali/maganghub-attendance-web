@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/page-header";
 import AutomationForm from "./automation-form";
 
 export default async function AutomationPage() {
@@ -31,12 +32,10 @@ export default async function AutomationPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">Otomasi Absensi</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Kirim laporan otomatis setiap hari pada jam pilihan Anda
-        </p>
-      </div>
+      <PageHeader
+        title="Otomasi Absensi"
+        description="Kirim laporan otomatis setiap hari pada jam pilihan Anda."
+      />
 
       <AutomationForm
         hasExisting={Boolean(config)}

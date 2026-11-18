@@ -38,7 +38,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("buildApiPath — pencegahan SSRF", () => {
+describe("buildApiPath, pencegahan SSRF", () => {
   it("merakit jalur GitHub dari owner & repo yang sah", () => {
     expect(buildApiPath("GITHUB", "budi", "proyek")).toBe(
       "/repos/budi/proyek/commits",
@@ -74,7 +74,7 @@ describe("buildApiPath — pencegahan SSRF", () => {
   });
 });
 
-describe("fetchCommits — branch yang dibaca", () => {
+describe("fetchCommits, branch yang dibaca", () => {
   it("mengirim ref_name untuk GitLab bila branch diisi", async () => {
     const spy = stubFetch([]);
     await fetchCommits({ ...OPSI_DASAR, provider: "GITLAB", branch: "dev-zar" });
@@ -148,7 +148,7 @@ describe("normalizeBranch", () => {
   });
 });
 
-describe("fetchCommits — keamanan token", () => {
+describe("fetchCommits, keamanan token", () => {
   it("mengirim token GitHub di header Authorization, bukan di URL", async () => {
     const spy = stubFetch([]);
     await fetchCommits(OPSI_DASAR);
@@ -199,7 +199,7 @@ describe("fetchCommits — keamanan token", () => {
   });
 });
 
-describe("fetchCommits — penanganan kegagalan", () => {
+describe("fetchCommits, penanganan kegagalan", () => {
   it("memetakan 401 ke AUTH dengan pesan yang tidak memuat token", async () => {
     stubFetch({}, { ok: false, status: 401 });
     const err = await fetchCommits(OPSI_DASAR).catch((e: unknown) => e);
@@ -309,7 +309,7 @@ describe("normalizeGitlabCommit", () => {
   });
 });
 
-describe("fetchCommits — integrasi normalisasi", () => {
+describe("fetchCommits, integrasi normalisasi", () => {
   it("menyaring commit rusak dari daftar GitHub", async () => {
     stubFetch([
       { sha: "aaa1111", commit: { message: "satu" } },

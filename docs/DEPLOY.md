@@ -1,4 +1,4 @@
-# Panduan Deploy — MagangHub Attendance
+# Panduan Deploy: MagangHub Attendance
 
 Cara men-deploy aplikasi ini dari nol ke **Vercel** (hosting utama, Next.js),
 termasuk daftar environment variable, penyiapan database Neon, cron, hingga
@@ -13,10 +13,10 @@ verifikasi pasca-deploy.
 
 ## 0. Ringkasan alur
 
-1. Siapkan database Neon (produksi) — 1x.
+1. Siapkan database Neon (produksi), 1x.
 2. Import repo di Vercel.
 3. Isi Environment Variables (Production, + Preview bila perlu).
-4. `npm run db:push` dari lokal ke DB produksi — 1x.
+4. `npm run db:push` dari lokal ke DB produksi, 1x.
 5. Deploy.
 6. (Opsional) Aktifkan cron & Upstash.
 7. Verifikasi.
@@ -34,7 +34,7 @@ verifikasi pasca-deploy.
 
 ---
 
-## 2. Database — Neon
+## 2. Database: Neon
 
 Proyek ini memakai **Neon** (region `ap-southeast-1` / Singapore).
 
@@ -72,11 +72,11 @@ Isi di Vercel: **Project → Settings → Environment Variables**.
 | `ENCRYPTION_KEY` | 32 byte acak, 64 karakter hex | Production |
 | `ADMIN_EMAIL` | Email pendaftar pertama yang jadi ADMIN | Production |
 
-> **`NEXTAUTH_URL` — penting:** harus `https://`, pakai host **final** yang
+> **`NEXTAUTH_URL`, penting:** harus `https://`, pakai host **final** yang
 > tidak di-redirect (domain ini me-redirect non-`www` → `www`, jadi `www`
 > **wajib**), dan **tanpa** garis miring di akhir.
 >
-> **`ENCRYPTION_KEY`:** jangan pernah diganti setelah ada data tersimpan —
+> **`ENCRYPTION_KEY`:** jangan pernah diganti setelah ada data tersimpan
 > kredensial Monev terenkripsi dengannya. Simpan di tempat aman.
 
 ### Gerbang keselamatan
@@ -97,7 +97,7 @@ Isi di Vercel: **Project → Settings → Environment Variables**.
 Daftar lengkap dengan penjelasan tiap variabel ada di **`.env.example`**.
 
 > **Catatan Upstash:** kode sudah mendukung Upstash sejak awal
-> (`src/lib/rate-limit-store.ts`). Cukup isi 2 env var — **tanpa mengubah kode**.
+> (`src/lib/rate-limit-store.ts`). Cukup isi 2 env var, **tanpa mengubah kode**.
 > Bila kosong, pembatas kembali ke in-memory (cukup untuk dev / 1 instance) dan
 > **fail-open** bila Upstash mati. Panduan:
 > [`docs/UPSTASH-SETUP.md`](UPSTASH-SETUP.md).
@@ -124,11 +124,11 @@ npm run db:push
 ## 5. Deploy
 
 1. **Import repo** di <https://vercel.com/new>. Vercel mengenali Next.js otomatis
-   — **tidak perlu** mengubah build command.
+**tidak perlu** mengubah build command.
 2. Pastikan Environment Variables sudah terisi (Langkah 3).
 3. **Deploy.**
 4. Bila build gagal dengan pesan `Konfigurasi environment bermasalah`, artinya
-   ada variabel wajib yang belum diisi — pesannya menyebut variabel mana.
+   ada variabel wajib yang belum diisi, pesannya menyebut variabel mana.
 
 > **Post-deploy:** setiap kali mengubah Environment Variables, **redeploy**
 > (Deployments → titik tiga deployment terakhir → *Redeploy*). Env var baru
@@ -178,7 +178,7 @@ muncul setelah deploy berikutnya. (Lihat bagian "Analytics" di README.)
 | Tidak ada error runtime | Vercel → **Logs** | Tidak ada `Upstash error`, tidak ada error DB |
 
 > **Catatan:** saat `ALLOW_LIVE_SUBMIT` kosong, pengiriman bersifat latihan
-> (`dryRun: true`) — ini normal dan aman. Baru set `"1"` setelah verifikasi lain
+> (`dryRun: true`), ini normal dan aman. Baru set `"1"` setelah verifikasi lain
 > lolos dan Anda siap mengirim laporan sungguhan.
 
 ---
@@ -211,9 +211,9 @@ muncul setelah deploy berikutnya. (Lihat bagian "Analytics" di README.)
 
 ## 10. Referensi
 
-- [`UPSTASH-SETUP.md`](UPSTASH-SETUP.md) — rate limit terpusat
-- [`CRON-BULK.md`](CRON-BULK.md) — dispatcher massal (cara direkomendasikan)
-- [`CRON-SETUP.md`](CRON-SETUP.md) — cron per-user (model lama)
-- [`PROXY-SETUP.md`](PROXY-SETUP.md) — proxy residensial untuk SSO
-- [`MONEV-API.md`](MONEV-API.md) — integrasi API Monev
-- `.env.example` — daftar lengkap env var
+- [`UPSTASH-SETUP.md`](UPSTASH-SETUP.md), rate limit terpusat
+- [`CRON-BULK.md`](CRON-BULK.md), dispatcher massal (cara direkomendasikan)
+- [`CRON-SETUP.md`](CRON-SETUP.md), cron per-user (model lama)
+- [`PROXY-SETUP.md`](PROXY-SETUP.md), proxy residensial untuk SSO
+- [`MONEV-API.md`](MONEV-API.md), integrasi API Monev
+- `.env.example`, daftar lengkap env var

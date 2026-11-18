@@ -124,7 +124,6 @@ export function ReminderPanel({
           <Button
             onClick={simpan}
             disabled={busy || !waktuSah}
-            variant="success"
             title={waktuSah ? "Simpan" : "Jam tidak sah"}
           >
             {busy ? (
@@ -141,7 +140,7 @@ export function ReminderPanel({
           </Button>
         </div>
 
-        <p className="text-sm text-foreground/70">
+        <p className="text-sm text-muted-foreground">
           {!waktuSah ? (
             "Jam tidak sah."
           ) : (

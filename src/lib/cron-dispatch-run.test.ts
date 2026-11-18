@@ -301,7 +301,7 @@ describe("runDispatch: tenggat internal per user", () => {
 // Pemanggilan ulang (cron-topup.ts) pada tingkat dispatcher.
 //
 // Regresi yang dijaga: sebelumnya user yang tertunda pada jam jadwalnya TIDAK
-// PERNAH dicoba lagi — jam berikutnya `isDueNow` menjawab "tidak" dan laporan
+// PERNAH dicoba lagi, jam berikutnya `isDueNow` menjawab "tidak" dan laporan
 // hari itu hilang tanpa suara.
 // ---------------------------------------------------------------------------
 describe("runDispatch: pengejaran user yang tertunda", () => {
@@ -415,7 +415,7 @@ describe("runDispatch: invarian hitungan", () => {
   });
 
   it("topUpPending tidak menghitung ganda user yang sudah DEFERRED", async () => {
-    // 41 kandidat tertunda (jam 6) — kuota batch 40 habis untuk pengejaran,
+    // 41 kandidat tertunda (jam 6), kuota batch 40 habis untuk pengejaran,
     // jadi 1 sisa. Semua menghasilkan hasil (SUCCESS), tidak ada yang
     // untouched, sehingga topUpPending harus tepat 1.
     findManyMock.mockResolvedValue(
@@ -450,7 +450,7 @@ describe("runDispatch: invarian hitungan", () => {
     // Tidak perlu dikejar dan tidak ada catatan tertunda.
     expect(summary.topUpPending).toBe(0);
     expect(summary.note).toBeNull();
-    // User ini sengaja TIDAK didatangi (sudah tuntas hari ini — pengejaran
+    // User ini sengaja TIDAK didatangi (sudah tuntas hari ini, pengejaran
     // memfilternya sebelum menyentuh portal sama sekali, lebih murah daripada
     // membuka sesi lalu dilewati). Karena itu hasil per-user kosong, tetapi
     // ia WAJIB tetap terhitung di `deferred` supaya totalnya utuh.

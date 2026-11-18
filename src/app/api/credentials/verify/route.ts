@@ -100,7 +100,7 @@ export async function POST(request: Request) {
 
   // Token rotasi: bila portal mengganti monev_refresh_token saat kita memanggil
   // /auth/refresh, simpan nilai BARU (menimpa yang lama). Berlaku baik untuk
-  // token tempelan baru maupun token tersimpan ("Tes ulang") — kalau tidak,
+  // token tempelan baru maupun token tersimpan ("Tes ulang"), kalau tidak,
   // token lama yang sudah dicabut akan dipakai pada refresh berikutnya.
   const rotated = result.status === "ACTIVE" ? result.rotatedRefreshToken : undefined;
   if (rotated) {
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
   //
   // PENTING (rotasi): bila portal MEROTASI token saat uji di atas, `rotated`
   // adalah token yang masih hidup sedangkan `tokenToCheck` (tempelan pengguna)
-  // SUDAH dicabut oleh rotasi itu. Jadi yang disimpan harus `rotated` — kalau
+  // SUDAH dicabut oleh rotasi itu. Jadi yang disimpan harus `rotated`, kalau
   // tidak, kita menimpa token hidup dengan token mati (bug rotasi terbalik).
   // Pilihan ini diekstrak ke fungsi murni `pickRefreshTokenToPersist` (ber-test).
   const tokenToPersist = pickRefreshTokenToPersist(rotated, tokenToCheck);

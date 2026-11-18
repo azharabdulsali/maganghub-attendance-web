@@ -28,14 +28,14 @@ export const MAX_REPORT_LENGTH = 5000;
  *
  * Beda dengan `MIN/MAX_REPORT_LENGTH`: keduanya aturan PIHAK KETIGA (portal).
  * Angka di bawah ini selera produk dan **tidak boleh** dipakai untuk menolak
- * laporan yang diketik manual — hanya untuk memotong hasil susunan otomatis.
+ * laporan yang diketik manual, hanya untuk memotong hasil susunan otomatis.
  *
  * `DRAFT_MIN_LENGTH` SENGAJA lebih tinggi daripada `MIN_REPORT_LENGTH`.
  *
  * KENAPA ADA SELISIH 20 KARAKTER
  * -----------------------------
  * `trimToChars` memotong di batas kata dan mengutamakan akhir kalimat. Titik
- * potong "rapi" itu bisa jatuh JAUH di bawah `DRAFT_MAX_LENGTH` — pada teks
+ * potong "rapi" itu bisa jatuh JAUH di bawah `DRAFT_MAX_LENGTH`, pada teks
  * `"Ok. " + 300 huruf` hasilnya cuma 4 karakter. Bila batas bawah disamakan
  * dengan `MIN_REPORT_LENGTH` (100), kolom seperti itu tidak punya ruang
  * perbaikan sama sekali: `checkReportField` menolaknya, drafter mengembalikan

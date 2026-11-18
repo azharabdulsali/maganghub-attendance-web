@@ -194,7 +194,6 @@ export default function EmailForm({ currentEmail }: { currentEmail: string }) {
       <div className="flex flex-row items-center justify-end gap-3">
         <Button
           type="submit"
-          variant="success"
           disabled={saving || !lengkap}
           title={saving ? "Menyimpan…" : "Ubah email"}
           aria-label={saving ? "Menyimpan email" : "Ubah email"}

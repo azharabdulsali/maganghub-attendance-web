@@ -18,7 +18,7 @@ export const SITE_URL = env.NEXTAUTH_URL.replace(/\/$/, "");
 
 /** Judul default (50-60 karakter, kata kunci di depan). */
 export const SITE_TITLE =
-  "MagangHub Autoabsen — Otomatisasi Presensi & Laporan Magang";
+  "MagangHub Autoabsen, Otomatisasi Presensi & Laporan Magang";
 
 /**
  * Email kontak publik untuk halaman /privacy dan /terms.

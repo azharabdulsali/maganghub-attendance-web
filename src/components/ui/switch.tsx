@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 // memakai token tema proyek (`bg-main`, `border-border`, `ring-ring`).
 //
 // Catatan: ini HANYA untuk sakelar yang dikontrol state React. Bila JS mati,
-// sakelar tidak bisa diubah — karena itu formnya tetap punya tombol submit
+// sakelar tidak bisa diubah, karena itu formnya tetap punya tombol submit
 // biasa dan status awal tetap dibaca dari server (lihat automation-form.tsx).
 function Switch({
   className,

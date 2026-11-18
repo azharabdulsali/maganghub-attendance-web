@@ -8,8 +8,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-mono: var(--font-jetbrains);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -92,6 +92,49 @@
     transform: translateX(0%);
     }
   }
+  /* Lembar laporan di landing (DESIGN.md "Buku absen editorial", pengecualian
+     hero). Dua gerak, keduanya SEKALI saat halaman dimuat:
+     - `sheet`: lembar "diletakkan" dari bawah, seperti menaruh kertas di meja;
+     - `stamp`: cap TERKIRIM menghantam setelahnya (skala berlebih dulu, lalu
+       mengendap) supaya terasa ditekan, bukan muncul begitu saja.
+     Keduanya dipakai lewat prefiks `motion-safe:`, jadi pengguna yang memilih
+     "kurangi gerakan" langsung melihat keadaan akhir tanpa menunggu durasi —
+     tidak perlu bergantung pada blok `@media` di bawah. */
+  --animate-sheet: sheet 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  @keyframes sheet {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+    }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    }
+  }
+  --animate-stamp: stamp 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  @keyframes stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.75) rotate(-9deg);
+    }
+  55% {
+    opacity: 1;
+    }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    }
+  }
+  /* Ganti lembar contoh di hero TIDAK lagi memakai keyframe di sini.
+     Sejak keputusan pemilik 2026-11 (DESIGN.md poin 6) pergantian lembar
+     ditangani `motion` di `landing-report-sheet.tsx`, karena geser-dengan-jari
+     butuh pelacakan pointer, ambang lepas, dan pegas pemulihan yang tidak bisa
+     ditulis di CSS. Keyframe lama (`sheet-back`/`sheet-forward`) dihapus, bukan
+     dibiarkan: CSS yang tidak dipakai siapa pun akan menyesatkan pembaca
+     berikutnya dan ikut terkirim ke peramban tanpa manfaat.
+     `sheet`/`stamp` di atas TETAP dipakai — keduanya gerak SEKALI saat halaman
+     dimuat, bukan reaksi terhadap sentuhan, jadi tidak perlu JavaScript. */
+
 }
 
 /* Palet terang & gelap ditulis BERPASANGAN lewat light-dark() (R-21).
@@ -127,7 +170,11 @@
   --secondary: light-dark(oklch(0.97 0 0), oklch(0.28 0 0));
   --secondary-foreground: light-dark(oklch(0.205 0 0), oklch(0.93 0 0));
   --muted: light-dark(oklch(0.97 0 0), oklch(0.28 0 0));
-  --muted-foreground: light-dark(oklch(0.556 0 0), oklch(0.72 0 0));
+  /* 0.50 (bukan 0.556 bawaan shadcn): latar halaman mode terang adalah biru
+     muda hsl(214, 95%, 93%), dan 0.556 di atasnya hanya 3.92:1 — di bawah
+     ambang 4.5:1 untuk teks bantuan. 0.50 memberi 4.97:1. Diukur oleh
+     src/lib/color-contrast.test.ts, jangan diturunkan lagi tanpa mengukur. */
+  --muted-foreground: light-dark(oklch(0.5 0 0), oklch(0.72 0 0));
   --accent: light-dark(oklch(0.97 0 0), oklch(0.28 0 0));
   --accent-foreground: light-dark(oklch(0.205 0 0), oklch(0.93 0 0));
   --destructive: light-dark(oklch(0.577 0.245 27.325), oklch(0.704 0.191 22.216));
@@ -158,8 +205,10 @@
      menyala di latar gelap (teks hitam di atasnya tetap 7:1). */
   --main: light-dark(hsl(217, 100%, 66%), hsl(217, 88%, 67%));
   --main-foreground: light-dark(oklch(0% 0 0), oklch(0.16 0 0));
-  /* Hijau "berhasil", dipakai grafik tren & status. */
-  --success: light-dark(#059669, #34d399);
+  /* Hijau "berhasil", dipakai grafik tren & status. #047857 (bukan #059669):
+     putih di atas #059669 hanya 3.77:1, gagal 4.5:1. #047857 memberi 5.48:1.
+     Diukur oleh src/lib/color-contrast.test.ts. */
+  --success: light-dark(#047857, #34d399);
   /* Hijau/merah/kuning mode gelap jadi lebih terang, jadi teks di atasnya harus
      GELAP (putih di atas #34d399 hanya ~1.6:1). Di mode terang kebalikannya. */
   --success-foreground: light-dark(oklch(100% 0 0), oklch(0.16 0 0));
@@ -203,6 +252,20 @@
   }
   h1, h2, h3, h4, h5, h6 {
     font-weight: var(--font-weight-heading);
+    /* Judul dirapatkan sedikit: pada ukuran besar, jarak huruf bawaan membuat
+       judul terasa longgar seperti teks isi. Ini satu-satunya alasan angka
+       negatif dipakai, bukan tren. */
+    letter-spacing: -0.02em;
+    /* Baris judul dipotong seimbang, bukan menyisakan satu kata menggantung. */
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  /* Sorotan teks memakai aksen aplikasi, bukan biru bawaan peramban. */
+  ::selection {
+    background: var(--main);
+    color: var(--main-foreground);
   }
 }
   body, .scrollbar {
@@ -291,13 +354,21 @@ html.theme-transition *::after {
 }
 
 /* Safe area (poni iPhone / home indicator). `env()` hanya bernilai non-nol bila
-   <meta viewport> memuat `viewport-fit=cover` — sudah diset di
+   <meta viewport> memuat `viewport-fit=cover`, sudah diset di
    `src/app/layout.tsx` (export `viewport`). Nilai cadangan `0px` untuk peramban
    yang tidak mendukung `env()`.
 
    Utilitas ini menambah padding pada sisi yang berisiko ketutup: atas (sticky
    header), bawah (footer/toast), dan kiri-kanan (laci, layar landscape).
-   Dipakai selektif, bukan global, supaya desktop tidak dapat padding ekstra. */
+   Dipakai selektif, bukan global, supaya desktop tidak dapat padding ekstra.
+
+   ⚠️ KIRI-KANAN WAJIB `max()`, BUKAN `env()` POLOS. Ini bug yang sudah dibuktikan
+   di peramban: `pl-safe { padding-left: env(..., 0px) }` menimpa `px-4` menjadi
+   `0px` di semua perangkat TANPA poni (semua HP portrait, semua desktop), karena
+   utilitas kustom di Tailwind v4 berada SETELAH utilitas inti dalam lembar gaya.
+   Akibatnya header dan form login menempel di tepi layar (diukur: padding 0px di
+   lebar 320–390px). `max(1rem, ...)` membuat poni tetap dihormati sementara
+   padding dasar tidak pernah hilang. Jangan kembalikan ke `env()` polos. */
 @utility pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
 }
@@ -305,13 +376,13 @@ html.theme-transition *::after {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 @utility pl-safe {
-  padding-left: env(safe-area-inset-left, 0px);
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
 }
 @utility pr-safe {
-  padding-right: env(safe-area-inset-right, 0px);
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
 }
 /* Kombinasi umum: elemen tepi yang perlu dua sisi sekaligus (landscape). */
 @utility px-safe {
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
 }

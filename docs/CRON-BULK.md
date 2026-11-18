@@ -35,7 +35,7 @@ GET /api/cron/run-all
 
 - **Angka ringkasan selalu utuh:** `considered = processed + deferred`. Setiap
   user pasti masuk salah satu: `processed` (sempat didatangi) atau `deferred`
-  (tidak didatangi — jam jadwalnya lain, kehabisan kuota, atau tenggat
+  (tidak didatangi, jam jadwalnya lain, kehabisan kuota, atau tenggat
   terlewati). Invarian ini dikunci tes, karena kesalahan hitung di sini tidak
   pernah memunculkan galat; ia hanya terlihat meyakinkan.
 - `topUpPending` = yang **harus** dikejar pemanggilan berikutnya (belum tuntas
@@ -48,7 +48,7 @@ GET /api/cron/run-all
   Absensi harian tidak butuh ketepatan menit, dan menuntutnya membuat jadwal
   `07:30` tak pernah kena pada cron per jam.
   > Sejak UI otomasi dibuat jam-only, pengguna hanya bisa memilih **jam** (00–23)
-  > dan menit selalu disimpan `00` — menampilkan menit membuat orang mengira
+  > dan menit selalu disimpan `00`, menampilkan menit membuat orang mengira
   > 07:30 bisa dijadwalkan tepat. Nilai lama yang terlanjur bermenit lain tetap
   > diproses sesuai jamnya.
 - **Satu user gagal tidak menggagalkan yang lain** (tiap user dibungkus
@@ -63,7 +63,7 @@ GET /api/cron/run-all
   baris user tertentu memanggil `POST /api/admin/dispatch/user` (body
   `{ userId }`, sesi + role ADMIN, rate limit `adminUserAction`). Aksi ini
   **memaksa** jalankan otomasi user itu apa pun jam jadwalnya, tetapi TETAP
-  memakai `performSubmit` yang sama — jadi libur/akhir pekan/akhir program,
+  memakai `performSubmit` yang sama, jadi libur/akhir pekan/akhir program,
   pra-cek duplikat, dan gerbang `ALLOW_LIVE_SUBMIT` tetap berlaku. Pemicunya
   tercatat `CRON` di audit log.
 - **Pemantauan per-user.** Tabel pengguna juga menampilkan **jadwal**
@@ -105,7 +105,7 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 | `APP_URL` | URL deploy, mis. `https://www.maganghub-autoabsen.my.id` (**tanpa** slash di akhir) |
 | `CRON_SECRET` | sama persis dengan langkah 2 |
 
-> **PENTING — pakai host FINAL, bukan yang di-redirect.** Domain ini me-redirect
+> **PENTING, pakai host FINAL, bukan yang di-redirect.** Domain ini me-redirect
 > **non-`www` → `www`** dengan `HTTP 308`. Bila `APP_URL` memakai
 > `https://maganghub-autoabsen.my.id` (tanpa `www`), curl mengikuti redirect
 > lintas-host dan **header `Authorization` DIBUANG** di tengah jalan → server
@@ -117,7 +117,7 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 Workflow `.github/workflows/absensi-dispatch.yml` sudah ada di repo ini dan
 berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
 
-> **Kenapa 4x, bukan 1x.** Penjadwal GitHub Actions tidak tepat waktu — ia bisa
+> **Kenapa 4x, bukan 1x.** Penjadwal GitHub Actions tidak tepat waktu, ia bisa
 > telat 10–30 menit saat runner ramai, dan kadang run di-skip. Dengan pemicu
 > sekali per jam, user berjadwal `07:xx` hanya punya satu kesempatan; kalau
 > pemicunya telat ke `08:xx`, server tak lagi mencocokkan jamnya dan absensi hari
@@ -127,13 +127,13 @@ berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
 > penjaga anti-duplikat.
 
 > Menit Actions **nol rupiah, berapa pun frekuensinya**, bila repo ini
-> **publik** — dan repo ini memang publik
+> **publik**, dan repo ini memang publik
 > (`github.com/azharabdulsali/maganghub-attendance-web`). Jadi jadwal `*/15` di
 > atas sepenuhnya gratis; bagian di bawah ini hanya relevan **bila suatu saat
 > repo diprivatkan**.
 
 > Repo **publik**: menit Actions tak terbatas. Repo **privat**: kuota gratis
-> 2.000 menit/bulan, dan GitHub **membulatkan tiap run ke atas** — jadi satu run
+> 2.000 menit/bulan, dan GitHub **membulatkan tiap run ke atas**, jadi satu run
 > beberapa detik tetap dihitung **1 menit**.
 >
 > Karena itu frekuensi pemicu penting:
@@ -156,7 +156,7 @@ berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
 > - `*/1` → 43.200 panggilan/bulan ≈ **3,6 jam** (nyaris menyentuh batas 4 jam).
 >
 > Karena server mencocokkan **jam** (bukan menit), mempercepat pemicu **tidak**
-> menambah keandalan — hanya menambah CPU. Jangan turun di bawah `*/5`.
+> menambah keandalan, hanya menambah CPU. Jangan turun di bawah `*/5`.
 
 ---
 
@@ -188,7 +188,7 @@ berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
 | :--- | :--- | :--- |
 | `200` | Diproses (sebagian mungkin `dryRun`) | Periksa `results` |
 | `301`/`302`/`307`/`308` | **`APP_URL` masih kena redirect** (mis. non-`www`→`www`, atau `http`→`https`) | Set `APP_URL` ke host **final** hasil redirect (mis. `https://www....`), tanpa slash di akhir; lihat `curl -L -w "%{url_effective}"` |
-| `401` | Bisa dua sebab: (a) `APP_URL` di-redirect lintas-host sehingga header `Authorization` dibuang — cek "URL akhir" di log; (b) `CRON_SECRET` GitHub ≠ Vercel | Samakan nilai di Vercel & GitHub **dan** pastikan `APP_URL` = host final |
+| `401` | Bisa dua sebab: (a) `APP_URL` di-redirect lintas-host sehingga header `Authorization` dibuang, cek "URL akhir" di log; (b) `CRON_SECRET` GitHub ≠ Vercel | Samakan nilai di Vercel & GitHub **dan** pastikan `APP_URL` = host final |
 | `503` | `CRON_SECRET` belum diset di Vercel | Set lalu redeploy |
 | `407`/timeout | Portal Monev menggantung | Normal; `deferred` diproses jam berikutnya |
 
@@ -225,7 +225,7 @@ berjalan otomatis **4x tiap jam** (`*/15 * * * *`, yaitu xx:00/15/30/45 WIB).
   bawaan penjadwal GitHub, bukan bug konfigurasi: pada jam sibuk run `schedule`
   ditunda, dan (terutama di repo dengan aktivitas rendah) sebagian besar slot
   `*/15` di-**skip** sepenuhnya. Akibatnya di tab Actions jeda antar-run bisa
-  terlihat **berjam-jam** (mis. 3–11 jam), bukan 15 menit — padahal ekspresi
+  terlihat **berjam-jam** (mis. 3–11 jam), bukan 15 menit, padahal ekspresi
   cron-nya sudah benar. Karena server mencocokkan **jam** jadwal user, slot yang
   hilang berarti user berjam jadwal itu bisa **tidak terkirim hari itu**. Solusi
   andal: tambahkan pemicu eksternal per-15-menit (bagian 7A di bawah).
@@ -243,17 +243,17 @@ penjaga anti-duplikat.
 1. Masuk <https://cron-job.org> → **Create cronjob**.
 2. **Title**: `Absensi Monev dispatcher (massal)`.
 3. **URL**: `https://www.maganghub-autoabsen.my.id/api/cron/run-all`
-   (host **final** — pakai `www`, **tanpa** slash di akhir).
+   (host **final**, pakai `www`, **tanpa** slash di akhir).
    > **cron-job.org TIDAK mengikuti redirect.** Kalau URL-nya memakai non-`www`,
    > **Test run** akan menampilkan `308 Permanent Redirect / Redirection
-   > detected`. Jawabannya ada di baris **"Redirection target"** — salin host itu
+   > detected`. Jawabannya ada di baris **"Redirection target"**, salin host itu
    > (yang ber-`www`) ke kolom URL.
 4. **Schedule**: **Every 10 minutes** (`*/10 * * * *`). Set zona waktu akun ke
    `Asia/Jakarta` bila tersedia; kalau tidak, `*/10` sama saja di UTC (interval
    10 menit tak bergantung zona).
    > **Kenapa 10 menit, bukan 1 menit?** Server mencocokkan **jam**, bukan menit
    > (`isDueNow` hanya membandingkan `hour`). Panggilan 1 menit berarti 6× panggilan
-   > identik tanpa manfaat apa pun, dan memakai **~3,6 jam Active CPU/bulan** —
+   > identik tanpa manfaat apa pun, dan memakai **~3,6 jam Active CPU/bulan**
    > nyaris menyentuh kuota Hobby 4 jam. `*/10` menaikkan jendela tangkap sedikit
    > (≤10 menit) dengan CPU ~0,4 jam/bulan, jauh dari batas. Jangan turun ke `*/1`.
 5. **Request method**: `GET`.
@@ -263,7 +263,7 @@ penjaga anti-duplikat.
 7. Simpan → **TEST RUN** sekali, pastikan respons `200` dan body memuat
    `considered/processed/deferred`.
 
-> **Jangan pakai endpoint per-user** (`/api/cron/submit`) di sini — endpoint itu
+> **Jangan pakai endpoint per-user** (`/api/cron/submit`) di sini, endpoint itu
 > ber-rate-limit 30/5 menit per IP dan akan menolak panggilan tiap 10 menit
 > dengan `429`. Dispatcher massal `/api/cron/run-all` **tidak** ber-rate-limit
 > (hanya dijaga `CRON_SECRET`), itulah yang benar untuk pemicu rapat.
@@ -277,7 +277,7 @@ penjaga anti-duplikat.
 > `performSubmit` (trigger `CRON`) memeriksa lebih dulu: bila sudah ada minimal
 > satu `SubmitLog` berstatus `SUCCESS` **atau `DUPLICATE`** pada hari WIB ini,
 > pengiriman DILEWATI
-> (`kind: "SKIPPED_ALREADY_DONE"`) — portal TIDAK disentuh dan TIDAK ada
+> (`kind: "SKIPPED_ALREADY_DONE"`), portal TIDAK disentuh dan TIDAK ada
 > `SubmitLog` baru. Sebabnya: `isDueNow` hanya mencocokkan JAM, jadi jadwal 12:00
 > "jatuh tempo" pada 12:00, 12:10, … 12:50 (6 kali) dan dulu menghasilkan
 > duplikat di `/history`. `DUPLICATE` ("Sudah ada") ikut menghentikan karena
@@ -298,7 +298,7 @@ penjaga anti-duplikat.
 | Actions merah, log `HTTP 401` | `CRON_SECRET` GitHub ≠ Vercel |
 | Actions merah, log `HTTP 503` | `CRON_SECRET` belum diset di Vercel / belum redeploy |
 | `considered: 0` | Tak ada user dengan otomasi aktif, atau sakelarnya mati |
-| `processed: 0` tapi `considered > 0` | Tak ada user yang jam jadwalnya = jam sekarang. **Normal** — `deferred` memuat mereka; tunggu jam berikutnya. Lihat `topUpPending` untuk yang benar-benar tertinggal |
+| `processed: 0` tapi `considered > 0` | Tak ada user yang jam jadwalnya = jam sekarang. **Normal**, `deferred` memuat mereka; tunggu jam berikutnya. Lihat `topUpPending` untuk yang benar-benar tertinggal |
 | `deferred` tinggi | Normal bila banyak user berjadwal di jam lain. Yang perlu ditindak hanya bila `topUpPending` juga tinggi |
 | `topUpPending` terus > 0 | Pengejaran selalu kehabisan kuota. Naikkan `DISPATCH_BATCH_SIZE` atau sebar jam jadwal pengguna |
 | Log `SYSTEM_DISPATCH` di panel admin | Ringkasan tiap pemanggilan cron (angka saja). `TENGGAT TERCAPAI` = ada yang tertinggal pada jam itu |

@@ -49,7 +49,22 @@ const googleEnabled = googleOAuthConfigured();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  // Umur sesi ditulis EKSPLISIT, bukan dibiarkan memakai default Auth.js.
+  // Default 30 hari hari ini, tapi default library bisa berubah saat paket
+  // dinaikkan dan pengguna tidak boleh tiba-tiba diminta login ulang (atau
+  // sebaliknya, sesi bertahan lebih lama dari yang dijanjikan).
+  //
+  // Sesi berbentuk cookie JWT `httpOnly` (bukan cookie peramban yang bisa
+  // dibaca JavaScript), jadi "cache login" di peramban tidak bisa dipalsukan
+  // atau dibaca skrip pihak ketiga. `updateAge` 24 jam = masa berlaku
+  // diperpanjang lagi paling sering sekali sehari selama pengguna aktif
+  // (sliding expiry): pengguna yang rutin membuka aplikasi tidak pernah
+  // dipaksa login ulang.
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
+  },
   pages: {
     signIn: "/login",
   },
@@ -242,7 +257,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // disalin saat login. Sesi ini JWT: `token.role` adalah potret saat
           // login. Tanpa baris ini, admin yang baru diturunkan (atau pengguna
           // yang baru dinaikkan) terus memakai peran lamanya sampai token
-          // kedaluwarsa — semua guard admin membaca `session.user.role`, yang
+          // kedaluwarsa, semua guard admin membaca `session.user.role`, yang
           // berasal dari token. Menaikkan `sessionVersion` di route ubah-peran
           // sudah mencabut sesi, tetapi ini menjadikannya benar dari sumbernya.
           role: true,

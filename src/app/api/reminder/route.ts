@@ -40,7 +40,7 @@ import {
  *
  * Server menyiapkan FAKTA (jam WIB, hari kerja?, sudah absen?) lalu menyerahkan
  * keputusan ke `shouldShowReminder` (murni, teruji). Klien hanya membaca
- * `show` — aturan tidak diduplikasi di peramban.
+ * `show`, aturan tidak diduplikasi di peramban.
  */
 export async function GET() {
   const session = await auth();
@@ -73,7 +73,7 @@ export async function GET() {
   // DUPLICATE). Definisi ini SAMA dengan badge admin (`assessTodayRun`): yang
   // dihitung adalah "otomasi mencoba absen hari ini", bukan hanya sukses. Bila
   // rentang hari tak sah (tidak seharusnya), anggap belum absen tapi tetap
-  // hormati jendela waktu — lebih aman menahan popup daripada salah muncul.
+  // hormati jendela waktu, lebih aman menahan popup daripada salah muncul.
   let hasSubmittedToday = false;
   if (range) {
     const count = await prisma.submitLog.count({

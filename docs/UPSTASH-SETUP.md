@@ -1,4 +1,4 @@
-# Panduan Upstash Redis (rate limit lintas instance) — 100% GRATIS
+# Panduan Upstash Redis (rate limit lintas instance): 100% GRATIS
 
 > **TL;DR:** Kode sudah mendukung Upstash sejak awal. Anda **tidak menulis kode
 > apa pun**. Cukup: (1) buat database Redis gratis di Upstash, (2) salin
@@ -11,9 +11,9 @@
 
 Rate limit proyek ini (`src/lib/rate-limit.ts`) punya **dua bagian**:
 
-1. **Kebijakan murni** — berapa kali boleh, dalam jendela berapa lama
+1. **Kebijakan murni**, berapa kali boleh, dalam jendela berapa lama
    (`RATE_LIMITS`). Sudah selesai & teruji, tidak butuh Upstash.
-2. **Penyimpanan penghitung** (`src/lib/rate-limit-store.ts`) — di mana angka
+2. **Penyimpanan penghitung** (`src/lib/rate-limit-store.ts`), di mana angka
    "sudah berapa kali request ini?" disimpan. Ini yang berubah.
 
 Masalahnya, penyimpanan default adalah **in-memory (memori proses)**. Di Vercel
@@ -46,12 +46,12 @@ Yang **terpengaruh** (semua endpoint ber-rate-limit):
 
 > `reminderCheck` adalah scope dengan pemakaian tertinggi: satu tab yang dibiarkan
 > terbuka bisa memanggilnya ±80 kali/jam. Bila kuota Upstash mulai terasa,
-> naikkan `CEK_INTERVAL_MS` di `src/app/(app)/attendance-reminder.tsx` — jangan
+> naikkan `CEK_INTERVAL_MS` di `src/app/(app)/attendance-reminder.tsx`, jangan
 > menurunkan batas rate limit, karena klien akan menerima 429 dan popup berhenti
 > muncul tanpa penjelasan.
 
-> **Penting:** `/api/cron/run-all` (dispatcher massal) **tidak** ber-rate-limit
-> — hanya dijaga `CRON_SECRET`. Jadi memasang Upstash **tidak** mengubah
+> **Penting:** `/api/cron/run-all` (dispatcher massal) **tidak** ber-rate-limit,
+> jadi hanya dijaga `CRON_SECRET`. Memasang Upstash **tidak** mengubah
 ---
 
 ## 2. Apakah benar-benar tanpa biaya? (ya)
@@ -60,7 +60,7 @@ Data dari halaman harga resmi Upstash (2026):
 
 | Item | Paket **Free** |
 | --- | --- |
-| Harga | **$0 / bulan — permanen** (bukan trial 30 hari) |
+| Harga | **$0 / bulan, permanen** (bukan trial 30 hari) |
 | Perintah/bulan | **500.000** |
 | Ukuran data | 256 MB |
 | Bandwidth/bulan | 10 GB |
@@ -81,7 +81,7 @@ per request (pembulatan aman):
   bawah 500.000/bulan.
 
 **Kesimpulan: kuota gratis 500K perintah/bulan sangat lega untuk 15-an
-pengguna.** Yang perlu Anda jaga hanya: **jangan masukkan kartu kredit** —
+pengguna.** Yang perlu Anda jaga hanya: **jangan masukkan kartu kredit**
 selama tetap di paket Free, saat kuota habis request ditolak/limit, **bukan
 ditagih otomatis**.
 
@@ -101,33 +101,33 @@ bukan gerbang tunggal; gerbang utama tetap sesi/kunci). Jadi memasang Upstash
 
 ## 3. Langkah-langkah (≈5 menit, tanpa kode)
 
-### Langkah 1 — Buat database Redis gratis
+### Langkah 1: Buat database Redis gratis
 
 1. Buka <https://console.upstash.com> → **Sign up** (boleh pakai Google/GitHub).
    **Tidak diminta kartu kredit.**
 2. Klik **Create Database**.
 3. Isi:
    - **Name**: `maganghub-ratelimit`
-   - **Type**: **Regional** (bukan Global — lebih murah/latensi rendah)
+   - **Type**: **Regional** (bukan Global, lebih murah/latensi rendah)
    - **Region**: pilih **Singapore (`ap-southeast-1`)** agar dekat dengan Neon
      (`ap-southeast-1`) dan pengguna Indonesia.
    - **TLS**: aktifkan (default).
 4. Klik **Create**.
 
-### Langkah 2 — Salin dua kredensial REST
+### Langkah 2: Salin dua kredensial REST
 
 Di halaman database → tab **REST API** (atau **Details** → bagian *REST API*).
 Di sana ada dua nilai:
 
-- `UPSTASH_REDIS_REST_URL` — mis. `https://xxxx-12345.upstash.io`
-- `UPSTASH_REDIS_REST_TOKEN` — string panjang (token rahasia)
+- `UPSTASH_REDIS_REST_URL`, mis. `https://xxxx-12345.upstash.io`
+- `UPSTASH_REDIS_REST_TOKEN`, string panjang (token rahasia)
 
 > Gunakan tab **REST API**, bukan **Connect** (yang untuk Redis protocol/TLS
 > biasa). Kode proyek memakai REST (`/pipeline`), bukan SDK/ioredis.
 >
 > Token ini **rahasia**. Jangan ditulis di dokumen, chat, atau commit.
 
-### Langkah 3 — Set di LOKAL (`.env.local`)
+### Langkah 3: Set di LOKAL (`.env.local`)
 
 Buka `.env.local` (buat dari `.env.example` bila belum ada) dan isi:
 
@@ -142,12 +142,12 @@ Lalu uji lokal:
 npm run dev
 ```
 
-Setelah itu lakukan login 11× dengan password salah — percobaan ke-11 harus
+Setelah itu lakukan login 11× dengan password salah, percobaan ke-11 harus
 mendapat **`429`** + header `Retry-After`. Itu bukti store aktif. (Tanpa env
-ini pun perilaku lokal biasanya mirip karena hanya 1 proses — pembeda
+ini pun perilaku lokal biasanya mirip karena hanya 1 proses, pembeda
 sesungguhnya ada di produksi multi-instance.)
 
-### Langkah 4 — Set di VERCEL (produksi)
+### Langkah 4: Set di VERCEL (produksi)
 
 1. Buka <https://vercel.com> → proyek Anda → **Settings** → **Environment
    Variables**.
@@ -167,12 +167,12 @@ sesungguhnya ada di produksi multi-instance.)
 > 📖 Langkah deploy lengkap (Neon, env wajib, cron, verifikasi):
 > [`DEPLOY.md`](DEPLOY.md).
 
-### Langkah 5 — Verifikasi
+### Langkah 5: Verifikasi
 
 1. Di **Upstash console → database → Data Browser**, setelah ada trafik login,
    Anda akan melihat kunci berawalan `rl:` (mis. `rl:login:...`). Itu bukti
    penghitung terpusat dipakai.
-2. Bisa juga cek tab **Metrics**: jumlah perintah/bulan bertambah dari 0 —
+2. Bisa juga cek tab **Metrics**: jumlah perintah/bulan bertambah dari 0
    artinya produksi benar-benar memakai Upstash.
 3. Di Vercel, cukup pastikan **tidak** ada error `Upstash pipeline gagal`
    di Runtime Logs.

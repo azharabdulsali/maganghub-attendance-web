@@ -41,7 +41,7 @@ export const HSTS_HEADER_VALUE =
  * memblokir pengiriman dan dasbor Analytics tetap kosong meski skrip terpasang.
  *
  * Kalau nanti beralih ke Vercel Speed Insights, domain tambahannya
- * `vitals.vercel-insights.com` (sama) — cukup pakai konstanta ini.
+ * `vitals.vercel-insights.com` (sama), cukup pakai konstanta ini.
  *
  * Catatan privasi: ini satu-satunya koneksi keluar yang kita izinkan untuk
  * ANALITIK, dan itu keputusan sadar (lihat README → "Analytics"). Satu-satunya

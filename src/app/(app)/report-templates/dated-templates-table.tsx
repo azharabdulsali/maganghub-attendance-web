@@ -14,7 +14,7 @@
 //   - **Urutan: tanggal TERBARU dulu** (keputusan pemilik). Yang dicari pengguna
 //     hampir selalu template kemarin/hari ini, bukan yang paling lama. Bahan draf
 //     commit memakai urutan sebaliknya (kronologis naik) karena itu menyusun
-//     narasi satu hari — dua kebutuhan berbeda, dua urutan berbeda.
+//     narasi satu hari, dua kebutuhan berbeda, dua urutan berbeda.
 //   - **Teks panjang dipangkas + tombol "Selengkapnya".** Sebelumnya sel memakai
 //     `line-clamp-3` yang memotong teks TANPA cara membukanya, sehingga isi
 //     template tidak bisa diperiksa dari tabel ini sama sekali.
@@ -55,6 +55,17 @@ import { trimToChars } from "@/lib/text-trim";
  */
 const CELL_PREVIEW_CHARS = 120;
 
+/**
+ * Kelas kepala kolom tabel.
+ *
+ * Huruf kecil renggang seperti judul kolom pada buku besar: kepala kolom
+ * memberi tahu ISI kolom, bukan bersaing dengan angka di bawahnya. Karena
+ * dipakai belasan kali per berkas, disimpan sebagai konstanta supaya tidak
+ * ada satu pun kepala kolom yang tertinggal gaya lamanya.
+ */
+const TH_CLASS =
+  "p-3 font-heading text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase";
+
 /** Tanggal yang sedang dibuka "Selengkapnya"-nya (satu per tabel). */
 export type ExpandedDate = string | null;
 
@@ -82,7 +93,7 @@ function Cell({
   expanded: boolean;
   buildExpandHref: (date: string | null) => string;
 }) {
-  if (!text) return <span className="text-foreground/40">,</span>;
+  if (!text) return <span className="text-muted-foreground">,</span>;
 
   const terpotong = text.length > CELL_PREVIEW_CHARS;
 
@@ -110,9 +121,9 @@ function Cell({
 function MobileField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[0.7rem] font-heading text-foreground/50">{label}</dt>
-      <dd className="whitespace-pre-line break-words text-xs leading-relaxed text-foreground/80">
-        {value || <span className="text-foreground/40">,</span>}
+      <dt className="text-[0.7rem] font-heading text-muted-foreground">{label}</dt>
+      <dd className="whitespace-pre-line break-words text-xs leading-relaxed text-muted-foreground">
+        {value || <span className="text-muted-foreground">,</span>}
       </dd>
     </div>
   );
@@ -182,11 +193,11 @@ export default async function DatedTemplatesTable({
 }) {
   // Hanya SATU halaman diambil dari database. Sebelumnya seluruh tabel ditarik
   // tanpa `take` lalu dipotong di memori, dan `page.tsx` menarik daftar yang
-  // SAMA sekali lagi — dua query untuk data yang identik, dan pengguna dengan
+  // SAMA sekali lagi, dua query untuk data yang identik, dan pengguna dengan
   // ratusan template mengangkut semuanya setiap kali halaman dibuka.
   //
   // `take` dihitung dari `end - start`. Saat tabel KOSONG hasilnya 0, dan
-  // Prisma memperlakukan `take: 0` sebagai "tanpa batas" — bukan nol baris.
+  // Prisma memperlakukan `take: 0` sebagai "tanpa batas", bukan nol baris.
   // Hari ini itu tidak berbahaya (tidak ada baris untuk diambil), tapi arti
   // diam-diamnya terlalu mudah berbalik jadi bug bila suatu saat `count` dan
   // `findMany` tidak sinkron. `Math.max(0, ...)` menjaga maksudnya eksplisit.
@@ -216,10 +227,10 @@ export default async function DatedTemplatesTable({
   }));
 
   return (
-    <section className="mt-10 border-2 border-border bg-secondary-background p-4 shadow-shadow sm:p-6">
+    <section className="mt-10 border-2 border-border bg-secondary-background p-4 sm:p-6">
       <div>
         <h2 className="font-heading text-lg">Template Khusus Tanggal Tertentu</h2>
-        <p className="mt-0.5 text-xs text-foreground/60">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Tanggal yang punya template sendiri, terpisah dari template default.
           Tekan <b>Buka</b> untuk menyuntingnya di form di atas. Tanggal yang
           tidak ada di sini memakai template default.
@@ -227,7 +238,7 @@ export default async function DatedTemplatesTable({
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-foreground/60">
+        <p className="mt-4 text-sm text-muted-foreground">
           Belum ada template khusus tanggal. Isi kolom tanggal di form di atas
           untuk membuatnya.
         </p>
@@ -236,7 +247,7 @@ export default async function DatedTemplatesTable({
           {/* Penanda baris yang sedang terbuka. Tanpa ini, pengguna yang membuka
               satu baris lalu menggulir tidak tahu baris mana yang berubah. */}
           {expandedDate ? (
-            <p className="mt-3 text-xs text-foreground/60">
+            <p className="mt-3 text-xs text-muted-foreground">
               Menampilkan teks lengkap tanggal{" "}
               <span className="font-mono font-bold">{expandedDate}</span>.{" "}
               <Link
@@ -264,7 +275,7 @@ export default async function DatedTemplatesTable({
                     <StatusChip date={t.date} today={today} holidays={holidays} />
                   </div>
 
-                  <dl className="space-y-1.5 border-t border-border/40 pt-2">
+                  <dl className="space-y-1.5 border-t border-border pt-2">
                     <MobileField label="Uraian Aktivitas" value={t.activity} />
                     <MobileField
                       label="Pembelajaran yang Diperoleh"
@@ -312,12 +323,12 @@ export default async function DatedTemplatesTable({
           >
             <table className="w-full min-w-[52rem] border-collapse text-sm">
               <thead>
-                <tr className="border-b-2 border-border text-left text-xs text-foreground/60">
-                  <th className="p-3 font-heading">Tanggal</th>
-                  <th className="p-3 font-heading">Uraian Aktivitas</th>
-                  <th className="p-3 font-heading">Pembelajaran yang Diperoleh</th>
-                  <th className="p-3 font-heading">Kendala yang Dialami</th>
-                  <th className="p-3 text-right font-heading">Aksi</th>
+                <tr className="border-b-2 border-border text-left">
+                  <th className={TH_CLASS}>Tanggal</th>
+                  <th className={TH_CLASS}>Uraian Aktivitas</th>
+                  <th className={TH_CLASS}>Pembelajaran yang Diperoleh</th>
+                  <th className={TH_CLASS}>Kendala yang Dialami</th>
+                  <th className={`${TH_CLASS} text-right`}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -326,7 +337,7 @@ export default async function DatedTemplatesTable({
                   return (
                     <tr
                       key={t.date}
-                      className="border-b border-border/40 align-top last:border-b-0"
+                      className="border-b border-border align-top last:border-b-0"
                     >
                       <td className="whitespace-nowrap p-3">
                         <span className="block font-mono text-xs font-bold tabular-nums">
@@ -336,7 +347,7 @@ export default async function DatedTemplatesTable({
                           <StatusChip date={t.date} today={today} holidays={holidays} />
                         </span>
                       </td>
-                      <td className="max-w-xs p-3 text-xs text-foreground/80">
+                      <td className="max-w-xs p-3 text-xs text-muted-foreground">
                         <Cell
                           text={t.activity}
                           date={t.date}
@@ -344,7 +355,7 @@ export default async function DatedTemplatesTable({
                           buildExpandHref={buildExpandHref}
                         />
                       </td>
-                      <td className="max-w-xs p-3 text-xs text-foreground/80">
+                      <td className="max-w-xs p-3 text-xs text-muted-foreground">
                         <Cell
                           text={t.learning}
                           date={t.date}
@@ -352,7 +363,7 @@ export default async function DatedTemplatesTable({
                           buildExpandHref={buildExpandHref}
                         />
                       </td>
-                      <td className="max-w-xs p-3 text-xs text-foreground/80">
+                      <td className="max-w-xs p-3 text-xs text-muted-foreground">
                         <Cell
                           text={t.obstacles}
                           date={t.date}

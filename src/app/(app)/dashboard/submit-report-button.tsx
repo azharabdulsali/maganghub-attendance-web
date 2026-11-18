@@ -90,7 +90,6 @@ export default function SubmitReportButton() {
       <Button
         onClick={kirim}
         disabled={loading}
-        variant="success"
         className="w-full sm:w-auto"
         title={loading ? "Mengirim…" : "Kirim Absen Hari Ini"}
         aria-label={loading ? "Mengirim absen" : "Kirim Absen Hari Ini"}
@@ -110,9 +109,9 @@ export default function SubmitReportButton() {
           <p className="font-heading">
             {STATUS_LABEL[hasil.status] ?? "Hasil pengiriman"}
           </p>
-          <p className="mt-1 text-foreground/80">{hasil.message}</p>
+          <p className="mt-1 text-muted-foreground">{hasil.message}</p>
           {hasil.date && (
-            <p className="mt-1 text-xs text-foreground/60">
+            <p className="mt-1 text-xs text-muted-foreground">
               Tanggal target: {hasil.date}
             </p>
           )}

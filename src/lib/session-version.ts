@@ -49,7 +49,7 @@ export function versiSesiDariKlien(session: unknown): number | null {
  *
  * Karena datang dari klien, hanya nilai boolean yang diterima; selain itu
  * `null` (abaikan). Perhatikan arahnya yang AMAN: klien diizinkan menurunkan
- * flag ini (`true → false`) — itu memang yang diinginkan setelah ganti sandi —
+ * flag ini (`true → false`), itu memang yang diinginkan setelah ganti sandi
  * sedangkan sumber kebenaran sesungguhnya tetap DB pada permintaan berikutnya
  * (callback `jwt` menimpa dari kolom setiap kali token diverifikasi).
  */
@@ -64,14 +64,14 @@ export function wajibGantiDariKlien(session: unknown): boolean | null {
  *
  * Kenapa harus ada: `token.role` adalah POTRET saat login. Tanpa penyegaran,
  * admin yang perannya diturunkan (atau pengguna yang dinaikkan) terus memakai
- * peran lamanya sampai token kedaluwarsa — dan semua penjagaan admin membaca
+ * peran lamanya sampai token kedaluwarsa, dan semua penjagaan admin membaca
  * `session.user.role`, yang berasal dari token itu. Itu berarti pencabutan
  * peran bisa tertunda berjam-jam/berhari-hari.
  *
  * Aturan:
  *   - DB yang menentukan; nilai token hanya dipakai bila DB tak terbaca.
  *   - Peran tak dikenal dari DB diperlakukan sebagai `USER` (menutup, bukan
- *     membuka) — sama seperti `isAdminRole` yang default ke `USER`.
+ *     membuka), sama seperti `isAdminRole` yang default ke `USER`.
  *
  * @param peranToken peran di token (potret saat login)
  * @param peranDb    peran di DB saat permintaan ini, atau `null` bila tak ada

@@ -1,6 +1,6 @@
 // src/lib/credential-session.test.ts: uji simpan/hidup sesi Monev, tanpa DB nyata.
 //
-// Fokus utama: `persistRotatedRefreshToken` — karena portal MEROTASI
+// Fokus utama: `persistRotatedRefreshToken`, karena portal MEROTASI
 // `monev_refresh_token` tiap `POST /auth/refresh` sukses. Kalau token baru tidak
 // tersimpan, refresh berikutnya memakai token yang sudah dicabut → 401 palsu.
 

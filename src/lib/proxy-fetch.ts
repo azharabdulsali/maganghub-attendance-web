@@ -5,12 +5,12 @@
 // Portal login SSO Kemnaker (`account.kemnaker.go.id`) dijaga **Cloudflare
 // Managed Challenge**. Dari IP datacenter (mis. Vercel) challenge itu tidak
 // bisa diselesaikan tanpa browser, sehingga langkah `sso-prime` (GET /auth)
-// gagal `403` dengan `cf-mitigated: challenge` — jauh sebelum password dicek.
+// gagal `403` dengan `cf-mitigated: challenge`, jauh sebelum password dicek.
 //
 // Repo referensi `maganghub-bot-attendance` (yang terbukti berhasil) menembus
 // ini dengan **proxy residensial**: `HttpsProxyAgent` + `MAGANGHUB_PROXY_URL`.
 // Proxy membuat request muncul dari IP residensial (IP pengguna/rumah), tempat
-// challenge Cloudflare lolos secara wajar — **tanpa** mengecoh CAPTCHA/OTP,
+// challenge Cloudflare lolos secara wajar, **tanpa** mengecoh CAPTCHA/OTP,
 // tanpa memalsukan identitas orang lain.
 //
 // DESAIN (sengaja minim-kejutan)
@@ -18,7 +18,7 @@
 // - **Opsional.** Bila `MAGANGHUB_PROXY_URL` kosong/tidak valid → `fetch` biasa,
 //   perilaku lama TIDAK berubah sama sekali.
 // - **Hanya** dipakai untuk host yang memang dijaga Cloudflare (SSO). API Monev
-//   TIDAK diblokir (§7 docs), jadi TIDAK lewat proxy — hemat kuota & risiko.
+//   TIDAK diblokir (§7 docs), jadi TIDAK lewat proxy, hemat kuota & risiko.
 // - Proxy URL TIDAK PERNAH ditulis ke log/pesan error (bisa memuat sandi).
 //
 // Catatan teknis: Node tidak menerima proxy langsung di `fetch`. Dipakai
@@ -51,7 +51,7 @@ export function getProxyUrl(): string | undefined {
   }
 }
 
-/** True bila proxy aktif — dipakai lint/diagnostik, bukan untuk log isi URL. */
+/** True bila proxy aktif, dipakai lint/diagnostik, bukan untuk log isi URL. */
 export function isProxyEnabled(): boolean {
   return getProxyUrl() !== undefined;
 }

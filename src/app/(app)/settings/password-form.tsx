@@ -199,7 +199,6 @@ export default function PasswordForm({
       <div className="flex flex-row items-center justify-end gap-3">
         <Button
           type="submit"
-          variant="success"
           disabled={saving || !lengkap || samaDenganLama}
           title={
             saving

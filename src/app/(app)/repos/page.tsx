@@ -2,13 +2,14 @@
 //
 // Server component: memeriksa sesi & mengambil status awal, lalu menyerahkan
 // tampilan ke form (client component). **Token tidak pernah sampai ke halaman
-// ini**, hanya Boolean `hasToken` — sama seperti kredensial Monev.
+// ini**, hanya Boolean `hasToken`, sama seperti kredensial Monev.
 
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { gitCommitsEnabled } from "@/lib/git-repo-service";
+import { PageHeader } from "@/components/page-header";
 import RepoForm from "./repo-form";
 
 export default async function ReposPage() {
@@ -34,12 +35,10 @@ export default async function ReposPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">Repo Git</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Pakai commit harian sebagai bahan draf laporan (opsional)
-        </p>
-      </header>
+      <PageHeader
+        title="Repo Git"
+        description="Pakai commit harian sebagai bahan draf laporan (opsional)."
+      />
 
       <RepoForm
         featureEnabled={gitCommitsEnabled()}

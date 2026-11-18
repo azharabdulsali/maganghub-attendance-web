@@ -3,7 +3,7 @@
 // Kenapa membaca dari token, bukan melacak kolom DB:
 //   Refresh token (`monev_refresh_token`) adalah **JWT** dengan masa berlaku
 //   30 hari (docs/MONEV-API.md §4.4, `Max-Age=2592000`). Klaim `exp`/`iat`
-//   standar sudah memberi tahu kapan ia kedaluwarsa — tanpa perlu kolom DB
+//   standar sudah memberi tahu kapan ia kedaluwarsa, tanpa perlu kolom DB
 //   baru (proyek ini memakai `prisma db push`, bukan migrasi, jadi menambah
 //   kolom = operasi eksternal ke Neon, tidak sepadan untuk sekadar pengingat).
 //
@@ -22,7 +22,7 @@ export const REFRESH_EXPIRY_WARNING_MS = 7 * 24 * 60 * 60 * 1000;
  * Dekode payload sebuah JWT TANPA memverifikasi tanda tangannya.
  *
  * Aman di sini karena kita HANYA membaca `exp` dari token yang SUDAH tersimpan
- * & terdekripsi di server — token itu milik pengguna yang sudah terautentikasi,
+ * & terdekripsi di server, token itu milik pengguna yang sudah terautentikasi,
  * dan hasilnya hanya dipakai untuk menampilkan pengingat. Tidak ada keputusan
  * keamanan (izin/aksi) yang bergantung pada hasil ini, jadi verifikasi
  * signature tidak diperlukan.
@@ -72,7 +72,7 @@ export function refreshTokenExpiresAt(token: string): Date | null {
 
 /**
  * True bila refresh token akan kedaluwarsa dalam <= 7 hari ke depan (tetapi
- * belum lewat). Token yang sudah lewat TIDAK memicu ini — kondisi itu ditandai
+ * belum lewat). Token yang sudah lewat TIDAK memicu ini, kondisi itu ditandai
  * oleh jalur `SESSION_DEAD`/status INVALID, bukan pengingat "segera habis".
  *
  * `null` (umur tak diketahui) → selalu `false`: tidak ada peringatan palsu.

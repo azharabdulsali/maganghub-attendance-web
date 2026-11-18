@@ -7,7 +7,7 @@
 //   - Klien mengecek status ke GET /api/reminder secara berkala (default ~45s).
 //   - Bila user belum absen & sudah lewat jam yang diset admin & hari ini hari
 //     kerja, popup tampil. Semua keputusan itu dihitung SERVER; komponen ini
-//     hanya menampilkan `show` yang diterima — aturan tidak diduplikasi di sini.
+//     hanya menampilkan `show` yang diterima, aturan tidak diduplikasi di sini.
 //   - Bisa ditutup (dismiss) TAPI hanya sementara: setelah ~10 menit, jika
 //     kondisinya masih "belum absen", popup muncul lagi. Ini memang disengaja
 //     ("lebih nagging") agar user terdorong menyelesaikan absen.

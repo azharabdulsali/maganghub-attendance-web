@@ -98,7 +98,7 @@ beforeEach(() => {
   encryptMock.mockReturnValue({ ciphertext: "C", iv: "I", authTag: "T" });
   updateMock.mockResolvedValue({ userId: "u1" });
   // `updateMany` mengembalikan `{ count }`, bukan baris. Nilai ini dipakai
-  // `.catch()` di service, jadi HARUS promise — bukan undefined.
+  // `.catch()` di service, jadi HARUS promise, bukan undefined.
   updateManyMock.mockResolvedValue({ count: 1 });
   findUniqueMock.mockResolvedValue(baris());
   fetchCommitsMock.mockResolvedValue([commit()]);
@@ -233,7 +233,7 @@ describe("setRepoEnabled", () => {
     // Skenario nyata: pengguna menghapus repo di tab lain tepat setelah
     // `findUnique` melihatnya ada. Tanpa penanganan, galat Prisma lolos ke
     // rute dan pengguna melihat 500 padahal kondisinya cuma "repo sudah tidak
-    // ada" — yang seharusnya 404.
+    // ada", yang seharusnya 404.
     updateMock.mockRejectedValue(
       Object.assign(new Error("Record to update not found."), { code: "P2025" }),
     );
@@ -264,7 +264,7 @@ describe("resolveCommits", () => {
   // BUG NYATA (dilaporkan pemilik repo): field Branch ADA di form dan tersimpan
   // benar di DB, tetapi `resolveCommits` tidak pernah meneruskannya ke
   // `fetchCommits`. Akibatnya API memakai DEFAULT BRANCH repo, dan commit di
-  // branch kerja (mis. dev-zar) tidak pernah terlihat — pesannya
+  // branch kerja (mis. dev-zar) tidak pernah terlihat, pesannya
   // "Tidak ada commit pada hari itu" padahal commit-nya ada.
   it("meneruskan branch tersimpan ke provider", async () => {
     findUniqueMock.mockResolvedValue(baris({ branch: "dev-zar" }));
@@ -327,7 +327,7 @@ describe("resolveCommits", () => {
     expect(arg.repo).toBe("jadwalmagang-app");
   });
 
-  it("menolak GitLab bertingkat? Tidak — GitHub yang menolak, dengan pesan jelas", async () => {
+  it("menolak GitLab bertingkat? Tidak, GitHub yang menolak, dengan pesan jelas", async () => {
     findUniqueMock.mockResolvedValue(
       baris({ provider: "GITHUB", repoPath: "grup/sub/proyek" }),
     );

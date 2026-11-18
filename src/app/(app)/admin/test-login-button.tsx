@@ -69,9 +69,9 @@ export function TestLoginButton({
     <Button
       type="button"
       // Biru utama (`default`): kolom Aksi sudah memakai hijau (Jalankan),
-      // netral (Atur ulang), dan merah (Hapus). `neutral` di sini bentrok
-      // dengan "Atur ulang", jadi pakai `default` agar keempat tombol
-      // terbedakan — tetap berbayangan + animasi tekan.
+      // netral (Atur ulang), kuning (Ubah peran), dan merah (Hapus).
+      // `neutral` di sini bentrok dengan "Atur ulang", jadi pakai `default`
+      // agar kelima tombol terbedakan, tetap berbayangan + animasi tekan.
       variant="default"
       size="icon-sm"
       onClick={run}

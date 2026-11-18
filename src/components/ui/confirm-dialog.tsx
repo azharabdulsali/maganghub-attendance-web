@@ -45,7 +45,7 @@ interface ConfirmDialogBaseProps {
  * Dua bentuk yang saling eksklusif:
  *   - dialog konfirmasi biasa: punya `onConfirm` dan merender dua tombol;
  *   - dialog hasil/informasi (`hideConfirm`): hanya satu tombol tutup, jadi
- *     `onConfirm` tidak ada — penutupan ditangani lewat `onOpenChange`.
+ *     `onConfirm` tidak ada, penutupan ditangani lewat `onOpenChange`.
  *
  * Dibuat union, bukan `onConfirm?` opsional, supaya pemanggil tidak bisa lupa
  * memberi `onConfirm` pada dialog yang benar-benar butuh konfirmasi.

@@ -2,7 +2,7 @@
 //
 // Dibedakan dari `src/app/not-found.tsx` karena berkas ini dirender di dalam
 // `(app)/layout.tsx`, sehingga sidebar tetap ada dan tawarannya relevan untuk
-// pengguna yang sudah masuk (Dasbor, Riwayat) — bukan "Masuk" seperti versi
+// pengguna yang sudah masuk (Dasbor, Riwayat), bukan "Masuk" seperti versi
 // publik.
 //
 // Kapan ini terpakai: `notFound()` yang dipanggil dari server component di
@@ -28,14 +28,14 @@ export default function AppNotFound() {
         <CardHeader>
           <div className="mb-2 flex items-center gap-2">
             <Compass aria-hidden="true" className="size-5 shrink-0" />
-            <span className="text-sm font-base text-foreground/70">
+            <span className="text-sm font-base text-muted-foreground">
               Galat 404
             </span>
           </div>
           <CardTitle>Halaman tidak ditemukan</CardTitle>
           <CardDescription>
             Alamat ini tidak ada di dalam aplikasi. Menu di samping tetap bisa
-            dipakai — pilih halaman yang Anda butuhkan.
+            dipakai, pilih halaman yang Anda butuhkan.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">

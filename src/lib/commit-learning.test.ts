@@ -68,7 +68,7 @@ describe("detectChangeKind", () => {
   });
 });
 
-describe("learningFromCommits — tidak mengarang", () => {
+describe("learningFromCommits, tidak mengarang", () => {
   it("tanpa commit → null (bukan teks kosong yang terlihat terisi)", () => {
     expect(learningFromCommits([])).toBeNull();
   });
@@ -83,7 +83,7 @@ describe("learningFromCommits — tidak mengarang", () => {
 
   // Tes ini mengunci guard "tidak ada bukti" secara TERPISAH dari validasi
   // panjang. Tanpa pemisahan itu, guard bisa dihapus dan tes tetap hijau
-  // (teks kosong tetap ditolak karena < MIN_REPORT_LENGTH) — tes yang lulus
+  // (teks kosong tetap ditolak karena < MIN_REPORT_LENGTH), tes yang lulus
   // secara kebetulan tidak menjaga apa pun. Karena itu di sini kata kunci
   // dibuat cukup panjang agar, bila guard hilang, hasilnya AKAN lolos validasi
   // panjang dan tes ini menjadi merah.
@@ -98,7 +98,7 @@ describe("learningFromCommits — tidak mengarang", () => {
   });
 });
 
-describe("learningFromCommits — berbasis bukti", () => {
+describe("learningFromCommits, berbasis bukti", () => {
   it("memakai topik dan jenis perubahan dari commit", () => {
     const hasil = learningFromCommits([commit("fix: perbaiki filter tanggal laporan")]);
     expect(hasil).not.toBeNull();
@@ -144,7 +144,7 @@ describe("learningFromCommits — berbasis bukti", () => {
   // TOPIK tidak boleh mengklaim apa pun soal isi kepala pengguna.
   //
   // Tes ini ada karena versi sebelumnya lolos semua tes lain sambil memuat
-  // "saya mempelajari penerapannya secara langsung" di setiap keluaran —
+  // "saya mempelajari penerapannya secara langsung" di setiap keluaran
   // klaim tanpa dasar yang selalu lolos karena tidak ada yang memeriksanya.
   it("kalimat topik TIDAK mengklaim 'mempelajari'", () => {
     const hasil = learningFromCommits([commit("fix: bug simpan data")]);
@@ -166,14 +166,14 @@ describe("learningFromCommits — berbasis bukti", () => {
     expect(hasil).not.toBeNull();
     const jumlah = (hasil!.match(/mempelajari|saya belajar/gi) ?? []).length;
     // Maksimal dua jenis (slice(0,2)), dan tiap jenis muncul paling banyak
-    // sekali — bukan satu per commit, bukan satu tambahan dari kalimat topik.
+    // sekali, bukan satu per commit, bukan satu tambahan dari kalimat topik.
     expect(jumlah).toBeLessThanOrEqual(2);
   });
 
   // BATAS ATAS 200 KARAKTER (keputusan pemilik: draf harus 100-200 karakter).
   // Dua-duanya wajib: batas bawah dari `MIN_REPORT_LENGTH` (dipenuhi penutup
   // netral), batas atas dari pemotongan di modul ini. Sebelum perbaikan, modul
-  // ini TIDAK punya batas atas sama sekali — pesan commit panjang menghasilkan
+  // ini TIDAK punya batas atas sama sekali, pesan commit panjang menghasilkan
   // kolom 400+ karakter yang ditolak portal, padahal drafter lain sudah dibatasi.
   it("tidak pernah melewati batas atas 200 karakter", () => {
     // Judul sangat panjang: satu commit saja sudah cukup membuat keluaran
@@ -220,7 +220,7 @@ describe("learningFromCommits — berbasis bukti", () => {
     ]);
     expect(hasil).not.toBeNull();
     // Yang diperiksa BUKAN "tidak ada elipsis" (elipsis memang wajar), juga
-    // bukan "elipsis tidak didahului huruf" — `"…teks sah…"` didahului huruf
+    // bukan "elipsis tidak didahului huruf", `"…teks sah…"` didahului huruf
     // "h" dan itu SAH, karena "sah" adalah kata utuh. Yang salah adalah
     // elipsis yang menempel pada PENGGAL kata, dan itu tidak bisa dibedakan
     // dari bentuk teksnya saja. Karena itu yang diperiksa adalah kata SEBELUM

@@ -13,10 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { kodeDetailDari, kodeErrorDari, pesanUntukLogin } from "@/lib/login-messages";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
@@ -53,7 +50,7 @@ export default function LoginForm() {
    *   - kotak inline di atas tombol: menempel pada form, tetap ada selama
    *     pengguna memperbaiki isian.
    *
-   * Sebelumnya hanya ada kotak inline — dan pada jalur redirect tidak pernah
+   * Sebelumnya hanya ada kotak inline, dan pada jalur redirect tidak pernah
    * muncul karena `fetch` mengikuti 302 ke `/login?error=...` (HTML), sehingga
    * `res.ok` true dan `target` jatuh ke `/dashboard`: tidak ada pesan, lalu
    * `router.push` memantul balik ke login tanpa penjelasan.
@@ -163,12 +160,21 @@ export default function LoginForm() {
 
   return (
     <main className="pt-safe pb-safe pl-safe pr-safe mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 py-16">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Masuk</CardTitle>
-          <CardDescription>MagangHub Autoabsen</CardDescription>
-        </CardHeader>
+      {/* Kepala halaman di LUAR kartu: identitas halaman tidak perlu dibingkai,
+          yang dibingkai hanya isian. Bentuknya sama dengan `PageHeader` di
+          dalam aplikasi (judul besar + garis tebal), jadi halaman masuk tidak
+          terasa seperti halaman lain yang kebetulan mirip. */}
+      <header className="mb-6 border-b-2 border-border pb-5">
+        <p className="font-heading text-[0.6875rem] tracking-[0.18em] uppercase text-muted-foreground">
+          MagangHub Autoabsen
+        </p>
+        <h1 className="mt-2 font-heading text-3xl leading-[1.05]">Masuk</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Absensi otomatis dari template laporan Anda.
+        </p>
+      </header>
 
+      <Card>
         <CardContent>
           {justRegistered && (
             <Message tone="good" className="mb-4">
@@ -224,7 +230,6 @@ export default function LoginForm() {
               type="submit"
               disabled={loading}
               className="w-full"
-              variant="success"
               title={loading ? "Memproses…" : "Masuk"}
               aria-label={loading ? "Memproses masuk" : "Masuk"}
             >

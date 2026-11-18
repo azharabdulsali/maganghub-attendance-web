@@ -19,13 +19,15 @@ import {
 } from "@/lib/audit-log";
 import SubmitReportButton from "./submit-report-button";
 import StatsCards from "./stats-cards";
-import StatusStrip from "./status-strip";
+import StatusCalendar from "./status-calendar";
 import FilterBar from "@/components/filter-bar";
 import { getDashboardStats, todayJakartaISODate } from "./stats-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Message } from "@/components/ui/message";
+import { PageHeader } from "@/components/page-header";
+import { Stamp } from "@/components/ui/stamp";
 import { Disclosure } from "@/components/ui/collapsible";
 
 // Dashboard, halaman utama setelah login, di URL /dashboard.
@@ -137,12 +139,10 @@ export default async function DashboardPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="font-heading text-2xl sm:text-3xl">Dashboard</h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Ringkasan absensi Anda
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        description="Ringkasan absensi dan kesiapan akun Anda."
+      />
 
       {/* Banner peringatan, hanya muncul bila ada yang perlu dibereskan.
           Memakai Message tone="bad" (merah) supaya sejalan dengan bahasa nada
@@ -161,7 +161,7 @@ export default async function DashboardPage({
                       ? "Sesi Monev tidak valid"
                       : "Token Monev belum ada"}
                 </p>
-                <p className="mt-1 text-xs text-foreground/80">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {belumAdaKredensial
                     ? "Simpan kredensial Monev untuk melanjutkan."
                     : perluPerhatian
@@ -198,7 +198,7 @@ export default async function DashboardPage({
               <CircleAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
               <div>
                 <p className="font-heading">Sesi Monev segera berakhir</p>
-                <p className="mt-1 text-xs text-foreground/80">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {`Sesi berakhir dalam ±${tokenHealth.daysLeft} hari. Perbarui sebelum habis.`}
                 </p>
               </div>
@@ -237,37 +237,14 @@ export default async function DashboardPage({
 
       <StatsCards stats={stats} />
 
-      {/* Panel "Status Hari Ini": jawaban singkat untuk pertanyaan utama
-          pengguna — hari ini sudah kirim belum. Rincian SYARAT (kredensial,
-          token, template) sengaja tidak diulang di sini; itu tugas kartu
-          "Kesiapan akun" di bawah, supaya satu fakta hanya muncul sekali. */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Status Hari Ini</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs uppercase tracking-wider text-foreground/60">
-              {hariIni}
-            </span>
-            <Badge tone={sudahKirimHariIni ? "good" : "neutral"}>
-              {sudahKirimHariIni ? "Sudah dikirim" : "Belum dikirim"}
-            </Badge>
-          </div>
-          <p className="text-sm text-foreground/70">
-            {sudahKirimHariIni
-              ? "Laporan hari ini sudah terkirim."
-              : siapKirim
-                ? "Siap dikirim hari ini."
-                : "Lengkapi kesiapan akun di bawah sebelum mengirim."}
-          </p>
-        </CardContent>
-      </Card>
+      {/* Panel "Status Hari Ini" digabung ke kartu aksi di bawah: keduanya
+          menjawab satu pertanyaan yang sama, dan dulu pengguna harus membaca
+          dua kartu untuk tahu "hari ini sudah kirim belum". Rincian SYARAT
+          tetap di kartu "Kesiapan akun" supaya satu fakta hanya muncul sekali. */}
 
-      {/* Kesiapan akun: 4 syarat sebelum absensi bisa dikirim. Dulu berupa
-          daftar centang sederhana; sekarang punya progres + tautan perbaikan
-          per poin, sehingga pengguna tahu PERSIS apa yang kurang dan ke mana
-          harus pergi. Poin keempat adalah ringkasan dari ketiga poin di atas. */}
+      {/* Kesiapan akun: 4 syarat sebelum absensi bisa dikirim. Kartu ini
+          informatif (tidak bisa ditekan), jadi tanpa bayangan keras; bayangan
+          disimpan untuk tombol dan kartu aksi. */}
       <Card className="mb-6">
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -279,7 +256,7 @@ export default async function DashboardPage({
         </CardHeader>
         <CardContent className="space-y-4">
           <div
-            className="h-2.5 w-full overflow-hidden rounded-full border-2 border-border bg-secondary-background"
+            className="h-2.5 w-full overflow-hidden rounded-base border-2 border-border bg-secondary-background"
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={4}
@@ -339,23 +316,43 @@ export default async function DashboardPage({
         </CardContent>
       </Card>
 
-      {/* Aksi utama halaman ditaruh SEBELUM grafik: pengguna yang buru-buru
-          tidak perlu menggulir melewati analitik untuk menemukan tombol kirim.
-          Satu kartu penuh + border aksen supaya jelas ini tindakan utama. */}
-      <Card className="mb-6 border-main">
-        <CardHeader>
-          <CardTitle>Kirim Absen Hari Ini</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      {/* Aksi utama halaman, sekaligus jawaban "hari ini sudah kirim belum".
+          Ditaruh sebelum kalender: pengguna yang buru-buru tidak perlu
+          menggulir melewati analitik untuk menemukan tombol kirim.
+
+          Bentuknya sengaja BUKAN kartu biasa: cap status (Stamp) hanya dipakai
+          untuk status pengiriman, dan di sinilah satu-satunya tempat yang
+          benar-benar mengabarkannya. Tombol & pesan hasil ditaruh satu kolom
+          penuh supaya pesan sukses/gagal tidak terjepit di kolom sempit. */}
+      <section className="mb-6 border-2 border-border bg-secondary-background p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="font-heading text-2xl">Kirim absen hari ini</h2>
+          <Stamp tone={sudahKirimHariIni ? "good" : "neutral"}>
+            {sudahKirimHariIni ? "Terkirim" : "Belum terkirim"}
+          </Stamp>
+        </div>
+        {/* Tanggal ditulis sebagai teks biasa, bukan `font-mono` berhuruf
+            besar: isinya kalimat, bukan string mesin. */}
+        <p className="mt-2 text-xs text-muted-foreground">{hariIni}</p>
+        <p className="mt-1 text-sm">
+          {sudahKirimHariIni
+            ? "Laporan hari ini sudah terkirim."
+            : siapKirim
+              ? "Siap dikirim hari ini."
+              : "Lengkapi kesiapan akun di atas sebelum mengirim."}
+        </p>
+        <div className="mt-4">
           <SubmitReportButton />
+        </div>
+        <div className="mt-4">
           <Disclosure summary="Kapan laporan tidak dikirim?">
             Akhir pekan, hari libur nasional, dan tanggal setelah akhir program
             otomatis dilewati. Laporan hanya untuk hari ini (zona Asia/Jakarta).
           </Disclosure>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <StatusStrip trend={trend} range={range} />
+      <StatusCalendar trend={trend} range={range} />
     </div>
   );
 }
@@ -394,21 +391,14 @@ function ReadinessItem({
       <Icon
         className={cn(
           "mt-0.5 size-5 shrink-0",
-          ok ? "text-success" : "text-foreground/40",
+          ok ? "text-success" : "text-muted-foreground",
         )}
         aria-hidden
       />
       <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            "text-sm font-heading",
-            ok ? "text-foreground" : "text-foreground/80",
-          )}
-        >
-          {label}
-        </p>
+        <p className="font-heading text-sm">{label}</p>
         {hint && (
-          <p className="mt-0.5 text-xs text-foreground/60">{hint}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
         )}
       </div>
       {!ok && href && actionLabel && (

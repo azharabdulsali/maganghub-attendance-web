@@ -11,7 +11,7 @@
 // sedangkan di sini tanggal LIBUR (Sabtu/Minggu + libur nasional) dan tanggal
 // LAMPAU (sebelum hari ini) memang tidak boleh dipilih. Aturan itu diteruskan
 // lewat matcher `disabled` react-day-picker, jadi perilakunya sama persis
-// dengan sebelumnya — hanya kulitnya yang sekarang memakai komponen resmi.
+// dengan sebelumnya, hanya kulitnya yang sekarang memakai komponen resmi.
 //
 // Aturan libur memakai `isHoliday` yang SAMA dengan jalur kirim, dan hari ini
 // dihitung dari jam perangkat, jadi tidak ada dua daftar yang bisa berbeda.
@@ -22,7 +22,7 @@
 // sah untuk hari ini (lihat report-policy.ts).
 //
 // PENGECUALIAN: halaman yang SEDANG mengelola daftar libur (/admin/holidays)
-// justru perlu memilih tanggal lampau, jadi di sana dioper `unrestricted` —
+// justru perlu memilih tanggal lampau, jadi di sana dioper `unrestricted`
 // pembatas tanggal lampau/daftar libur/batas bulan dilepas. Sabtu/Minggu TETAP
 // nonaktif karena server menolak mendaftarkannya. Halaman lain tetap memakai
 // default (terbatas) supaya perilakunya tidak berubah.
@@ -85,7 +85,7 @@ export interface DatePickerProps {
   holidays?: string[];
   /**
    * Bila `true`, pembatas tanggal LAMPAU, daftar libur, dan batas bulan
-   * dilepas — dipakai halaman yang SEDANG mengelola daftar libur. Sabtu/Minggu
+   * dilepas, dipakai halaman yang SEDANG mengelola daftar libur. Sabtu/Minggu
    * TETAP dinonaktifkan karena server menolak mendaftarkan akhir pekan
    * (`validateHolidayInput`): membiarkannya bisa dipilih hanya menghasilkan
    * kegagalan simpan yang membingungkan. Default `false`.
@@ -111,7 +111,7 @@ export function DatePicker({
   // pengganti langsung dari pengecekan `libur`/`lampau` versi lama.
   //
   // Bila `unrestricted` (halaman kelola libur), tanggal lampau & daftar libur
-  // dilepas — di sana justru tanggal itulah yang mau didaftarkan. Sabtu/Minggu
+  // dilepas, di sana justru tanggal itulah yang mau didaftarkan. Sabtu/Minggu
   // TETAP nonaktif karena server menolaknya; membiarkannya dipilih hanya
   // menghasilkan kegagalan simpan.
   //
@@ -150,7 +150,7 @@ export function DatePicker({
               className="w-full justify-start text-left font-normal"
             >
               <CalendarIcon className="mr-2 size-4" aria-hidden />
-              <span className={cn("truncate", !value && "text-foreground/50")}>
+              <span className={cn("truncate", !value && "text-muted-foreground")}>
                 {value ? formatDisplay(value) : placeholder}
               </span>
             </Button>
@@ -174,7 +174,7 @@ export function DatePicker({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="cursor-pointer px-1 py-1.5 text-xs text-foreground/60 underline underline-offset-4 hover:text-foreground"
+              className="cursor-pointer px-1 py-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
             >
               Tutup
             </button>
@@ -184,7 +184,7 @@ export function DatePicker({
                 onChange(null);
                 setOpen(false);
               }}
-              className="cursor-pointer px-1 py-1.5 text-xs text-foreground/60 underline underline-offset-4 hover:text-foreground"
+              className="cursor-pointer px-1 py-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
             >
               Kosongkan
             </button>

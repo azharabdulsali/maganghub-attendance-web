@@ -291,7 +291,7 @@ export const ALL_USERS = "ALL";
  * yang tahu daftarnya. Di sini hanya dipastikan bentuknya wajar (trim, tolak
  * kosong/terlalu panjang/berisi karakter aneh) supaya URL ngawur tidak
  * diteruskan mentah ke Prisma. Bila id tidak ada, query mengembalikan nol baris
- * dan tabel menampilkan pesan kosong — bukan error.
+ * dan tabel menampilkan pesan kosong, bukan error.
  */
 export function parseUserFilter(raw: string | undefined): string {
   if (!raw) return ALL_USERS;

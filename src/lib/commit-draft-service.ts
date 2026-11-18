@@ -11,7 +11,7 @@
 // ATURAN YANG DIJAGA
 // ------------------
 // 1. **Suntingan manusia tidak pernah ditimpa.** Bila baris bertanggal untuk
-//    hari itu sudah ada — apa pun asalnya — fungsi ini TIDAK menulis apa pun.
+//    hari itu sudah ada, apa pun asalnya, fungsi ini TIDAK menulis apa pun.
 //    Cron jalan berkali-kali sehari (atau di-retry), dan commit bisa bertambah
 //    setelah pengguna menyunting draf. Menimpanya berarti membuang pekerjaan
 //    pengguna tanpa persetujuan.
@@ -31,7 +31,7 @@ import type { ReportContent } from "./report-source";
 export type CommitDraftOutcome =
   /** Disusun BARU dan sudah tersimpan sebagai template bertanggal. */
   | { kind: "SAVED"; content: ReportContent }
-  /** Sudah ada template bertanggal hari itu (tulisan/pra-susun sendiri) — tidak ditimpa. */
+  /** Sudah ada template bertanggal hari itu (tulisan/pra-susun sendiri), tidak ditimpa. */
   | { kind: "ALREADY_EXISTS" }
   /** Tidak ada commit, atau commit tidak layak dijadikan bahan. */
   | { kind: "NO_COMMITS"; reason: string }
@@ -80,7 +80,7 @@ export async function prepareCommitDraft(
     // Kolom "Pembelajaran" diturunkan dari BUKTI commit (jenis perubahan &
     // topiknya), bukan dikarang dari template. Bila bukti tidak cukup,
     // `learningFromCommits` mengembalikan `null` dan penyusun memakai kalimat
-    // netral — kolom tidak pernah diisi klaim tanpa dasar.
+    // netral, kolom tidak pernah diisi klaim tanpa dasar.
     const learning = learningFromCommits(hasilGit.commits) ?? undefined;
     const draf = await getDrafter().draft({ keywords: bahan.keywords, date, learning });
     const content: ReportContent = {

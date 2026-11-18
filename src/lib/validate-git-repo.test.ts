@@ -5,7 +5,7 @@
 // `repoPath` adalah satu-satunya bagian URL API git yang berasal dari pengguna.
 // Kalau lolos karakter aneh (`..`, `//`, `@`, spasi), permintaan bisa dibelokkan
 // ke host/path lain. `buildApiPath` punya penjaga sendiri, tetapi skema ini
-// adalah lapis pertama yang harus menolak lebih dulu — dan tes ini mengunci
+// adalah lapis pertama yang harus menolak lebih dulu, dan tes ini mengunci
 // daftar hal yang ditolak supaya tidak dilonggarkan tanpa sengaja.
 
 import { describe, expect, it } from "vitest";

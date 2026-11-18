@@ -92,12 +92,12 @@ export function FeedbackForm() {
           }}
         />
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p id="feedback-message-help" className="text-xs text-foreground/60">
+          <p id="feedback-message-help" className="text-xs text-muted-foreground">
             Minimal {FEEDBACK_MIN_LENGTH} karakter. Sebutkan halaman atau
             langkah yang bermasalah agar mudah ditindaklanjuti.
           </p>
           <span
-            className="text-xs text-foreground/60"
+            className="text-xs text-muted-foreground"
             aria-live="polite"
           >
             {panjang}/{FEEDBACK_MAX_LENGTH}
@@ -115,7 +115,6 @@ export function FeedbackForm() {
       <div className="flex justify-end">
         <Button
           type="submit"
-          variant="success"
           disabled={saving || !lengkap}
           title={saving ? "Mengirim…" : "Kirim masukan"}
           aria-label={saving ? "Mengirim masukan" : "Kirim masukan"}

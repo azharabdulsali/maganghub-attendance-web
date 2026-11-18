@@ -250,7 +250,7 @@ export const GUIDES: readonly Guide[] = [
             jenis: "daftar",
             item: [
               "Tidak menulis laporan menggantikan Anda. Isi template tetap dari Anda.",
-              "Tidak menembus proteksi portal dengan tipuan. Kalau portal membalas terlarang, pesannya ditampilkan apa adanya, tanpa memalsukan identitas. Untuk login otomatis, server boleh memakai koneksi dari IP residensial (proxy) agar dianggap klien wajar — itu bukan menipu proteksi.",
+              "Tidak menembus proteksi portal dengan tipuan. Kalau portal membalas terlarang, pesannya ditampilkan apa adanya, tanpa memalsukan identitas. Untuk login otomatis, server boleh memakai koneksi dari IP residensial (proxy) agar dianggap klien wajar, itu bukan menipu proteksi.",
               "Tidak menjamin pengiriman bila portal Monev berubah. Bila itu terjadi, Anda tetap bisa menyalin isi template dan mengirimnya manual dari situs Monev.",
             ],
           },

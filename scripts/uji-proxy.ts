@@ -1,13 +1,13 @@
 /**
  * Skrip diagnosis PROXY RESIDENSIAL untuk login SSO Kemnaker.
  *
- * Gunanya: membuktikan — SEBELUM dipakai produksi — bahwa proxy yang kamu beli
+ * Gunanya: membuktikan, SEBELUM dipakai produksi, bahwa proxy yang kamu beli
  * benar-benar membuat `GET https://account.kemnaker.go.id/auth` lolos, padahal
  * tanpa proxy gagal `403` + `cf-mitigated: challenge`.
  *
  * Ia menembak endpoint yang SAMA dengan langkah `sso-prime` alur login nyata,
  * jadi hasilnya mewakili kenyataan. TIDAK menyentuh password/kredensial apa pun
- * — hanya halaman publik `/auth`.
+ * hanya halaman publik `/auth`.
  *
  * Jalankan:
  *   npx tsx scripts/uji-proxy.ts            # baca MAGANGHUB_PROXY_URL dari .env.local
@@ -20,7 +20,7 @@
  *   - Dengan proxy `403 challenge`  -> ❌ proxy TIDAK dipakai / IP tetap diblokir.
  *        Periksa: URL salah, sandi salah, atau proxy bukan residensial.
  *
- * Aman: URL proxy TIDAK pernah dicetak apa adanya (bisa memuat sandi) — hanya
+ * Aman: URL proxy TIDAK pernah dicetak apa adanya (bisa memuat sandi), hanya
  * host:port-nya, dan sandi disamarkan.
  */
 import { config } from "dotenv";
@@ -56,7 +56,7 @@ async function probe(
     method: "GET",
     redirect: "manual",
     headers: {
-      // UA jujur, sama seperti alur produksi — bukan spoof.
+      // UA jujur, sama seperti alur produksi, bukan spoof.
       "user-agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
         "(KHTML, like Gecko) Chrome/124.0 Safari/537.36",

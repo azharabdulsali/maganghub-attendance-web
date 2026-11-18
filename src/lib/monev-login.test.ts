@@ -512,7 +512,7 @@ describe("primeSsoSession, GERBANG", () => {
     expect(r.status).toBe("OK");
     if (r.status === "OK") {
       expect(r.csrfToken).toBe("CSRF-AKHIR");
-      // Cookie dari hop 302 HILANG bila redirect:"follow" — ini regresi inti.
+      // Cookie dari hop 302 HILANG bila redirect:"follow", ini regresi inti.
       expect(r.cookies).toContain("kemnaker_ri_session=SESI-1");
     }
     // Hop kedua membawa Referer = URL hop pertama (perilaku browser).
