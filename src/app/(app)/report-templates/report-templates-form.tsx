@@ -623,8 +623,8 @@ export default function ReportTemplatesForm({
                 Kata kunci aktivitas
               </Label>
               <InfoHint>
-                Bila repo git terhubung dan aktif, commit hari ini dipakai
-                sebagai bahan. Kosongkan kata kunci untuk memakainya.
+                Opsional: bila repo git terhubung dan aktif, commit hari ini
+                dipakai sebagai bahan. Kosongkan kata kunci untuk memakainya.
               </InfoHint>
             </div>
             <Input

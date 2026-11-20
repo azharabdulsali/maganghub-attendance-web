@@ -188,6 +188,15 @@ export const GUIDES: readonly Guide[] = [
               "Susun draf. Ketiga kolom terisi otomatis dan tetap bisa " +
               "Anda sunting sebelum disimpan.",
           },
+          {
+            jenis: "catatan",
+            judul: "Bukan programmer? Lewati saja",
+            teks:
+              "Menu Repo Git (Opsional) hanya berguna kalau pekerjaan magang " +
+              "Anda disimpan sebagai commit di GitHub atau GitLab. Bila tidak, " +
+              "halaman itu tidak perlu dibuka dan tidak ada yang hilang: " +
+              "template dan tombol Susun draf tetap bekerja seperti biasa.",
+          },
         ],
       },
       {

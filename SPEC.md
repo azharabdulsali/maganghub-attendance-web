@@ -224,6 +224,13 @@ judul biasa membuktikan apa yang dikerjakan, bukan bahwa ada yang
   skema sudah berbentuk relasi sehingga banyak repo bisa menyusul.
 - **Ini bukan pengganti template.** Commit hanya menjadi sumber `keywords` bagi
   penyusun yang sudah ada (§5.4). Alur penyusunan dan form tidak berubah.
+- **Mayoritas pengguna TIDAK memakai git**, jadi fitur ini harus terbaca sebagai
+  tambahan, bukan langkah persiapan: label menunya **"Repo Git (Opsional)"**,
+  halaman `/repos` memasang lencana "Opsional" + kartu "Perlu halaman ini atau
+  tidak?", dan istilah `repo`/`commit` hanya dijelaskan di halaman itu
+  (lipatan "Apa itu repo dan commit?") serta di `/docs`/`/panduan`. Istilah
+  tersebut **tidak boleh** muncul di alur wajib (dashboard, kredensial,
+  template, otomasi).
 - **Token akses disimpan terenkripsi** AES-256-GCM, pola sama dengan kredensial
   Monev (§5.2). Token **tidak pernah** dikembalikan ke klien, tidak pernah masuk
   log atau pesan error.

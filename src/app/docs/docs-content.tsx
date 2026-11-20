@@ -522,6 +522,16 @@ function TopikTemplate() {
           yang bisa Anda sunting sebelum disimpan.
         </p>
       </Catatan>
+
+      <Catatan judul="Kalau Anda tidak memakai GitHub atau GitLab">
+        <p>
+          Tidak masalah, dan tidak ada yang perlu diurus. Menu{" "}
+          <em>Repo Git (Opsional)</em> hanya berguna bagi peserta yang
+          pekerjaannya disimpan sebagai commit; halaman itu boleh diabaikan
+          sepenuhnya. Template laporan, tombol Susun draf, dan pengiriman
+          otomatis tetap berjalan tanpa repo.
+        </p>
+      </Catatan>
     </>
   );
 }
