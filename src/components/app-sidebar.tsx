@@ -26,6 +26,7 @@ import { useEffect, useState } from "react";
 import {
   BookText,
   CalendarCheck,
+  CalendarClock,
   CalendarDays,
   CalendarOff,
   Clock,
@@ -88,6 +89,7 @@ const MENU_UMUM_GROUPS: MenuGroup[] = [
     label: "Persiapan",
     items: [
       { href: "/credentials", label: "Kredensial Monev", icon: KeyRound },
+      { href: "/work-schedule", label: "Jadwal Kerja", icon: CalendarClock },
       {
         href: "/report-templates",
         label: "Template Laporan",

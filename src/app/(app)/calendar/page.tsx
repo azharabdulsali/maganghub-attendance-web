@@ -19,6 +19,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toPlainDate } from "@/lib/submit-service";
 import { loadHolidaySet } from "@/lib/holidays-repo";
+import { loadWorkSchedule } from "@/lib/work-schedule-repo";
 import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,7 @@ const STATUS_CELL_CLASS: Record<DayStatus, string> = {
 /** Label ringkas penanda hari libur di sudut sel. */
 const HOLIDAY_LABEL: Record<Exclude<HolidayKind, null>, string> = {
   NATIONAL: "Libur",
-  WEEKEND: "Akhir pekan",
+  OFF: "Tidak bekerja",
 };
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
@@ -96,7 +97,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
   // Ambil paralel: log submit pada bulan ini, report/draft pada bulan ini, dan
   // template khusus tanggal pada bulan ini (untuk penanda hijau di kalender).
-  const [logs, reports, datedTemplates, holidays] = await Promise.all([
+  const [logs, reports, datedTemplates, holidays, workDays] = await Promise.all([
     prisma.submitLog.findMany({
       where: {
         userId: session.user.id,
@@ -121,6 +122,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     // Libur dari tabel admin: dipakai agar penanda "Libur" di kalender sama
     // dengan yang benar-benar dilewati otomasi (`decide()`).
     loadHolidaySet(),
+    // Jadwal kerja pengguna: menentukan hari mana yang ditandai "Tidak
+    // bekerja". Tanpa baris tersimpan → default Senin–Jumat (gagal-lunak).
+    loadWorkSchedule(session.user.id),
   ]);
 
   // Tanggal (YYYY-MM-DD) yang punya template khusus. Dipakai untuk penanda
@@ -228,7 +232,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                     return <div key={`blank-${cellIndex}`} aria-hidden />;
                   }
                   const status = classifyDay(cell.iso, logsByDate, reportDates);
-                  const holiday = holidayKindOf(cell.iso, holidays);
+                  const holiday = holidayKindOf(cell.iso, holidays, workDays);
                   const hasDatedTemplate = datedReportDates.has(cell.iso);
                   const isToday =
                     isCurrentMonth &&
@@ -342,7 +346,8 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
       <p className="mt-4 text-xs text-muted-foreground">
         Zona waktu Asia/Jakarta. Hanya kiriman <strong>sukses</strong> yang
-        ditandai terkirim. Sel bergaris putus-putus = akhir pekan atau libur.
+        ditandai terkirim. Sel bergaris putus-putus = hari libur atau hari di
+        luar jadwal kerja Anda.
       </p>
     </div>
   );

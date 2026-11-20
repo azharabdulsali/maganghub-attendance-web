@@ -11,6 +11,7 @@
 // `submitReport` di monev-submit.
 
 import { decide, type PolicyDecision, type PlainDate } from "./report-policy";
+import type { WorkDays } from "./work-schedule";
 import type { ReportPayload } from "./monev-submit";
 
 /**
@@ -68,7 +69,7 @@ export function policyMessage(decision: PolicyDecision): string {
     case "ALLOW":
       return "Hari kerja aktif, pengiriman diizinkan.";
     case "SKIPPED":
-      return "Hari ini libur/akhir pekan, laporan dilewati (bukan error).";
+      return "Hari ini libur atau bukan hari kerja Anda, laporan dilewati (bukan error).";
     case "PROGRAM_ENDED":
       return "Program magang sudah berakhir, otomasi dihentikan.";
   }
@@ -157,8 +158,14 @@ export function assessReadiness(input: {
    * memakainya sebagai sumber kebenaran; bila tidak, jatuh ke daftar statis.
    */
   holidays?: ReadonlySet<string>;
+  /**
+   * Hari kerja milik pengguna (ISO 1=Senin … 7=Minggu, opsional). Bila tidak
+   * diberikan, `decide()` memakai default Senin–Jumat; bila diberikan, hari di
+   * luar daftar ini diperlakukan SKIPPED sama seperti libur.
+   */
+  workDays?: WorkDays;
 }): SubmitReadiness {
-  const decision = decide(input.date, input.holidays);
+  const decision = decide(input.date, input.holidays, input.workDays);
   if (decision === "PROGRAM_ENDED") {
     return { ready: false, reason: "PROGRAM_ENDED", decision, date: input.date };
   }

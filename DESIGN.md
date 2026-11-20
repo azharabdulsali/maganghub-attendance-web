@@ -94,11 +94,18 @@ kata kerja konkret, angka yang bisa dicek.
 - **CTA** harus menyebut aksi nyatanya (R-15): "Simpan template", "Kirim sekarang",
   "Hubungkan akun Monev", bukan "Get Started" / "Learn More".
 - **Judul hero = dua kalimat pendek, bukan deskripsi teknis** (2026-11). Bunyinya
-  sekarang "Tulis sekali. Terkirim tiap hari." Kategori produknya (presensi &
+  sekarang "Lupa absen? Tenang, tetap terkirim." Kategori produknya (presensi &
   logbook magang) dinaikkan ke **kicker** di atas judul, sehingga judul boleh
   sesingkat itu tanpa kehilangan kata kunci. Kalimat lama "terkirim dari server"
   turun ke paragraf & daftar fitur karena itu **cara kerja**, bukan alasan orang
   memakainya. Pola ini yang dipakai lagi kalau judul hero disunting nanti.
+  Alasan judul lama "Tulis sekali. Terkirim tiap hari." diganti: (a) "tiap
+  hari" tidak akurat, `decide()` melewati hari di luar jadwal kerja pengguna
+  (bawaan Sabtu/Minggu) dan libur nasional serta
+  berhenti setelah akhir program; (b) manfaat yang dicari pengguna adalah rasa
+  aman saat lupa, bukan penghematan mengetik. "Terkirim" tetap dipertahankan
+  karena itu janji intinya, dengan syarat yang disebut di paragraf hero:
+  template cadangan tersimpan dan jadwal otomatis menyala.
 - **Angka** hanya boleh muncul kalau bisa ditelusuri (R-17, R-36). Contoh yang
   lolos: "3 template", "100 karakter minimum" (benar, ada di SPEC).
 
@@ -281,9 +288,11 @@ Crosscheck menyeluruh menemukan beberapa ketidakcocokan yang sudah diperbaiki:
   sama dengan sidebar: `Kredensial Monev`, `Otomasi`, `Kirim Absen Hari Ini`.
   Sebelumnya ada `Akun Monev`, `Jadwal Otomatis`, `Kirim Sekarang` yang membuat
   pengguna mencari menu yang tidak ada.
-- **Tanggal libur tidak bisa memilih akhir pekan.** `<DatePicker unrestricted>`
-  di `/admin/holidays` tetap menonaktifkan Sabtu/Minggu karena server menolak
-  mendaftarkannya; sebelumnya pengguna bisa memilih lalu gagal saat menyimpan.
+- **Tanggal libur boleh jatuh pada hari apa pun.** `<DatePicker unrestricted>`
+  di `/admin/holidays` melepas seluruh pembatas (tanggal lampau, libur, batas
+  bulan, jadwal kerja), karena sejak ada jadwal kerja per pengguna
+  (`docs/WORK-SCHEDULE.md`) "akhir pekan" tidak lagi otomatis libur untuk semua
+  orang, dan server menerima libur pada Sabtu/Minggu.
 - **Dokumentasi publik jujur.** Klaim lama "tidak ada AI / integrasi GitHub"
   dihapus dari `/docs`, landing, dan FAQ; sekarang disebut apa adanya beserta
   batasnya (AI opsional + fallback lokal, git hanya baca). Kebijakan privasi
@@ -329,12 +338,13 @@ biner:
 
 - **Masalah bar chart:** tinggi batang mengodekan jumlah kiriman, padahal
   jumlahnya hampir selalu 0 atau 1 per hari. Semua batang jadi sama tinggi,
-  hari kosong tampak seperti grafik rusak, dan akhir pekan tidak bisa dibedakan
-  dari hari yang terlewat.
+  hari kosong tampak seperti grafik rusak, dan hari non-kerja tidak bisa
+  dibedakan dari hari yang terlewat.
 - **Kalender status:** satu kotak = satu hari, berisi **angka tanggal** dengan
   baris nama hari (Min–Sab), disusun **per bulan** memakai `buildMonthGrid`.
   Warna: hijau (berhasil), merah (gagal), kuning (sudah ada/duplikat), abu-abu
-  (belum ada). Kotak "belum ada" di akhir pekan bergaris putus-putus; hari ini
+  (belum ada). Kotak "belum ada" di hari non-kerja (libur nasional atau di luar
+  jadwal kerja pengguna, bawaan Sabtu/Minggu) bergaris putus-putus; hari ini
   diberi cincin aksen.
 - **Rentang filter:** 7 hari = 1 bulan, 30 hari = 1–2 bulan, 90 hari = 3–4
   bulan, 1 tahun = 13 bulan paling banyak (pola sama dengan kontribusi GitHub:
@@ -426,8 +436,8 @@ aplikasi ini. Batasnya mengikat:
      dengan tanggal hari kerja yang berbeda (`recentWorkingDays` di
      `src/lib/landing-sheet-dates.ts`): satu hari tidak mungkin punya tiga
      laporan berbeda, jadi tanggalnya memang harus ikut berganti. Tanggal
-     Sabtu/Minggu/libur nasional tidak pernah muncul, karena otomasi juga tidak
-     pernah mengirim di hari itu.
+     hari di luar jadwal kerja pengguna atau libur nasional tidak pernah muncul,
+     karena otomasi juga tidak pernah mengirim di hari itu.
    - **Putar otomatis tiap 6 detik — keputusan pemilik 2026-11.** Lembar
      berganti sendiri sampai pengguna menyentuh atau memfokuskannya. Ini
      **satu-satunya** gerak di aplikasi yang berjalan tanpa dipicu pengguna;

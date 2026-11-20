@@ -7,7 +7,7 @@
 //
 // Konsistensi yang dijaga:
 //   - Memakai `performSubmit` yang sama dengan dispatcher massal & webhook,
-//     jadi aturan laporan (libur/akhir pekan/akhir program, pra-cek duplikat,
+//     jadi aturan laporan (libur/jadwal kerja pengguna/akhir program, pra-cek duplikat,
 //     gerbang ALLOW_LIVE_SUBMIT) TIDAK dilanggar. "Paksa" berarti "abaikan jam
 //     jadwal", BUKAN "abaikan kebijakan laporan".
 //   - Pemicu tetap tercatat sebagai `CRON`: ini bukan submit manual oleh

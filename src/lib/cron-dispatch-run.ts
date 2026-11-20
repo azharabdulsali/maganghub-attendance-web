@@ -18,6 +18,7 @@ import { planTopUp, topUpNote } from "@/lib/cron-topup";
 import { prepareCommitDraft, contentOf } from "@/lib/commit-draft-service";
 import { chooseReportContent } from "@/lib/report-source";
 import { jakartaDayRange } from "@/lib/admin-automation";
+import { normalizeWorkDays } from "@/lib/work-schedule";
 
 /** Berapa user diproses bersamaan. Menahan burst tanpa membanjiri portal. */
 export const DISPATCH_CONCURRENCY = 10;
@@ -84,6 +85,10 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
       user: {
         select: {
           template: { select: { activity: true, learning: true, obstacles: true } },
+          // Jadwal kerja: dibaca SEKALI untuk semua pengguna di query ini, lalu
+          // diteruskan ke `performSubmit`, supaya dispatcher massal tidak
+          // menambah satu query per pengguna. Tanpa baris = default Senin–Jumat.
+          workSchedule: { select: { days: true } },
           datedTemplates: {
             // Hanya tanggal hari ini: tanpa saringan ini, seluruh riwayat
             // template bertanggal semua pengguna ikut terbaca di setiap
@@ -204,6 +209,11 @@ export async function runDispatch(now: Date = new Date()): Promise<DispatchSumma
             credential: cfg.user.credential,
             trigger: "CRON",
             logOnNotReady: true,
+            // `days` dari Prisma bertipe `number[]`; normalisasi sebelum
+            // dipakai supaya tipe & nilai jaminan sama dengan repo.
+            workDays: cfg.user.workSchedule
+              ? normalizeWorkDays(cfg.user.workSchedule.days)
+              : undefined,
           });
           return { userId: cand.userId, kind: outcome.kind };
         } catch {

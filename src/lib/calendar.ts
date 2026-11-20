@@ -10,6 +10,11 @@
 
 import type { SubmitStatus } from "@/generated/prisma/enums";
 import { isNationalHoliday } from "./holidays";
+import {
+  isWorkDayOf,
+  isoWeekdayOfDate,
+  type WorkDays,
+} from "./work-schedule";
 
 /** Offset WIB tetap (UTC+7), Indonesia tidak memakai DST. */
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
@@ -182,13 +187,18 @@ export type DayStatus = "SUBMITTED" | "FAILED" | "DRAFT" | "NONE";
 /**
  * Jenis hari libur untuk penanda di sel kalender:
  *   - `NATIONAL` = libur nasional/cuti bersama (daftar holidays.ts)
- *   - `WEEKEND`  = Sabtu/Minggu
+ *   - `OFF`      = bukan hari kerja pengguna (default: Sabtu/Minggu)
  *   - `null`     = hari kerja biasa
+ *
+ * Nama `OFF` (bukan `WEEKEND`) karena sejak jadwal kerja per pengguna ada,
+ * Sabtu bisa menjadi hari kerja dan Selasa bisa menjadi hari libur; yang
+ * ditandai kalender adalah "hari ini tidak bekerja menurut jadwal Anda",
+ * bukan "ini akhir pekan".
  *
  * Dipisah dari `DayStatus` supaya penanda libur TIDAK mengubah statistik
  * (terkirim/draft/gagal), kalender tetap menghitung status submit apa adanya.
  */
-export type HolidayKind = "NATIONAL" | "WEEKEND" | null;
+export type HolidayKind = "NATIONAL" | "OFF" | null;
 /** Baris minimal SubmitLog yang dibutuhkan kalender. */
 export interface CalendarLogRow {
   status: SubmitStatus;
@@ -326,21 +336,21 @@ export function weekdayIndex(year: number, month: number, day: number): number {
 /**
  * Tentukan jenis libur untuk `iso` (YYYY-MM-DD). MURNI.
  *
- * Urutan penting: libur nasional diperiksa LEBIH DULU daripada akhir pekan.
- * Jadi Sabtu/Minggu yang kebetulan juga libur nasional dilaporkan sebagai
- * `NATIONAL`, penanda yang lebih informatif. Tanggal tak sah → `null`.
+ * Urutan penting: libur nasional diperiksa LEBIH DULU, jadi hari yang
+ * kebetulan libur nasional dilaporkan sebagai `NATIONAL` (penanda yang lebih
+ * informatif) meskipun hari itu juga di luar jadwal kerja pengguna.
+ *
+ * `workDays` = hari kerja pengguna (ISO 1=Senin … 7=Minggu). Tanpa argumen
+ * itu, hari kerja dianggap Senin–Jumat — perilaku sebelum fitur jadwal kerja
+ * ada. Tanggal tak sah → `null` (tidak menebak, dan tidak melempar).
  */
 export function holidayKindOf(
   iso: string,
   holidays?: ReadonlySet<string>,
+  workDays?: WorkDays,
 ): HolidayKind {
   if (isNationalHoliday(iso, holidays)) return "NATIONAL";
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (!match) return null;
-  const wd = weekdayIndex(
-    Number.parseInt(match[1], 10),
-    Number.parseInt(match[2], 10),
-    Number.parseInt(match[3], 10),
-  );
-  return wd === 0 || wd === 6 ? "WEEKEND" : null;
+  const isoDay = isoWeekdayOfDate(iso);
+  if (isoDay === null) return null;
+  return isWorkDayOf(isoDay, workDays) ? null : "OFF";
 }

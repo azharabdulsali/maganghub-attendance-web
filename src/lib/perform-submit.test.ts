@@ -16,6 +16,7 @@ const submitLogCreateMock = vi.fn();
 const submitLogCountMock = vi.fn();
 const credentialUpdateMock = vi.fn();
 const holidayFindManyMock = vi.fn();
+const workScheduleFindUniqueMock = vi.fn();
 const persistRotatedMock = vi.fn();
 
 vi.mock("@/lib/crypto", () => ({
@@ -51,6 +52,12 @@ vi.mock("@/lib/prisma", () => ({
     // lewat `base({ holidays })`.
     holiday: {
       findMany: (...args: unknown[]) => holidayFindManyMock(...args),
+    },
+    // Jadwal kerja mingguan pengguna. Default mock: `null` = belum ada baris →
+    // `loadWorkSchedule()` jatuh ke default Senin–Jumat. Tes yang menguji jadwal
+    // khusus menimpanya sendiri.
+    workSchedule: {
+      findUnique: (...args: unknown[]) => workScheduleFindUniqueMock(...args),
     },
   },
 }));
@@ -107,6 +114,8 @@ beforeEach(() => {
   submitLogCountMock.mockResolvedValue(0);
   // Default: tabel libur kosong (bukan error).
   holidayFindManyMock.mockResolvedValue([]);
+  // Default: pengguna belum pernah mengatur jadwal → default Senin–Jumat.
+  workScheduleFindUniqueMock.mockResolvedValue(null);
   // Default: portal LAPOR belum ada laporan hari ini → aman lanjut kirim.
   // Tes khusus pra-cek menimpanya sendiri.
   checkDailyLogMock.mockResolvedValue({ status: "ABSENT" });
@@ -158,7 +167,7 @@ describe("performSubmit, gerbang ALLOW_LIVE_SUBMIT", () => {
     expect(submitReportMock).not.toHaveBeenCalled();
     expect(exchangeMock).not.toHaveBeenCalled();
   });
-
+});
 
 describe("performSubmit, daftar libur gagal dimuat (gagal-lunak)", () => {
   // Pagar PENTING: daftar libur hanya PENYEMPURNAAN. Bila tabel `holidays`
@@ -215,6 +224,7 @@ describe("performSubmit, daftar libur gagal dimuat (gagal-lunak)", () => {
   });
 });
 
+describe("performSubmit, gerbang mati tidak mencatat log", () => {
   it("gerbang mati + manual → tidak mencatat log", async () => {
     delete process.env.ALLOW_LIVE_SUBMIT;
     await performSubmit(base({ logOnNotReady: false }));
@@ -226,6 +236,44 @@ describe("performSubmit, daftar libur gagal dimuat (gagal-lunak)", () => {
     await performSubmit(base({ trigger: "CRON", logOnNotReady: true }));
     expect(submitLogCreateMock).toHaveBeenCalledTimes(1);
     expect(submitLogCreateMock.mock.calls[0][0].data.status).toBe("SUCCESS");
+  });
+});
+
+describe("performSubmit, jadwal kerja pengguna", () => {
+  // Pagar penting: jadwal kerja menentukan KAPAN server boleh menyentuh portal.
+  // Tes ini mengunci bahwa `performSubmit` benar-benar MEMBACA jadwal pengguna
+  // (bukan hanya `decide()` yang diuji terpisah) dan tetap gagal-lunak.
+
+  it("hari di luar jadwal pengguna → POLICY_SKIPPED (dibaca dari DB)", async () => {
+    // 2026-02-03 = Selasa; pengguna hanya bekerja Sabtu & Minggu.
+    workScheduleFindUniqueMock.mockResolvedValueOnce({ days: [6, 7] });
+    const out = await performSubmit(base({ date: "2026-02-03" }));
+    expect(out).toMatchObject({ kind: "NOT_READY", reason: "POLICY_SKIPPED" });
+    expect(submitReportMock).not.toHaveBeenCalled();
+  });
+
+  it("Sabtu pada jadwal Sabtu–Minggu → lolos kebijakan (DRY_RUN)", async () => {
+    workScheduleFindUniqueMock.mockResolvedValueOnce({ days: [6, 7] });
+    delete process.env.ALLOW_LIVE_SUBMIT;
+    // 2026-02-07 = Sabtu, biasanya SKIPPED; kini hari kerja pengguna.
+    const out = await performSubmit(base({ date: "2026-02-07" }));
+    expect(out.kind).toBe("DRY_RUN");
+  });
+
+  it("workDays eksplisit menimpa DB (tanpa query tambahan)", async () => {
+    delete process.env.ALLOW_LIVE_SUBMIT;
+    const out = await performSubmit(
+      base({ date: "2026-02-07", workDays: [6] }),
+    );
+    expect(out.kind).toBe("DRY_RUN");
+    expect(workScheduleFindUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("DB jadwal error → default Senin–Jumat (gagal-lunak, tidak melempar)", async () => {
+    workScheduleFindUniqueMock.mockRejectedValueOnce(new Error("DB down"));
+    delete process.env.ALLOW_LIVE_SUBMIT;
+    const out = await performSubmit(base()); // Senin 2026-02-02
+    expect(out.kind).toBe("DRY_RUN");
   });
 });
 

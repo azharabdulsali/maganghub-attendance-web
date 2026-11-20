@@ -352,3 +352,31 @@ export const changeEmailSchema = z.object({
 
 export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
 
+/**
+ * Jadwal kerja mingguan (tabel `work_schedules`, docs/WORK-SCHEDULE.md).
+ *
+ * `days` adalah penomoran ISO-8601: 1=Senin … 7=Minggu. Aturan:
+ *   - wajib ARRAY (bukan angka tunggal) — form mengirim daftar checkbox;
+ *   - setiap angka harus bilangan bulat 1–7;
+ *   - TIDAK boleh kosong: pengguna tanpa hari kerja berarti laporan tak pernah
+ *     bisa dikirim; kalau ia memang mau berhenti, jalan yang benar adalah
+ *     mematikan otomasi, bukan menyimpan jadwal kosong yang diam-diam
+ *     menggagalkan semua jalur kirim;
+ *   - duplikat diterima tapi diam-diam dibuang (`normalizeWorkDays` di
+ *     work-schedule.ts) — lebih ramah daripada menolak checkbox ganda.
+ */
+export const workScheduleSchema = z.object({
+  days: z
+    .array(
+      z
+        .number({ message: "Hari harus berupa angka" })
+        .int("Hari harus bilangan bulat")
+        .min(1, "Nomor hari antara 1 (Senin) sampai 7 (Minggu)")
+        .max(7, "Nomor hari antara 1 (Senin) sampai 7 (Minggu)"),
+      { message: "Pilih hari kerja Anda" },
+    )
+    .min(1, "Pilih minimal satu hari kerja")
+    .max(7, "Pilih maksimal tujuh hari kerja"),
+});
+
+export type WorkScheduleInput = z.infer<typeof workScheduleSchema>;

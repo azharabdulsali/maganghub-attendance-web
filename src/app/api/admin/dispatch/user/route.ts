@@ -8,7 +8,7 @@
 //   - WAJIB sesi + role ADMIN, dicek di SERVER.
 //   - `userId` datang dari klien tetapi DIVERIFIKASI ada & belum di-soft-delete;
 //     bukan data rahasia, hanya sasaran.
-//   - Aturan laporan (libur/akhir pekan/akhir program, pra-cek duplikat,
+//   - Aturan laporan (libur/jadwal kerja pengguna/akhir program, pra-cek duplikat,
 //     gerbang ALLOW_LIVE_SUBMIT) TETAP berlaku: `performSubmit` yang sama
 //     dipakai, jadi "paksa" = abaikan jam jadwal, bukan abaikan kebijakan.
 //   - Rate limit scope `adminUserAction`.

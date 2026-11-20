@@ -46,7 +46,7 @@ const STATUS_LABEL: Record<string, string> = {
   EXCHANGE_FAILED: "Sesi Monev bermasalah",
   NOT_READY: "Belum siap dikirim",
   PROGRAM_ENDED: "Program sudah berakhir",
-  POLICY_SKIPPED: "Dilewati (libur/akhir pekan)",
+  POLICY_SKIPPED: "Dilewati (libur atau bukan hari kerja)",
 };
 
 /** Nada pesan hasil: sukses hijau, latihan netral, sisanya merah. */

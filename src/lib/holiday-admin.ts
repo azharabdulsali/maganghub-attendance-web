@@ -7,8 +7,11 @@
 // Aturan yang ditegakkan di sini:
 //   1. Tanggal harus `YYYY-MM-DD` yang benar-benar ada di kalender
 //      (menolak `2026-02-30`), memakai `isPlainDate` agar SATU sumber.
-//   2. Akhir pekan (Sabtu/Minggu) TIDAK boleh didaftarkan: itu sudah otomatis
-//      libur lewat `isHoliday`, menambah baris hanya membingungkan.
+//   2. Akhir pekan (Sabtu/Minggu) BOLEH didaftarkan sejak ada jadwal kerja
+//      per pengguna (docs/WORK-SCHEDULE.md): hari kerja tidak lagi sama untuk
+//      semua orang, dan libur nasional sering jatuh pada Sabtu/Minggu. Tanpa
+//      baris ini, pengguna yang berjadwal bekerja Sabtu tetap dikirim otomasi
+//      pada hari libur nasional tersebut.
 //   3. Tanggal harus berada dalam masa program (`<= LAST_ACTIVE_DATE`); setelah
 //      program berakhir tak ada laporan yang dicek lagi, jadi barisnya sia-sia.
 
@@ -42,18 +45,6 @@ export function isSeedHolidayId(id: string): boolean {
   return id.startsWith(SEED_ID_PREFIX);
 }
 
-/** Hari ke berapa (0=Minggu … 6=Sabtu) untuk tanggal polos. MURNI. */
-export function weekdayOfPlainDate(date: PlainDate): number {
-  const [y, m, d] = date.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-}
-
-/** Apakah tanggal jatuh pada akhir pekan (Sabtu/Minggu)? MURNI. */
-export function isWeekendPlainDate(date: PlainDate): boolean {
-  const wd = weekdayOfPlainDate(date);
-  return wd === 0 || wd === 6;
-}
-
 /** Hasil validasi input libur: normal atau pesan kesalahan + field penyebab. */
 export type HolidayValidation =
   | { ok: true; date: PlainDate; name: string; kind: string }
@@ -62,9 +53,11 @@ export type HolidayValidation =
 /**
  * Validasi & normalisasi input tambah/ubah libur. MURNI.
  *
- * `name` dipangkas; kosong ditolak. `kind` kosong → default "Nasional". Tanggal
- * weekend / di luar masa program ditolak dengan pesan yang menjelaskan ALASAN
- * (bukan sekadar "tidak valid"), supaya admin paham kenapa.
+ * `name` dipangkas; kosong ditolak. `kind` kosong → default "Nasional". Sabtu/
+ * Minggu DITERIMA (lihat komentar aturan 2 di atas): libur nasional bisa saja
+ * jatuh di sana, dan sejak ada jadwal kerja per pengguna, "akhir pekan" tidak
+ * lagi otomatis libur untuk semua orang. Tanggal di luar masa program tetap
+ * ditolak dengan pesan yang menjelaskan ALASAN (bukan sekadar "tidak valid").
  */
 export function validateHolidayInput(input: {
   date?: unknown;
@@ -77,13 +70,6 @@ export function validateHolidayInput(input: {
     return {
       ok: false,
       error: "Tanggal tidak sah. Gunakan format YYYY-MM-DD.",
-      field: "date",
-    };
-  }
-  if (isWeekendPlainDate(date)) {
-    return {
-      ok: false,
-      error: "Tanggal ini akhir pekan (Sabtu/Minggu), sudah otomatis libur.",
       field: "date",
     };
   }

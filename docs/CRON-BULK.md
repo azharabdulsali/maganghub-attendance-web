@@ -63,9 +63,9 @@ GET /api/cron/run-all
   baris user tertentu memanggil `POST /api/admin/dispatch/user` (body
   `{ userId }`, sesi + role ADMIN, rate limit `adminUserAction`). Aksi ini
   **memaksa** jalankan otomasi user itu apa pun jam jadwalnya, tetapi TETAP
-  memakai `performSubmit` yang sama, jadi libur/akhir pekan/akhir program,
-  pra-cek duplikat, dan gerbang `ALLOW_LIVE_SUBMIT` tetap berlaku. Pemicunya
-  tercatat `CRON` di audit log.
+  memakai `performSubmit` yang sama, jadi libur/jadwal kerja pengguna/akhir
+  program, pra-cek duplikat, dan gerbang `ALLOW_LIVE_SUBMIT` tetap berlaku.
+  Pemicunya tercatat `CRON` di audit log.
 - **Pemantauan per-user.** Tabel pengguna juga menampilkan **jadwal**
   (`HH:MM WIB`) dan **status hari ini** ("Belum jalan"/"Sudah jalan"/"Gagal")
   tiap user, sehingga admin bisa melihat siapa yang belum jalan hari itu

@@ -161,4 +161,38 @@ describe("assessReadiness", () => {
     });
     expect(r.ready).toBe(true);
   });
+
+  it("jadwal kerja pengguna: hari di luar jadwal → POLICY_SKIPPED", () => {
+    // 2026-03-02 Senin; pengguna hanya bekerja Sabtu & Minggu.
+    const r = assessReadiness({
+      date: "2026-03-02",
+      hasTemplate: true,
+      hasToken: true,
+      workDays: [6, 7] as const,
+    });
+    expect(r.ready).toBe(false);
+    if (!r.ready) expect(r.reason).toBe("POLICY_SKIPPED");
+  });
+
+  it("jadwal kerja pengguna: Sabtu yang biasanya libur kini boleh", () => {
+    // 2026-03-07 Sabtu; jadwal pengguna memuat Sabtu → hari kerja.
+    const r = assessReadiness({
+      date: "2026-03-07",
+      hasTemplate: true,
+      hasToken: true,
+      workDays: [6, 7] as const,
+    });
+    expect(r.ready).toBe(true);
+    if (r.ready) expect(r.decision).toBe("ALLOW");
+  });
+
+  it("jadwal kerja kosong jatuh ke default (gagal-lunak), bukan libur total", () => {
+    const r = assessReadiness({
+      date: "2026-03-02",
+      hasTemplate: true,
+      hasToken: true,
+      workDays: [],
+    });
+    expect(r.ready).toBe(true);
+  });
 });

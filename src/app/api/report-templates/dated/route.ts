@@ -10,9 +10,10 @@
 //   - Data dikembalikan penuh ke klien (template bukan rahasia).
 //
 // Yang penting dipahami: menyimpan template bertanggal TIDAK berarti laporan
-// akan terkirim di tanggal itu. Aturan libur/akhir pekan/akhir program tetap
-// berlaku saat pengiriman (report-policy.ts). Jadi tanggal Sabtu boleh
-// disimpan, tetapi otomasi tetap melewatinya.
+// akan terkirim di tanggal itu. Aturan hari (libur nasional, jadwal kerja
+// pengguna, akhir program) tetap berlaku saat pengiriman (report-policy.ts).
+// Jadi tanggal Sabtu boleh disimpan, tetapi otomasi hanya mengirimnya bila
+// Sabtu memang hari kerja pengguna dan bukan libur.
 
 import { NextResponse } from "next/server";
 

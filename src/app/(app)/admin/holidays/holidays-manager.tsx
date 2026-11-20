@@ -176,7 +176,8 @@ export function HolidaysManager({ initialRows, today }: Props) {
                   unrestricted
                 />
                 <span className="text-xs text-muted-foreground">
-                  Pilih hari kerja (Sabtu/Minggu sudah otomatis libur).
+                  Libur nasional boleh jatuh pada hari apa pun, termasuk
+                  Sabtu/Minggu.
                 </span>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -261,8 +262,10 @@ export function HolidaysManager({ initialRows, today }: Props) {
           ) : null}
           {rows.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Belum ada tanggal libur yang didaftarkan. Sabtu &amp; Minggu tetap
-              otomatis libur tanpa perlu didaftarkan di sini.
+              Belum ada tanggal libur yang didaftarkan. Hari di luar jadwal kerja
+              pengguna (bawaan: Sabtu &amp; Minggu) sudah otomatis dilewati, tetapi
+              libur nasional yang jatuh pada hari kerja seseorang tetap perlu
+              didaftarkan di sini.
             </p>
           ) : (
             <div

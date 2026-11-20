@@ -1,20 +1,19 @@
 // src/lib/holiday-admin.test.ts: uji logika MURNI pengelolaan libur admin.
 //
 // Fokus pada INVARIAN yang menentukan keselamatan: validasi menolak tanggal
-// rusak/akhir pekan/di luar program, normalisasi membuang spasi, dan pengurutan
-// stabil. Tanpa tes ini, satu bug validasi bisa membuat otomasi melewati hari
-// kerja yang seharusnya dikirim.
+// rusak/di luar program, MENERIMA akhir pekan (sejak ada jadwal kerja per
+// pengguna, libur nasional bisa jatuh di Sabtu/Minggu), normalisasi membuang
+// spasi, dan pengurutan stabil. Tanpa tes ini, satu bug validasi bisa membuat
+// otomasi melewati hari kerja yang seharusnya dikirim.
 
 import { describe, it, expect } from "vitest";
 import {
   HOLIDAY_NAME_MAX,
   isSeedHolidayId,
-  isWeekendPlainDate,
   partitionHolidays,
   SEED_ID_PREFIX,
   sortHolidays,
   validateHolidayInput,
-  weekdayOfPlainDate,
 } from "./holiday-admin";
 
 describe("isSeedHolidayId", () => {
@@ -24,20 +23,6 @@ describe("isSeedHolidayId", () => {
 
   it("id DB biasa (cuid) BUKAN baris seed", () => {
     expect(isSeedHolidayId("clx123abc")).toBe(false);
-  });
-});
-
-describe("weekdayOfPlainDate", () => {
-  it("0 untuk Minggu, 6 untuk Sabtu, 1 untuk Senin", () => {
-    expect(weekdayOfPlainDate("2026-09-20")).toBe(0); // Minggu
-    expect(weekdayOfPlainDate("2026-09-19")).toBe(6); // Sabtu
-    expect(weekdayOfPlainDate("2026-09-21")).toBe(1); // Senin
-  });
-
-  it("isWeekendPlainDate benar hanya untuk Sabtu/Minggu", () => {
-    expect(isWeekendPlainDate("2026-09-19")).toBe(true);
-    expect(isWeekendPlainDate("2026-09-20")).toBe(true);
-    expect(isWeekendPlainDate("2026-09-21")).toBe(false);
   });
 });
 
@@ -82,11 +67,12 @@ describe("validateHolidayInput", () => {
     if (!hasil.ok) expect(hasil.field).toBe("date");
   });
 
-  it("menolak akhir pekan dengan alasan yang jelas", () => {
+  it("menerima akhir pekan (bisa jadi hari kerja sebagian pengguna)", () => {
+    // 2026-12-26 = Sabtu. Sejak ada jadwal kerja per pengguna, Sabtu/Minggu
+    // BOLEH didaftarkan: libur nasional sering jatuh di sana, dan menolaknya
+    // berarti pengguna berjadwal Sabtu tetap dikirim pada hari libur itu.
     const hasil = validateHolidayInput({ date: "2026-12-26", name: "X" });
-    // 2026-12-26 = Sabtu.
-    expect(hasil.ok).toBe(false);
-    if (!hasil.ok) expect(hasil.error).toMatch(/akhir pekan/i);
+    expect(hasil.ok).toBe(true);
   });
 
   it("menolak tanggal di luar masa program (> 2027-02-09)", () => {

@@ -34,7 +34,7 @@ export default async function AutomationPage() {
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
         title="Otomasi Absensi"
-        description="Kirim laporan otomatis setiap hari pada jam pilihan Anda."
+        description="Kirim laporan otomatis pada hari kerja Anda, di jam pilihan Anda."
       />
 
       <AutomationForm

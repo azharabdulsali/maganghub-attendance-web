@@ -48,6 +48,7 @@ import {
   summarizeUsers,
   templateStatusTone,
 } from "@/lib/admin";
+import { describeWorkDays } from "@/lib/work-schedule";
 import { describeTodayRun, scheduleLabel, type TodayRunStatus } from "@/lib/admin-automation";
 import {
   ALL_USERS,
@@ -297,6 +298,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         {u.automationHour !== null
                           ? scheduleLabel(u.automationHour)
                           : ","}
+                        {/* Hari kerja: tanpa ini admin tidak tahu kenapa tombol
+                            Jalankan bisa dilewati hari ini (POLICY_SKIPPED). */}
+                        <span className="mt-1 block text-[0.6875rem]">
+                          {describeWorkDays(u.workDays)}
+                        </span>
                       </td>
                       <td className="p-3">
                         <Badge tone={todayRunTone(u.todayRunStatus)}>

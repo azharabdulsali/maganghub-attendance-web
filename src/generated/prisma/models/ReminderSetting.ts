@@ -18,7 +18,7 @@ import type * as Prisma from "../internal/prismaNamespace"
  * 
  * Latar: admin ingin memunculkan popup peringatan ke semua pengguna yang
  * BELUM absen pada jam:menit tertentu (WIB). Popup hanya tampil di dalam
- * aplikasi (saat halaman terbuka) — tidak ada email/WA/push.
+ * aplikasi (saat halaman terbuka), tidak ada email/WA/push.
  * 
  * Kenapa SATU baris (bukan satu baris per pengguna): setelannya bersifat
  * GLOBAL untuk seluruh aplikasi, diatur sekali oleh admin. Kita memakai

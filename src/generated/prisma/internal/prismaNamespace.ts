@@ -411,7 +411,8 @@ export const ModelName = {
   Feedback: 'Feedback',
   Session: 'Session',
   AdminActionLog: 'AdminActionLog',
-  GitRepoConfig: 'GitRepoConfig'
+  GitRepoConfig: 'GitRepoConfig',
+  WorkSchedule: 'WorkSchedule'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -427,7 +428,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "verificationToken" | "maganghubCredential" | "reportTemplate" | "datedReportTemplate" | "report" | "submitLog" | "automationConfig" | "reminderSetting" | "holiday" | "feedback" | "session" | "adminActionLog" | "gitRepoConfig"
+    modelProps: "user" | "account" | "verificationToken" | "maganghubCredential" | "reportTemplate" | "datedReportTemplate" | "report" | "submitLog" | "automationConfig" | "reminderSetting" | "holiday" | "feedback" | "session" | "adminActionLog" | "gitRepoConfig" | "workSchedule"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1541,6 +1542,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WorkSchedule: {
+      payload: Prisma.$WorkSchedulePayload<ExtArgs>
+      fields: Prisma.WorkScheduleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkScheduleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkScheduleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload>
+        }
+        findFirst: {
+          args: Prisma.WorkScheduleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkScheduleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload>
+        }
+        findMany: {
+          args: Prisma.WorkScheduleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload>[]
+        }
+        create: {
+          args: Prisma.WorkScheduleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload>
+        }
+        createMany: {
+          args: Prisma.WorkScheduleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkScheduleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload>[]
+        }
+        delete: {
+          args: Prisma.WorkScheduleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload>
+        }
+        update: {
+          args: Prisma.WorkScheduleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkScheduleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkScheduleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkScheduleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkScheduleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkSchedulePayload>
+        }
+        aggregate: {
+          args: Prisma.WorkScheduleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkSchedule>
+        }
+        groupBy: {
+          args: Prisma.WorkScheduleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkScheduleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkScheduleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkScheduleCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1795,6 +1870,17 @@ export const GitRepoConfigScalarFieldEnum = {
 } as const
 
 export type GitRepoConfigScalarFieldEnum = (typeof GitRepoConfigScalarFieldEnum)[keyof typeof GitRepoConfigScalarFieldEnum]
+
+
+export const WorkScheduleScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  days: 'days',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkScheduleScalarFieldEnum = (typeof WorkScheduleScalarFieldEnum)[keyof typeof WorkScheduleScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2167,6 +2253,7 @@ export type GlobalOmitConfig = {
   session?: Prisma.SessionOmit
   adminActionLog?: Prisma.AdminActionLogOmit
   gitRepoConfig?: Prisma.GitRepoConfigOmit
+  workSchedule?: Prisma.WorkScheduleOmit
 }
 
 /* Types for Logging */

@@ -13,6 +13,7 @@
 
 import type { CredentialStatus } from "@/generated/prisma/enums";
 import type { TodayRunStatus } from "@/lib/admin-automation";
+import type { WorkDays } from "@/lib/work-schedule";
 
 /** Apakah sebuah peran berhak membuka halaman admin. Selalu peka huruf besar-kecil. */
 export function isAdminRole(role: string | null | undefined): boolean {
@@ -106,6 +107,13 @@ export interface AdminUserRow {
   automationEnabled: boolean;
   /** Jam jadwal otomasi (0–23 WIB), atau null bila belum diatur. */
   automationHour: number | null;
+  /**
+   * Hari kerja mingguan pengguna (ISO 1=Senin … 7=Minggu, terurut). Daftar
+   * kosong berarti default Senin–Jumat — tampilkan lewat `describeWorkDays`.
+   * Ada supaya admin tahu KENAPA tombol Jalankan bisa dilewati hari ini
+   * (mis. pengguna hanya bekerja Sabtu–Minggu).
+   */
+  workDays: WorkDays;
   reportCount: number;
   submitCount: number;
   /** Waktu submit terakhir (ms), atau null bila belum pernah submit. */

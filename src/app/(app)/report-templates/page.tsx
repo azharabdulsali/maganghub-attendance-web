@@ -17,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { todayInJakarta, plainDateToUtcDate } from "@/lib/submit-service";
 import { paginate, parsePage } from "@/lib/audit-log";
 import { loadHolidayRows } from "@/lib/holidays-repo";
+import { loadWorkSchedule } from "@/lib/work-schedule-repo";
 import { PageHeader } from "@/components/page-header";
 import ReportTemplatesForm from "./report-templates-form";
 import DatedTemplatesTable from "./dated-templates-table";
@@ -83,6 +84,10 @@ export default async function ReportTemplatesPage({
   const holidayRows = await loadHolidayRows();
   const holidaySet = new Set(holidayRows.map((h) => h.date));
   const holidayDates = holidayRows.map((h) => h.date);
+  // Jadwal kerja pemilik sesi: menentukan tanggal mana yang ditandai/nonaktif
+  // di form & tabel (tanggal di luar jadwal = seperti libur). Tanpa baris
+  // tersimpan → default Senin–Jumat, jadi perilaku pengguna lama tidak berubah.
+  const workDays = await loadWorkSchedule(session.user.id);
 
   // Form hanya perlu isi template khusus untuk SATU tanggal: yang sedang
   // dibuka lewat `?date=`. Sebelumnya seluruh daftar ikut dikirim ke komponen
@@ -160,6 +165,7 @@ export default async function ReportTemplatesPage({
         initialDated={datedTemplatesForForm}
         initialDate={params.date ?? null}
         holidays={holidayDates}
+        workDays={workDays}
       />
 
       {/* Daftar template khusus tanggal. Ditaruh SETELAH form karena tombol
@@ -169,6 +175,7 @@ export default async function ReportTemplatesPage({
         userId={session.user.id}
         today={today}
         holidays={holidaySet}
+        workDays={workDays}
         pageInfo={datedPageInfo}
         buildHref={(page) =>
           // `expand` sengaja DIBUANG saat berpindah halaman. Baris yang

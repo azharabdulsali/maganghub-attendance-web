@@ -65,7 +65,8 @@ export const ModelName = {
   Feedback: 'Feedback',
   Session: 'Session',
   AdminActionLog: 'AdminActionLog',
-  GitRepoConfig: 'GitRepoConfig'
+  GitRepoConfig: 'GitRepoConfig',
+  WorkSchedule: 'WorkSchedule'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -299,6 +300,17 @@ export const GitRepoConfigScalarFieldEnum = {
 } as const
 
 export type GitRepoConfigScalarFieldEnum = (typeof GitRepoConfigScalarFieldEnum)[keyof typeof GitRepoConfigScalarFieldEnum]
+
+
+export const WorkScheduleScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  days: 'days',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkScheduleScalarFieldEnum = (typeof WorkScheduleScalarFieldEnum)[keyof typeof WorkScheduleScalarFieldEnum]
 
 
 export const SortOrder = {

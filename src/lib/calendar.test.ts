@@ -276,8 +276,22 @@ describe("holidayKindOf", () => {
 
   it("menandai akhir pekan biasa", () => {
     // 2026-09-19 Sabtu, 2026-09-20 Minggu.
-    expect(holidayKindOf("2026-09-19")).toBe("WEEKEND");
-    expect(holidayKindOf("2026-09-20")).toBe("WEEKEND");
+    expect(holidayKindOf("2026-09-19")).toBe("OFF");
+    expect(holidayKindOf("2026-09-20")).toBe("OFF");
+  });
+
+  it("mengikuti jadwal kerja per pengguna (OFF, bukan weekend)", () => {
+    // Selasa 2026-09-22, tetapi pengguna hanya bekerja Sabtu & Minggu.
+    const sabtuMinggu = [6, 7] as const;
+    expect(holidayKindOf("2026-09-22", undefined, sabtuMinggu)).toBe("OFF");
+    // Sabtu justru hari kerja → bukan OFF.
+    expect(holidayKindOf("2026-09-19", undefined, sabtuMinggu)).toBeNull();
+  });
+
+  it("libur nasional tetap menang atas jadwal kerja", () => {
+    // Jumat 2026-12-25 (Natal) ada di jadwal kerja [5] → tetap NATIONAL.
+    const jumat = [5] as const;
+    expect(holidayKindOf("2026-12-25", undefined, jumat)).toBe("NATIONAL");
   });
 
   it("hari kerja biasa → null", () => {

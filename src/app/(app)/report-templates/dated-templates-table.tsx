@@ -42,6 +42,7 @@ import { DeleteDatedButton } from "./delete-dated-button";
 import { OpenDatedButton } from "./open-dated-button";
 import { toPlainDate } from "@/lib/submit-service";
 import { isHoliday, isAfter, LAST_ACTIVE_DATE } from "@/lib/report-policy";
+import type { WorkDays } from "@/lib/work-schedule";
 import { Message } from "@/components/ui/message";
 import Pagination from "@/components/pagination";
 import type { Pagination as PaginationInfo } from "@/lib/audit-log";
@@ -134,9 +135,11 @@ function statusOf(
   date: string,
   today: string,
   holidays?: ReadonlySet<string>,
+  workDays?: WorkDays,
 ): string {
   if (isAfter(date, LAST_ACTIVE_DATE)) return "Di luar masa program";
-  if (isHoliday(date, holidays)) return "Libur, otomasi tidak mengirim";
+  if (isHoliday(date, holidays, workDays))
+    return "Libur atau bukan hari kerja, otomasi tidak mengirim";
   if (isAfter(today, date)) return "Sudah lewat";
   return "Siap dipakai";
 }
@@ -152,12 +155,14 @@ function StatusChip({
   date,
   today,
   holidays,
+  workDays,
 }: {
   date: string;
   today: string;
   holidays?: ReadonlySet<string>;
+  workDays?: WorkDays;
 }) {
-  const status = statusOf(date, today, holidays);
+  const status = statusOf(date, today, holidays, workDays);
   return (
     <Message
       tone={status === "Siap dipakai" ? "good" : "bad"}
@@ -172,6 +177,7 @@ export default async function DatedTemplatesTable({
   userId,
   today,
   holidays,
+  workDays,
   pageInfo,
   buildHref,
   buildExpandHref,
@@ -182,6 +188,8 @@ export default async function DatedTemplatesTable({
   today: string;
   /** Libur dari tabel admin untuk label status (opsional; fallback statis). */
   holidays?: ReadonlySet<string>;
+  /** Hari kerja pemilik sesi (ISO 1-7); tanpa ini dianggap Senin-Jumat. */
+  workDays?: WorkDays;
   /** Halaman yang sedang tampil & batas irisan baris (dihitung di page.tsx). */
   pageInfo: PaginationInfo;
   /** Susun URL untuk nomor halaman tertentu (mempertahankan `?date=` aktif). */
@@ -272,7 +280,7 @@ export default async function DatedTemplatesTable({
                     <span className="font-mono text-xs font-bold tabular-nums">
                       {t.date}
                     </span>
-                    <StatusChip date={t.date} today={today} holidays={holidays} />
+                    <StatusChip date={t.date} today={today} holidays={holidays} workDays={workDays} />
                   </div>
 
                   <dl className="space-y-1.5 border-t border-border pt-2">
@@ -344,7 +352,7 @@ export default async function DatedTemplatesTable({
                           {t.date}
                         </span>
                         <span className="mt-1 block">
-                          <StatusChip date={t.date} today={today} holidays={holidays} />
+                          <StatusChip date={t.date} today={today} holidays={holidays} workDays={workDays} />
                         </span>
                       </td>
                       <td className="max-w-xs p-3 text-xs text-muted-foreground">

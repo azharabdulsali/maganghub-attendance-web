@@ -10,6 +10,8 @@ import {
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { refreshTokenHealth } from "@/lib/credential-session";
+import { loadHolidaySet } from "@/lib/holidays-repo";
+import { loadWorkSchedule } from "@/lib/work-schedule-repo";
 import { checkReportField } from "@/lib/report-rules";
 import { cn } from "@/lib/utils";
 import {
@@ -68,7 +70,7 @@ export default async function DashboardPage({
   // Status kredensial nyata, supaya kartu di bawah jujur saat sesi Monev mati,
   // bukan selalu menyuruh "Atur kredensial" walau semuanya sehat.
   // Statistik ringkas, dihitung di server, hanya membaca data milik pengguna.
-  const [credential, { stats, trend }, tokenHealth, template] =
+  const [credential, { stats, trend }, tokenHealth, template, holidays, workDays] =
     await Promise.all([
       prisma.maganghubCredential.findUnique({
         where: { userId },
@@ -82,6 +84,12 @@ export default async function DashboardPage({
         where: { userId },
         select: { activity: true, learning: true, obstacles: true },
       }),
+      // Libur admin + jadwal kerja pengguna: kalender mini memberi garis
+      // putus-putus pada "hari ini bukan hari kerja Anda" memakai aturan yang
+      // SAMA dengan halaman /calendar & jalur kirim. Keduanya gagal-lunak
+      // (libur → daftar statis, jadwal → Senin–Jumat).
+      loadHolidaySet(),
+      loadWorkSchedule(userId),
     ]);
 
   const punyaToken = Boolean(credential?.tokenCiphertext);
@@ -346,13 +354,19 @@ export default async function DashboardPage({
         </div>
         <div className="mt-4">
           <Disclosure summary="Kapan laporan tidak dikirim?">
-            Akhir pekan, hari libur nasional, dan tanggal setelah akhir program
-            otomatis dilewati. Laporan hanya untuk hari ini (zona Asia/Jakarta).
+            Hari di luar jadwal kerja Anda, hari libur nasional, dan tanggal
+            setelah akhir program otomatis dilewati. Laporan hanya untuk hari
+            ini (zona Asia/Jakarta).
           </Disclosure>
         </div>
       </section>
 
-      <StatusCalendar trend={trend} range={range} />
+      <StatusCalendar
+        trend={trend}
+        range={range}
+        workDays={workDays}
+        holidays={holidays}
+      />
     </div>
   );
 }

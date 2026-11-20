@@ -281,6 +281,7 @@ export type UserWhereInput = {
   submitLogs?: Prisma.SubmitLogListRelationFilter
   automation?: Prisma.XOR<Prisma.AutomationConfigNullableScalarRelationFilter, Prisma.AutomationConfigWhereInput> | null
   gitRepoConfig?: Prisma.XOR<Prisma.GitRepoConfigNullableScalarRelationFilter, Prisma.GitRepoConfigWhereInput> | null
+  workSchedule?: Prisma.XOR<Prisma.WorkScheduleNullableScalarRelationFilter, Prisma.WorkScheduleWhereInput> | null
   adminActionsPerformed?: Prisma.AdminActionLogListRelationFilter
   adminActionsReceived?: Prisma.AdminActionLogListRelationFilter
   feedbacks?: Prisma.FeedbackListRelationFilter
@@ -308,6 +309,7 @@ export type UserOrderByWithRelationInput = {
   submitLogs?: Prisma.SubmitLogOrderByRelationAggregateInput
   automation?: Prisma.AutomationConfigOrderByWithRelationInput
   gitRepoConfig?: Prisma.GitRepoConfigOrderByWithRelationInput
+  workSchedule?: Prisma.WorkScheduleOrderByWithRelationInput
   adminActionsPerformed?: Prisma.AdminActionLogOrderByRelationAggregateInput
   adminActionsReceived?: Prisma.AdminActionLogOrderByRelationAggregateInput
   feedbacks?: Prisma.FeedbackOrderByRelationAggregateInput
@@ -338,6 +340,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   submitLogs?: Prisma.SubmitLogListRelationFilter
   automation?: Prisma.XOR<Prisma.AutomationConfigNullableScalarRelationFilter, Prisma.AutomationConfigWhereInput> | null
   gitRepoConfig?: Prisma.XOR<Prisma.GitRepoConfigNullableScalarRelationFilter, Prisma.GitRepoConfigWhereInput> | null
+  workSchedule?: Prisma.XOR<Prisma.WorkScheduleNullableScalarRelationFilter, Prisma.WorkScheduleWhereInput> | null
   adminActionsPerformed?: Prisma.AdminActionLogListRelationFilter
   adminActionsReceived?: Prisma.AdminActionLogListRelationFilter
   feedbacks?: Prisma.FeedbackListRelationFilter
@@ -403,6 +406,7 @@ export type UserCreateInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -430,6 +434,7 @@ export type UserUncheckedCreateInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -457,6 +462,7 @@ export type UserUpdateInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -484,6 +490,7 @@ export type UserUncheckedUpdateInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -792,6 +799,20 @@ export type UserUpdateOneRequiredWithoutGitRepoConfigNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutGitRepoConfigInput, Prisma.UserUpdateWithoutGitRepoConfigInput>, Prisma.UserUncheckedUpdateWithoutGitRepoConfigInput>
 }
 
+export type UserCreateNestedOneWithoutWorkScheduleInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWorkScheduleInput, Prisma.UserUncheckedCreateWithoutWorkScheduleInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWorkScheduleInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutWorkScheduleNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWorkScheduleInput, Prisma.UserUncheckedCreateWithoutWorkScheduleInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWorkScheduleInput
+  upsert?: Prisma.UserUpsertWithoutWorkScheduleInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWorkScheduleInput, Prisma.UserUpdateWithoutWorkScheduleInput>, Prisma.UserUncheckedUpdateWithoutWorkScheduleInput>
+}
+
 export type UserCreateWithoutAccountsInput = {
   id?: string
   email: string
@@ -813,6 +834,7 @@ export type UserCreateWithoutAccountsInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -839,6 +861,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -881,6 +904,7 @@ export type UserUpdateWithoutAccountsInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -907,6 +931,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -933,6 +958,7 @@ export type UserCreateWithoutCredentialInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -959,6 +985,7 @@ export type UserUncheckedCreateWithoutCredentialInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -1001,6 +1028,7 @@ export type UserUpdateWithoutCredentialInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -1027,6 +1055,7 @@ export type UserUncheckedUpdateWithoutCredentialInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -1053,6 +1082,7 @@ export type UserCreateWithoutTemplateInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -1079,6 +1109,7 @@ export type UserUncheckedCreateWithoutTemplateInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -1121,6 +1152,7 @@ export type UserUpdateWithoutTemplateInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -1147,6 +1179,7 @@ export type UserUncheckedUpdateWithoutTemplateInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -1173,6 +1206,7 @@ export type UserCreateWithoutDatedTemplatesInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -1199,6 +1233,7 @@ export type UserUncheckedCreateWithoutDatedTemplatesInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -1241,6 +1276,7 @@ export type UserUpdateWithoutDatedTemplatesInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -1267,6 +1303,7 @@ export type UserUncheckedUpdateWithoutDatedTemplatesInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -1293,6 +1330,7 @@ export type UserCreateWithoutReportsInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -1319,6 +1357,7 @@ export type UserUncheckedCreateWithoutReportsInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -1361,6 +1400,7 @@ export type UserUpdateWithoutReportsInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -1387,6 +1427,7 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -1413,6 +1454,7 @@ export type UserCreateWithoutSubmitLogsInput = {
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -1439,6 +1481,7 @@ export type UserUncheckedCreateWithoutSubmitLogsInput = {
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -1481,6 +1524,7 @@ export type UserUpdateWithoutSubmitLogsInput = {
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -1507,6 +1551,7 @@ export type UserUncheckedUpdateWithoutSubmitLogsInput = {
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -1533,6 +1578,7 @@ export type UserCreateWithoutAutomationInput = {
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -1559,6 +1605,7 @@ export type UserUncheckedCreateWithoutAutomationInput = {
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -1601,6 +1648,7 @@ export type UserUpdateWithoutAutomationInput = {
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -1627,6 +1675,7 @@ export type UserUncheckedUpdateWithoutAutomationInput = {
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -1654,6 +1703,7 @@ export type UserCreateWithoutFeedbacksInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
 }
@@ -1680,6 +1730,7 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
 }
@@ -1722,6 +1773,7 @@ export type UserUpdateWithoutFeedbacksInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
 }
@@ -1748,6 +1800,7 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
 }
@@ -1773,6 +1826,7 @@ export type UserCreateWithoutSessionsInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -1799,6 +1853,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -1841,6 +1896,7 @@ export type UserUpdateWithoutSessionsInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -1867,6 +1923,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -1894,6 +1951,7 @@ export type UserCreateWithoutAdminActionsPerformedInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
 }
@@ -1920,6 +1978,7 @@ export type UserUncheckedCreateWithoutAdminActionsPerformedInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
 }
@@ -1951,6 +2010,7 @@ export type UserCreateWithoutAdminActionsReceivedInput = {
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
 }
@@ -1977,6 +2037,7 @@ export type UserUncheckedCreateWithoutAdminActionsReceivedInput = {
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
 }
@@ -2019,6 +2080,7 @@ export type UserUpdateWithoutAdminActionsPerformedInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
 }
@@ -2045,6 +2107,7 @@ export type UserUncheckedUpdateWithoutAdminActionsPerformedInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -2082,6 +2145,7 @@ export type UserUpdateWithoutAdminActionsReceivedInput = {
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
 }
@@ -2108,6 +2172,7 @@ export type UserUncheckedUpdateWithoutAdminActionsReceivedInput = {
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
   gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -2133,6 +2198,7 @@ export type UserCreateWithoutGitRepoConfigInput = {
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
@@ -2159,6 +2225,7 @@ export type UserUncheckedCreateWithoutGitRepoConfigInput = {
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
   submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
   automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  workSchedule?: Prisma.WorkScheduleUncheckedCreateNestedOneWithoutUserInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
@@ -2201,6 +2268,7 @@ export type UserUpdateWithoutGitRepoConfigInput = {
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
@@ -2227,6 +2295,131 @@ export type UserUncheckedUpdateWithoutGitRepoConfigInput = {
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
   submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
   automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  workSchedule?: Prisma.WorkScheduleUncheckedUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
+  feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutWorkScheduleInput = {
+  id?: string
+  email: string
+  passwordHash?: string | null
+  name?: string | null
+  role?: $Enums.Role
+  emailVerified?: Date | string | null
+  image?: string | null
+  sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  credential?: Prisma.MaganghubCredentialCreateNestedOneWithoutUserInput
+  template?: Prisma.ReportTemplateCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateCreateNestedManyWithoutUserInput
+  reports?: Prisma.ReportCreateNestedManyWithoutUserInput
+  submitLogs?: Prisma.SubmitLogCreateNestedManyWithoutUserInput
+  automation?: Prisma.AutomationConfigCreateNestedOneWithoutUserInput
+  gitRepoConfig?: Prisma.GitRepoConfigCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogCreateNestedManyWithoutTargetInput
+  feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutWorkScheduleInput = {
+  id?: string
+  email: string
+  passwordHash?: string | null
+  name?: string | null
+  role?: $Enums.Role
+  emailVerified?: Date | string | null
+  image?: string | null
+  sessionVersion?: number
+  deletedAt?: Date | string | null
+  mustChangePassword?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  credential?: Prisma.MaganghubCredentialUncheckedCreateNestedOneWithoutUserInput
+  template?: Prisma.ReportTemplateUncheckedCreateNestedOneWithoutUserInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedCreateNestedManyWithoutUserInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
+  submitLogs?: Prisma.SubmitLogUncheckedCreateNestedManyWithoutUserInput
+  automation?: Prisma.AutomationConfigUncheckedCreateNestedOneWithoutUserInput
+  gitRepoConfig?: Prisma.GitRepoConfigUncheckedCreateNestedOneWithoutUserInput
+  adminActionsPerformed?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutActorInput
+  adminActionsReceived?: Prisma.AdminActionLogUncheckedCreateNestedManyWithoutTargetInput
+  feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutWorkScheduleInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutWorkScheduleInput, Prisma.UserUncheckedCreateWithoutWorkScheduleInput>
+}
+
+export type UserUpsertWithoutWorkScheduleInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWorkScheduleInput, Prisma.UserUncheckedUpdateWithoutWorkScheduleInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWorkScheduleInput, Prisma.UserUncheckedCreateWithoutWorkScheduleInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWorkScheduleInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWorkScheduleInput, Prisma.UserUncheckedUpdateWithoutWorkScheduleInput>
+}
+
+export type UserUpdateWithoutWorkScheduleInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  credential?: Prisma.MaganghubCredentialUpdateOneWithoutUserNestedInput
+  template?: Prisma.ReportTemplateUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUpdateManyWithoutUserNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
+  submitLogs?: Prisma.SubmitLogUpdateManyWithoutUserNestedInput
+  automation?: Prisma.AutomationConfigUpdateOneWithoutUserNestedInput
+  gitRepoConfig?: Prisma.GitRepoConfigUpdateOneWithoutUserNestedInput
+  adminActionsPerformed?: Prisma.AdminActionLogUpdateManyWithoutActorNestedInput
+  adminActionsReceived?: Prisma.AdminActionLogUpdateManyWithoutTargetNestedInput
+  feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWorkScheduleInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  credential?: Prisma.MaganghubCredentialUncheckedUpdateOneWithoutUserNestedInput
+  template?: Prisma.ReportTemplateUncheckedUpdateOneWithoutUserNestedInput
+  datedTemplates?: Prisma.DatedReportTemplateUncheckedUpdateManyWithoutUserNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
+  submitLogs?: Prisma.SubmitLogUncheckedUpdateManyWithoutUserNestedInput
+  automation?: Prisma.AutomationConfigUncheckedUpdateOneWithoutUserNestedInput
+  gitRepoConfig?: Prisma.GitRepoConfigUncheckedUpdateOneWithoutUserNestedInput
   adminActionsPerformed?: Prisma.AdminActionLogUncheckedUpdateManyWithoutActorNestedInput
   adminActionsReceived?: Prisma.AdminActionLogUncheckedUpdateManyWithoutTargetNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
@@ -2348,6 +2541,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   submitLogs?: boolean | Prisma.User$submitLogsArgs<ExtArgs>
   automation?: boolean | Prisma.User$automationArgs<ExtArgs>
   gitRepoConfig?: boolean | Prisma.User$gitRepoConfigArgs<ExtArgs>
+  workSchedule?: boolean | Prisma.User$workScheduleArgs<ExtArgs>
   adminActionsPerformed?: boolean | Prisma.User$adminActionsPerformedArgs<ExtArgs>
   adminActionsReceived?: boolean | Prisma.User$adminActionsReceivedArgs<ExtArgs>
   feedbacks?: boolean | Prisma.User$feedbacksArgs<ExtArgs>
@@ -2410,6 +2604,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   submitLogs?: boolean | Prisma.User$submitLogsArgs<ExtArgs>
   automation?: boolean | Prisma.User$automationArgs<ExtArgs>
   gitRepoConfig?: boolean | Prisma.User$gitRepoConfigArgs<ExtArgs>
+  workSchedule?: boolean | Prisma.User$workScheduleArgs<ExtArgs>
   adminActionsPerformed?: boolean | Prisma.User$adminActionsPerformedArgs<ExtArgs>
   adminActionsReceived?: boolean | Prisma.User$adminActionsReceivedArgs<ExtArgs>
   feedbacks?: boolean | Prisma.User$feedbacksArgs<ExtArgs>
@@ -2436,6 +2631,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * * Repo git untuk bahan draf (satu per pengguna untuk sekarang).
      */
     gitRepoConfig: Prisma.$GitRepoConfigPayload<ExtArgs> | null
+    /**
+     * * Jadwal kerja mingguan pengguna (opsional; NULL = default Senin–Jumat).
+     */
+    workSchedule: Prisma.$WorkSchedulePayload<ExtArgs> | null
     adminActionsPerformed: Prisma.$AdminActionLogPayload<ExtArgs>[]
     adminActionsReceived: Prisma.$AdminActionLogPayload<ExtArgs>[]
     feedbacks: Prisma.$FeedbackPayload<ExtArgs>[]
@@ -2856,6 +3055,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   submitLogs<T extends Prisma.User$submitLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$submitLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubmitLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   automation<T extends Prisma.User$automationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$automationArgs<ExtArgs>>): Prisma.Prisma__AutomationConfigClient<runtime.Types.Result.GetResult<Prisma.$AutomationConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   gitRepoConfig<T extends Prisma.User$gitRepoConfigArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$gitRepoConfigArgs<ExtArgs>>): Prisma.Prisma__GitRepoConfigClient<runtime.Types.Result.GetResult<Prisma.$GitRepoConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  workSchedule<T extends Prisma.User$workScheduleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$workScheduleArgs<ExtArgs>>): Prisma.Prisma__WorkScheduleClient<runtime.Types.Result.GetResult<Prisma.$WorkSchedulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   adminActionsPerformed<T extends Prisma.User$adminActionsPerformedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminActionsPerformedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminActionLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   adminActionsReceived<T extends Prisma.User$adminActionsReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminActionsReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminActionLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   feedbacks<T extends Prisma.User$feedbacksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$feedbacksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3486,6 +3686,25 @@ export type User$gitRepoConfigArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   include?: Prisma.GitRepoConfigInclude<ExtArgs> | null
   where?: Prisma.GitRepoConfigWhereInput
+}
+
+/**
+ * User.workSchedule
+ */
+export type User$workScheduleArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkSchedule
+   */
+  select?: Prisma.WorkScheduleSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkSchedule
+   */
+  omit?: Prisma.WorkScheduleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkScheduleInclude<ExtArgs> | null
+  where?: Prisma.WorkScheduleWhereInput
 }
 
 /**
