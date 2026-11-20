@@ -95,7 +95,11 @@ const MENU_UMUM_GROUPS: MenuGroup[] = [
         label: "Template Laporan",
         icon: BookText,
       },
-      { href: "/repos", label: "Repo Git", icon: GitBranch },
+      // "(Opsional)" ditulis di label, bukan disembunyikan di tooltip: sebagian
+      // besar peserta tidak memakai git, dan menu di grup "Persiapan" terbaca
+      // seperti langkah wajib. Menyembunyikan menunya butuh preferensi DB baru,
+      // jadi label terang-terangan lebih jujur dan cukup.
+      { href: "/repos", label: "Repo Git (Opsional)", icon: GitBranch },
       { href: "/automation", label: "Otomasi", icon: Clock },
     ],
   },

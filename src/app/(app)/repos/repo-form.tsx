@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Disclosure } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -496,6 +497,17 @@ export default function RepoForm({
           Fitur ini hanya membaca commit. Aplikasi tidak pernah membuat commit
           atau push ke repo Anda.
         </p>
+
+        {/* Istilah "repo" dan "commit" hanya dijelaskan di sini, bukan di alur
+            wajib. Yang tidak mengenalnya tidak perlu membuka lipatan ini. */}
+        <Disclosure summary="Apa itu repo dan commit?">
+          <p>
+            Repo (repositori) adalah tempat menyimpan proyek di GitHub atau
+            GitLab. Commit adalah satu catatan perubahan yang Anda simpan di
+            sana, biasanya dengan pesan singkat. Aplikasi ini hanya membaca
+            daftarnya sebagai bahan draf, tidak pernah mengubah isinya.
+          </p>
+        </Disclosure>
       </aside>
 
       <ConfirmDialog

@@ -66,7 +66,13 @@ yang mengikat.
 > untuk menutup celah SSRF;
 > (d) **fallback lokal wajib tetap ada**, API git gagal atau tidak ada commit
 > tidak boleh membuat form laporan error. Fitur ini hanya *menambah bahan draf*,
-> tidak pernah menghalangi submit normal.
+> tidak pernah menghalangi submit normal;
+> (e) **harus terbaca opsional di UI**, karena sebagian besar peserta magang
+> bukan programmer dan tidak memakai git. Label menu **"Repo Git (Opsional)"**,
+> lencana "Opsional" + kartu "Perlu halaman ini atau tidak?" di `/repos`, dan
+> istilah `repo`/`commit` hanya dijelaskan di halaman itu, `/docs`, dan
+> `/panduan`. **Jangan** memunculkan istilah itu di alur wajib (dashboard,
+> kredensial, template, otomasi) dan jangan menjadikannya syarat apa pun.
 
 > **Cara men-debug "kok masih pakai lokal?":** jalankan
 > `npx tsx scripts/uji-gemini.ts`. Skrip itu memanggil API sungguhan dan
