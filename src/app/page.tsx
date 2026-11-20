@@ -9,10 +9,10 @@ import {
   KeyRound,
   LayoutDashboard,
   LogIn,
+  PenLine,
   Plus,
   Send,
   ShieldCheck,
-  Timer,
   UserPlus,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
@@ -44,9 +44,10 @@ import { todayInJakarta } from "@/lib/submit-service";
 // Struktur section mengikuti referensi UI (hero + statistik, strip teknologi,
 // grid fitur, tiga langkah, panduan, CTA, footer) tetapi SELURUH konten ditulis
 // ulang agar jujur: fitur yang disebut hanya yang benar-benar ada, dan tidak ada
-// tautan ke halaman yang belum ada. Penyusun draf AI & bahan draf dari commit
-// git bersifat opsional, jadi tidak dijadikan janji utama di halaman ini; detail
-// lengkapnya ada di /docs dan /panduan. Lihat SPEC.md §3 & §13.
+// tautan ke halaman yang belum ada. Penyusun draf lokal dari kata kunci adalah
+// fitur inti; AI & bahan draf dari commit git tetap opsional, jadi tidak
+// dijadikan janji utama di halaman ini. Detail lengkapnya ada di /docs dan
+// /panduan. Lihat SPEC.md §3 & §13.
 
 // Statistik di bawah hero. Semua angka ini benar dan dapat ditelusuri ke SPEC
 // (3 kolom laporan, 100 karakter minimum, token akses 6 jam, AES-256-GCM).
@@ -118,18 +119,18 @@ const FITUR = [
   },
   {
     icon: BookText,
-    judul: "Tiga template tetap",
-    isi: "Uraian Aktivitas, Pembelajaran, dan Kendala, sama seperti proyek lama. Pakai berulang tiap hari, atau salin dulu ke editor kalau mau diubah manual.",
+    judul: "Template cadangan",
+    isi: "Uraian Aktivitas, Pembelajaran, dan Kendala disimpan sekali. Kalau Anda lupa absen, template inilah yang dikirim saat jadwal otomatis menyala.",
   },
   {
     icon: ShieldCheck,
     judul: "Lolos syarat 100 karakter",
-    isi: "Portal menolak laporan yang terlalu singkat. Setiap kolom dicek wajib lebih dari 100 karakter langsung di kode, bukan cuma diingatkan di tampilan.",
+    isi: "Portal menolak laporan yang terlalu singkat. Setiap kolom dicek wajib minimal 100 karakter langsung di kode, bukan cuma diingatkan di tampilan.",
   },
   {
-    icon: Timer,
-    judul: "Hemat waktu tiap sore",
-    isi: "Tidak perlu lagi buka web lemot dan mengetik ulang laporan. Template sudah siap, Anda tinggal review sebentar lalu kirim.",
+    icon: PenLine,
+    judul: "Draf dari kata kunci",
+    isi: "Ketik aktivitas hari itu, lalu tekan Susun draf. Ketiga kolom terisi otomatis dan tetap bisa Anda sunting sebelum disimpan.",
   },
   {
     icon: Clock,
@@ -139,7 +140,7 @@ const FITUR = [
   {
     icon: Send,
     judul: "Kirim langsung dari server",
-    isi: "Tanpa browser dan tanpa server tambahan. Laporan terkirim ke portal dalam hitungan detik, jadi tidak ada risiko lupa absen.",
+    isi: "Tanpa browser dan tanpa server tambahan. Laporan terkirim ke portal dalam hitungan detik, tanpa Anda membuka portal Monev.",
   },
 ];
 
@@ -151,13 +152,13 @@ const LANGKAH = [
   },
   {
     nomor: "02",
-    judul: "Isi tiga template",
-    isi: "Tulis Uraian Aktivitas, Pembelajaran, dan Kendala, masing-masing lebih dari 100 karakter. Setelah itu tinggal dipakai berulang.",
+    judul: "Simpan template cadangan",
+    isi: "Isi Uraian Aktivitas, Pembelajaran, dan Kendala, masing-masing minimal 100 karakter. Setelah tersimpan, template ini jadi cadangan kalau Anda lupa absen.",
   },
   {
     nomor: "03",
-    judul: "Review & kirim",
-    isi: "Kirim manual sekali klik saat siap, atau nyalakan jadwal otomatis. Laporan langsung masuk ke akun Kemnaker Anda.",
+    judul: "Ketik kata kunci & kirim",
+    isi: "Ketik aktivitas hari itu lalu tekan Susun draf, atau langsung kirim template cadangan. Nyalakan jadwal otomatis supaya tetap terkirim saat Anda lupa.",
   },
 ];
 
@@ -191,10 +192,12 @@ const PANDUAN = [
 
 // Batasan yang diakui terbuka, kebalikan dari klaim berlebihan. Semua ini
 // sesuai SPEC: draf AI bisa gagal (selalu ada fallback lokal), integrasi git
-// hanya membaca commit, dan laporan tetap harus pernah dibuat sendiri
-// setidaknya sekali untuk mengisi template.
+// hanya membaca commit, laporan tetap harus pernah dibuat sendiri setidaknya
+// sekali untuk mengisi template, dan pengiriman otomatis butuh jadwal yang
+// dinyalakan.
 const BATASAN = [
   "Tidak menulis laporan atas nama Anda, isi template tetap dari Anda.",
+  "Laporan hanya terkirim otomatis bila template cadangan sudah disimpan dan jadwal otomatis dinyalakan.",
   "Draf AI opsional; bila gagal, draf disusun lokal tanpa AI.",
   "Integrasi GitHub/GitLab hanya membaca commit sebagai bahan draf; aplikasi tidak pernah menulis ke repo Anda.",
   "Bergantung pada portal Monev; bila portal berubah, pengiriman bisa gagal.",
@@ -359,13 +362,12 @@ export default async function Home() {
               Presensi &amp; logbook magang
             </p>
             <h1 className="mt-3 max-w-2xl font-heading text-4xl leading-[0.98] sm:text-5xl lg:text-6xl">
-              Tulis sekali. Terkirim tiap hari.
+              Lupa absen? Tenang, tetap terkirim.
             </h1>
             <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground">
-              Tiga kolom laporan (Uraian Aktivitas, Pembelajaran, Kendala) cukup
-              diisi satu kali. Setelah itu laporan harian terkirim dengan satu
-              klik atau lewat jadwal otomatis, tanpa membuka portal Monev di
-              browser.
+              Simpan template laporan sekali. Kalau Anda lupa absen, template
+              itulah yang dikirim saat jadwal otomatis menyala. Mau laporan yang
+              lebih spesifik? Ketik kata kunci hari itu, lalu tekan Susun draf.
             </p>
             <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span>Gratis</span>

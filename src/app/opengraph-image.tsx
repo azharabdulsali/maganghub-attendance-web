@@ -8,8 +8,8 @@
 // Desain mengikuti landing TERKINI (2026-11): bukan lagi gradien biru gelap,
 // melainkan gaya neobrutalism halaman â€” latar terang datar, garis tebal,
 // bayangan offset solid, dan ELEMEN UTAMANYA lembar laporan ber-cap "Terkirim"
-// yang sama dengan hero. Headline-nya persis H1 landing ("Tulis sekali.
-// Terkirim tiap hari.") supaya yang dilihat orang di chat/DM sama dengan yang
+// yang sama dengan hero. Headline-nya persis H1 landing ("Lupa absen? Tenang,
+// tetap terkirim.") supaya yang dilihat orang di chat/DM sama dengan yang
 // diterima setelah klik. Warna ditulis literal (bukan token Tailwind) karena
 // ImageResponse dirender di luar rangkaian CSS aplikasi.
 
@@ -17,7 +17,7 @@ import { ImageResponse } from "next/og";
 
 import { SITE_NAME } from "@/lib/site";
 
-export const alt = `${SITE_NAME}: tulis sekali, laporan magang terkirim tiap hari`;
+export const alt = `${SITE_NAME}: lupa absen? laporan magang tetap terkirim`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -112,7 +112,7 @@ export default function OpengraphImage() {
               maxWidth: 640,
             }}
           >
-            Tulis sekali. Terkirim tiap hari.
+            Lupa absen? Tenang, tetap terkirim.
           </div>
           <div
             style={{
@@ -124,8 +124,8 @@ export default function OpengraphImage() {
               maxWidth: 600,
             }}
           >
-            Tiga kolom cukup diisi sekali, absensi &amp; laporan Monev terkirim
-            otomatis ke Kemnaker.
+            Template yang Anda simpan sekali tetap dikirim saat jadwal otomatis
+            menyala.
           </div>
         </div>
 
