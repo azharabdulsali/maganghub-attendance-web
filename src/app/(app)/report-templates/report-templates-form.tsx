@@ -32,6 +32,7 @@ import { Message } from "@/components/ui/message";
 import { InfoHint } from "@/components/ui/tooltip";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
+import type { WorkDays } from "@/lib/work-schedule";
 import {
   MIN_REPORT_LENGTH,
   MAX_REPORT_LENGTH,
@@ -94,6 +95,14 @@ interface Props {
    * Dipakai agar tanggal libur dinonaktifkan di DatePicker & ditandai di sini.
    */
   holidays?: string[];
+  /**
+   * Hari kerja pemilik formulir (ISO 1=Senin … 7=Minggu) sebagai ARRAY, alasan
+   * serialisasi sama dengan `holidays`. Tanggal di luar daftar ini diperlakukan
+   * seperti libur (DatePicker menonaktifkannya, status di bawah menyebutkannya),
+   * supaya tanggal yang bisa dipilih sama dengan tanggal yang benar-benar
+   * dikirimi laporan. Tanpa prop ini → Senin–Jumat.
+   */
+  workDays?: WorkDays;
 }
 
 const KOSONG: Record<FieldName, string> = {
@@ -112,6 +121,7 @@ export default function ReportTemplatesForm({
   initialDated = [],
   initialDate = null,
   holidays = [],
+  workDays,
 }: Props) {
   // Set libur dibangun sekali (union statis + dari DB) supaya DatePicker &
   // penanda status memakai sumber yang sama persis.
@@ -263,10 +273,14 @@ export default function ReportTemplatesForm({
   const statusTanggal = useMemo(() => {
     if (tanggal === null) return null;
     if (isAfter(tanggal, LAST_ACTIVE_DATE)) return "Di luar masa program";
-    if (isHoliday(tanggal, holidaySet)) return "Libur, otomasi tidak mengirim";
+    // `workDays` diteruskan supaya tanggal di luar jadwal kerja pengguna
+    // (mis. Sabtu bagi yang bekerja Senin–Jumat) mendapat pesan yang SAMA
+    // dengan yang dipakai server, bukan hanya "libur" generik.
+    if (isHoliday(tanggal, holidaySet, workDays))
+      return "Libur atau bukan hari kerja Anda, otomasi tidak mengirim";
     if (isAfter(today, tanggal)) return "Sudah lewat";
     return "Siap dipakai";
-  }, [tanggal, today, holidaySet]);
+  }, [tanggal, today, holidaySet, workDays]);
 
   /**
    * Minta server menyusun draf dari kata kunci, lalu isikan hasilnya ke ketiga
@@ -495,7 +509,7 @@ export default function ReportTemplatesForm({
                 <span className="text-muted-foreground">(opsional)</span>
               </Label>
               <InfoHint>
-                Tanggal libur (Sabtu, Minggu, dan hari libur nasional) tidak bisa
+                Hari libur dan tanggal di luar jadwal kerja Anda tidak bisa
                 dipilih karena otomasi tidak mengirim laporan pada hari itu.
               </InfoHint>
             </div>
@@ -507,6 +521,7 @@ export default function ReportTemplatesForm({
               placeholder="Semua tanggal (default)"
               className="w-full sm:w-60"
               holidays={holidays}
+              workDays={workDays}
             />
           </div>
           {tanggal !== null ? (

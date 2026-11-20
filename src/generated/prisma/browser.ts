@@ -34,14 +34,14 @@ export type Account = Prisma.AccountModel
 export type VerificationToken = Prisma.VerificationTokenModel
 /**
  * Model MaganghubCredential
- * Kredensial Monev pengguna. Password TIDAK pernah disimpan mentah —
+ * Kredensial Monev pengguna. Password TIDAK pernah disimpan mentah
  * hanya ciphertext AES-256-GCM beserta IV dan auth tag (SPEC.md §9 poin 1).
  */
 export type MaganghubCredential = Prisma.MaganghubCredentialModel
 /**
  * Model ReportTemplate
  * Tiga template tetap: uraian aktivitas, pembelajaran, kendala.
- * Isinya >100 karakter (syarat portal) dan dipakai ulang setiap hari —
+ * Isinya >100 karakter (syarat portal) dan dipakai ulang setiap hari
  * persis perilaku bot Python (SPEC.md §1, §5.3, §13 baris 9).
  */
 export type ReportTemplate = Prisma.ReportTemplateModel
@@ -72,14 +72,14 @@ export type DatedReportTemplate = Prisma.DatedReportTemplateModel
 export type Report = Prisma.ReportModel
 /**
  * Model SubmitLog
- * Audit log tiap percobaan submit — bukti "sudah dikirim" bila disengketakan
+ * Audit log tiap percobaan submit, bukti "sudah dikirim" bila disengketakan
  * (SPEC.md §7, §10). Tidak boleh ada submit yang tidak tercatat di sini.
  */
 export type SubmitLog = Prisma.SubmitLogModel
 /**
  * Model AutomationConfig
  * Pengaturan pemicu otomatis per pengguna. `webhookKey` adalah rahasia
- * milik pengguna sendiri — jangan satu kunci untuk semua (SPEC.md §9 poin 7).
+ * milik pengguna sendiri, jangan satu kunci untuk semua (SPEC.md §9 poin 7).
  */
 export type AutomationConfig = Prisma.AutomationConfigModel
 /**
@@ -88,7 +88,7 @@ export type AutomationConfig = Prisma.AutomationConfigModel
  * 
  * Latar: admin ingin memunculkan popup peringatan ke semua pengguna yang
  * BELUM absen pada jam:menit tertentu (WIB). Popup hanya tampil di dalam
- * aplikasi (saat halaman terbuka) — tidak ada email/WA/push.
+ * aplikasi (saat halaman terbuka), tidak ada email/WA/push.
  * 
  * Kenapa SATU baris (bukan satu baris per pengguna): setelannya bersifat
  * GLOBAL untuk seluruh aplikasi, diatur sekali oleh admin. Kita memakai
@@ -154,3 +154,21 @@ export type AdminActionLog = Prisma.AdminActionLogModel
  * pun (GIT-COMMITS-PLAN.md §6).
  */
 export type GitRepoConfig = Prisma.GitRepoConfigModel
+/**
+ * Model WorkSchedule
+ * Hari kerja MINGGUAN milik satu pengguna (keputusan pemilik, 2026-11).
+ * 
+ * Sebelumnya "hari kerja" selalu berarti Senin–Jumat (dihitung otomatis dari
+ * tanggal, lihat `isHoliday` di report-policy.ts). Kini setiap pengguna bisa
+ * menetapkan sendiri hari mana ia bekerja; `decide()`, kalender, date picker,
+ * pengingat, dan panel admin semuanya mengikuti.
+ * 
+ * `days` memakai penomoran ISO-8601: 1=Senin … 7=Minggu (BUKAN
+ * `getUTCDay()` yang 0=Minggu). Konversi satu tempat di
+ * `src/lib/work-schedule.ts`. Array bertipe `Int[]` karena jumlah hari 1–7.
+ * 
+ * Pengguna TANPA baris di sini berperilaku persis seperti sebelum fitur ini:
+ * Senin–Jumat (default, diterapkan di `work-schedule.ts`), jadi perubahan
+ * skema ini aditif dan tidak mengubah perilaku pengguna lama.
+ */
+export type WorkSchedule = Prisma.WorkScheduleModel

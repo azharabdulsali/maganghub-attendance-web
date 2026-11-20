@@ -128,6 +128,8 @@ model User {
   automation   AutomationConfig?
   /** Repo git untuk bahan draf (satu per pengguna untuk sekarang). */
   gitRepoConfig GitRepoConfig?
+  /** Jadwal kerja mingguan pengguna (opsional; NULL = default Senin–Jumat). */
+  workSchedule WorkSchedule?
   adminActionsPerformed AdminActionLog[] @relation("AdminActor")
   adminActionsReceived  AdminActionLog[] @relation("AdminTarget")
   feedbacks    Feedback[]
@@ -233,8 +235,9 @@ model ReportTemplate {
 /// akan membingungkan "yang mana yang dipakai".
 ///
 /// Catatan penting: baris di sini TIDAK membuat otomasi mengirim di hari libur.
-/// Aturan libur/akhir pekan tetap berlaku (report-policy.ts `decide()`), jadi
-/// tanggal yang jatuh pada Sabtu/Minggu/libur nasional tetap SKIPPED.
+/// Aturan hari tetap berlaku (report-policy.ts `decide()`): tanggal yang jatuh
+/// di luar jadwal kerja pengguna (docs/WORK-SCHEDULE.md) atau pada libur
+/// nasional tetap SKIPPED.
 model DatedReportTemplate {
   id        String   @id @default(cuid())
   userId    String
@@ -468,6 +471,39 @@ model GitRepoConfig {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("git_repo_configs")
+}
+
+// ---------------------------------------------------------------------------
+// Fitur: jadwal kerja mingguan per pengguna (docs/WORK-SCHEDULE.md)
+// ---------------------------------------------------------------------------
+
+/// Hari kerja MINGGUAN milik satu pengguna (keputusan pemilik, 2026-11).
+///
+/// Sebelumnya "hari kerja" selalu berarti Senin–Jumat (dihitung otomatis dari
+/// tanggal, lihat `isHoliday` di report-policy.ts). Kini setiap pengguna bisa
+/// menetapkan sendiri hari mana ia bekerja; `decide()`, kalender, date picker,
+/// pengingat, dan panel admin semuanya mengikuti.
+///
+/// `days` memakai penomoran ISO-8601: 1=Senin … 7=Minggu (BUKAN
+/// `getUTCDay()` yang 0=Minggu). Konversi satu tempat di
+/// `src/lib/work-schedule.ts`. Array bertipe `Int[]` karena jumlah hari 1–7.
+///
+/// Pengguna TANPA baris di sini berperilaku persis seperti sebelum fitur ini:
+/// Senin–Jumat (default, diterapkan di `work-schedule.ts`), jadi perubahan
+/// skema ini aditif dan tidak mengubah perilaku pengguna lama.
+model WorkSchedule {
+  id     String @id @default(cuid())
+  userId String @unique
+  /// Hari kerja dalam seminggu, ISO-8601: 1=Senin … 7=Minggu. Minimal satu
+  /// hari (ditolak validasi jika kosong), maksimal 7, tanpa duplikat.
+  days   Int[]  @default([1, 2, 3, 4, 5])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("work_schedules")
 }
 
 

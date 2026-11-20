@@ -38,8 +38,9 @@ export const CONTACT_EMAIL_IS_PLACEHOLDER = CONTACT_EMAIL.startsWith("[");
  * Kemnaker" dan ajakan bertindak, sesuai temuan audit O-2.
  */
 export const SITE_DESCRIPTION =
-  "Kirim absensi & laporan Monev MagangHub Kemnaker otomatis dari template " +
-  "Anda. Tanpa browser, tanpa ketik ulang, kredensial terenkripsi AES-256.";
+  "Simpan template laporan Monev MagangHub Kemnaker sekali. Lupa absen? " +
+  "Laporan tetap terkirim saat jadwal otomatis menyala. Kredensial " +
+  "terenkripsi AES-256.";
 
 /** URL absolut dari sebuah path relatif ("/" → origin + "/"). */
 export function absoluteUrl(path = "/"): string {
@@ -60,8 +61,8 @@ export function absoluteUrl(path = "/"): string {
  * Aturan penulisan jawaban (lihat ai-writing-detection.md): kalimat lugas,
  * tanpa basa-basi "Tentu saja!"/"Tentu, kami senang membantu", tanpa em dash
  * dekoratif, dan menyebut batasan secara jujur. Semua jawaban hanya mengulang
- * fakta yang sudah ada di aplikasi: AES-256-GCM, tiga template, aturan >100
- * karakter, mode manual atau cron, dan REST API. Fitur opsional (penyusun draf
+ * fakta yang sudah ada di aplikasi: AES-256-GCM, tiga template, aturan minimal
+ * 100 karakter, mode manual atau cron, dan REST API. Fitur opsional (penyusun draf
  * AI, bahan draf dari commit git) tidak dijadikan janji di FAQ ini; detailnya
  * ada di /docs. Jangan menyebut fitur yang memang tidak ada (mis. ekstensi
  * browser).
@@ -71,8 +72,9 @@ export const FAQ_ITEMS: readonly { q: string; a: string }[] = [
     q: "Apakah MagangHub mengisi laporan magang saya otomatis?",
     a: "Iya, tapi isinya tetap dari Anda. Anda menyiapkan tiga kolom template " +
       "(Uraian Aktivitas, Pembelajaran, dan Kendala) sekali saja, lalu " +
-      "aplikasi yang mengirimkannya ke portal Monev, entah sesuai jadwal atau " +
-      "lewat satu klik. MagangHub tidak menulis laporan menggantikan Anda.",
+      "aplikasi yang mengirimkannya ke portal Monev, entah lewat satu klik " +
+      "atau sesuai jadwal yang Anda nyalakan. MagangHub tidak menulis laporan " +
+      "menggantikan Anda.",
   },
   {
     q: "Apakah kredensial Monev saya aman?",
@@ -89,13 +91,13 @@ export const FAQ_ITEMS: readonly { q: string; a: string }[] = [
   {
     q: "Bisakah laporan dikirim otomatis tanpa saya buka aplikasinya?",
     a: "Bisa. Setelah template disiapkan, Anda dapat menyalakan jadwal otomatis " +
-      "supaya laporan terkirim tiap sore, atau mengirim manual satu klik saat " +
-      "Anda siap. Jadwalnya bisa dimatikan kapan saja.",
+      "supaya laporan terkirim tiap sore pada hari kerja, atau mengirim manual " +
+      "satu klik saat Anda siap. Jadwalnya bisa dimatikan kapan saja.",
   },
   {
     q: "Apakah ada batasan minimum panjang laporan?",
     a: "Ada. Portal Monev menolak laporan yang terlalu singkat, jadi setiap " +
-      "kolom wajib lebih dari 100 karakter. Aturan ini diperiksa di kode " +
+      "kolom wajib minimal 100 karakter. Aturan ini diperiksa di kode " +
       "aplikasi, bukan hanya diperingatkan di tampilan.",
   },
   {

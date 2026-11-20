@@ -13,8 +13,8 @@
 // ⚠️  Etika & keselamatan (SPEC.md §10):
 //   - TIDAK ada pengiriman otomatis diam-diam; route ini hanya jalan saat
 //     pengguna menekan tombol.
-//   - `decide()` diperiksa lebih dulu (via assessReadiness); libur & akhir
-//     program TIDAK PERNAH kirim.
+//   - `decide()` diperiksa lebih dulu (via assessReadiness); libur & hari di
+//     luar jadwal kerja pengguna TIDAK PERNAH kirim.
 //   - Body permintaan TIDAK pernah memuat password/token dalam bentuk apa pun.
 
 import { NextResponse } from "next/server";

@@ -20,6 +20,7 @@ desain dan aturan teknis, lihat:
 | [`docs/GIT-COMMITS-PLAN.md`](./docs/GIT-COMMITS-PLAN.md) | Rencana fitur auto laporan dari commit GitHub/GitLab |
 | [`docs/GOOGLE-LOGIN.md`](./docs/GOOGLE-LOGIN.md) | Mengaktifkan login dengan Google (opsional) |
 | [`docs/TURNSTILE.md`](./docs/TURNSTILE.md) | Mengaktifkan CAPTCHA Cloudflare Turnstile (opsional) |
+| [`docs/WORK-SCHEDULE.md`](./docs/WORK-SCHEDULE.md) | Jadwal kerja mingguan per pengguna |
 
 ## Tumpukan teknologi
 

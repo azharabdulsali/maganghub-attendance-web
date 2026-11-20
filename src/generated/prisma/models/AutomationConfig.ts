@@ -15,7 +15,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 /**
  * Model AutomationConfig
  * Pengaturan pemicu otomatis per pengguna. `webhookKey` adalah rahasia
- * milik pengguna sendiri — jangan satu kunci untuk semua (SPEC.md §9 poin 7).
+ * milik pengguna sendiri, jangan satu kunci untuk semua (SPEC.md §9 poin 7).
  */
 export type AutomationConfigModel = runtime.Types.Result.DefaultSelection<Prisma.$AutomationConfigPayload>
 

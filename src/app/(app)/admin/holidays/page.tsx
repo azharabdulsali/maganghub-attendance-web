@@ -38,7 +38,7 @@ export default async function AdminHolidaysPage() {
       <PageHeader
         title="Hari Libur & Tanggal Merah"
         badge={<Badge className="bg-main text-main-foreground">Admin</Badge>}
-        description="Tanggal ini dilewati otomasi, sama seperti Sabtu & Minggu."
+        description="Tanggal ini dilewati otomasi untuk semua pengguna, di luar jadwal kerja mereka."
       />
 
       {/* `key` dari data server: saat `router.refresh()` mengambil daftar baru,

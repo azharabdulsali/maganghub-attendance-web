@@ -33,6 +33,8 @@ import {
 } from "@/lib/submit-service";
 import { jakartaDayRange } from "@/lib/admin-automation";
 import { loadHolidaySet } from "@/lib/holidays-repo";
+import { loadWorkSchedule } from "@/lib/work-schedule-repo";
+import type { WorkDays } from "@/lib/work-schedule";
 
 export type SubmitTrigger = "MANUAL" | "CRON";
 
@@ -239,6 +241,13 @@ export async function performSubmit(opts: {
    * pemanggil yang sudah memuatnya (menghindari query ganda).
    */
   holidays?: ReadonlySet<string>;
+  /**
+   * Hari kerja milik pengguna (ISO 1=Senin … 7=Minggu). Opsional: bila tak
+   * diberikan, dimuat dari DB (`loadWorkSchedule()`); tanpa baris tersimpan
+   * hasilnya default Senin–Jumat. Diberikan eksplisit oleh test agar murni,
+   * dan oleh pemanggil yang sudah memuatnya (menghindari query ganda).
+   */
+  workDays?: WorkDays;
 }): Promise<SubmitOutcome> {
   const { userId, date, template, credential, trigger, logOnNotReady } = opts;
 
@@ -257,6 +266,11 @@ export async function performSubmit(opts: {
   } catch {
     holidays = undefined;
   }
+
+  // Jadwal kerja pengguna. `loadWorkSchedule` sudah gagal-lunak (default
+  // Senin–Jumat bila tabel belum ada / DB sesaat bermasalah), jadi TIDAK perlu
+  // try/catch di sini — dan jangan tambahkan yang bisa menelan galat lain.
+  const workDays = opts.workDays ?? (await loadWorkSchedule(userId));
 
   const hasRefreshToken = Boolean(
     credential?.tokenCiphertext && credential.tokenIv && credential.tokenAuthTag,
@@ -281,6 +295,7 @@ export async function performSubmit(opts: {
       hasTemplate: Boolean(template),
       hasToken,
       holidays,
+      workDays,
     });
   } catch {
     return { kind: "BAD_DATE", date };
@@ -288,7 +303,7 @@ export async function performSubmit(opts: {
 
   if (!readiness.ready) {
     const message = readinessMessage(readiness.reason);
-    // Libur/akhir pekan (POLICY_SKIPPED) BUKAN kegagalan → tidak menulis
+    // Libur / di luar jadwal kerja (POLICY_SKIPPED) BUKAN kegagalan → tidak menulis
     // SubmitLog sama sekali, apa pun trigger. Dulu cron mencatatnya FAILED
     // ("hari dicek, memang libur"), tapi itu memenuhi Riwayat absensi dengan
     // baris libur yang bukan laporan. Riwayat kini hanya memuat hari kerja.

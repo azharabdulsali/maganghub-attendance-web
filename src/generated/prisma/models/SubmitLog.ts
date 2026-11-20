@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model SubmitLog
- * Audit log tiap percobaan submit — bukti "sudah dikirim" bila disengketakan
+ * Audit log tiap percobaan submit, bukti "sudah dikirim" bila disengketakan
  * (SPEC.md §7, §10). Tidak boleh ada submit yang tidak tercatat di sini.
  */
 export type SubmitLogModel = runtime.Types.Result.DefaultSelection<Prisma.$SubmitLogPayload>

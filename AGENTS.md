@@ -31,7 +31,7 @@ Tahap 6 dan **sudah aktif**: penyusun draf Gemini + fallback lokal, bahan draf
 dari commit git (GitHub/GitLab), panel admin lengkap (hapus/atur ulang sandi/
 ubah peran/uji login), hari libur, kritik & saran, pengingat "belum absen",
 kalender kehadiran, dan halaman legal/panduan. Baseline verifikasi saat ini:
-`npm run typecheck` ✅ · `npm run lint` ✅ · `npm test` (**1221 tes**) ✅ ·
+`npm run typecheck` ✅ · `npm run lint` ✅ · `npm test` (**1256 tes**) ✅ ·
 `npm run build` ✅. Lihat `SPEC.md` §12 untuk tahapan dan §13 untuk keputusan
 yang mengikat.
 
@@ -133,7 +133,7 @@ yang mengikat.
   ingin menyimpang, tulis alasannya di `SPEC.md`, jangan diam-diam.
 - **Jalankan `npm run lint`, `npm run typecheck`, `npm run build`, dan
   `npm test`** sebelum menyatakan selesai. Empat-empatnya wajib hijau; tes
-  (`vitest`, 1221 tes) adalah jaring pengaman utama proyek ini, lihat §7 untuk
+  (`vitest`, 1256 tes) adalah jaring pengaman utama proyek ini, lihat §7 untuk
   aturan menulis tes yang benar-benar bisa gagal.
 - **Balas dalam Bahasa Indonesia.** Seluruh komunikasi ke pemilik proyek
   memakai Bahasa Indonesia, konsisten sampai akhir, jangan berganti bahasa di
@@ -251,11 +251,12 @@ Keputusan pemilik 2026-11: CAPTCHA **boleh** dipasang pada **pendaftaran** dan
      cjs output format"_. Bungkus dalam `async function main()` lalu
      `main().catch(...).finally(() => prisma.$disconnect())`.
 - Proyek ini memakai **`prisma db push`**, bukan migrasi (tidak ada folder
-  `prisma/migrations`). **15 model sudah ada** di `schema.prisma` dan wajib
+  `prisma/migrations`). **16 model sudah ada** di `schema.prisma` dan wajib
   disamakan ke Neon dengan `npm run db:push`: `User`, `Account`,
   `VerificationToken`, `Session`, `MaganghubCredential`, `ReportTemplate`,
   `DatedReportTemplate`, `Report`, `SubmitLog`, `AutomationConfig`,
-  `ReminderSetting`, `Holiday`, `Feedback`, `AdminActionLog`, `GitRepoConfig`.
+  `ReminderSetting`, `Holiday`, `Feedback`, `AdminActionLog`, `GitRepoConfig`,
+  `WorkSchedule`.
   Menambah model/kolom berarti menjalankan `db push` lagi **sebelum** deploy
   lihat peringatan di bawah.
   - **Tambahan kolom (bukan tabel):** `User.sessionVersion` (fitur invalidasi
@@ -427,7 +428,7 @@ maganghub-attendance-web/
 │   │   └── ui/               # primitif dari registry (button, card, dialog, …)
 │   ├── lib/                  # SEMUA logika bisnis & murni + tesnya berdampingan
 │   └── generated/prisma/     # hasil `prisma generate`, JANGAN diedit
-├── prisma/schema.prisma      # sumber kebenaran skema (15 model)
+├── prisma/schema.prisma      # sumber kebenaran skema (16 model)
 ├── scripts/                  # uji-gemini.ts, uji-proxy.ts (dijalankan manual)
 ├── docs/                     # panduan operasional (lihat tabel di README)
 ├── .env                      # RAHASIA, jangan pernah commit
@@ -454,12 +455,14 @@ maganghub-attendance-web/
 - `src/app/api/`, `auth/[...nextauth]`, `register`, `credentials`,
   `credentials/login`, `credentials/verify`, `profile`, `account/password`,
   `account/email`, `account/sessions/revoke`, `automation`, `reminder`,
-  `report-templates` (+`dated`, `generate`), `cron/submit`, `cron/run-all`,
+  `work-schedule`, `report-templates` (+`dated`, `generate`), `cron/submit`,
+  `cron/run-all`,
   `reports/submit`, `feedback`, `admin/feedback/[id]`, `admin/holidays`,
   `admin/dispatch`, `admin/dispatch/user`, `admin/users/[id]` (+`reset-password`,
   `test-login`), `repos`, `repos/preview`, `dev-tools/analyze-capture`.
 - `src/app/(app)/`, rute terlindungi: `dashboard/` (beranda), `calendar/`,
-  `credentials/`, `report-templates/`, `history/`, `automation/`,
+  `credentials/`, `report-templates/`, `work-schedule/` (jadwal kerja mingguan),
+  `history/`, `automation/`,
   `feedback/`, `admin/` (termasuk `admin/holidays/` & `admin/feedback/`),
   `repos/` (repo git untuk bahan draf), `dev-tools/`, `profile/`, `settings/`.
   Sidebar & cek sesi dipasang sekali di `src/app/(app)/layout.tsx`.
@@ -643,7 +646,8 @@ Prioritas test:
   (`chooseTemplate`) dan dipanggil di **tiap** jalur kirim (manual/cron/dispatch),
   bukan di `performSubmit`, agar satu aturan untuk semua jalur.
 - Template bertanggal **tidak** mengubah aturan libur: `decide()` di
-  `report-policy.ts` tetap melewati Sabtu/Minggu/libur nasional/akhir program.
+  `report-policy.ts` tetap melewati hari di luar jadwal kerja pengguna/libur
+  nasional/akhir program.
   Tanggal disimpan `@db.Date` dan dibandingkan sebagai string `YYYY-MM-DD`
   (leksikografis = kronologis) supaya tidak tergeser zona waktu.
 - UI template = **satu form** (`report-templates-form.tsx`), bukan dua panel.
@@ -678,18 +682,21 @@ Prioritas test:
     (riwayat percobaan kirim tetap lengkap di `/history`).
 - **Date picker tanggal khusus = `DatePicker` sendiri** (`src/components/ui/date-picker.tsx`),
   bukan `<input type="date">` bawaan peramban: input bawaan tidak mengizinkan
-  menonaktifkan tanggal tertentu, sedangkan tanggal LIBUR (Sabtu/Minggu + libur
-  nasional) **dan tanggal LAMPAU** (sebelum hari ini) tidak boleh dipilih. Kini
+  menonaktifkan tanggal tertentu, sedangkan tanggal di LUAR JADWAL KERJA
+  pengguna (default Sabtu/Minggu) + libur nasional **dan tanggal LAMPAU**
+  (sebelum hari ini) tidak boleh dipilih. Kini
   ia **menyusun** komponen resmi registry: `<Popover>` (`popover.tsx`) sebagai
   cangkang + `<Calendar>` (`calendar.tsx`, react-day-picker) sebagai kisi; aturan
-  libur tetap memakai `isHoliday` yang SAMA dengan jalur kirim, jadi tanggal yang
-  dinonaktifkan tidak mungkin berbeda dari yang benar-benar dilewati otomasi.
+  hari tetap memakai `isWorkingDay` yang SAMA dengan jalur kirim (prop
+  `workDays`), jadi tanggal yang dinonaktifkan tidak mungkin berbeda dari yang
+  benar-benar dilewati otomasi.
   **Pengecualian:** halaman `/admin/holidays` (yang justru MENGELOLA daftar
-  libur) memakai `<DatePicker unrestricted>`, pembatas tanggal lampau, daftar
-  libur, dan batas bulan dilepas, karena di sana justru tanggal itulah yang mau
-  didaftarkan. **Sabtu/Minggu tetap nonaktif** karena server menolak
-  mendaftarkan akhir pekan (`validateHolidayInput`); membiarkannya dipilih hanya
-  menghasilkan kegagalan simpan. Karena `<DatePicker>` bukan kontrol form asli,
+  libur) memakai `<DatePicker unrestricted>`, yang melepas **seluruh** pembatas
+  (tanggal lampau, daftar libur, batas bulan, jadwal kerja, termasuk Sabtu/
+  Minggu), karena di sana justru tanggal itulah yang mau didaftarkan. Sejak ada
+  jadwal kerja per pengguna, server **menerima** libur pada Sabtu/Minggu
+  (`validateHolidayInput`), jadi pilihan itu benar-benar bisa disimpan. Karena
+  `<DatePicker>` bukan kontrol form asli,
   `required` bawaan peramban tak berlaku; form di sana memeriksa "tanggal wajib
   dipilih" sendiri di `simpan()`.
 - **Kisi picker TIDAK mengosongkan sel padding** (berbeda dari `/calendar`):
@@ -731,18 +738,22 @@ Prioritas test:
   Sama: `performSubmit()` membungkus pemuatan libur dengan `try/catch`
   kegagalan baca DB libur TIDAK boleh mematikan seluruh otomasi; ia jatuh ke
   daftar statis. Kedua pagar ini diuji (butuh pembuktian test bisa merah).
-- `report-policy.ts` tetap **MURNI**: `isHoliday(date, holidays?)`,
-  `isWorkingDay`, dan `decide(date, holidays?)` menerima himpunan tanggal
-  sebagai argumen opsional. `undefined` = pakai daftar statis (kompatibilitas
-  & test). `holidayKindOf(iso, holidays?)` di `calendar.ts` juga menerima
-  himpunan ini. **Himpunan kosong tidak pernah membuat Sabtu/Minggu jadi hari
-  kerja**, pagar ini diuji.
+- `report-policy.ts` tetap **MURNI**: `isHoliday(date, holidays?, workDays?)`,
+  `isWorkingDay`, dan `decide(date, holidays?, workDays?)` menerima himpunan
+  tanggal **dan** jadwal kerja pengguna sebagai argumen opsional. `undefined` =
+  pakai daftar statis + Senin–Jumat (kompatibilitas & test).
+  `holidayKindOf(iso, holidays?, workDays?)` di `calendar.ts` juga menerima
+  keduanya; hasilnya `OFF` (bukan lagi `WEEKEND`) untuk hari di luar jadwal.
+  **Himpunan libur kosong tidak pernah membuat semua hari jadi libur**, dan
+  **jadwal kosong tidak pernah berarti "tanpa hari kerja"** (jatuh ke default
+  Senin–Jumat); kedua pagar ini diuji.
 - Jalur kirim: `performSubmit()` (dipakai manual, webhook cron, dispatch massal)
   memuat libur via `loadHolidaySet()` bila pemanggil tidak memberikannya, lalu
   meneruskannya ke `assessReadiness()` → `decide()`. Jadi **ketiga** jalur kirim
   memakai libur admin yang sama tanpa perubahan di masing-masing route.
-- Validasi input libur (bentuk tanggal, tolak akhir pekan, tolak > masa
-  program, nama wajib & panjangnya) ada di `src/lib/holiday-admin.ts` (MURNI,
+- Validasi input libur (bentuk tanggal, **Sabtu/Minggu diterima** karena libur
+  nasional bisa jatuh di hari kerja sebagian pengguna, tolak > masa program,
+  nama wajib & panjangnya) ada di `src/lib/holiday-admin.ts` (MURNI,
   teruji di `holiday-admin.test.ts`). Endpoint `/api/admin/holidays`
   (GET/POST/PUT/DELETE) mengikuti pola admin lain: guard role di SERVER, rate
   limit `adminUserAction`, tanggal `@db.Date` dibandingkan sebagai string.
@@ -751,6 +762,34 @@ Prioritas test:
   Halaman memberi `key` dari data server; `router.refresh()` yang mengubah
   `key` memasang ulang komponen dengan daftar segar (pola sama seperti form
   template).
+
+#### Jadwal kerja mingguan per pengguna (`/work-schedule`)
+
+- **Keputusan pemilik 2026-11.** "Hari kerja" tidak lagi selalu Senin–Jumat;
+  setiap pengguna menyimpan sendiri hari kerjanya di tabel `WorkSchedule`
+  (`days Int[]`, ISO 1=Senin … 7=Minggu, satu baris per pengguna via
+  `userId @unique`). Default & pengguna lama tetap Senin–Jumat (aditif).
+  Panduan: `docs/WORK-SCHEDULE.md`; ringkasan keputusan: `SPEC.md` §5.15.
+- **Modul murni** `src/lib/work-schedule.ts`: `isoWeekdayOf`/`isoWeekdayOfDate`
+  (konversi SATU tempat), `normalizeWorkDays` (buang tak sah/duplikat, urutkan),
+  `isWorkDayOf`, `sameWorkDays`, `describeWorkDays`, `DEFAULT_WORK_DAYS`.
+- **Gagal-lunak wajib**: jadwal kosong/tak ada/DB gagal → default Senin–Jumat,
+  BUKAN "tanpa hari kerja" (itu mematikan manual, cron, dan dispatcher
+  sekaligus). Jangan mengubah `isWorkDayOf` menjadi `workDays ?? DEFAULT` tanpa
+  cek panjang; `work-schedule.test.ts` + `report-policy.test.ts` mengunci ini.
+- **Akses DB hanya** lewat `src/lib/work-schedule-repo.ts` (`loadWorkSchedule`,
+  `loadWorkScheduleState` dengan `exists`, `saveWorkSchedule`). Sisi BACA
+  gagal-lunak; sisi SIMPAN sengaja melempar supaya route memberi pesan ramah,
+  bukan "tersimpan" palsu.
+- **Semua jalur wajib meneruskan `workDays`**: `performSubmit` memuatnya sendiri
+  bila pemanggil tidak memberi; dispatcher massal memuat sekali per gelombang.
+  Kalau menambah jalur kirim baru, jangan memanggil `decide()` tanpa jadwal.
+- **UI**: `/work-schedule` (`work-schedule-form.tsx`) memakai `baseline`
+  terpisah supaya guard "belum disimpan" benar; minimal satu hari dijaga di
+  form DAN Zod (`workScheduleSchema`). Endpoint `GET/PUT /api/work-schedule`,
+  rate limit `workSchedule`.
+- **Tanggal di luar jadwal** ditandai `OFF` di kalender (`holidayKindOf`) dan
+  nonaktif di `<DatePicker workDays>`; kalender dashboard memakai aturan sama.
 
 #### Panel Admin: pantau jadwal & jalankan otomasi per-user
 

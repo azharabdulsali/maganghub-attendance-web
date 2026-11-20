@@ -168,7 +168,7 @@ export async function GET(request: Request) {
     credential: config.user.credential,
     trigger: "CRON",
     // logOnNotReady=true: cron mencatat alasan tidak-siap (token dsb.) supaya
-    // terlihat. Hari libur/akhir pekan TETAP tidak dicatat (performSubmit
+    // terlihat. Hari libur / hari di luar jadwal kerja TETAP tidak dicatat (performSubmit
     // menjaga: POLICY_SKIPPED tidak pernah menulis log), Riwayat bersih.
     logOnNotReady: true,
   });

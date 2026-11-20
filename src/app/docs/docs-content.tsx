@@ -364,9 +364,10 @@ function TopikQuickstart() {
           tiga bagian (Uraian Aktivitas, Pembelajaran, Kendala) ke portal Monev
           MagangHub Kemnaker (<code>monev.maganghub.kemnaker.go.id</code>) lewat
           Direct REST API. Isi laporan berasal dari template yang Anda tulis
-          sendiri. Tombol <em>Susun draf</em> boleh memakai AI (opsional) atau
-          commit git sebagai bahan, tetapi hasilnya selalu bisa Anda sunting
-          sebelum disimpan.
+          sendiri. Kalau Anda lupa absen, template itulah yang dikirim saat
+          jadwal otomatis menyala. Tombol <em>Susun draf</em> boleh memakai AI
+          (opsional) atau commit git sebagai bahan, tetapi hasilnya selalu bisa
+          Anda sunting sebelum disimpan.
         </p>
       </div>
 
@@ -384,15 +385,16 @@ function TopikQuickstart() {
             </TautanPanduan>{" "}, masukkan email &amp; password Kemnaker, lalu tekan{" "}
             <em>Uji login</em>.
           </Langkah>
-          <Langkah nomor="3" judul="Isi tiga template">
+          <Langkah nomor="3" judul="Simpan template cadangan">
             Buka{" "}
             <TautanPanduan href="/report-templates">
               Template Laporan
             </TautanPanduan>{" "}
-            dan isi ketiga kolom, masing-masing lebih dari 100 karakter.
+            dan isi ketiga kolom, masing-masing minimal 100 karakter.
           </Langkah>
-          <Langkah nomor="4" judul="Review draf">
-            Di dashboard, periksa kembali isi laporan hari ini sebelum dikirim.
+          <Langkah nomor="4" judul="Susun draf (opsional)">
+            Ketik kata kunci aktivitas hari itu, lalu tekan <em>Susun draf</em>.
+            Hasilnya tetap bisa Anda sunting sebelum dikirim.
           </Langkah>
           <Langkah nomor="5" judul="Submit kehadiran">
             Klik <em>Kirim Absen Hari Ini</em> untuk mode manual, atau aktifkan
@@ -506,7 +508,7 @@ function TopikTemplate() {
 
       <Catatan judul="Aturan 100 karakter">
         <p>
-          Setiap kolom wajib lebih dari 100 karakter. Portal Monev menolak
+          Setiap kolom wajib minimal 100 karakter. Portal Monev menolak
           laporan yang terlalu pendek, dan validasi ini juga dijalankan di sisi
           aplikasi sebelum dikirim.
         </p>
@@ -534,7 +536,11 @@ function TopikJadwal() {
           <TautanPanduan href="/automation">
             Otomasi
           </TautanPanduan>
-          .
+          . Hari mana yang dikirim ditentukan{" "}
+          <TautanPanduan href="/work-schedule">
+            Jadwal Kerja
+          </TautanPanduan>{" "}
+          (bawaan Senin–Jumat).
         </p>
       </div>
 

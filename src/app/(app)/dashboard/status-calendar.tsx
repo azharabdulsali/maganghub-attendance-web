@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RANGE_FILTER_LABELS, type RangeFilter } from "@/lib/audit-log";
-import { MONTH_LABELS, WEEKDAY_LABELS, buildMonthGrid } from "@/lib/calendar";
+import { MONTH_LABELS, WEEKDAY_LABELS, buildMonthGrid, holidayKindOf } from "@/lib/calendar";
 import {
   dayStatus,
   monthsCovered,
   type DayStatus,
 } from "@/lib/dashboard-calendar";
 import { cn } from "@/lib/utils";
+import type { WorkDays } from "@/lib/work-schedule";
 import type { TrendPoint } from "./stats-query";
 
 // Kalender status di dashboard: satu kotak = satu HARI, dengan angka tanggal
@@ -15,8 +16,11 @@ import type { TrendPoint } from "./stats-query";
 // Kenapa bukan bar chart (riwayat keputusan di DESIGN.md §"Visualisasi status"):
 // datanya biner, hampir selalu 0 atau 1 kiriman per hari, sehingga tinggi
 // batang tidak mengodekan apa pun yang berguna. Warna kotak menunjukkan
-// KEADAAN, dan bentuk kalender membuat pola mingguan (akhir pekan, hari libur,
-// hari terlewat) langsung terlihat tanpa membaca label.
+// KEADAAN, dan bentuk kalender membuat pola mingguan (hari kerja, hari libur,
+// hari terlewat) langsung terlihat tanpa membaca label. Tanggal di luar jadwal
+// kerja pengguna diberi garis putus-putus memakai `holidayKindOf` yang sama
+// dengan halaman /calendar, jadi pengguna berjadwal Sabtu tidak melihat
+// Sabtu-nya dicoret sebagai libur.
 //
 // Rentang filter bisa mencapai 1 tahun, jadi kalender digambar per bulan:
 // 7 hari = 1 bulan, 30 hari = 1-2 bulan, 90 hari = 3-4 bulan, 1 tahun = 13 bulan
@@ -47,9 +51,15 @@ const STATUS_LABEL: Record<DayStatus, string> = {
 export default function StatusCalendar({
   trend,
   range,
+  workDays,
+  holidays,
 }: {
   trend: TrendPoint[];
   range: RangeFilter;
+  /** Hari kerja pengguna (ISO 1–7). Tanpa ini → default Senin–Jumat. */
+  workDays?: WorkDays;
+  /** Libur admin, supaya hari libur nasional tidak ditandai "bukan hari kerja". */
+  holidays?: ReadonlySet<string>;
 }) {
   const byDate = new Map(trend.map((point) => [point.date, point]));
   const months = monthsCovered(trend.map((point) => point.date));
@@ -105,6 +115,8 @@ export default function StatusCalendar({
               month={month}
               byDate={byDate}
               today={today}
+              workDays={workDays}
+              holidays={holidays}
             />
           ))}
         </div>
@@ -143,11 +155,15 @@ function MiniMonth({
   month,
   byDate,
   today,
+  workDays,
+  holidays,
 }: {
   year: number;
   month: number;
   byDate: Map<string, TrendPoint>;
   today: string;
+  workDays?: WorkDays;
+  holidays?: ReadonlySet<string>;
 }) {
   const weeks = buildMonthGrid({ year, month });
 
@@ -193,7 +209,12 @@ function MiniMonth({
           }
 
           const status = dayStatus(point);
-          const isWeekend = index % 7 === 0 || index % 7 === 6;
+          // Garis putus-putus = "hari ini bukan hari kerja Anda" (termasuk
+          // Sabtu/Minggu pada jadwal default). Sumbernya `holidayKindOf` yang
+          // SAMA dengan halaman /calendar & jalur kirim, jadi pengguna yang
+          // bekerja Sabtu tidak melihat Sabtu-nya dicoret sebagai libur.
+          const bukanHariKerja =
+            holidayKindOf(cell.iso, holidays, workDays) === "OFF";
           const rincian = `${point.success} berhasil, ${point.failed} gagal, ${point.duplicate} sudah ada`;
 
           return (
@@ -203,7 +224,7 @@ function MiniMonth({
               className={cn(
                 "flex h-8 items-center justify-center rounded-base border-2 font-mono text-xs",
                 CELL_CLASS[status],
-                status === "none" && isWeekend && "border-dashed",
+                status === "none" && bukanHariKerja && "border-dashed",
                 cell.iso === today &&
                   "ring-2 ring-main ring-offset-2 ring-offset-background",
               )}

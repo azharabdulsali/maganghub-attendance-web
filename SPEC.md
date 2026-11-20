@@ -161,12 +161,14 @@ Sebelumnya §13 baris 6 menyebut "email + password (tanpa OAuth)"; kalimat itu
 - Saat menyusun/mengirim laporan tanggal X: bila ada template bertanggal untuk
   X, itu yang dipakai; bila tidak ada, jatuh ke template harian. Satu aturan ini
   berlaku sama di **semua** jalur kirim (manual, cron, dan dispatch webhook).
-- **Template bertanggal hanya menimpa ISI, bukan pemicu kirim.** Aturan libur
-  tetap berlaku: otomasi tetap melewati Sabtu, Minggu, libur nasional, dan
-  tanggal di luar masa program, walaupun ada template untuk tanggal itu.
-- Menyimpan template untuk Sabtu **sah** (mis. agenda khusus), hanya saja
-  otomasi tidak akan mengirim di hari itu. UI menandai tanggal tersebut
-  "Libur" agar pengguna tidak salah paham.
+- **Template bertanggal hanya menimpa ISI, bukan pemicu kirim.** Aturan hari
+  tetap berlaku: otomasi melewati hari di luar jadwal kerja pengguna (bawaan
+  Senin–Jumat, §5.15), libur nasional, dan tanggal di luar masa program,
+  walaupun ada template untuk tanggal itu.
+- Menyimpan template untuk hari yang bukan hari kerja pengguna **sah** (mis.
+  agenda khusus), hanya saja otomasi tidak akan mengirim di hari itu. UI
+  menandai tanggal tersebut "Libur atau bukan hari kerja Anda" agar pengguna
+  tidak salah paham.
 - Aturan validasi (100–5000 karakter per kolom) sama persis dengan template
   harian; tanggal divalidasi bentuknya (`YYYY-MM-DD`) dan keberadaannya di
   kalender (menolak `2026-02-30`).
@@ -569,7 +571,8 @@ apa pun hari ini; status log terakhir menang (FAILED → "Gagal"). Setiap baris
 punya tombol **Jalankan** yang memanggil `POST /api/admin/dispatch/user` untuk
 **memaksa** jalankan otomasi user itu, mengabaikan jam jadwalnya (untuk mengejar
 yang terlewat). Eksekusinya memakai `performSubmit` yang SAMA dengan dispatcher
-massal, jadi kebijakan laporan (libur/akhir pekan/akhir program, pra-cek duplikat,
+massal, jadi kebijakan laporan (libur/jadwal kerja pengguna/akhir program,
+pra-cek duplikat,
 gerbang `ALLOW_LIVE_SUBMIT`) tetap berlaku, "paksa" = abaikan jam, bukan abaikan
 kebijakan. Pemicunya tercatat `CRON` di audit log.
 
@@ -752,6 +755,34 @@ tersuntik tertangkap tanpa membocorkan `error.message`).
 
 ---
 
+### 5.15 Jadwal Kerja Mingguan (`/work-schedule`)
+
+> **Keputusan pemilik 2026-11.** "Hari kerja" tidak lagi selalu Senin–Jumat;
+> setiap pengguna dapat menetapkan sendiri hari kerjanya. Default dan perilaku
+> pengguna lama tetap Senin–Jumat, jadi perubahan ini **aditif**: tanpa baris
+> tersimpan, semua jalur berperilaku persis seperti sebelumnya.
+
+- Tabel `WorkSchedule` (`work_schedules`): satu baris per pengguna
+  (`userId @unique`), `days Int[]`. Penomoran **ISO-8601: 1=Senin … 7=Minggu**;
+  konversi dari `getUTCDay()` hanya di `src/lib/work-schedule.ts`.
+- **Minimal satu hari** (ditolak `workScheduleSchema`); duplikat & urutan
+  dirapikan `normalizeWorkDays` agar yang tersimpan deterministik.
+- **Gagal-lunak wajib:** tanpa baris, tabel belum dibuat, atau DB sesaat gagal
+  dibaca → default Senin–Jumat. Jadwal kosong TIDAK pernah berarti "tidak
+  pernah mengirim"; mematikan pengiriman adalah tugas sakelar otomasi.
+- **Konsumen:** `decide()` / `isHoliday` / `isWorkingDay` (`report-policy.ts`),
+  kalender (`holidayKindOf` → `OFF`, bukan lagi `WEEKEND`), `<DatePicker>`
+  (prop `workDays`), pengingat, kalender dashboard, dan **semua** jalur kirim.
+  `performSubmit()` memuat jadwal sendiri; dispatcher massal memuatnya sekali
+  per gelombang lalu meneruskannya (menghindari query per pengguna).
+- **Libur admin tetap menang** atas jadwal. Sejak fitur ini ada,
+  `validateHolidayInput` **menerima** Sabtu/Minggu: libur nasional bisa jatuh
+  di hari yang bagi sebagian pengguna adalah hari kerja, dan menolaknya berarti
+  pengguna berjadwal Sabtu tetap dikirim pada hari libur tersebut.
+- Endpoint `GET/PUT /api/work-schedule` (hanya milik sesi; jadwal bukan rahasia
+  jadi boleh dikembalikan penuh), rate limit `workSchedule` 20/10 menit.
+- Panduan & daftar berkas: `docs/WORK-SCHEDULE.md`.
+
 ## 6. Cara Submit, Keputusan Kunci
 
 **Keputusan (atas pilihan pemilik proyek): memakai Direct REST API, tanpa
@@ -859,6 +890,7 @@ Ringkas; nama field dapat menyesuaikan saat implementasi.
 | `Report` | userId, tanggal, activity, learning, obstacles, source, status |
 | `SubmitLog` | reportId, userId, status, message, httpCode, pemicu, attempt |
 | `AutomationConfig` | userId, isEnabled, `webhookKey`, jam, timezone |
+| `WorkSchedule` | userId (**unik**, satu baris), `days Int[]` (ISO 1=Senin … 7=Minggu, default `[1,2,3,4,5]`), §5.15 |
 | `GitRepoConfig` | userId (**unik**, satu repo dulu), `provider`, `repoPath`, `branch`, `ciphertext`/`iv`/`authTag`, `enabled`, `lastFetchedAt`, `lastError` |
 
 Enum: `Role`, `CredentialStatus`, `SourceType`, `ReportStatus`, `SubmitStatus`,
@@ -893,6 +925,7 @@ barisnya di sini **dalam perubahan yang sama**, `AGENTS.md` §9 mewajibkan itu.
 | `GET/POST/PUT/DELETE` | `/api/admin/holidays` | Kelola daftar hari libur nasional/cuti bersama | Cookie sesi + role **ADMIN** | 20/10 menit (`adminUserAction`) |
 | `PATCH`/`DELETE` | `/api/admin/feedback/[id]` | Tandai kritik & saran sudah dibaca / hapus | Cookie sesi + role **ADMIN** | 20/10 menit (`adminUserAction`) |
 | `GET/PUT` | `/api/automation` | Baca/simpan jadwal otomasi + webhook key | Cookie sesi | 20/menit |
+| `GET/PUT` | `/api/work-schedule` | Baca/simpan jadwal kerja mingguan pengguna (§5.15) | Cookie sesi | 20/10 menit (`workSchedule`) |
 | `GET/PUT/DELETE` | `/api/credentials` | Status & simpan kredensial Monev (token **tidak pernah** dikembalikan); `DELETE` = hapus | Cookie sesi | 12/10 menit (`credentials`) |
 | `POST` | `/api/credentials/login` | Login otomatis SSO Kemnaker (lewat proxy bila `MAGANGHUB_PROXY_URL` diisi) | Cookie sesi | 6/10 menit (`credentialsLogin`) |
 | `POST` | `/api/credentials/verify` | Verifikasi refresh token yang ditempel manual dari DevTools | Cookie sesi | 12/10 menit (`credentialsVerify`) |
@@ -1071,6 +1104,7 @@ mereplikasi aturan ini; jangan mengarang ulang dari nol.
 | Aturan | Nilai | Sumber |
 | :--- | :--- | :--- |
 | Hanya hari kerja | Senin–Jumat (`weekday() < 5`) | `policy.py` |
+| Jadwal kerja per pengguna | default Senin–Jumat, dapat diubah di `/work-schedule` | keputusan 2026-11 (§5.15) |
 | Libur nasional | dilewati | `config/holidays.json` |
 | **Batas akhir program** | **`LAST_ACTIVE_DATE = 2027-02-09`** | `policy.py:11` |
 

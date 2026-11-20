@@ -12,7 +12,7 @@
 //
 // Pembagian tanggung jawab (penting):
 //   - SERVER menyiapkan FAKTA: jam:menit kini di WIB, apakah tanggal ini hari
-//     kerja (libur/akhir pekan?), dan apakah user sudah punya SubmitLog hari
+//     kerja (libur / di luar jadwal pengguna?), dan apakah user sudah punya SubmitLog hari
 //     ini. Fakta itu diteruskan ke `shouldShowReminder()`.
 //   - Fungsi di sini hanya MENILAI fakta, tanpa menyentuh apa pun.
 
@@ -47,7 +47,7 @@ export interface ReminderFacts {
   nowHour: number;
   /** Menit (0–59) sekarang di zona setelan. */
   nowMinute: number;
-  /** Apakah tanggal ini hari kerja (bukan akhir pekan / libur nasional)? */
+  /** Apakah tanggal ini hari kerja pengguna (sesuai jadwalnya, bukan libur)? */
   isWorkingDay: boolean;
   /** Apakah pengguna SUDAH punya jejak absen hari ini (SubmitLog apa pun)? */
   hasSubmittedToday: boolean;
@@ -121,7 +121,7 @@ export function isReminderWindowOpen(
  *
  * Urutan pemeriksaan (semuanya harus terpenuhi):
  *   1. Fitur tidak dimatikan admin (`isEnabled`).
- *   2. Hari ini HARI KERJA (bukan akhir pekan/libur nasional).
+ *   2. Hari ini HARI KERJA menurut jadwal pengguna (bukan libur nasional).
  *   3. Sudah melewati jam:menit yang diset admin.
  *   4. Pengguna BELUM absen hari ini.
  *

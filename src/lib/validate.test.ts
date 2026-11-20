@@ -13,6 +13,7 @@ import {
   changePasswordSchema,
   changeEmailSchema,
   automationSchema,
+  workScheduleSchema,
 } from "./validate";
 
 describe("credentialsSchema, email Monev", () => {
@@ -353,6 +354,7 @@ describe("changePasswordSchema, ubah kata sandi dalam sesi", () => {
     });
     expect(r.success).toBe(false);
   });
+});
 
 // Skema ubah email adalah gerbang paling sensitif: email = identitas login DAN
 // penentu peran admin. Test ini mengunci aturan yang mencegah data rusak masuk
@@ -492,4 +494,35 @@ describe("datedReportTemplateSchema, template per-tanggal", () => {
   });
 });
 
+describe("workScheduleSchema, jadwal kerja mingguan", () => {
+  // Nomor hari ISO-8601: 1=Senin … 7=Minggu (docs/WORK-SCHEDULE.md).
+
+  it("menerima pilihan hari yang sah (urutan bebas)", () => {
+    const r = workScheduleSchema.safeParse({ days: [6, 1] });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.days).toEqual([6, 1]);
+  });
+
+  it("menolak daftar kosong (minimal satu hari kerja)", () => {
+    const r = workScheduleSchema.safeParse({ days: [] });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues[0].message).toMatch(/minimal satu/i);
+  });
+
+  it("menolak nomor di luar 1–7 dan pecahan", () => {
+    for (const bad of [0, 8, -1, 1.5]) {
+      expect(workScheduleSchema.safeParse({ days: [bad] }).success).toBe(false);
+    }
+  });
+
+  it("menolak bukan array dan angka tunggal", () => {
+    expect(workScheduleSchema.safeParse({ days: 5 }).success).toBe(false);
+    expect(workScheduleSchema.safeParse({ days: "Senin" }).success).toBe(false);
+    expect(workScheduleSchema.safeParse({}).success).toBe(false);
+  });
+
+  it("menerima semua tujuh hari", () => {
+    const r = workScheduleSchema.safeParse({ days: [1, 2, 3, 4, 5, 6, 7] });
+    expect(r.success).toBe(true);
+  });
 });

@@ -15,7 +15,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 /**
  * Model ReportTemplate
  * Tiga template tetap: uraian aktivitas, pembelajaran, kendala.
- * Isinya >100 karakter (syarat portal) dan dipakai ulang setiap hari —
+ * Isinya >100 karakter (syarat portal) dan dipakai ulang setiap hari
  * persis perilaku bot Python (SPEC.md §1, §5.3, §13 baris 9).
  */
 export type ReportTemplateModel = runtime.Types.Result.DefaultSelection<Prisma.$ReportTemplatePayload>

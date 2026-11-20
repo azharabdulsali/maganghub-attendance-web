@@ -237,4 +237,10 @@ export const RATE_LIMITS = {
    * murah (satu query hitung SubmitLog), jadi angkanya sengaja longgar.
    */
   reminderCheck: { limit: 120, windowMs: 5 * 60_000 },
+  /**
+   * Simpan/ubah jadwal kerja mingguan: 20 / 10 menit per pengguna. Aksi murah
+   * (satu upsert) dan jarang berubah; batasnya menahan dobel-klik beruntun &
+   * penyalahgunaan endpoint, sekelas dengan scope pengaturan lainnya.
+   */
+  workSchedule: { limit: 20, windowMs: 10 * 60_000 },
 } as const;

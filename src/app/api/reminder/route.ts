@@ -25,6 +25,7 @@ import { enforceRateLimit } from "@/lib/enforce-rate-limit";
 import { jakartaDayRange } from "@/lib/admin-automation";
 import { isWorkingDay } from "@/lib/report-policy";
 import { loadHolidaySet } from "@/lib/holidays-repo";
+import { loadWorkSchedule } from "@/lib/work-schedule-repo";
 import {
   jakartaClock,
   shouldShowReminder,
@@ -64,9 +65,10 @@ export async function GET() {
   const clock = jakartaClock(now);
   const range = jakartaDayRange(now);
 
-  const [setting, holidays] = await Promise.all([
+  const [setting, holidays, workDays] = await Promise.all([
     loadReminderSetting(),
     loadHolidaySet(),
+    loadWorkSchedule(userId),
   ]);
 
   // "Sudah absen hari ini" = ada SubmitLog APA PUN hari ini (SUCCESS/FAILED/
@@ -88,7 +90,7 @@ export async function GET() {
   const show = shouldShowReminder(setting, {
     nowHour: clock.hour,
     nowMinute: clock.minute,
-    isWorkingDay: isWorkingDay(clock.date, holidays),
+    isWorkingDay: isWorkingDay(clock.date, holidays, workDays),
     hasSubmittedToday,
   });
 

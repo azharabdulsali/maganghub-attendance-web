@@ -11,6 +11,7 @@
 //   "sekarang" ke zona Asia/Jakarta LEBIH DULU, baru panggil fungsi ini.
 //   Kalau tidak, batas 2027-02-10 bisa meleset satu hari di server UTC.
 
+import { isWorkDayOf, isoWeekdayOfDate, type WorkDays } from "./work-schedule";
 import { isNationalHoliday } from "./holidays";
 import { MIN_REPORT_LENGTH } from "./report-rules";
 
@@ -47,7 +48,7 @@ export type HolidaySet = ReadonlySet<string>;
 /** Hasil keputusan policy, satu kata, dipakai konsisten di audit log §5.7. */
 export type PolicyDecision =
   | "ALLOW" // boleh submit
-  | "SKIPPED" // libur / akhir pekan → dilewati (bukan error)
+  | "SKIPPED" // libur / di luar jadwal kerja → dilewati (bukan error)
   | "PROGRAM_ENDED"; // lewat LAST_ACTIVE_DATE → hentikan otomasi
 
 /** Apakah string berbentuk `YYYY-MM-DD` yang sah (bukan cuma cocok pola)? */
@@ -62,35 +63,47 @@ export function isPlainDate(value: string): boolean {
   );
 }
 
-/** Hari ke berapa (0=Minggu … 6=Sabtu) untuk tanggal polos, tanpa zona waktu. */
-function weekdayOf(date: PlainDate): number {
-  const [y, m, d] = date.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-}
-
 /** Bandingkan dua tanggal polos secara leksikografis (= kronologis utk format ini). */
 export function isAfter(a: PlainDate, b: PlainDate): boolean {
   return a > b;
 }
 
 /**
- * Apakah tanggal ini libur (akhir pekan ATAU libur nasional)?
- * Akhir pekan: Sabtu/Minggu (selalu, tak butuh data). Libur nasional: dari
- * `holidays` bila diberikan, kalau tidak dari daftar statis `LIBUR_NASIONAL`.
+ * Apakah tanggal ini "libur" bagi pengguna — yaitu TIDAK boleh kirim?
  *
- * `holidays` datang dari tabel `holidays` (dikelola admin). Bila ia kosong
- * (`new Set()`), akhir pekan tetap libur, mengosongkan tabel tidak pernah
- * membuat Sabtu/Minggu jadi hari kerja.
+ * Tiga lapis (urutan penting):
+ *   1. Di luar jadwal kerja pengguna (`workDays`). Bila tidak diberikan,
+ *      jatuh ke default Senin–Jumat, sehingga pemanggil lama berperilaku
+ *      persis seperti sebelum fitur jadwal kerja ada. Pengguna yang SENGAJA
+ *      mencentang Sabtu di /work-schedule membuat Sabtu jadi hari kerja
+ *      baginya — itu pilihan eksplisit, bukan celah.
+ *   2. Libur nasional dari `holidays` (tabel admin); tanpa argumen itu,
+ *      jatuh ke daftar statis `LIBUR_NASIONAL`.
+ *
+ * Tanggal tak sah dianggap libur (aman: lebih baik menolak daripada mengirim
+ * untuk tanggal yang tidak bisa dipastikan).
  */
-export function isHoliday(date: PlainDate, holidays?: HolidaySet): boolean {
-  const wd = weekdayOf(date);
-  if (wd === 0 || wd === 6) return true;
+export function isHoliday(
+  date: PlainDate,
+  holidays?: HolidaySet,
+  workDays?: WorkDays,
+): boolean {
+  const isoDay = isoWeekdayOfDate(date);
+  if (isoDay === null) return true;
+  if (!isWorkDayOf(isoDay, workDays)) return true;
   return isNationalHoliday(date, holidays);
 }
 
-/** Apakah tanggal ini hari kerja (Senin–Jumat, bukan libur nasional)? */
-export function isWorkingDay(date: PlainDate, holidays?: HolidaySet): boolean {
-  return !isHoliday(date, holidays);
+/**
+ * Apakah tanggal ini hari kerja (hari kerja pengguna DAN bukan libur
+ * nasional)? Dipakai pengingat, dashboard, date picker, dan landing.
+ */
+export function isWorkingDay(
+  date: PlainDate,
+  holidays?: HolidaySet,
+  workDays?: WorkDays,
+): boolean {
+  return !isHoliday(date, holidays, workDays);
 }
 
 /**
@@ -99,14 +112,20 @@ export function isWorkingDay(date: PlainDate, holidays?: HolidaySet): boolean {
  * Urutan pemeriksaan sengaja: **PROGRAM_ENDED diperiksa lebih dulu**, supaya
  * setelah 2027-02-09 tidak ada alasan lain yang bisa membuka jalan kembali.
  *
- * `holidays` diteruskan ke `isHoliday` (libur nasional dari tabel admin).
+ * `holidays` diteruskan ke `isHoliday` (libur nasional dari tabel admin) dan
+ * `workDays` menentukan hari kerja milik pengguna sendiri (default
+ * Senin–Jumat bila tidak diberikan).
  */
-export function decide(date: PlainDate, holidays?: HolidaySet): PolicyDecision {
+export function decide(
+  date: PlainDate,
+  holidays?: HolidaySet,
+  workDays?: WorkDays,
+): PolicyDecision {
   if (!isPlainDate(date)) {
     throw new Error(`Tanggal tidak sah: ${date} (harus YYYY-MM-DD).`);
   }
   if (isAfter(date, LAST_ACTIVE_DATE)) return "PROGRAM_ENDED";
-  if (isHoliday(date, holidays)) return "SKIPPED";
+  if (isHoliday(date, holidays, workDays)) return "SKIPPED";
   return "ALLOW";
 }
 

@@ -242,7 +242,7 @@ export default function AutomationForm({
         <CardHeader>
           <CardTitle>Jadwal harian</CardTitle>
           <CardDescription>
-            Absensi diproses setiap hari pada jam yang Anda pilih.
+            Absensi diproses pada hari kerja Anda, di jam yang Anda pilih.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -467,8 +467,8 @@ export default function AutomationForm({
 
             <p className="text-xs text-muted-foreground">
               Jadwal: {formatSchedule(hour, 0)}{" "}
-              WIB setiap hari. Mengganti kunci akan mematikan tautan/perintah
-              lama, pasang ulang di penjadwal Anda setelah itu.
+              WIB, khusus hari kerja Anda. Mengganti kunci akan mematikan
+              tautan/perintah lama, pasang ulang di penjadwal Anda setelah itu.
             </p>
           </div>
         </details>
@@ -494,8 +494,8 @@ export default function AutomationForm({
                 <strong>
                   {formatSchedule(hour, 0)}–{formatSchedule(hour, 59)} WIB
                 </strong>{" "}
-                setiap hari. Bisa terkirim kapan saja di jam itu, bukan tepat
-                menit ke-00.
+                setiap hari kerja Anda. Bisa terkirim kapan saja di jam itu,
+                bukan tepat menit ke-00.
               </>
             ) : (
               <>

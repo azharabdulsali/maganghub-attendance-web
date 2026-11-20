@@ -8,13 +8,14 @@
 //
 // Kenapa dulu ditulis tangan, dan apa yang tetap dipertahankan: peramban tidak
 // mengizinkan menonaktifkan tanggal tertentu pada `<input type="date">`,
-// sedangkan di sini tanggal LIBUR (Sabtu/Minggu + libur nasional) dan tanggal
-// LAMPAU (sebelum hari ini) memang tidak boleh dipilih. Aturan itu diteruskan
-// lewat matcher `disabled` react-day-picker, jadi perilakunya sama persis
-// dengan sebelumnya, hanya kulitnya yang sekarang memakai komponen resmi.
+// sedangkan di sini tanggal yang tidak boleh dipilih (hari di luar jadwal kerja
+// pengguna, libur nasional, dan tanggal LAMPAU) memang harus mati. Aturan itu
+// diteruskan lewat matcher `disabled` react-day-picker, jadi perilakunya sama
+// persis dengan sebelumnya, hanya kulitnya yang sekarang memakai komponen resmi.
 //
-// Aturan libur memakai `isHoliday` yang SAMA dengan jalur kirim, dan hari ini
-// dihitung dari jam perangkat, jadi tidak ada dua daftar yang bisa berbeda.
+// Aturan hari memakai `isWorkingDay` yang SAMA dengan jalur kirim (libur admin +
+// jadwal kerja pengguna), dan hari ini dihitung dari jam perangkat, jadi tidak
+// ada dua daftar yang bisa berbeda.
 //
 // BATAS TANGGAL: pemilih ini hanya boleh memilih HARI INI atau tanggal yang
 // akan datang (lihat `disabledMatchers`), dan tombol "bulan sebelumnya" mati
@@ -22,10 +23,17 @@
 // sah untuk hari ini (lihat report-policy.ts).
 //
 // PENGECUALIAN: halaman yang SEDANG mengelola daftar libur (/admin/holidays)
-// justru perlu memilih tanggal lampau, jadi di sana dioper `unrestricted`
-// pembatas tanggal lampau/daftar libur/batas bulan dilepas. Sabtu/Minggu TETAP
-// nonaktif karena server menolak mendaftarkannya. Halaman lain tetap memakai
-// default (terbatas) supaya perilakunya tidak berubah.
+// justru perlu memilih tanggal lampau DAN akhir pekan (libur nasional bisa
+// jatuh pada Sabtu/Minggu), jadi di sana dioper `unrestricted` yang melepas
+// seluruh pembatas. Halaman lain tetap memakai default (terbatas) supaya
+// perilakunya tidak berubah: hanya HARI INI & tanggal mendatang, dan hanya
+// hari kerja menurut jadwal pengguna (default Senin–Jumat) yang bukan libur.
+//
+// JADWAL KERJA: prop `workDays` (ISO 1=Senin … 7=Minggu) membuat tanggal di
+// luar jadwal pengguna ikut nonaktif. Tanpa prop itu, Senin–Jumat (perilaku
+// lama). Aturan dinonaktifkannya memakai `isWorkingDay` yang SAMA dengan jalur
+// kirim, jadi tanggal yang tidak bisa dipilih mustahil berbeda dari tanggal
+// yang benar-benar dilewati otomasi.
 
 import { useMemo, useState } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -40,7 +48,8 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { MONTH_LABELS } from "@/lib/calendar";
-import { isHoliday, isPlainDate } from "@/lib/report-policy";
+import { isPlainDate, isWorkingDay } from "@/lib/report-policy";
+import type { WorkDays } from "@/lib/work-schedule";
 
 /** `YYYY-MM-DD` → Date lokal (tanpa pergeseran zona waktu). */
 function toDate(iso: string | null): Date | undefined {
@@ -84,11 +93,16 @@ export interface DatePickerProps {
    */
   holidays?: string[];
   /**
-   * Bila `true`, pembatas tanggal LAMPAU, daftar libur, dan batas bulan
-   * dilepas, dipakai halaman yang SEDANG mengelola daftar libur. Sabtu/Minggu
-   * TETAP dinonaktifkan karena server menolak mendaftarkan akhir pekan
-   * (`validateHolidayInput`): membiarkannya bisa dipilih hanya menghasilkan
-   * kegagalan simpan yang membingungkan. Default `false`.
+   * Hari kerja pemilik formulir (ISO 1=Senin … 7=Minggu). Bila diberikan,
+   * tanggal di luar daftar ini dinonaktifkan, sama seperti akhir pekan pada
+   * jadwal default. Tanpa prop ini → Senin–Jumat (perilaku lama).
+   */
+  workDays?: WorkDays;
+  /**
+   * Bila `true`, SEMUA pembatas dilepas (tanggal lampau, daftar libur, batas
+   * bulan, akhir pekan, jadwal kerja), dipakai halaman yang SEDANG mengelola
+   * daftar libur — termasuk untuk mendaftarkan libur nasional yang jatuh pada
+   * Sabtu/Minggu. Default `false`.
    */
   unrestricted?: boolean;
 }
@@ -101,34 +115,32 @@ export function DatePicker({
   id,
   className,
   holidays,
+  workDays,
   unrestricted = false,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const selected = toDate(value);
 
   // Matcher `disabled` react-day-picker: setiap tanggal lampau DAN setiap
-  // tanggal libur (Sabtu/Minggu + libur dari admin) tidak bisa diklik. Ini
-  // pengganti langsung dari pengecekan `libur`/`lampau` versi lama.
+  // tanggal yang bukan hari kerja menurut jadwal pengguna (libur nasional dari
+  // admin ATAU hari di luar jadwal, termasuk Sabtu/Minggu pada jadwal default)
+  // tidak bisa diklik. Satu predikat `isWorkingDay` memastikan aturannya
+  // identik dengan jalur kirim; tidak ada dua daftar yang bisa berbeda.
   //
-  // Bila `unrestricted` (halaman kelola libur), tanggal lampau & daftar libur
-  // dilepas, di sana justru tanggal itulah yang mau didaftarkan. Sabtu/Minggu
-  // TETAP nonaktif karena server menolaknya; membiarkannya dipilih hanya
-  // menghasilkan kegagalan simpan.
+  // Bila `unrestricted` (halaman kelola libur), SEMUA pembatas dilepas: di
+  // sana justru tanggal lampau & akhir pekan yang mau didaftarkan.
   //
-  // `isHoliday` menuntut Set (ReadonlySet) untuk lookup O(1), jadi array
+  // `isWorkingDay` menuntut Set (ReadonlySet) untuk lookup O(1), jadi array
   // serializable dari server dibungkus sekali di sini.
   const disabledMatchers = useMemo<Matcher[]>(() => {
-    const akhirPekan = (date: Date) =>
-      date.getDay() === 0 || date.getDay() === 6;
-    if (unrestricted) return [akhirPekan];
+    if (unrestricted) return [];
     const batas = today();
     const libur = new Set(holidays ?? []);
     return [
       { before: batas },
-      akhirPekan,
-      (date) => isHoliday(toIso(date), libur),
+      (date) => !isWorkingDay(toIso(date), libur, workDays),
     ];
-  }, [holidays, unrestricted]);
+  }, [holidays, unrestricted, workDays]);
 
   const bolehMundur = useMemo(() => {
     if (unrestricted) return undefined;

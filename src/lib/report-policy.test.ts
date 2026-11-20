@@ -78,6 +78,33 @@ describe("isHoliday / isWorkingDay", () => {
     expect(isHoliday("2026-09-20", kosong)).toBe(true); // Minggu
   });
 
+  it("jadwal kerja per pengguna mengubah hari libur", () => {
+    // Jadwal hanya Sabtu & Minggu: Selasa (2026-09-22) jadi libur, Sabtu
+    // (2026-09-19) justru hari kerja. Argumen ketiga = workDays (ISO 1–7).
+    const sabtuMinggu = [6, 7] as const;
+    expect(isHoliday("2026-09-22", undefined, sabtuMinggu)).toBe(true);
+    expect(isWorkingDay("2026-09-22", undefined, sabtuMinggu)).toBe(false);
+    expect(isHoliday("2026-09-19", undefined, sabtuMinggu)).toBe(false);
+    expect(isWorkingDay("2026-09-19", undefined, sabtuMinggu)).toBe(true);
+    // Tanpa argumen ketiga, perilaku lama tetap: Sabtu libur.
+    expect(isWorkingDay("2026-09-19")).toBe(false);
+  });
+
+  it("jadwal kerja kosong jatuh ke default, BUKAN 'tanpa hari kerja'", () => {
+    // Pagar gagal-lunak: DB sesaat kosong/gagal tidak boleh membuat semua hari
+    // jadi libur (itu mematikan seluruh otomasi). Harus berperilaku Senin–Jumat.
+    const kosong: readonly never[] = [];
+    expect(isWorkingDay("2026-09-22", undefined, kosong)).toBe(true); // Selasa
+    expect(isWorkingDay("2026-09-19", undefined, kosong)).toBe(false); // Sabtu
+  });
+
+  it("libur nasional tetap libur walau ada di jadwal kerja", () => {
+    // 2026-12-25 Jumat (Natal), pengguna berjadwal kerja Jumat → tetap libur.
+    const jumat = [5] as const;
+    expect(isHoliday("2026-12-25", undefined, jumat)).toBe(true);
+    expect(isWorkingDay("2026-12-25", undefined, jumat)).toBe(false);
+  });
+
   it("himunan DB menggantikan daftar statis (libur statis hilang bila tak ada di DB)", () => {
     // 2026-12-25 libur di daftar statis; DB kosong → dianggap BUKAN libur.
     // Ini disengaja: begitu admin memakai fitur, DB = kebenarannya.
@@ -117,6 +144,19 @@ describe("decide, keputusan utama", () => {
   it("PROGRAM_ENDED tetap menang atas libur admin", () => {
     const db = new Set(["2027-03-01"]); // setelah batas akhir
     expect(decide("2027-03-01", db)).toBe("PROGRAM_ENDED");
+  });
+
+  it("SKIPPED pada hari di luar jadwal kerja pengguna", () => {
+    // 2026-09-22 Selasa; pengguna hanya bekerja Sabtu & Minggu.
+    const sabtuMinggu = [6, 7] as const;
+    expect(decide("2026-09-22", undefined, sabtuMinggu)).toBe("SKIPPED");
+    // Sabtu yang biasanya dilewati kini ALLOW bila memang hari kerjanya.
+    expect(decide("2026-09-19", undefined, sabtuMinggu)).toBe("ALLOW");
+  });
+
+  it("jadwal kerja kosong jatuh ke default Senin–Jumat (gagal-lunak)", () => {
+    expect(decide("2026-09-22", undefined, [])).toBe("ALLOW");
+    expect(decide("2026-09-19", undefined, [])).toBe("SKIPPED");
   });
 });
 

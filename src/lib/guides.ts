@@ -73,7 +73,7 @@ export const GUIDES: readonly Guide[] = [
     slug: "cara-absensi-monev-maganghub",
     judul: "Cara Absensi Monev MagangHub Kemnaker: Alur Lengkap",
     ringkas:
-      "Urutan langkah dari menyiapkan template sampai laporan terkirim ke portal Monev, tanpa mengetik ulang tiap hari.",
+      "Urutan langkah dari menyimpan template cadangan sampai laporan terkirim ke portal Monev, tanpa mengetik ulang tiap hari.",
     terbit: "2026-02-05",
     menitBaca: 7,
     kataKunci: [
@@ -96,7 +96,7 @@ export const GUIDES: readonly Guide[] = [
               "dan Kendala. Isinya tetap Anda yang menulis. Yang " +
               "diotomatiskan hanyalah pengulangan: teks yang sama disusun " +
               "ulang dan dikirim pada tanggal yang benar, tanpa Anda buka " +
-              "portal tiap hari.",
+              "portal setiap hari kerja.",
           },
           {
             jenis: "langkah",
@@ -104,16 +104,17 @@ export const GUIDES: readonly Guide[] = [
             item: [
               "Daftar akun aplikasi, lalu login ke dashboard.",
               "Simpan email dan password Monev Anda di menu Kredensial.",
-              "Isi tiga kolom template laporan sekali, masing-masing minimal 100 karakter.",
+              "Simpan template cadangan sekali, masing-masing kolom minimal 100 karakter.",
               "Kirim manual satu klik, atau nyalakan jadwal otomatis.",
             ],
           },
           {
             jenis: "paragraf",
             teks:
-              "Setelah template tersimpan, aktivitas harian Anda hanya dua " +
-              "hal: mengecek Riwayat, dan mengubah isi template bila kegiatan " +
-              "Anda berubah. Sisanya berjalan sendiri.",
+              "Setelah template tersimpan, aktivitas harian Anda tinggal " +
+              "memilih: kirim template cadangan apa adanya, ketik kata kunci " +
+              "lalu tekan Susun draf untuk laporan yang lebih spesifik, atau " +
+              "biarkan jadwal otomatis yang mengirim. Sisanya berjalan sendiri.",
           },
         ],
       },
@@ -152,15 +153,15 @@ export const GUIDES: readonly Guide[] = [
       },
       {
         id: "isi-template",
-        judul: "2. Isi tiga kolom template",
+        judul: "2. Simpan template cadangan",
         blok: [
           {
             jenis: "paragraf",
             teks:
               "Buka menu Template Laporan. Di sana ada tiga kolom tetap yang " +
               "sama seperti portal: Uraian Aktivitas, Pembelajaran, dan " +
-              "Kendala. Tulis isinya sekali, simpan, lalu dipakai ulang " +
-              "setiap hari.",
+              "Kendala. Tulis isinya sekali, simpan, lalu template ini jadi " +
+              "cadangan yang dikirim kalau Anda lupa absen.",
           },
           {
             jenis: "daftar",
@@ -178,6 +179,14 @@ export const GUIDES: readonly Guide[] = [
               "disengaja: aturan 100 karakter milik portal, dan Anda " +
               "sebaiknya tahu sebelum menekan Simpan, bukan sesudah " +
               "pengiriman gagal.",
+          },
+          {
+            jenis: "paragraf",
+            teks:
+              "Kalau kegiatan hari itu berbeda, tidak perlu menulis ulang " +
+              "dari nol. Ketik kata kunci aktivitas hari itu, lalu tekan " +
+              "Susun draf. Ketiga kolom terisi otomatis dan tetap bisa " +
+              "Anda sunting sebelum disimpan.",
           },
         ],
       },
@@ -218,6 +227,15 @@ export const GUIDES: readonly Guide[] = [
               "Pilih satu cara per hari: manual atau terjadwal, bukan " +
               "keduanya.",
           },
+          {
+            jenis: "catatan",
+            judul: "Hari kerja menentukan hari mana yang dikirim",
+            teks:
+              "Buka menu Jadwal Kerja untuk mencentang hari kerja Anda. " +
+              "Bawaannya Senin sampai Jumat. Otomasi, kalender, dan pemilih " +
+              "tanggal mengikuti pilihan itu, jadi Sabtu atau Minggu hanya " +
+              "dikirim kalau Anda memang mencentangnya.",
+          },
         ],
       },
       {
@@ -250,6 +268,7 @@ export const GUIDES: readonly Guide[] = [
             jenis: "daftar",
             item: [
               "Tidak menulis laporan menggantikan Anda. Isi template tetap dari Anda.",
+              "Pengiriman otomatis hanya berjalan bila template cadangan sudah disimpan dan jadwal otomatis dinyalakan.",
               "Tidak menembus proteksi portal dengan tipuan. Kalau portal membalas terlarang, pesannya ditampilkan apa adanya, tanpa memalsukan identitas. Untuk login otomatis, server boleh memakai koneksi dari IP residensial (proxy) agar dianggap klien wajar, itu bukan menipu proteksi.",
               "Tidak menjamin pengiriman bila portal Monev berubah. Bila itu terjadi, Anda tetap bisa menyalin isi template dan mengirimnya manual dari situs Monev.",
             ],

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model MaganghubCredential
- * Kredensial Monev pengguna. Password TIDAK pernah disimpan mentah —
+ * Kredensial Monev pengguna. Password TIDAK pernah disimpan mentah
  * hanya ciphertext AES-256-GCM beserta IV dan auth tag (SPEC.md §9 poin 1).
  */
 export type MaganghubCredentialModel = runtime.Types.Result.DefaultSelection<Prisma.$MaganghubCredentialPayload>
