@@ -30,12 +30,12 @@ import type { TrendPoint } from "./stats-query";
 // tersebut diredupkan, bukan dijadikan kotak "belum ada".
 
 const CELL_CLASS: Record<DayStatus, string> = {
-  // Kontras teks di atas hijau: putih 3.8:1 (gagal AA 4.5:1 untuk teks 12px),
-  // hitam 5.6:1 (lolos). Karena itu hari berhasil memakai `main-foreground`
-  // (hitam di mode terang, nyaris hitam di mode gelap), BUKAN
-  // `success-foreground`. Ini satu-satunya deviasi pasangan token di berkas
-  // ini, dan alasannya kontras, bukan selera.
-  success: "border-border bg-success text-main-foreground",
+  // Wajib `success-foreground`, BUKAN `main-foreground`. Dulu hijau mode terang
+  // masih #059669 sehingga teks hitam lolos; setelah --success digelapkan ke
+  // #047857 (agar putih lolos 4.5:1), teks hitam di atasnya justru turun ke
+  // 3.8:1 dan gagal. `success-foreground` = putih di mode terang (5.5:1) dan
+  // nyaris hitam di mode gelap (10.1:1), jadi lolos di kedua tema.
+  success: "border-border bg-success text-success-foreground",
   failed: "border-border bg-destructive text-destructive-foreground",
   duplicate: "border-border bg-warning text-warning-foreground",
   none: "border-muted-foreground bg-secondary-background text-muted-foreground",

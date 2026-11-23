@@ -30,7 +30,9 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        "group/calendar rounded-base border-2 border-border bg-background p-3 font-heading text-foreground shadow-shadow",
+        // Popover, bukan background: kalender adalah permukaan mengambang.
+        // Di mode gelap `bg-background` justru lebih gelap dari kartu.
+        "group/calendar rounded-base border-2 border-border bg-popover p-3 font-heading text-foreground shadow-shadow",
         className,
       )}
       captionLayout={captionLayout}
@@ -100,13 +102,13 @@ function Calendar({
           defaultClassNames.day,
         ),
         range_start: cn(
-          "rounded-l-base bg-main/50",
+          "rounded-l-base bg-main",
           defaultClassNames.range_start,
         ),
-        range_middle: cn("bg-main/50", defaultClassNames.range_middle),
-        range_end: cn("rounded-r-base bg-main/50", defaultClassNames.range_end),
+        range_middle: cn("bg-main/25", defaultClassNames.range_middle),
+        range_end: cn("rounded-r-base bg-main", defaultClassNames.range_end),
         selected: cn(
-          props.mode !== "range" && "rounded-base bg-main/50",
+          props.mode !== "range" && "rounded-base bg-main",
           defaultClassNames.selected,
         ),
         today: cn(defaultClassNames.today),
@@ -190,7 +192,10 @@ function CalendarDayButton({
         buttonVariants({ variant: "noShadow" }),
         "size-9 bg-secondary-background p-0 font-base text-foreground",
         modifiers.today && "bg-transparent",
-        modifiers.range_middle && "bg-main/50 text-main-foreground",
+        // 25% + teks biasa, BUKAN 50% + teks hitam: campuran 50% di atas
+        // permukaan gelap hanya ~3:1 untuk teks hitam. Teks tetap terbaca di
+        // kedua tema karena tint biru muda dan off-white/black kontras tinggi.
+        modifiers.range_middle && "bg-main/25 text-foreground",
         (selectedSingle || modifiers.range_start || modifiers.range_end) &&
           "bg-main text-main-foreground",
         defaultClassNames.day_button,
