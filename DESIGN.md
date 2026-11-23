@@ -144,9 +144,9 @@ Diputuskan dan dieksekusi (R-21, opsi b):
   `.ikon-tema-terang` di `globals.css`). Server tidak tahu tema saat merender
   `ThemeToggle`, jadi ikon yang dipilih lewat state membuat markup server
   berbeda dari klien dan React melaporkan "Hydration failed".
-- Penyesuaian mode gelap yang ikut diambil: `--shadow` diikat ke putih 90%
-  (bukan turunan `--border` yang jadi terlalu tipis dan membuat shadow keras
-  hilang, sekaligus tidak sekeras putih 100%), dan warna scrollbar kini memakai
+- Penyesuaian mode gelap yang ikut diambil: `--shadow` diikat ke putih 50%
+  dengan tint biru tipis (bukan turunan `--border` yang jadi terlalu tipis,
+  dan bukan putih 90% yang menyilaukan), dan warna scrollbar kini memakai
   token (`--secondary-background` / `--border`) alih-alih putih/hitam hard-code.
 - **Perbaikan (bug "mode gelap tetap putih semua"):** blok `.dark` dulu hanya
   meng-override sebagian token `:root`. Token `--secondary-background`, dipakai
@@ -163,24 +163,37 @@ Palet gelap disusun ulang mengikuti prinsip *surface elevation*, bukan sekadar
 pembalikan warna terang, lewat skill `dark-mode-design`
 (`owl-listener/designer-skills`). Empat aturan skill yang diterapkan:
 
-- **Hierarki permukaan lewat kecerahan, bukan bayangan.** Dulu hanya ada dua
-  bidang (`--background` `0.145` → sisanya `0.205`/`0.269`), sehingga kartu,
-  sidebar, dan popover bertumpuk di ketinggian yang sama. Sekarang tangga
-  eksplisit: kanvas `0.16` ≈ `#0d0d0d` → permukaan-1 (`--card`,
-  `--secondary-background`, `--sidebar`) `0.21` ≈ `#181818` → permukaan-2
-  (`--popover`) `0.25` ≈ `#222` → inset/hover (`--secondary`, `--muted`,
-  `--accent`) `0.28` ≈ `#292929`.
+- **Hierarki permukaan lewat kecerahan, bukan bayangan.** Dulu kartu dan
+  `--secondary-background` sama-sama `0.21`, sehingga kartu, sidebar, dan
+  latar bertumpuk di ketinggian yang sama. Sekarang tangga eksplisit:
+  inset/kanvas (`--background`) `0.16` ≈ `#141518` → kanvas body
+  (`--secondary-background`, sidebar, header, input, tombol `neutral`)
+  `0.21` ≈ `#1b1c20` → permukaan-1 (`--card`) `0.235` ≈ `#1f2025` →
+  permukaan-2 (`--popover`, dialog, toast, dropdown) `0.27` ≈ `#24252b` →
+  inset/hover (`--secondary`, `--muted`, `--accent`) `0.30` ≈ `#292a30`.
+- **Tint biru sangat tipis.** Permukaan memakai `oklch(… chroma 0.008–0.013,
+  hue 255)`, bukan abu murni. Tujuannya menghindari kesan "abu mati" dan
+  menyatukan permukaan dengan aksen biru; chroma sekecil ini tidak mengubah
+  identitas warna dan tidak menaikkan saturasi teks.
 - **Teks off-white, bukan putih murni.** `--foreground` `0.985` → `0.93`
-  ≈ `#e8e8e8`. Putih 100% di latar gelap memicu *halation* (teks tampak
-  "bergetar") dan mempercepat kelelahan mata.
+  ≈ `#e8e8e8` dengan tint biru tipis. Putih 100% di latar gelap memicu
+  *halation* (teks tampak "bergetar") dan mempercepat kelelahan mata.
 - **Border terlihat.** `--border` `1 0 0 / 10%` hanya **1.4:1** terhadap
-  permukaan, nyaris tak terlihat. Dinaikkan ke `1 0 0 / 35%` ≈ **3.2:1**,
-  memenuhi ambang 3:1 batas komponen WCAG 1.4.11 tanpa terasa seperti garis
-  menyala. `--input` `1 0 0 / 40%`.
+  permukaan, nyaris tak terlihat. Dinaikkan ke `0.92 0.015 255 / 42%`
+  ≈ **3.4:1** terhadap kanvas/kartu, memenuhi ambang 3:1 batas komponen
+  WCAG 1.4.11 tanpa terasa seperti garis menyala. Opacity 35% sempat dipakai,
+  tetapi setelah permukaan dinaikkan hasil ukurnya turun ke 2.8:1 (gagal),
+  jadi dinaikkan lagi. `--input` opacity 45%.
 - **Desaturasi aksen ±12%.** `--main` `hsl(217,100%,66%)` → `hsl(217,88%,67%)`
   (`#619af5`). Warna jenuh penuh tampak menyala di latar gelap. Teks hitam di
   atasnya tetap 7.0:1. Ini **bukan** perubahan identitas: hue 217 tetap sama,
   hanya saturasi yang diturunkan di mode gelap (mode terang tidak disentuh).
+- **Permukaan mengambang memakai `bg-popover`.** Dialog, toast, tooltip,
+  popover, dropdown, dan kalender sebelumnya memakai `bg-background`; di mode
+  gelap itu membuatnya lebih gelap dari kartu sehingga tampak tenggelam.
+  Sekarang semuanya `bg-popover` (permukaan-2), jadi arah elevasinya benar.
+- **Bayangan keras tidak menyilaukan.** `--shadow` putih 90% turun ke 50%
+  dengan tint biru. Offset keras 4px tetap, jadi tombol masih terasa ditekan.
 - **Transisi halus antar mode.** Kelas `html.theme-transition` (dipasang-lepas
   oleh `theme-toggle.tsx` selama 240ms) menganimasikan `background-color`,
   `border-color`, `color`, `fill`, `stroke`, dan `box-shadow` 220ms. Sengaja
@@ -189,7 +202,7 @@ pembalikan warna terang, lewat skill `dark-mode-design`
   memunculkan kedipan. Transisi dilewati bila pengguna meminta
   `prefers-reduced-motion`.
 - `--overlay` (tirai panel geser) dipekatkan ke `oklch(0% 0 0 / 0.7)` dan
-  `--shadow` dilunakkan ke `oklch(1 0 0 / 90%)` agar offset keras khas
+  `--shadow` dilunakkan ke `oklch(0.95 0.01 255 / 50%)` agar offset keras khas
   neobrutalisme tetap terbaca tanpa menyilaukan.
 
 Kontras terverifikasi: seluruh pasangan teks/latar pada tangga ini ≥ 5.7:1

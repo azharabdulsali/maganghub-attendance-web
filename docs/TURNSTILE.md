@@ -53,7 +53,7 @@ pemeriksaan di server.
 | Berkas | Peran |
 | --- | --- |
 | `src/lib/turnstile.ts` | Verifikasi ke `/siteverify` (timeout 5 detik, tanpa dependensi baru). Kegagalan jaringan **tidak** dianggap lolos. |
-| `src/components/turnstile-widget.tsx` | Widget; skrip dimuat sekali per halaman, `theme: auto`, `size: flexible`. |
+| `src/components/turnstile-widget.tsx` | Widget; skrip dimuat sekali per halaman, `size: flexible`, tema dibaca dari kelas `.dark` di `<html>` (BUKAN `auto`, yang mengikuti OS sehingga bisa putih di tengah form gelap). |
 | `src/app/api/register/route.ts` | Memeriksa token **sebelum** bcrypt dan sebelum query `User`. |
 | `src/lib/auth.ts` | Memeriksa token di `authorize`, setelah rate limit dan sebelum query/bcrypt. Kegagalan memakai kode `CaptchaGagal`, bukan "email atau password salah". |
 | `src/app/login/login-form.tsx`, `src/app/register/page.tsx` | Mengirim token; widget di-reset setiap submit gagal. |

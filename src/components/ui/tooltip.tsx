@@ -35,7 +35,7 @@ export function InfoHint({ children, className, side = "top" }: InfoHintProps) {
       </TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Positioner side={side} sideOffset={6} className="z-50">
-          <TooltipPrimitive.Popup className="max-w-xs rounded-base border-2 border-border bg-background px-3 py-2 text-xs leading-relaxed text-foreground shadow-shadow">
+          <TooltipPrimitive.Popup className="max-w-xs rounded-base border-2 border-border bg-popover px-3 py-2 text-xs leading-relaxed text-foreground shadow-shadow">
             {children}
           </TooltipPrimitive.Popup>
         </TooltipPrimitive.Positioner>

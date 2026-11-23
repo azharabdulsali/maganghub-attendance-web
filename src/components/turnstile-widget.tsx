@@ -90,7 +90,14 @@ export function TurnstileWidget({
         if (!hidup || !kontainer || !window.turnstile) return;
         widgetId = window.turnstile.render(kontainer, {
           sitekey: SITE_KEY,
-          theme: "auto",
+          // BUKAN "auto": mode gelap aplikasi ini berbasis kelas `.dark`
+          // (cookie `tema`), sedangkan "auto" mengikuti preferensi OS. Pengguna
+          // yang memilih tema gelap di OS terang akan melihat kotak CAPTCHA
+          // putih menyilaukan di tengah form gelap. Kelas dibaca saat widget
+          // dipasang, jadi hasilnya sama dengan tema yang sedang tampil.
+          theme: document.documentElement.classList.contains("dark")
+            ? "dark"
+            : "light",
           size: "flexible",
           callback: (token: string) => onTokenRef.current(token),
           "expired-callback": () => onTokenRef.current(null),

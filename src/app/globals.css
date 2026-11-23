@@ -150,82 +150,89 @@
      - tanpa kelas => `light dark` = ikuti preferensi OS (kunjungan pertama);
      - `.light`/`.dark` => cookie `tema` dibaca RootLayout di server (pilihan
        pengguna dari ThemeToggle), jadi tidak ada kedipan saat memuat ulang.
-   Tangga elevasi mode gelap (tergelap sampai teringan):
-     latar kanvas oklch(0.16) ~ #141414
-     permukaan-1  oklch(0.21) ~ #1c1c1c  => kartu, sidebar, footer, input
-     permukaan-2  oklch(0.25) ~ #242424  => popover, dropdown, modal
-     inset/hover  oklch(0.28) ~ #2b2b2b  => blok kode, item terpilih
-   Kontras teks terendah pada tangga ini 5.7:1 (di atas WCAG AA 4.5:1). */
+   Tangga elevasi mode gelap (tergelap sampai teringan), dengan tint biru
+   sangat tipis (hue 255, chroma 0.008-0.013) supaya abu tidak terasa mati:
+     inset/kanvas   oklch(0.16)  ~ #141518  => --background, area tenggelam
+     kanvas/body    oklch(0.21)  ~ #1b1c20  => --secondary-background, sidebar,
+                                               header, input, tombol neutral
+     permukaan-1    oklch(0.235) ~ #1f2025  => --card
+     permukaan-2    oklch(0.27)  ~ #24252b  => --popover, dialog, toast, dropdown
+     inset/hover    oklch(0.30)  ~ #292a30  => --secondary, --muted, --accent
+   Kartu WAJIB lebih terang dari kanvas; sebelumnya keduanya 0.21 sehingga
+   seluruh halaman terasa satu tingkat. Kontras teks terendah tetap di atas
+   WCAG AA 4.5:1 (diukur src/lib/color-contrast.test.ts). */
 :root {
   color-scheme: light dark;
-  --background: light-dark(hsl(214, 95%, 93%), oklch(0.16 0 0));
+  --background: light-dark(hsl(214, 95%, 93%), oklch(0.16 0.008 255));
   /* Mode gelap: off-white, bukan putih murni (putih 100% memicu halation). */
-  --foreground: light-dark(oklch(0% 0 0), oklch(0.93 0 0));
-  --card: light-dark(oklch(1 0 0), oklch(0.21 0 0));
-  --card-foreground: light-dark(oklch(0.145 0 0), oklch(0.93 0 0));
-  --popover: light-dark(oklch(1 0 0), oklch(0.25 0 0));
-  --popover-foreground: light-dark(oklch(0.145 0 0), oklch(0.93 0 0));
-  --primary: light-dark(oklch(0.205 0 0), oklch(0.93 0 0));
-  --primary-foreground: light-dark(oklch(0.985 0 0), oklch(0.21 0 0));
-  --secondary: light-dark(oklch(0.97 0 0), oklch(0.28 0 0));
-  --secondary-foreground: light-dark(oklch(0.205 0 0), oklch(0.93 0 0));
-  --muted: light-dark(oklch(0.97 0 0), oklch(0.28 0 0));
+  --foreground: light-dark(oklch(0% 0 0), oklch(0.93 0.004 255));
+  --card: light-dark(oklch(1 0 0), oklch(0.235 0.01 255));
+  --card-foreground: light-dark(oklch(0.145 0 0), oklch(0.93 0.004 255));
+  --popover: light-dark(oklch(1 0 0), oklch(0.27 0.012 255));
+  --popover-foreground: light-dark(oklch(0.145 0 0), oklch(0.93 0.004 255));
+  --primary: light-dark(oklch(0.205 0 0), oklch(0.93 0.004 255));
+  --primary-foreground: light-dark(oklch(0.985 0 0), oklch(0.21 0.009 255));
+  --secondary: light-dark(oklch(0.97 0 0), oklch(0.3 0.013 255));
+  --secondary-foreground: light-dark(oklch(0.205 0 0), oklch(0.93 0.004 255));
+  --muted: light-dark(oklch(0.97 0 0), oklch(0.3 0.013 255));
   /* 0.50 (bukan 0.556 bawaan shadcn): latar halaman mode terang adalah biru
      muda hsl(214, 95%, 93%), dan 0.556 di atasnya hanya 3.92:1 — di bawah
      ambang 4.5:1 untuk teks bantuan. 0.50 memberi 4.97:1. Diukur oleh
      src/lib/color-contrast.test.ts, jangan diturunkan lagi tanpa mengukur. */
-  --muted-foreground: light-dark(oklch(0.5 0 0), oklch(0.72 0 0));
-  --accent: light-dark(oklch(0.97 0 0), oklch(0.28 0 0));
-  --accent-foreground: light-dark(oklch(0.205 0 0), oklch(0.93 0 0));
+  --muted-foreground: light-dark(oklch(0.5 0 0), oklch(0.72 0.01 255));
+  --accent: light-dark(oklch(0.97 0 0), oklch(0.3 0.013 255));
+  --accent-foreground: light-dark(oklch(0.205 0 0), oklch(0.93 0.004 255));
   --destructive: light-dark(oklch(0.577 0.245 27.325), oklch(0.704 0.191 22.216));
-  /* Border gelap 35% putih ~ 3.2:1 terhadap permukaan-1: cukup untuk ambang
-     3:1 batas komponen (WCAG 1.4.11), tapi tetap terasa tipis, bukan menyala. */
-  --border: light-dark(oklch(0% 0 0), oklch(1 0 0 / 35%));
-  --input: light-dark(oklch(0.922 0 0), oklch(1 0 0 / 40%));
-  --ring: light-dark(oklch(0% 0 0), oklch(0.72 0 0));
+  /* Border gelap 42% putih ~ 3.4:1 terhadap kanvas/kartu/popover: cukup untuk
+     ambang 3:1 batas komponen (WCAG 1.4.11), tapi tetap terasa tipis, bukan
+     menyala. 35% sempat dipakai, hasil ukurnya turun ke 2.8:1 setelah permukaan
+     dinaikkan, jadi opacity dinaikkan. */
+  --border: light-dark(oklch(0% 0 0), oklch(0.92 0.015 255 / 42%));
+  --input: light-dark(oklch(0.922 0 0), oklch(0.92 0.015 255 / 45%));
+  --ring: light-dark(oklch(0% 0 0), oklch(0.75 0.03 250));
   --chart-1: light-dark(#5294ff, oklch(0.87 0 0));
   --chart-2: light-dark(#ff4d50, oklch(0.708 0 0));
   --chart-3: light-dark(#facc00, oklch(0.556 0 0));
   --chart-4: light-dark(#05e17a, oklch(0.439 0 0));
   --chart-5: light-dark(#7a83ff, oklch(0.371 0 0));
   --radius: 0.625rem;
-  --sidebar: light-dark(oklch(0.985 0 0), oklch(0.21 0 0));
-  --sidebar-foreground: light-dark(oklch(0.145 0 0), oklch(0.93 0 0));
+  --sidebar: light-dark(oklch(0.985 0 0), oklch(0.21 0.009 255));
+  --sidebar-foreground: light-dark(oklch(0.145 0 0), oklch(0.93 0.004 255));
   --sidebar-primary: light-dark(oklch(0.205 0 0), oklch(0.488 0.243 264.376));
-  --sidebar-primary-foreground: light-dark(oklch(0.985 0 0), oklch(0.93 0 0));
-  --sidebar-accent: light-dark(oklch(0.97 0 0), oklch(0.28 0 0));
-  --sidebar-accent-foreground: light-dark(oklch(0.205 0 0), oklch(0.93 0 0));
-  --sidebar-border: light-dark(oklch(0.922 0 0), oklch(1 0 0 / 35%));
-  --sidebar-ring: light-dark(oklch(0.708 0 0), oklch(0.72 0 0));
-  /* Tanpa pasangan gelap, `bg-secondary-background` (kartu, panel hero, footer,
-     input, tombol varian `neutral`) tetap putih penuh dan seluruh halaman
-     tampak terang di mode gelap. Disamakan dengan permukaan-1 (--card). */
-  --secondary-background: light-dark(oklch(100% 0 0), oklch(0.21 0 0));
+  --sidebar-primary-foreground: light-dark(oklch(0.985 0 0), oklch(0.93 0.004 255));
+  --sidebar-accent: light-dark(oklch(0.97 0 0), oklch(0.3 0.013 255));
+  --sidebar-accent-foreground: light-dark(oklch(0.205 0 0), oklch(0.93 0.004 255));
+  --sidebar-border: light-dark(oklch(0.922 0 0), oklch(0.92 0.015 255 / 42%));
+  --sidebar-ring: light-dark(oklch(0.708 0 0), oklch(0.75 0.03 250));
+  /* Kanvas (body, sidebar, header, input, tombol `neutral`). Sengaja LEBIH
+     GELAP dari --card agar kartu punya elevasi; tanpa ini kartu dan latar
+     bertumpuk di tingkat yang sama. */
+  --secondary-background: light-dark(oklch(100% 0 0), oklch(0.21 0.009 255));
   /* Aksen biru mode gelap diturunkan saturasinya 100% menjadi 88% agar tidak
      menyala di latar gelap (teks hitam di atasnya tetap 7:1). */
   --main: light-dark(hsl(217, 100%, 66%), hsl(217, 88%, 67%));
-  --main-foreground: light-dark(oklch(0% 0 0), oklch(0.16 0 0));
+  --main-foreground: light-dark(oklch(0% 0 0), oklch(0.16 0.006 255));
   /* Hijau "berhasil", dipakai grafik tren & status. #047857 (bukan #059669):
      putih di atas #059669 hanya 3.77:1, gagal 4.5:1. #047857 memberi 5.48:1.
      Diukur oleh src/lib/color-contrast.test.ts. */
   --success: light-dark(#047857, #34d399);
   /* Hijau/merah/kuning mode gelap jadi lebih terang, jadi teks di atasnya harus
      GELAP (putih di atas #34d399 hanya ~1.6:1). Di mode terang kebalikannya. */
-  --success-foreground: light-dark(oklch(100% 0 0), oklch(0.16 0 0));
-  --destructive-foreground: light-dark(oklch(100% 0 0), oklch(0.16 0 0));
+  --success-foreground: light-dark(oklch(100% 0 0), oklch(0.16 0.006 255));
+  --destructive-foreground: light-dark(oklch(100% 0 0), oklch(0.16 0.006 255));
   /* Kuning "peringatan": butuh perhatian, tapi TIDAK merusak/gagal (mis.
      spanduk wajib ganti kata sandi). Dibedakan dari --success/--destructive
      agar tiga makna (berhasil / gagal / perlu tindakan) tidak tercampur. */
   --warning: light-dark(#f5c518, #facc15);
-  --warning-foreground: light-dark(oklch(0% 0 0), oklch(0.16 0 0));
+  --warning-foreground: light-dark(oklch(0% 0 0), oklch(0.16 0.006 255));
   /* Tirai (scrim) panel geser: lebih pekat di mode terang. */
   --overlay: light-dark(oklch(0% 0 0 / 0.8), oklch(0% 0 0 / 0.7));
-  /* Mode terang: --shadow mengikuti --border (hitam). Mode gelap: --border
-     hanya putih 35% (terlalu tipis untuk shadow keras), jadi diikat ke putih
-     90% agar tetap terbaca tanpa menyilaukan. */
-  --shadow: 4px 4px 0px 0px light-dark(oklch(0% 0 0), oklch(1 0 0 / 90%));
+  /* Mode terang: --shadow mengikuti --border (hitam). Mode gelap: putih 90%
+     menyilaukan di atas kartu gelap, jadi diturunkan ke 50% dengan tint biru
+     tipis. Offset keras 4px tetap, jadi bentuk khas neobrutalisme bertahan. */
+  --shadow: 4px 4px 0px 0px light-dark(oklch(0% 0 0), oklch(0.95 0.01 255 / 50%));
   /* Titik penanda grafik: hitam pekat akan hilang di latar gelap. */
-  --chart-active-dot: light-dark(#000, oklch(0.93 0 0));
+  --chart-active-dot: light-dark(#000, oklch(0.93 0.004 255));
 }
 
 /* Pilihan eksplisit pengguna (cookie `tema` dibaca di RootLayout). Tanpa salah

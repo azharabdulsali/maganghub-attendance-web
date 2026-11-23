@@ -61,7 +61,7 @@ function SelectScrollUpButton({
     <SelectPrimitive.ScrollUpArrow
       data-slot="select-scroll-up"
       className={cn(
-        "top-0 z-10 flex w-full cursor-default items-center justify-center bg-background py-1 font-base text-foreground",
+        "top-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 font-base text-foreground",
         className,
       )}
       {...props}
@@ -79,7 +79,7 @@ function SelectScrollDownButton({
     <SelectPrimitive.ScrollDownArrow
       data-slot="select-scroll-down"
       className={cn(
-        "bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-background py-1 font-base text-foreground",
+        "bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 font-base text-foreground",
         className,
       )}
       {...props}
@@ -117,7 +117,7 @@ function SelectContent({
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(
-            "relative z-50 max-h-[min(24rem,var(--available-height))] min-w-(--anchor-width) overflow-x-hidden overflow-y-auto rounded-base border-2 border-border bg-background text-foreground outline-none origin-(--transform-origin) data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2",
+            "relative z-50 max-h-[min(24rem,var(--available-height))] min-w-(--anchor-width) overflow-x-hidden overflow-y-auto rounded-base border-2 border-border bg-popover text-foreground outline-none origin-(--transform-origin) data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2",
             className,
           )}
           {...props}

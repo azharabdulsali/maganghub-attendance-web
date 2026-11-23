@@ -90,9 +90,13 @@ describe("bacaToken", () => {
 // jadi ambang 3:1 untuk teks besar tidak dipakai.
 const PASANGAN: Array<[string, string, string]> = [
   ["foreground", "background", "teks utama di atas latar halaman"],
-  ["foreground", "secondary-background", "teks di dalam kartu/panel"],
+  ["foreground", "secondary-background", "teks di kanvas (body/sidebar/input)"],
+  ["foreground", "card", "teks di dalam kartu"],
+  ["foreground", "popover", "teks di atas dialog/popover/toast"],
   ["muted-foreground", "background", "teks bantuan di atas latar halaman"],
-  ["muted-foreground", "secondary-background", "teks bantuan di dalam kartu"],
+  ["muted-foreground", "secondary-background", "teks bantuan di kanvas"],
+  ["muted-foreground", "card", "teks bantuan di dalam kartu"],
+  ["muted-foreground", "popover", "teks bantuan di atas dialog"],
   ["main-foreground", "main", "teks di atas tombol utama (aksen biru)"],
   ["success-foreground", "success", "teks di atas tombol sukses"],
   ["destructive-foreground", "destructive", "teks di atas tombol bahaya"],
